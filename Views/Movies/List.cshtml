@@ -1,0 +1,214 @@
+﻿@using Ezequiel_Movies.Helpers
+@model PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>
+
+@{
+    ViewData["Title"] = "My Movies - CineLog";
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
+    var posterSize = "w185";
+}
+
+<h1>My Movies</h1>
+<hr />
+
+@* Search form *@
+<form asp-controller="Movies" asp-action="List" method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by Title, Director, or Year..." />
+        <button type="submit" class="btn btn-info">Search</button>
+        <a asp-action="List" class="btn btn-secondary ms-1">Clear Search</a>
+    </div>
+</form>
+
+@* "Add New Movie" button *@
+<p>
+    <a asp-controller="Movies" asp-action="Add" class="btn btn-success mb-3">Add New Movie</a>
+</p>
+
+@* Sorting Dropdown Menu *@
+<div class="mb-3 d-flex justify-content-end">
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="sortDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            Sort by:
+            @{
+                string currentSortDisplay = "Date Watched (Desc)";
+                var currentSort = ViewData["CurrentSort"] as string;
+
+                if (!string.IsNullOrEmpty(currentSort))
+                {
+                    string sortFieldKey = "";
+                    string sortDirectionIndicator = "";
+
+                    if (currentSort.EndsWith("_desc"))
+                    {
+                        sortFieldKey = currentSort.Substring(0, currentSort.Length - "_desc".Length);
+                        sortDirectionIndicator = " (Desc)";
+                    }
+                    else if (currentSort.EndsWith("_asc"))
+                    {
+                        sortFieldKey = currentSort.Substring(0, currentSort.Length - "_asc".Length);
+                        sortDirectionIndicator = " (Asc)";
+                    }
+                    else { sortFieldKey = currentSort; sortDirectionIndicator = " (Asc)"; }
+
+                    switch (sortFieldKey.ToLowerInvariant())
+                    {
+                        case "title": currentSortDisplay = "Title" + sortDirectionIndicator; break;
+                        case "director": currentSortDisplay = "Director" + sortDirectionIndicator; break;
+                        case "year": currentSortDisplay = "Released Year" + sortDirectionIndicator; break;
+                        case "datewatched": currentSortDisplay = "Date Watched" + sortDirectionIndicator; break;
+                        case "watchedat": currentSortDisplay = "Watched At" + sortDirectionIndicator; break;
+                        case "rating": currentSortDisplay = "Rating" + sortDirectionIndicator; break;
+                        default: currentSortDisplay = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(sortFieldKey) + sortDirectionIndicator; break;
+                    }
+                }
+            }
+            <span>@currentSortDisplay</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdownMenuButton">
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["TitleSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Title</a></li>
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["DirectorSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Director</a></li>
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["YearSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Released Year</a></li>
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["DateWatchedSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Date Watched</a></li>
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["WatchedAtSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Watched At</a></li>
+            <li><a class="dropdown-item" asp-action="List" asp-route-sortOrder="@ViewData["RatingSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]">Rating</a></li>
+        </ul>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <p>No movies found in your list yet. Why not <a asp-action="Add">add one</a>?</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        @foreach (var movie in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    @if (!string.IsNullOrEmpty(movie.PosterPath))
+                    {
+                        <img src="@(tmdbImageBaseUrl + posterSize + movie.PosterPath)" class="card-img-top" alt="@movie.Title Poster" style="height: 275px; width: 100%; object-fit: contain;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 275px; font-size:0.8rem; color: #6c757d;">
+                            <span>No Poster Available</span>
+                        </div>
+                    }
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@movie.Title</h5>
+                        <p class="card-text mb-1"><small class="text-muted">Directed by: @movie.Director</small></p>
+
+                        <ul class="list-unstyled mt-2 mb-2" style="font-size: 0.85rem;">
+                            @if (movie.ReleasedYear.HasValue)
+                            {
+                                <li class="mb-1"><strong>Released:</strong> @movie.ReleasedYear</li>
+                            }
+                            @if (movie.DateWatched.HasValue)
+                            {
+                                <li class="mb-1"><strong>Watched:</strong> @movie.DateWatched?.ToString("dd/MM/yyyy")</li>
+                            }
+                            <li class="mb-1"><strong>At:</strong> @movie.WatchedLocation</li>
+
+                            @if (movie.IsRewatch)
+                            {
+                                <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>
+                            }
+
+                            @* VVVV REPLACE YOUR CURRENT RATING DISPLAY WITH THIS FULL BLOCK VVVV *@
+                            @if (movie.UserRating.HasValue && movie.UserRating.Value > 0)
+                            {
+                                <li class="mt-1">
+                                    <span class="star-rating-display" style="color: #ffc107; font-size: 0.9rem;">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (movie.UserRating.Value >= i)
+                                            {<i class="bi bi-star-fill"></i> }
+                                            else if (movie.UserRating.Value >= (i - 0.5m))
+                                            { <i class="bi bi-star-half"></i> }
+                                            else
+                                            { <i class="bi bi-star"></i>}
+                                        }
+                                    </span>
+                                </li>
+                            }
+                            else // This part shows "Not Rated" if UserRating is null or 0
+                            {
+                                <li class="mt-1">
+                                    <small class="text-muted" style="font-size:0.8em;">Not Rated</small>
+                                </li>
+                            }
+                            @* ^^^^ END OF STAR RATING DISPLAY BLOCK ^^^^ *@
+                        </ul>
+
+                        <div class="mt-auto">
+                            <a class="btn btn-warning btn-sm" asp-controller="Movies" asp-action="Edit" asp-route-id="@movie.Id">Edit</a>
+                            <form asp-action="Delete" asp-controller="Movies" asp-route-id="@movie.Id" method="post" style="display: inline; margin-left: 5px;">
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete the movie: \'@movie.Title?.Replace("'", "\\'")\'?');">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div> @* End of the row for cards *@
+}
+
+@* --- VVVV CORRECTED AND SIMPLIFIED PAGINATION CONTROL BLOCK VVVV --- *@
+<div class="d-flex justify-content-center mt-4">
+    <nav aria-label="Movie list navigation">
+        <ul class="pagination">
+
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a asp-action="List"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       class="page-link">
+                        Previous
+                    </a>
+                </li>
+            }
+
+            @if (Model.TotalPages > 1)
+            {
+                <li class="page-item disabled">
+                    <span class="page-link" style="color: #6c757d;">Page @Model.PageIndex of @Model.TotalPages</span>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a asp-action="List"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       class="page-link">
+                        Next
+                    </a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+</div>
+@* --- ^^^^ END OF PAGINATION CONTROL BLOCK ^^^^ --- *@
+
+
+@* Optional "Add New Movie" button at the bottom *@
+@if (Model.Any())
+{
+    <div class="mt-4 pt-3 border-top text-center">
+        <a asp-controller="Movies" asp-action="Add" class="btn btn-success btn-lg">
+            <i class="bi bi-plus-circle-fill me-2"></i>Add New Movie
+        </a>
+    </div>
+}

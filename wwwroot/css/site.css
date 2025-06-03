@@ -1,0 +1,67 @@
+﻿html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* Add this to wwwroot/css/site.css (recommended) or in a <style> tag in Add.cshtml */
+
+.star-rating-container {
+    /* Container itself doesn't need much, font-size and cursor are on its inline style for now */
+}
+
+    .star-rating-container .star { /* This class is on your <i> tags */
+        display: inline-block; /* Ensures proper spacing and interaction for <i> tags */
+        /* The initial color for bi-star (empty) will be inherited or can be set specifically */
+        margin-right: 2px; /* Spacing between stars */
+        transition: color 0.1s ease-in-out, transform 0.1s ease-in-out; /* Smooth transitions */
+    }
+
+        /* Styling for when a star is part of the selected rating (filled or half-filled) */
+        .star-rating-container .star.filled, /* A class JS will add to persistently selected stars */
+        .star-rating-container i.bi-star-fill,
+        .star-rating-container i.bi-star-half {
+            color: #ffc107; /* Gold/Yellow color for selected stars */
+        }
+
+        /* Styling for when a star is being hovered over (temporary highlight) */
+        .star-rating-container .star.hover {
+            color: #fadb7d; /* A slightly lighter gold for hover, or keep it the same as 'filled' */
+            transform: scale(1.1); /* Slight zoom effect on hover */
+        }
+
+    /* Default color for empty stars if not inheriting nicely */
+    .star-rating-container i.bi-star {
+        color: #ccc; /* Light grey for empty stars */
+    }
+
+/* Styling for the clear rating link */
+#clearRating {
+    color: #6c757d; /* Bootstrap's secondary text color */
+    text-decoration: none;
+    font-size: 0.85rem; /* Adjusted size */
+    vertical-align: middle;
+    margin-left: 0.5rem; /* Spacing from stars */
+}
+
+    #clearRating:hover {
+        color: #dc3545; /* Bootstrap's danger color on hover */
+        text-decoration: underline;
+    }

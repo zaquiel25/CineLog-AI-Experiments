@@ -1,0 +1,389 @@
+﻿@model Ezequiel_Movies.Models.AddMoviesViewModel
+@using Ezequiel_Movies.Models
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Edit Movie - " + (Model?.Title ?? "Movie");
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342"; // Poster preview size
+}
+
+<hr />
+
+@if (Model is null)
+{
+    <p>No Movie was found with this Id.</p>
+    <p><a asp-action="List" asp-controller="Movies">Back to List</a></p>
+}
+else
+{
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <form asp-action="Edit" asp-controller="Movies" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                @* Main "Title" input - can be used to edit title OR trigger new TMDB search *@
+                <div class="mb-3 mx-auto" style="position: relative; max-width: 600px;">
+                    <label asp-for="Title" class="form-label">Title (edit or type to search TMDB)</label>
+                    <input asp-for="Title" class="form-control form-control-lg" id="editMovieFormTitle" autocomplete="off" placeholder="Edit title or type new title for suggestions..." />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                    <div id="editTmdbTitleSuggestions" class="list-group mt-1"
+                         style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
+                        @* TMDB suggestions will appear here *@
+                    </div>
+                </div>
+
+                @* --- SELECTED TMDB MOVIE PREVIEW AREA --- *@
+                <div id="editTmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white mx-auto"
+                     style="display: none; background-color: #212529; max-width: 600px;">
+
+                    <div class="row">
+                        <div class="col-md-4 text-center text-md-start mb-3 mb-md-0" id="editPosterImageContainer">
+                            <img id="editSelectedPosterImage" src="#" alt="Movie Poster" class="img-fluid rounded shadow-sm" style="max-width: 180px; display: none;" />
+                        </div>
+                        <div class="col-md-8">
+                            <h3 id="editSelectedMovieTitleText" class="card-title"></h3>
+                            <p class="mb-1"><strong>Director:</strong> <span id="editSelectedMovieDirectorText"></span></p>
+                            <p class="mb-1"><strong>Released:</strong> <span id="editSelectedMovieYearText"></span></p>
+                            <p id="editSelectedMovieOverviewText" class="mt-2" style="font-size: 0.9rem; max-height: 100px; overflow-y: auto;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                @* Hidden fields to store TMDB data (and values for submission) *@
+                @* Title is submitted from the visible editMovieFormTitle input above *@
+                <input type="hidden" asp-for="Director" id="editMovieFormDirectorHidden" />
+                <input type="hidden" asp-for="ReleasedYear" id="editMovieFormReleasedYearHidden" />
+                <input type="hidden" asp-for="PosterPath" id="editMovieFormPosterPath" />
+                <input type="hidden" asp-for="Overview" id="editMovieFormOverviewHidden" />
+
+                @* --- VISIBLE USER INPUT FIELDS FOR WATCH DETAILS --- *@
+                <div class="mt-4 pt-3 border-top" style="max-width: 600px; margin-left:auto; margin-right:auto;">
+
+                    <div class="mb-3">
+                        <label asp-for="DateWatched" class="form-label">Date Watched</label>
+                        <input asp-for="DateWatched" type="date" class="form-control" id="editMovieFormDateWatched" />
+                        <span asp-validation-for="DateWatched" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Home" name="WatchedLocation" id="editWatchedLocationHome" />
+                                <label class="form-check-label" for="editWatchedLocationHome">Home</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Cinema" name="WatchedLocation" id="editWatchedLocationCinema" />
+                                <label class="form-check-label" for="editWatchedLocationCinema">Cinema</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Other" name="WatchedLocation" id="editWatchedLocationOther" />
+                                <label class="form-check-label" for="editWatchedLocationOther">Other</label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="WatchedLocation" class="text-danger"></span>
+                    </div>
+
+                    @* VVVV ADD THIS SECTION FOR THE REWATCH CHECKBOX VVVV *@
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="editIsRewatchCheck" />
+                            <label class="form-check-label" for="editIsRewatchCheck">
+                                Rewatched
+                            </label>
+                        </div>
+                    </div>
+                    @* ^^^^ END OF REWATCH CHECKBOX SECTION ^^^^ *@
+
+                    @* --- VVVV STAR RATING SECTION VVVV --- *@
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating:</label>
+                        <div id="editStarRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
+                            <i class="bi bi-star star" data-value="1"></i>
+                            <i class="bi bi-star star" data-value="2"></i>
+                            <i class="bi bi-star star" data-value="3"></i>
+                            <i class="bi bi-star star" data-value="4"></i>
+                            <i class="bi bi-star star" data-value="5"></i>
+                            <a href="#" id="editClearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        </div>
+                        <input type="hidden" asp-for="UserRating" id="editUserRatingHidden" /> @* Hidden input for the rating value *@
+                        <span asp-validation-for="UserRating" class="text-danger"></span>
+                    </div>
+                    @* --- END OF STAR RATING SECTION --- *@
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary mt-3 btn-lg">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="mt-3 text-center">
+        <form asp-action="Delete" asp-controller="Movies" asp-route-id="@Model.Id" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Are you sure you want to delete the movie: \'@(Model.Title?.Replace("'", "\\'"))\'?');">
+                Delete Movie
+            </button>
+        </form>
+        <a asp-action="List" asp-controller="Movies" class="btn btn-secondary ms-2">Back to List</a>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Edit.cshtml - Combined TMDB & Star Rating Script Loaded.');
+
+            // --- Elements for TMDB Search and Preview Card ---
+            const titleQueryInput = document.getElementById('editMovieFormTitle');
+            const suggestionsDiv = document.getElementById('editTmdbTitleSuggestions');
+            const selectedMoviePreviewDiv = document.getElementById('editTmdbSelectedMoviePreview');
+            const posterImageContainer = document.getElementById('editPosterImageContainer');
+            const selectedPosterImage = document.getElementById('editSelectedPosterImage');
+            const selectedMovieTitleText = document.getElementById('editSelectedMovieTitleText');
+            const selectedMovieDirectorText = document.getElementById('editSelectedMovieDirectorText');
+            const selectedMovieYearText = document.getElementById('editSelectedMovieYearText');
+            const selectedMovieOverviewText = document.getElementById('editSelectedMovieOverviewText');
+
+            // --- HIDDEN Form fields for TMDB-sourced data ---
+            const hiddenDirectorField = document.getElementById('editMovieFormDirectorHidden');
+            const hiddenYearField = document.getElementById('editMovieFormReleasedYearHidden'); // For TMDB Release Year
+            const hiddenPosterPathField = document.getElementById('editMovieFormPosterPath');
+            const hiddenOverviewField = document.getElementById('editMovieFormOverviewHidden');
+
+            // --- VISIBLE Form fields for user to directly edit (apart from Title which is titleQueryInput) ---
+            // (Your HTML from #188 does not have visible inputs for Director and Year other than the preview text)
+            // (If you re-add them, getElementById for them here)
+
+            const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
+
+            // --- STAR RATING Elements ---
+            const starRatingContainer = document.getElementById('editStarRatingContainer'); // Matches your HTML from #188
+            const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
+            const userRatingHiddenInput = document.getElementById('editUserRatingHidden');   // Matches your HTML from #188
+            const clearRatingLink = document.getElementById('editClearRating');             // Matches your HTML from #188
+            let currentStarRating = 0;
+
+            // --- FUNCTION TO UPDATE PREVIEW CARD AND HIDDEN FIELDS (and visible Title) ---
+            function updateFormAndPreviewWithDetails(details, isInitialLoad = false) {
+                if (!selectedMoviePreviewDiv) return;
+
+                const logPrefix = isInitialLoad ? "Initial Load" : "TMDB Update";
+                console.log(`${logPrefix}: Updating form and preview with:`, JSON.stringify(details, null, 2));
+
+                // Update VISIBLE Title input field (which is also the TMDB search trigger)
+                if (titleQueryInput && details.title !== undefined) {
+                     titleQueryInput.value = details.title;
+                }
+
+                // Update HIDDEN form fields that store TMDB data
+                if (hiddenDirectorField) hiddenDirectorField.value = details.director || "N/A";
+                if (hiddenYearField) hiddenYearField.value = details.releaseYear || "";
+                if (hiddenPosterPathField) hiddenPosterPathField.value = details.posterPath || "";
+                if (hiddenOverviewField) hiddenOverviewField.value = details.overview || "";
+
+                // Populate text parts of the preview card
+                if (selectedMovieTitleText) selectedMovieTitleText.textContent = details.title || 'N/A';
+                if (selectedMovieDirectorText) selectedMovieDirectorText.textContent = details.director || 'N/A';
+                if (selectedMovieYearText) selectedMovieYearText.textContent = details.releaseYear || 'N/A';
+                if (selectedMovieOverviewText) selectedMovieOverviewText.textContent = details.overview || 'No overview available.';
+
+                // Handle Poster Image in Preview
+                if (posterImageContainer && selectedPosterImage) {
+                    posterImageContainer.innerHTML = '';
+                    if (details.posterPath) {
+                        selectedPosterImage.src = tmdbImageBaseUrl + details.posterPath;
+                        selectedPosterImage.style.display = 'block';
+                        posterImageContainer.appendChild(selectedPosterImage);
+                    } else {
+                        selectedPosterImage.style.display = 'none';
+                        selectedPosterImage.src = '#';
+                        posterImageContainer.innerHTML =
+                            `<div class="no-poster-placeholder d-flex align-items-center justify-content-center text-muted"
+                                  style="width: 100%; max-width: 180px; height: 270px; border: 1px dashed; border-radius:.25rem; font-size:0.9em; background-color: #3e444a;">
+                                <span>No Poster Available</span>
+                             </div>`;
+                    }
+                }
+                selectedMoviePreviewDiv.style.display = 'block';
+
+                const pageDisplayTitle = document.getElementById('pageDisplayTitle');
+                if(pageDisplayTitle && details.title) pageDisplayTitle.textContent = details.title;
+            }
+
+            // --- STAR RATING Functions ---
+            function renderStarsDisplay(ratingToDisplay) {
+                if (!stars.length) return;
+                stars.forEach((starIcon, index) => {
+                    const starFullValue = index + 1;
+                    starIcon.classList.remove('bi-star-fill', 'bi-star-half', 'bi-star', 'filled', 'hover');
+                    if (ratingToDisplay >= starFullValue) starIcon.classList.add('bi-star-fill', 'filled');
+                    else if (ratingToDisplay >= starFullValue - 0.5) starIcon.classList.add('bi-star-half', 'filled');
+                    else starIcon.classList.add('bi-star');
+                });
+            }
+
+            function setAndRenderStarRating(value) {
+                currentStarRating = parseFloat(value) || 0;
+                if (userRatingHiddenInput) {
+                    userRatingHiddenInput.value = (currentStarRating === 0) ? "" : currentStarRating.toFixed(1);
+                }
+                renderStarsDisplay(currentStarRating);
+                if (clearRatingLink) {
+                    clearRatingLink.style.display = (currentStarRating > 0) ? 'inline-block' : 'none';
+                }
+                console.log("Star Rating set to: " + currentStarRating + ", Hidden input value: " + (userRatingHiddenInput ? userRatingHiddenInput.value : 'N/A'));
+            }
+
+            if (starRatingContainer && stars.length > 0 && userRatingHiddenInput) {
+                starRatingContainer.addEventListener('mousemove', function(e) {
+                    if (currentStarRating > 0) { return; }
+                    const targetStarElement = e.target.closest('.star');
+                    if (targetStarElement && stars.includes(targetStarElement)) {
+                        const starIndex = stars.indexOf(targetStarElement);
+                        const starElementFullValue = starIndex + 1;
+                        const rect = targetStarElement.getBoundingClientRect();
+                        const mouseX = e.clientX - rect.left;
+                        let hoverRating = starElementFullValue;
+                        if (mouseX <= rect.width / 2) { hoverRating -= 0.5; }
+                        renderStarsDisplay(hoverRating);
+                        stars.forEach(s => s.classList.add('hover'));
+                    }
+                });
+                starRatingContainer.addEventListener('mouseleave', function() { renderStarsDisplay(currentStarRating); });
+                starRatingContainer.addEventListener('click', function(e) {
+                    const targetStarElement = e.target.closest('.star');
+                    if (targetStarElement && stars.includes(targetStarElement)) {
+                        const starIndex = stars.indexOf(targetStarElement);
+                        const starElementFullValue = starIndex + 1;
+                        const rect = targetStarElement.getBoundingClientRect();
+                        const clickX = e.clientX - rect.left;
+                        let newRating = starElementFullValue;
+                        if (clickX <= rect.width / 2) { newRating -= 0.5; }
+                        setAndRenderStarRating(newRating);
+                    }
+                });
+                if (clearRatingLink) {
+                    clearRatingLink.addEventListener('click', function(e) { e.preventDefault(); setAndRenderStarRating(0); });
+                }
+            }
+            // --- END OF STAR RATING Logic ---
+
+            // --- INITIAL PAGE LOAD SETUP for Edit Page ---
+            const initialDetailsFromModel = {
+                title: @Json.Serialize(Model.Title ?? string.Empty),
+                director: @Json.Serialize(Model.Director ?? string.Empty),
+                releaseYear: @Json.Serialize(Model.ReleasedYear?.ToString() ?? string.Empty),
+                overview: @Json.Serialize(Model.Overview ?? string.Empty),
+                posterPath: @Json.Serialize(Model.PosterPath ?? string.Empty)
+            };
+
+            // Populate hidden fields with initial Model values (asp-for on inputs handles their initial state for submission from Model)
+            // The `updateFormAndPreviewWithDetails` will set these again from initialDetails if needed
+            // but it's good to have them set before the preview card tries to read from them.
+            if (hiddenDirectorField) hiddenDirectorField.value = initialDetailsFromModel.director || "N/A";
+            if (hiddenYearField) hiddenYearField.value = initialDetailsFromModel.releaseYear || "";
+            // PosterPath and Overview hidden fields are handled by asp-for, but JS will update them if TMDB search happens.
+            // Let's ensure they reflect model state for the initial call to updateFormAndPreviewWithDetails
+            if (hiddenPosterPathField) hiddenPosterPathField.value = initialDetailsFromModel.posterPath;
+            if (hiddenOverviewField) hiddenOverviewField.value = initialDetailsFromModel.overview;
+
+            if (selectedMoviePreviewDiv && (initialDetailsFromModel.title || initialDetailsFromModel.posterPath)) {
+                updateFormAndPreviewWithDetails(initialDetailsFromModel, true);
+            } else if (selectedMoviePreviewDiv) {
+                selectedMoviePreviewDiv.style.display = 'none';
+            }
+
+            // Initialize star rating from Model.UserRating
+            const initialUserRating = parseFloat(@Json.Serialize(Model.UserRating?.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) ?? null)) || 0;
+            if (starRatingContainer) { // Check if starRatingContainer exists
+                 setAndRenderStarRating(initialUserRating);
+            }
+            // --- END OF INITIAL PAGE LOAD SETUP ---
+
+            // --- TMDB Search Logic (Typeahead on Title input) ---
+            let tmdbSearchDebounceTimer;
+            if (titleQueryInput && suggestionsDiv) {
+                titleQueryInput.addEventListener('input', function () {
+                    clearTimeout(tmdbSearchDebounceTimer);
+                    const query = titleQueryInput.value;
+                    if (query.length < 3) {
+                        suggestionsDiv.innerHTML = '';
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }
+                    tmdbSearchDebounceTimer = setTimeout(async () => {
+                        suggestionsDiv.innerHTML = '<div class="list-group-item disabled">Searching TMDB...</div>';
+                        suggestionsDiv.style.display = 'block';
+                        // Keep existing preview visible during new search
+
+                        try {
+                            const response = await fetch(`/Movies/SearchTmdbApi?query=${encodeURIComponent(query)}`);
+                            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                            const data = await response.json();
+                            suggestionsDiv.innerHTML = '';
+
+                            if (data.results && data.results.length > 0) {
+                                data.results.slice(0, 7).forEach(movie => {
+                                    const releaseYear = movie.releaseDate ? movie.releaseDate.substring(0, 4) : 'N/A';
+                                    const movieItem = document.createElement('a');
+                                    movieItem.href = '#';
+                                    movieItem.classList.add('list-group-item', 'list-group-item-action');
+                                    movieItem.innerHTML = `<strong>${movie.title}</strong> (${releaseYear})<br><small class="text-muted">${(movie.overview || '').substring(0,100)}...</small>`;
+                                    movieItem.setAttribute('data-tmdb-id', movie.id);
+
+                                    movieItem.addEventListener('click', async function(e) {
+                                        e.preventDefault();
+                                        const tmdbId = this.getAttribute('data-tmdb-id');
+                                        suggestionsDiv.innerHTML = `<div class="list-group-item disabled">Fetching details...</div>`;
+
+                                        try {
+                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbId}`);
+                                            if (!detailsResponse.ok) { throw new Error(`HTTP error! status: ${detailsResponse.statusText}`); }
+                                            const movieDetailsFromApi = await detailsResponse.json();
+
+                                            if (movieDetailsFromApi) {
+                                                updateFormAndPreviewWithDetails(movieDetailsFromApi, false); // Update with NEW TMDB data
+                                                setAndRenderStarRating(0); // Reset user rating for the new TMDB movie
+                                                // The IsRewatch checkbox also needs to be reset if a new movie is chosen
+                                                const isRewatchCheckbox = document.getElementById('editIsRewatchCheck');
+                                                if(isRewatchCheckbox) isRewatchCheckbox.checked = false;
+                                            }
+                                            suggestionsDiv.innerHTML = '';
+                                            suggestionsDiv.style.display = 'none';
+                                            const dateWatchedField = document.getElementById('editMovieFormDateWatched'); // For focus
+                                            if (dateWatchedField) dateWatchedField.focus(); else if(titleQueryInput) titleQueryInput.focus();
+                                        } catch (error) {
+                                            console.error('Error fetching/processing TMDB movie details for Edit page:', error);
+                                            suggestionsDiv.innerHTML = `<div class="list-group-item text-danger">Error getting details.</div>`;
+                                        }
+                                    });
+                                    suggestionsDiv.appendChild(movieItem);
+                                });
+                            } else {
+                                suggestionsDiv.innerHTML = '<div class="list-group-item">No matches found on TMDB.</div>';
+                            }
+                        } catch (error) {
+                            console.error('Error fetching TMDB search suggestions for Edit page:', error);
+                            suggestionsDiv.innerHTML = `<div class="list-group-item text-danger">Error searching TMDB.</div>`;
+                        }
+                    }, 500);
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (titleQueryInput && suggestionsDiv &&
+                        !titleQueryInput.contains(event.target) &&
+                        !suggestionsDiv.contains(event.target) &&
+                        !event.target.closest('#editTmdbTitleSuggestions')) {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+}

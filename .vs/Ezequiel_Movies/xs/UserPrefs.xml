@@ -1,0 +1,69 @@
+﻿<Properties StartupConfiguration="{D2E055B0-811F-4AF8-BF3E-88809EC48276}|Default">
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.ItemProperties.Ezequiel__Movies PreferredExecutionTarget="/Applications/Google Chrome.app" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Controllers/MoviesController.cs">
+    <Files>
+      <File FileName="Models/Entities/Movies.cs" Line="24" Column="1" IsPinned="True" />
+      <File FileName="Models/AddMoviesViewModel.cs" />
+      <File FileName="Data/ApplicationDbContext.cs" />
+      <File FileName="Controllers/HomeController.cs" Line="17" Column="6" />
+      <File FileName="Models/ErrorViewModel.cs" />
+      <File FileName="appsettings.Development.json" />
+      <File FileName="Migrations/ApplicationDbContextModelSnapshot.cs" />
+      <File FileName="Views/Movies/Add.cshtml" />
+      <File FileName="Views/Home/Index.cshtml" />
+      <File FileName="Controllers/MoviesController.cs" Line="196" Column="74" />
+      <File FileName="Program.cs" />
+      <File FileName="Views/Shared/_Layout.cshtml" />
+      <File FileName="Views/Movies/Edit.cshtml" />
+      <File FileName="Views/Home/Privacy.cshtml" />
+      <File FileName="Views/Movies/List.cshtml" Line="125" Column="49" />
+      <File FileName="Migrations/20250521110519_AddDateWatchedToMovies.cs" />
+      <File FileName="wwwroot/css/bootstrap.min.css" />
+      <File FileName="Views/Shared/_Layout.cshtml.css" />
+      <File FileName="Models/WatchedLocationType.cs" />
+      <File FileName="Models/ValidReleasedYearAttribute.cs" />
+      <File FileName="Models/NoFutureDateAttribute.cs" />
+      <File FileName="TmdbService.cs" />
+      <File FileName="Models/TmdbMovieBrief.cs" />
+      <File FileName="Models/TmdbSearchResponse.cs" />
+      <File FileName="Models/TmdbMovieDetails.cs" />
+      <File FileName="Migrations/20250527133345_AddOverviewToMovies.Designer.cs" />
+      <File FileName="Views/Shared/_ValidationScriptsPartial.cshtml" />
+      <File FileName="Views/Shared/Error.cshtml" />
+      <File FileName="Views/_ViewImports.cshtml" />
+      <File FileName="appsettings.json" />
+      <File FileName="wwwroot/css/site.css" />
+      <File FileName="Migrations/20250529151116_ConfigureUserRatingPrecision.cs" />
+      <File FileName="Helpers/PaginatedList.cs" Line="19" Column="34" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="Ezequiel_Movies" expanded="True">
+            <Node name="Ezequiel_Movies" expanded="True">
+              <Node name="Dependencies" expanded="True" />
+              <Node name="Ezequiel Movies" expanded="True">
+                <Node name="Controllers" expanded="True">
+                  <Node name="MoviesController.cs" selected="True" />
+                </Node>
+                <Node name="Helpers" expanded="True" />
+                <Node name="Views" expanded="True">
+                  <Node name="Movies" expanded="True" />
+                  <Node name="Shared" expanded="True">
+                    <Node name="_Layout.cshtml" expanded="True" />
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+</Properties>
