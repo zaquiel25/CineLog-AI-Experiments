@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../buildMultiTargeting/Ezequiel_Movies.props" />
-</Project>
