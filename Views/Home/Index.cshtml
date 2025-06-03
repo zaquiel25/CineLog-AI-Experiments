@@ -1,9 +1,22 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home - CineLog";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4 mt-5 mb-3">Welcome to CineLog!</h1>
+    <p class="lead mb-5">Your personal movie watching log and suggestion companion.</p>
+
+    <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+        <a asp-controller="Movies" asp-action="Add" class="btn btn-primary btn-lg px-4 gap-3">
+            <i class="bi bi-film me-2"></i>Log a New Movie
+        </a>
+        <a asp-controller="Movies" asp-action="Suggest" class="btn btn-warning btn-lg px-4">
+            @* Changed btn-outline-secondary to btn-warning *@
+            <i class="bi bi-lightbulb me-2"></i>Get Movie Suggestions
+        </a>
+    </div>
 </div>
 
+@* You can add more content to your home page later if you like,
+    such as a brief overview of features, or maybe some stats if you implement them.
+*@

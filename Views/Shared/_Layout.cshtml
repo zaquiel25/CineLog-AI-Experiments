@@ -11,9 +11,12 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
+            @* CHANGED: navbar-dark bg-primary *@
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Movies" asp-action="Add">CineLog</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-film me-2"></i>CineLog @* Optional: Icon for brand *@
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -21,10 +24,25 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Movies" asp-action="List">My Movies</a>
+                            <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="List">
+                                @* text-dark removed, navbar-dark handles text color *@
+                                <i class="bi bi-collection-play me-1"></i>My Movies
+                            </a>
                         </li>
-
+                        @* VVVV NEW NAV LINK FOR MOVIE SUGGESTIONS VVVV *@
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Suggest">
+                                @* text-dark removed *@
+                                <i class="bi bi-lightbulb me-1"></i>Movie Suggestions
+                            </a>
+                        </li>
+                        @* ^^^^ END OF NEW NAV LINK ^^^^ *@
                     </ul>
+                    @* You might add user/login related items on the right-hand side in the future:
+                <ul class="navbar-nav">
+                    <li class="nav-item">User Info / Logout</li>
+                </ul>
+                    *@
                 </div>
             </div>
         </nav>
@@ -35,9 +53,11 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="border-top footer text-light bg-dark mt-auto py-3">
+        @* CHANGED: classes for color, added padding *@
+        <div class="container text-center">
+            @* ADDED: text-center to center content *@
+            &copy; @DateTime.Now.Year - CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-light">Privacy</a> @* MODIFIED: link class for better visibility *@
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
