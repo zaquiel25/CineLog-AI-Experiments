@@ -206,7 +206,8 @@ else
 @* Optional "Add New Movie" button at the bottom *@
 @if (Model.Any())
 {
-    <div class="mt-4 pt-3 border-top text-center">
+    <div class="mt-4 pt-4 border-top text-center mb-5">
+        @* <<< ADDED mb-5 HERE *@
         <a asp-controller="Movies" asp-action="Add" class="btn btn-success btn-lg">
             <i class="bi bi-plus-circle-fill me-2"></i>Add New Movie
         </a>
