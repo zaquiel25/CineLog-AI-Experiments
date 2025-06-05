@@ -55,6 +55,7 @@ else
                 <input type="hidden" asp-for="ReleasedYear" id="editMovieFormReleasedYearHidden" />
                 <input type="hidden" asp-for="PosterPath" id="editMovieFormPosterPath" />
                 <input type="hidden" asp-for="Overview" id="editMovieFormOverviewHidden" />
+                <input type="hidden" asp-for="TmdbId" id="editMovieFormTmdbIdHidden" />
 
                 @* --- VISIBLE USER INPUT FIELDS FOR WATCH DETAILS --- *@
                 <div class="mt-4 pt-3 border-top" style="max-width: 600px; margin-left:auto; margin-right:auto;">
@@ -124,7 +125,7 @@ else
     <hr />
 
     <div class="mt-3 text-center mb-5">
-       
+
         <form asp-action="Delete" asp-controller="Movies" asp-route-id="@Model.Id" method="post" style="display: inline;">
             <button type="submit" class="btn btn-danger"
                     onclick="return confirm('Are you sure you want to delete the movie: \'@(Model.Title?.Replace("'", "\\'"))\'?');">
@@ -138,11 +139,12 @@ else
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('Edit.cshtml - Combined TMDB & Star Rating Script Loaded.');
+            console.log('Edit.cshtml - Fully Integrated Script Loaded (TMDB, Preview, Stars, TmdbId).');
 
-            // --- Elements for TMDB Search and Preview Card ---
+            // --- Get DOM Elements ---
             const titleQueryInput = document.getElementById('editMovieFormTitle');
             const suggestionsDiv = document.getElementById('editTmdbTitleSuggestions');
+
             const selectedMoviePreviewDiv = document.getElementById('editTmdbSelectedMoviePreview');
             const posterImageContainer = document.getElementById('editPosterImageContainer');
             const selectedPosterImage = document.getElementById('editSelectedPosterImage');
@@ -151,42 +153,96 @@ else
             const selectedMovieYearText = document.getElementById('editSelectedMovieYearText');
             const selectedMovieOverviewText = document.getElementById('editSelectedMovieOverviewText');
 
-            // --- HIDDEN Form fields for TMDB-sourced data ---
             const hiddenDirectorField = document.getElementById('editMovieFormDirectorHidden');
-            const hiddenYearField = document.getElementById('editMovieFormReleasedYearHidden'); // For TMDB Release Year
+            const hiddenYearField = document.getElementById('editMovieFormReleasedYearHidden');
             const hiddenPosterPathField = document.getElementById('editMovieFormPosterPath');
             const hiddenOverviewField = document.getElementById('editMovieFormOverviewHidden');
+            const hiddenTmdbIdField = document.getElementById('editMovieFormTmdbIdHidden'); // For TMDB ID
 
-            // --- VISIBLE Form fields for user to directly edit (apart from Title which is titleQueryInput) ---
-            // (Your HTML from #188 does not have visible inputs for Director and Year other than the preview text)
-            // (If you re-add them, getElementById for them here)
+            const starRatingContainer = document.getElementById('editStarRatingContainer');
+            const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
+            const userRatingHiddenInput = document.getElementById('editUserRatingHidden');
+            const clearRatingLink = document.getElementById('editClearRating');
+            let currentStarRating = 0;
 
             const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
 
-            // --- STAR RATING Elements ---
-            const starRatingContainer = document.getElementById('editStarRatingContainer'); // Matches your HTML from #188
-            const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
-            const userRatingHiddenInput = document.getElementById('editUserRatingHidden');   // Matches your HTML from #188
-            const clearRatingLink = document.getElementById('editClearRating');             // Matches your HTML from #188
-            let currentStarRating = 0;
+            // --- Element existence checks ---
+            if (!titleQueryInput) console.error("SCRIPT ERROR: 'editMovieFormTitle' not found!");
+            if (!selectedMoviePreviewDiv) console.error("SCRIPT ERROR: 'editTmdbSelectedMoviePreview' not found!");
+            if (!hiddenTmdbIdField) console.error("SCRIPT ERROR: 'editMovieFormTmdbIdHidden' not found!");
+            if (!starRatingContainer) console.error("SCRIPT ERROR: 'editStarRatingContainer' not found!");
+            if (!userRatingHiddenInput) console.error("SCRIPT ERROR: 'editUserRatingHidden' not found!");
 
-            // --- FUNCTION TO UPDATE PREVIEW CARD AND HIDDEN FIELDS (and visible Title) ---
+
+            // --- FUNCTION TO UPDATE PREVIEW CARD AND ALL RELEVANT FORM FIELDS ---
             function updateFormAndPreviewWithDetails(details, isInitialLoad = false) {
-                if (!selectedMoviePreviewDiv) return;
-
-                const logPrefix = isInitialLoad ? "Initial Load" : "TMDB Update";
-                console.log(`${logPrefix}: Updating form and preview with:`, JSON.stringify(details, null, 2));
-
-                // Update VISIBLE Title input field (which is also the TMDB search trigger)
-                if (titleQueryInput && details.title !== undefined) {
-                     titleQueryInput.value = details.title;
+                if (!details && selectedMoviePreviewDiv) { // If no details, hide preview
+                    selectedMoviePreviewDiv.style.display = 'none';
+                    if(titleQueryInput && isInitialLoad) titleQueryInput.value = ''; // Clear title if initial load had no details
+                    if(hiddenDirectorField) hiddenDirectorField.value = '';
+                    if(hiddenYearField) hiddenYearField.value = '';
+                    if(hiddenPosterPathField) hiddenPosterPathField.value = '';
+                    if(hiddenOverviewField) hiddenOverviewField.value = '';
+                    if (hiddenTmdbIdField) {
+                        let idToSet = null;
+                        if (details.tmdbId !== undefined && details.tmdbId !== null) { /* ... */ }
+                        // ... (fallback to details.id) ...
+                        hiddenTmdbIdField.value = (idToSet !== null) ? String(idToSet) : '';
+                        console.log('JS (Edit Page) - Final hiddenTmdbIdField.value set to:', `"${hiddenTmdbIdField.value}"`);
+                    }
+                    return;
+                }
+                if (!selectedMoviePreviewDiv || !details) {
+                    console.error("Preview div or details object missing in updateFormAndPreviewWithDetails.");
+                    return;
                 }
 
-                // Update HIDDEN form fields that store TMDB data
+                const logPrefix = isInitialLoad ? "Initial Page Load" : "TMDB Data Update";
+                console.log(`${logPrefix}: Populating form/preview with details:`, JSON.stringify(details, null, 2));
+
+                // Update VISIBLE Title input field
+                if (titleQueryInput && details.title !== undefined) titleQueryInput.value = details.title;
+
+                // Update HIDDEN form fields for main movie data
                 if (hiddenDirectorField) hiddenDirectorField.value = details.director || "N/A";
                 if (hiddenYearField) hiddenYearField.value = details.releaseYear || "";
                 if (hiddenPosterPathField) hiddenPosterPathField.value = details.posterPath || "";
                 if (hiddenOverviewField) hiddenOverviewField.value = details.overview || "";
+
+                // Inside your existing updateFormAndPreviewWithDetails function:
+                // ... (after updating hiddenOverviewField) ...
+
+                // VVVV REPLACE YOUR CURRENT TMDB ID LOGIC WITH THIS VVVV
+                if (hiddenTmdbIdField) { // Ensure the HTML element itself exists
+                    let idToSet = null; // Use null to distinguish from 0 if 0 is a valid ID
+                    let idSource = "none";
+
+                    if (details.tmdbId !== undefined && details.tmdbId !== null) {
+                        idToSet = details.tmdbId;
+                        idSource = "details.tmdbId";
+                    } else if (!isInitialLoad && details.id !== undefined && details.id !== null) {
+                        // Fallback to 'details.id' ONLY for non-initial loads (TMDB API responses)
+                        // because initialDetailsFromModel is specifically structured with 'tmdbId'
+                        idToSet = details.id;
+                        idSource = "details.id (TMDB fallback)";
+                    }
+
+                    if (idToSet !== null) {
+                        hiddenTmdbIdField.value = String(idToSet); // Ensure it's a string for the input value
+                        console.log(`JS (Edit Page) - Found TMDB ID via ${idSource}: <span class="math-inline">\{idToSet\}\. Set hiddenTmdbIdField\.value to\: "</span>{hiddenTmdbIdField.value}"`);
+                    } else {
+                        hiddenTmdbIdField.value = ''; // Clear if no valid ID found
+                        if (!isInitialLoad) {
+                            console.warn("JS (Edit Page) - TMDB Update: Neither 'tmdbId' nor 'id' found or was null in API response details object. Clearing hiddenTmdbIdField. Details:", details);
+                        } else {
+                            console.log("JS (Edit Page) - Initial Load: 'tmdbId' not found or was null in initial model details. Clearing hiddenTmdbIdField. Details:", details);
+                        }
+                    }
+                } else {
+                    console.error("SCRIPT ERROR: hiddenTmdbIdField ('editMovieFormTmdbIdHidden') not found!");
+                }
+            // VVVV END OF REPLACEMENT VVVV
 
                 // Populate text parts of the preview card
                 if (selectedMovieTitleText) selectedMovieTitleText.textContent = details.title || 'N/A';
@@ -194,7 +250,6 @@ else
                 if (selectedMovieYearText) selectedMovieYearText.textContent = details.releaseYear || 'N/A';
                 if (selectedMovieOverviewText) selectedMovieOverviewText.textContent = details.overview || 'No overview available.';
 
-                // Handle Poster Image in Preview
                 if (posterImageContainer && selectedPosterImage) {
                     posterImageContainer.innerHTML = '';
                     if (details.posterPath) {
@@ -206,20 +261,19 @@ else
                         selectedPosterImage.src = '#';
                         posterImageContainer.innerHTML =
                             `<div class="no-poster-placeholder d-flex align-items-center justify-content-center text-muted"
-                                  style="width: 100%; max-width: 180px; height: 270px; border: 1px dashed; border-radius:.25rem; font-size:0.9em; background-color: #3e444a;">
+                                  style="width: 100%; max-width: 180px; height: 270px; border: 1px dashed #6c757d; border-radius:.25rem; font-size:0.9em; background-color: #3e444a;">
                                 <span>No Poster Available</span>
                              </div>`;
                     }
                 }
                 selectedMoviePreviewDiv.style.display = 'block';
-
                 const pageDisplayTitle = document.getElementById('pageDisplayTitle');
                 if(pageDisplayTitle && details.title) pageDisplayTitle.textContent = details.title;
             }
 
             // --- STAR RATING Functions ---
             function renderStarsDisplay(ratingToDisplay) {
-                if (!stars.length) return;
+                if (!stars || !stars.length) return;
                 stars.forEach((starIcon, index) => {
                     const starFullValue = index + 1;
                     starIcon.classList.remove('bi-star-fill', 'bi-star-half', 'bi-star', 'filled', 'hover');
@@ -281,29 +335,26 @@ else
                 director: @Json.Serialize(Model.Director ?? string.Empty),
                 releaseYear: @Json.Serialize(Model.ReleasedYear?.ToString() ?? string.Empty),
                 overview: @Json.Serialize(Model.Overview ?? string.Empty),
-                posterPath: @Json.Serialize(Model.PosterPath ?? string.Empty)
+                posterPath: @Json.Serialize(Model.PosterPath ?? string.Empty),
+                tmdbId: @Json.Serialize(Model.TmdbId ?? null) // Get TmdbId from Model
             };
+            console.log("Initial Model Data for JS (Edit Page):", JSON.stringify(initialDetailsFromModel, null, 2));
 
-            // Populate hidden fields with initial Model values (asp-for on inputs handles their initial state for submission from Model)
-            // The `updateFormAndPreviewWithDetails` will set these again from initialDetails if needed
-            // but it's good to have them set before the preview card tries to read from them.
-            if (hiddenDirectorField) hiddenDirectorField.value = initialDetailsFromModel.director || "N/A";
-            if (hiddenYearField) hiddenYearField.value = initialDetailsFromModel.releaseYear || "";
-            // PosterPath and Overview hidden fields are handled by asp-for, but JS will update them if TMDB search happens.
-            // Let's ensure they reflect model state for the initial call to updateFormAndPreviewWithDetails
-            if (hiddenPosterPathField) hiddenPosterPathField.value = initialDetailsFromModel.posterPath;
-            if (hiddenOverviewField) hiddenOverviewField.value = initialDetailsFromModel.overview;
-
-            if (selectedMoviePreviewDiv && (initialDetailsFromModel.title || initialDetailsFromModel.posterPath)) {
+            if (selectedMoviePreviewDiv && (initialDetailsFromModel.title || initialDetailsFromModel.posterPath || initialDetailsFromModel.director )) {
                 updateFormAndPreviewWithDetails(initialDetailsFromModel, true);
             } else if (selectedMoviePreviewDiv) {
                 selectedMoviePreviewDiv.style.display = 'none';
             }
 
             // Initialize star rating from Model.UserRating
-            const initialUserRating = parseFloat(@Json.Serialize(Model.UserRating?.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) ?? null)) || 0;
-            if (starRatingContainer) { // Check if starRatingContainer exists
-                 setAndRenderStarRating(initialUserRating);
+            // Ensure Model.UserRating is correctly passed as nullable decimal and serialized
+            const initialUserRatingValue = @Json.Serialize(Model.UserRating);
+            const initialUserRating = initialUserRatingValue === null ? 0 : parseFloat(initialUserRatingValue);
+            if (starRatingContainer) {
+                setAndRenderStarRating(initialUserRating);
+                console.log("Initial UserRating from Model for stars: " + initialUserRating);
+            } else {
+                 console.error("SCRIPT ERROR: starRatingContainer not found for initial rating set!");
             }
             // --- END OF INITIAL PAGE LOAD SETUP ---
 
@@ -321,14 +372,11 @@ else
                     tmdbSearchDebounceTimer = setTimeout(async () => {
                         suggestionsDiv.innerHTML = '<div class="list-group-item disabled">Searching TMDB...</div>';
                         suggestionsDiv.style.display = 'block';
-                        // Keep existing preview visible during new search
-
                         try {
                             const response = await fetch(`/Movies/SearchTmdbApi?query=${encodeURIComponent(query)}`);
                             if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                             const data = await response.json();
                             suggestionsDiv.innerHTML = '';
-
                             if (data.results && data.results.length > 0) {
                                 data.results.slice(0, 7).forEach(movie => {
                                     const releaseYear = movie.releaseDate ? movie.releaseDate.substring(0, 4) : 'N/A';
@@ -336,28 +384,26 @@ else
                                     movieItem.href = '#';
                                     movieItem.classList.add('list-group-item', 'list-group-item-action');
                                     movieItem.innerHTML = `<strong>${movie.title}</strong> (${releaseYear})<br><small class="text-muted">${(movie.overview || '').substring(0,100)}...</small>`;
-                                    movieItem.setAttribute('data-tmdb-id', movie.id);
+                                    movieItem.setAttribute('data-tmdb-id', movie.id); // movie.id is the TMDB ID from search results
 
                                     movieItem.addEventListener('click', async function(e) {
                                         e.preventDefault();
-                                        const tmdbId = this.getAttribute('data-tmdb-id');
-                                        suggestionsDiv.innerHTML = `<div class="list-group-item disabled">Fetching details...</div>`;
-
+                                        const tmdbIdToFetch = this.getAttribute('data-tmdb-id');
+                                        suggestionsDiv.innerHTML = `<div class="list-group-item disabled">Fetching details for ID ${tmdbIdToFetch}...</div>`;
                                         try {
-                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbId}`);
+                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbIdToFetch}`);
                                             if (!detailsResponse.ok) { throw new Error(`HTTP error! status: ${detailsResponse.statusText}`); }
-                                            const movieDetailsFromApi = await detailsResponse.json();
+                                            const movieDetailsFromApi = await detailsResponse.json(); // This must return 'tmdbId' or 'id'
 
                                             if (movieDetailsFromApi) {
-                                                updateFormAndPreviewWithDetails(movieDetailsFromApi, false); // Update with NEW TMDB data
-                                                setAndRenderStarRating(0); // Reset user rating for the new TMDB movie
-                                                // The IsRewatch checkbox also needs to be reset if a new movie is chosen
+                                                updateFormAndPreviewWithDetails(movieDetailsFromApi, false);
+                                                setAndRenderStarRating(0);
                                                 const isRewatchCheckbox = document.getElementById('editIsRewatchCheck');
                                                 if(isRewatchCheckbox) isRewatchCheckbox.checked = false;
                                             }
                                             suggestionsDiv.innerHTML = '';
                                             suggestionsDiv.style.display = 'none';
-                                            const dateWatchedField = document.getElementById('editMovieFormDateWatched'); // For focus
+                                            const dateWatchedField = document.getElementById('editMovieFormDateWatched');
                                             if (dateWatchedField) dateWatchedField.focus(); else if(titleQueryInput) titleQueryInput.focus();
                                         } catch (error) {
                                             console.error('Error fetching/processing TMDB movie details for Edit page:', error);
@@ -384,6 +430,8 @@ else
                         suggestionsDiv.style.display = 'none';
                     }
                 });
+            } else {
+                if(!titleQueryInput) console.error("SCRIPT ERROR: Title Query Input ('editMovieFormTitle') not found!");
             }
         });
     </script>

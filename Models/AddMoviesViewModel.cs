@@ -35,5 +35,7 @@ namespace Ezequiel_Movies.Models
         [Range(0.0, 5.0, ErrorMessage = "Rating must be between 0.0 and 5.0.")]
         [RegularExpression(@"^[0-5](\.0|\.5)?$", ErrorMessage = "Rating must be in 0.5 increments (e.g., 3.0, 3.5).")] // Optional: more specific validation
         public decimal? UserRating { get; set; } // <<< ADD THIS NEW PROPERTY
+
+        public int? TmdbId { get; set; }
     }
 }

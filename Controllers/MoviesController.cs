@@ -13,7 +13,7 @@ namespace Ezequiel_Movies.Controllers
     public class MoviesController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
-        private readonly TmdbService _tmdbService; // Added TmdbService field
+        private readonly TmdbService _tmdbService;
 
         // Updated constructor to inject both DbContext and TmdbService
         public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService)
@@ -72,6 +72,7 @@ namespace Ezequiel_Movies.Controllers
                 // ...
                 return Json(new
                 {
+                    tmdbId = movieDetails.Id,
                     title = movieDetails.Title,
                     director = movieDetails.GetDirector(),
                     releaseYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
@@ -114,6 +115,7 @@ namespace Ezequiel_Movies.Controllers
             Console.WriteLine($"ViewModel DateWatched Received: {viewModel.DateWatched}");
             Console.WriteLine($"ViewModel WatchedLocation Received: {viewModel.WatchedLocation}");
             Console.WriteLine($"ViewModel IsRewatch Received: {viewModel.IsRewatch}"); // Log IsRewatch
+            Console.WriteLine($"ViewModel TmdbId Received: [{viewModel.TmdbId}]"); // <<< ENSURE THIS LINE IS PRESENT
             Console.WriteLine($"ViewModel Subscribed Received: {viewModel.Subscribed}"); // Log Subscribed
             Console.WriteLine("-----------------------------");
 
@@ -131,7 +133,8 @@ namespace Ezequiel_Movies.Controllers
                     Overview = viewModel.Overview,
                     IsRewatch = viewModel.IsRewatch,       // Assign IsRewatch
                     Subscribed = viewModel.Subscribed,
-                    UserRating = viewModel.UserRating
+                    UserRating = viewModel.UserRating,
+                    TmdbId = viewModel.TmdbId
                 }; // Object initializer for 'movie' ends here
 
                 // Logging line for IsRewatch, after 'movie' object is created
@@ -167,17 +170,6 @@ namespace Ezequiel_Movies.Controllers
                 return View(viewModel);
             }
         }
-
-        // GET: Movies/List
-        // In MoviesController.cs
-
-        // In MoviesController.cs
-
-        // In MoviesController.cs
-
-        // In MoviesController.cs
-
-        // In MoviesController.cs
 
         [HttpGet]
         public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber)
@@ -243,16 +235,29 @@ namespace Ezequiel_Movies.Controllers
             return View(paginatedMovies);
         }
         // GET: Movies/Edit/5
+        // In MoviesController.cs
+
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
             var movieEntity = await _dbContext.Movies.FindAsync(id);
             if (movieEntity == null)
             {
-                Console.WriteLine($"Edit GET - Movie with ID {id} not found in DB."); // <<< DEBUG
+                Console.WriteLine($"Edit GET - Movie with ID {id} not found in DB.");
                 return NotFound();
             }
-            Console.WriteLine($"Edit GET - Loaded movie ID {movieEntity.Id} from DB. PosterPath from DB: [{movieEntity.PosterPath}]"); // <<< DEBUG
+
+            // Enhanced log after loading the entity from the database
+            Console.WriteLine($"Edit GET - Loaded Movie from DB (ID: {movieEntity.Id}): " +
+                              $"Title='{movieEntity.Title}', " +
+                              $"Director='{movieEntity.Director}', " +
+                              $"ReleasedYear='{movieEntity.ReleasedYear}', " +
+                              $"PosterPath='{movieEntity.PosterPath}', " +
+                              $"Overview (snippet)='{movieEntity.Overview?.Substring(0, Math.Min(movieEntity.Overview?.Length ?? 0, 30))}...', " +
+                              $"IsRewatch='{movieEntity.IsRewatch}', " +
+                              $"UserRating='{movieEntity.UserRating}', " +
+                              $"TmdbId='{movieEntity.TmdbId}'");
+
 
             var viewModel = new AddMoviesViewModel
             {
@@ -266,14 +271,27 @@ namespace Ezequiel_Movies.Controllers
                 PosterPath = movieEntity.PosterPath,
                 Overview = movieEntity.Overview,
                 IsRewatch = movieEntity.IsRewatch,
-                UserRating = movieEntity.UserRating
+                UserRating = movieEntity.UserRating,
+                TmdbId = movieEntity.TmdbId
             };
-            Console.WriteLine($"Edit GET - ViewModel PosterPath being sent to view: [{viewModel.PosterPath}]");
-            Console.WriteLine($"Edit GET - ViewModel UserRating being sent to view: [{viewModel.UserRating}]");// <<< DEBUG
+
+            // Enhanced log for the ViewModel being sent to the View
+            Console.WriteLine($"Edit GET - ViewModel being sent to View (ID: {viewModel.Id}): " +
+                              $"Title='{viewModel.Title}', " +
+                              $"Director='{viewModel.Director}', " +
+                              $"ReleasedYear='{viewModel.ReleasedYear}', " +
+                              $"PosterPath='{viewModel.PosterPath}', " +
+                              $"Overview (snippet)='{viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 30))}...', " +
+                              $"IsRewatch='{viewModel.IsRewatch}', " +
+                              $"UserRating='{viewModel.UserRating}', " +
+                              $"TmdbId='{viewModel.TmdbId}'");
+
             return View(viewModel);
         }
 
         // POST: Movies/Edit/5
+        // In MoviesController.cs
+
         // In MoviesController.cs
 
         [HttpPost]
@@ -289,8 +307,10 @@ namespace Ezequiel_Movies.Controllers
             Console.WriteLine($"ViewModel Overview Snippet: [{viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 50))}...]");
             Console.WriteLine($"ViewModel DateWatched Received: {viewModel.DateWatched}");
             Console.WriteLine($"ViewModel WatchedLocation Received: {viewModel.WatchedLocation}");
-            Console.WriteLine($"ViewModel IsRewatch Received: {viewModel.IsRewatch}"); // <<< LOG IsRewatch FROM VIEWMODEL
-            Console.WriteLine($"ViewModel Subscribed Received: {viewModel.Subscribed}"); // Log Subscribed if you're using it
+            Console.WriteLine($"ViewModel IsRewatch Received: {viewModel.IsRewatch}");
+            Console.WriteLine($"ViewModel UserRating Received: [{viewModel.UserRating}]"); // Added brackets for consistency
+            Console.WriteLine($"ViewModel TmdbId Received: [{viewModel.TmdbId}]");     // <<< ENSURE THIS IS PRESENT AND LOGS VIEWMODEL TmdbId
+            Console.WriteLine($"ViewModel Subscribed Received: {viewModel.Subscribed}");
             Console.WriteLine("-----------------------------");
 
             if (ModelState.IsValid)
@@ -300,7 +320,8 @@ namespace Ezequiel_Movies.Controllers
 
                 if (movieEntity is not null)
                 {
-                    Console.WriteLine($"Edit POST - Movie Found. Original DB Values - ReleasedYear: [{movieEntity.ReleasedYear}], IsRewatch: [{movieEntity.IsRewatch}] for Movie ID {viewModel.Id}");
+                    // Log original values from DB, including TmdbId
+                    Console.WriteLine($"Edit POST - Movie Found (ID: {movieEntity.Id}). Original DB Values - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: {movieEntity.ReleasedYear}, IsRewatch: {movieEntity.IsRewatch}, UserRating: {movieEntity.UserRating}, TmdbId: {movieEntity.TmdbId}");
 
                     // Assign values from ViewModel to the Entity
                     movieEntity.Title = viewModel.Title;
@@ -310,12 +331,13 @@ namespace Ezequiel_Movies.Controllers
                     movieEntity.WatchedLocation = viewModel.WatchedLocation!.Value;
                     movieEntity.PosterPath = viewModel.PosterPath;
                     movieEntity.Overview = viewModel.Overview;
-                    movieEntity.IsRewatch = viewModel.IsRewatch;       // Assign IsRewatch
+                    movieEntity.IsRewatch = viewModel.IsRewatch;
                     movieEntity.Subscribed = viewModel.Subscribed;
                     movieEntity.UserRating = viewModel.UserRating;
+                    movieEntity.TmdbId = viewModel.TmdbId; // <<< This assignment is crucial and already in your code
 
-                    Console.WriteLine($"Edit POST - Entity values BEFORE SaveChangesAsync - Director: '{movieEntity.Director}', Year: '{movieEntity.ReleasedYear}', IsRewatch: {movieEntity.IsRewatch} for Movie ID {movieEntity.Id}"); // <<< LOG IsRewatch ON ENTITY
-                    Console.WriteLine($"Edit POST - Entity values BEFORE SaveChangesAsync - UserRating: [{movieEntity.UserRating}]");
+                    // Log entity values just before saving, including TmdbId
+                    Console.WriteLine($"Edit POST - Entity values BEFORE SaveChangesAsync (ID: {movieEntity.Id}) - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: '{movieEntity.ReleasedYear}', IsRewatch: {movieEntity.IsRewatch}, TmdbId: {movieEntity.TmdbId}, UserRating: {movieEntity.UserRating}");
 
                     try
                     {
@@ -325,12 +347,12 @@ namespace Ezequiel_Movies.Controllers
                     }
                     catch (DbUpdateConcurrencyException ex)
                     {
-                        Console.WriteLine($"Edit POST - DbUpdateConcurrencyException: {ex.Message}");
+                        Console.WriteLine($"Edit POST - DbUpdateConcurrencyException for Movie ID {movieEntity.Id}: {ex.Message}");
                         ModelState.AddModelError("", "The record you attempted to edit was modified by another user after you got the original value. The edit operation was canceled.");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Edit POST - Exception during SaveChangesAsync: {ex.Message}");
+                        Console.WriteLine($"Edit POST - Exception during SaveChangesAsync for Movie ID {movieEntity.Id}: {ex.Message}");
                         ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
                     }
                 }
@@ -361,10 +383,9 @@ namespace Ezequiel_Movies.Controllers
                 }
             }
             // If ModelState invalid or save failed, return to View with viewModel
-            Console.WriteLine("Edit POST - Returning View(viewModel) due to invalid ModelState or save error.");
+            Console.WriteLine("Edit POST - Returning View(viewModel) due to invalid ModelState or error for Movie ID: {viewModel.Id}.");
             return View(viewModel);
         }
-
         // POST: Movies/Delete/5
         [HttpPost]
         public async Task<IActionResult> Delete(Guid id)

@@ -53,71 +53,72 @@
                 <input type="hidden" asp-for="ReleasedYear" id="movieFormReleasedYearHidden" />
                 <input type="hidden" asp-for="PosterPath" id="movieFormPosterPath" />
                 <input type="hidden" asp-for="Overview" id="movieFormOverviewHidden" />
+                <input type="hidden" asp-for="TmdbId" id="movieFormTmdbIdHidden" />
                 @* --- 3. VISIBLE USER INPUT FIELDS FOR WATCH DETAILS --- *@
 
 
-            <div class="pt-3 border-top mb-5" style="max-width: 600px; margin-left:auto; margin-right:auto;">
-               
+                <div class="pt-3 border-top mb-5" style="max-width: 600px; margin-left:auto; margin-right:auto;">
 
 
-                <div class="mb-3">
-                    <label asp-for="DateWatched" class="form-label">Date Watched</label>
-                    <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" />
-                    <span asp-validation-for="DateWatched" class="text-danger"></span>
-                </div>
 
-                <div class="mb-3">
-                    <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Home" name="WatchedLocation" id="addWatchedLocationHome" />
-                            <label class="form-check-label" for="addWatchedLFocationHome">Home</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Cinema" name="WatchedLocation" id="addWatchedLocationCinema" />
-                            <label class="form-check-label" for="addWatchedLocationCinema">Cinema</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Other" name="WatchedLocation" id="addWatchedLocationOther" />
-                            <label class="form-check-label" for="addWatchedLocationOther">Other</label>
-                        </div>
+                    <div class="mb-3">
+                        <label asp-for="DateWatched" class="form-label">Date Watched</label>
+                        <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" />
+                        <span asp-validation-for="DateWatched" class="text-danger"></span>
                     </div>
-                    <span asp-validation-for="WatchedLocation" class="text-danger"></span>
-                </div>
 
-                @* VVVV ADD THIS SECTION FOR THE REWATCH CHECKBOX VVVV *@
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="addIsRewatchCheck" />
-                        <label class="form-check-label" for="addIsRewatchCheck">
-                            Rewatched
-                        </label>
+                    <div class="mb-3">
+                        <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Home" name="WatchedLocation" id="addWatchedLocationHome" />
+                                <label class="form-check-label" for="addWatchedLFocationHome">Home</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Cinema" name="WatchedLocation" id="addWatchedLocationCinema" />
+                                <label class="form-check-label" for="addWatchedLocationCinema">Cinema</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@Ezequiel_Movies.Models.WatchedLocationType.Other" name="WatchedLocation" id="addWatchedLocationOther" />
+                                <label class="form-check-label" for="addWatchedLocationOther">Other</label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="WatchedLocation" class="text-danger"></span>
                     </div>
-                    @* No validation message typically needed for a boolean checkbox *@
-                </div>
-                @* ^^^^ END OF REWATCH CHECKBOX SECTION ^^^^ *@
 
-
-                <div class="mb-3">
-                    <label class="form-label">Your Rating:</label>
-                    <div id="starRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
-                        <i class="bi bi-star star" data-value="1"></i>
-                        <i class="bi bi-star star" data-value="2"></i>
-                        <i class="bi bi-star star" data-value="3"></i>
-                        <i class="bi bi-star star" data-value="4"></i>
-                        <i class="bi bi-star star" data-value="5"></i>
-                        <a href="#" id="clearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
-                            <i class="bi bi-x-circle"></i> Clear
-                        </a>
+                    @* VVVV ADD THIS SECTION FOR THE REWATCH CHECKBOX VVVV *@
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="addIsRewatchCheck" />
+                            <label class="form-check-label" for="addIsRewatchCheck">
+                                Rewatched
+                            </label>
+                        </div>
+                        @* No validation message typically needed for a boolean checkbox *@
                     </div>
-                    <input type="hidden" asp-for="UserRating" id="userRatingHidden" /> @* This will hold the numeric value *@
-                    <span asp-validation-for="UserRating" class="text-danger"></span>
-                </div>
+                    @* ^^^^ END OF REWATCH CHECKBOX SECTION ^^^^ *@
 
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating:</label>
+                        <div id="starRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
+                            <i class="bi bi-star star" data-value="1"></i>
+                            <i class="bi bi-star star" data-value="2"></i>
+                            <i class="bi bi-star star" data-value="3"></i>
+                            <i class="bi bi-star star" data-value="4"></i>
+                            <i class="bi bi-star star" data-value="5"></i>
+                            <a href="#" id="clearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        </div>
+                        <input type="hidden" asp-for="UserRating" id="userRatingHidden" /> @* This will hold the numeric value *@
+                        <span asp-validation-for="UserRating" class="text-danger"></span>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
+                    </div>
                 </div>
-            </div>
             </div> @* --- END OF movieDetailsAndUserInputsSection --- *@
         </form>
     </div>
@@ -126,9 +127,9 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('Add.cshtml - TMDB Autofill with Sections and STAR RATING script loaded (hover fix).');
+            console.log('Add.cshtml - TMDB Autofill, Preview, Star Rating, TMDB ID Capture Script Loaded.');
 
-            // --- Existing TMDB Search & Preview Card Elements (from your script) ---
+            // --- TMDB Search & Preview Card Elements ---
             const tmdbQueryInput = document.getElementById('tmdbSearchQueryInput');
             const tmdbResultsDisplayDiv = document.getElementById('tmdbSearchResultsDisplay');
             const movieDetailsAndUserInputsSection = document.getElementById('movieDetailsAndUserInputsSection');
@@ -139,22 +140,34 @@
             const selectedMovieDirectorText = document.getElementById('selectedMovieDirectorText');
             const selectedMovieYearText = document.getElementById('selectedMovieYearText');
             const selectedMovieOverviewText = document.getElementById('selectedMovieOverviewText');
+
+            // --- Hidden Form Fields ---
             const hiddenTitleField = document.getElementById('movieFormTitleHidden');
             const hiddenDirectorField = document.getElementById('movieFormDirectorHidden');
             const hiddenYearField = document.getElementById('movieFormReleasedYearHidden');
             const hiddenPosterPathField = document.getElementById('movieFormPosterPath');
-            const hiddenOverviewField = document.getElementById('movieFormOverviewHidden'); // Ensure this ID matches your hidden input
+            const hiddenOverviewField = document.getElementById('movieFormOverviewHidden');
+            const userRatingHiddenInput = document.getElementById('userRatingHidden'); // For UserRating
+            const hiddenTmdbIdField = document.getElementById('movieFormTmdbIdHidden'); // <<< NEW: For TMDB ID
+
             const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
 
-            // --- STAR RATING Elements (from your script) ---
+            // --- Element existence checks ---
+            if (!hiddenOverviewField) console.error('SCRIPT ERROR: Hidden overview field (movieFormOverviewHidden) not found!');
+            if (!movieDetailsAndUserInputsSection) console.error("SCRIPT ERROR: movieDetailsAndUserInputsSection not found!");
+            if (!userRatingHiddenInput) console.error("SCRIPT ERROR: userRatingHidden input not found!");
+            if (!hiddenTmdbIdField) console.error("SCRIPT ERROR: movieFormTmdbIdHidden input not found!"); // <<< NEW CHECK
+
+
+            // --- STAR RATING Elements ---
             const starRatingContainer = document.getElementById('starRatingContainer');
             const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
-            const userRatingHiddenInput = document.getElementById('userRatingHidden');
             const clearRatingLink = document.getElementById('clearRating');
             let currentRating = 0;
 
-            // --- Helper function to update Preview Card (from your script, assuming it exists) ---
-            function updatePreviewCard(details) { // This is the one from your Add page for TMDB preview
+            // --- Function to update the Preview Card ---
+            function updatePreviewCard(details) {
+                // ... (This function from your script in response #200 is good) ...
                 if (!selectedMoviePreviewDiv || !details) { if(selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'none'; return; }
                 if (selectedMovieTitleText) selectedMovieTitleText.textContent = details.title || 'N/A';
                 if (selectedMovieDirectorText) selectedMovieDirectorText.textContent = details.director || 'N/A';
@@ -174,8 +187,9 @@
                 if (selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'block';
             }
 
-            // --- Function to re-show preview and user inputs on page load (from your script) ---
+            // --- Function to re-show preview on page load (e.g., after validation error) ---
             function showDetailsAndInputsOnLoad() {
+                // ... (This function from your script in response #200, which reads from hidden fields, is good) ...
                 if (hiddenTitleField && hiddenTitleField.value && movieDetailsAndUserInputsSection) {
                     console.log('Add.cshtml: Re-populating preview card from model data on page load.');
                     const initialDetails = {
@@ -184,8 +198,9 @@
                         releaseYear: hiddenYearField ? hiddenYearField.value : '',
                         overview: hiddenOverviewField ? hiddenOverviewField.value : '',
                         posterPath: hiddenPosterPathField ? hiddenPosterPathField.value : ''
+                        // Note: TmdbId is not displayed in preview, but will be in its hidden field
                     };
-                    updatePreviewCard(initialDetails); // Uses the above helper
+                    updatePreviewCard(initialDetails);
                     movieDetailsAndUserInputsSection.style.display = 'block';
                 } else {
                     if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
@@ -193,114 +208,50 @@
             }
             showDetailsAndInputsOnLoad();
 
-            // --- STAR RATING Logic (incorporating your pasted functions and the fix) ---
-            function renderStarsForRating(ratingToDisplay) { // Renamed from renderStars to avoid potential conflict
+            // --- STAR RATING Logic ---
+            function renderStarsForRating(ratingToDisplay) { /* ... (from response #221, confirmed working) ... */
                 if (!stars.length) return;
                 stars.forEach((starIcon, index) => {
                     const starFullValue = index + 1;
                     starIcon.classList.remove('bi-star-fill', 'bi-star-half', 'bi-star', 'filled', 'hover');
-                    if (ratingToDisplay >= starFullValue) {
-                        starIcon.classList.add('bi-star-fill', 'filled');
-                    } else if (ratingToDisplay >= starFullValue - 0.5) {
-                        starIcon.classList.add('bi-star-half', 'filled');
-                    } else {
-                        starIcon.classList.add('bi-star');
-                    }
+                    if (ratingToDisplay >= starFullValue) starIcon.classList.add('bi-star-fill', 'filled');
+                    else if (ratingToDisplay >= starFullValue - 0.5) starIcon.classList.add('bi-star-half', 'filled');
+                    else starIcon.classList.add('bi-star');
                 });
             }
-
-            function setStarRating(value) { // This is your function, looks good
+            function setStarRating(value) { /* ... (from response #221, confirmed working) ... */
                 currentRating = parseFloat(value) || 0;
-                if (userRatingHiddenInput) {
-                    userRatingHiddenInput.value = (currentRating === 0) ? "" : currentRating.toFixed(1);
-                }
+                if (userRatingHiddenInput) userRatingHiddenInput.value = (currentRating === 0) ? "" : currentRating.toFixed(1);
                 renderStarsForRating(currentRating);
-                if (clearRatingLink) {
-                    clearRatingLink.style.display = (currentRating > 0) ? 'inline-block' : 'none';
-                }
+                if (clearRatingLink) clearRatingLink.style.display = (currentRating > 0) ? 'inline-block' : 'none';
                 console.log("Star Rating set to: " + currentRating + ", Hidden input value: " + (userRatingHiddenInput ? userRatingHiddenInput.value : 'N/A'));
             }
-
-            if (starRatingContainer && stars.length > 0 && userRatingHiddenInput) {
-                starRatingContainer.addEventListener('mousemove', function(e) {
-                    // VVVV THE FIX IS HERE VVVV
-                    if (currentRating > 0) { // If a rating has been clicked and set (is not 0)
-                        return; // Do not show hover effects over already set stars
-                    }
-                    // VVVV END OF FIX VVVV
-
-                    // If currentRating is 0 (no rating set or it has been cleared), then show hover effect:
-                    const targetStarElement = e.target.closest('.star');
-                    if (targetStarElement && stars.includes(targetStarElement)) {
-                        const starIndex = stars.indexOf(targetStarElement);
-                        const starElementFullValue = starIndex + 1;
-                        const rect = targetStarElement.getBoundingClientRect();
-                        const mouseX = e.clientX - rect.left;
-                        let hoverRating = starElementFullValue;
-                        if (mouseX <= rect.width / 2) { hoverRating -= 0.5; }
-
-                        renderStarsForRating(hoverRating);
-                        stars.forEach(s => s.classList.add('hover'));
-                    }
-                });
-
-                starRatingContainer.addEventListener('mouseleave', function() {
-                    // Always render the actual current committed rating on mouseleave
-                    // This will also remove the .hover class because renderStarsForRating resets classes.
-                    renderStarsForRating(currentRating);
-                });
-
-                starRatingContainer.addEventListener('click', function(e) { // Your click logic is good
-                    const targetStarElement = e.target.closest('.star');
-                    if (targetStarElement && stars.includes(targetStarElement)) {
-                        const starIndex = stars.indexOf(targetStarElement);
-                        const starElementFullValue = starIndex + 1;
-                        const rect = targetStarElement.getBoundingClientRect();
-                        const clickX = e.clientX - rect.left;
-                        let newRating = starElementFullValue;
-                        if (clickX <= rect.width / 2) { newRating -= 0.5; }
-                        setStarRating(newRating);
-                    }
-                });
-
-                if (clearRatingLink) { // Your clear link logic is good
-                    clearRatingLink.addEventListener('click', function(e) { e.preventDefault(); setStarRating(0); });
-                }
-
-                // Initial state for Add page: check if userRatingHiddenInput has a value (from validation postback)
+            if (starRatingContainer && stars.length > 0 && userRatingHiddenInput) { /* ... (event listeners from #221, confirmed working) ... */
+                starRatingContainer.addEventListener('mousemove', function(e) { if (currentRating > 0) { return; } const targetStarElement = e.target.closest('.star'); if (targetStarElement && stars.includes(targetStarElement)) { const starIndex = stars.indexOf(targetStarElement); const starElementFullValue = starIndex + 1; const rect = targetStarElement.getBoundingClientRect(); const mouseX = e.clientX - rect.left; let hoverRating = starElementFullValue; if (mouseX <= rect.width / 2) { hoverRating -= 0.5; } renderStarsForRating(hoverRating); stars.forEach(s => s.classList.add('hover')); } });
+                starRatingContainer.addEventListener('mouseleave', function() { renderStarsForRating(currentRating); });
+                starRatingContainer.addEventListener('click', function(e) { const targetStarElement = e.target.closest('.star'); if (targetStarElement && stars.includes(targetStarElement)) { const starIndex = stars.indexOf(targetStarElement); const starElementFullValue = starIndex + 1; const rect = targetStarElement.getBoundingClientRect(); const clickX = e.clientX - rect.left; let newRating = starElementFullValue; if (clickX <= rect.width / 2) { newRating -= 0.5; } setStarRating(newRating); } });
+                if (clearRatingLink) { clearRatingLink.addEventListener('click', function(e) { e.preventDefault(); setStarRating(0); }); }
                 const initialUserRating = userRatingHiddenInput.value ? parseFloat(userRatingHiddenInput.value) : 0;
                 setStarRating(initialUserRating);
             }
             // --- END OF STAR RATING Logic ---
 
-            // --- Existing TMDB Search Logic (from your paste in response #180 - this is for Add.cshtml) ---
-            let tmdbSearchDebounceTimer; // Renamed from debounceTimer to avoid conflict if any other exists
+            // --- TMDB Search Logic ---
+            let tmdbSearchDebounceTimer;
             if (tmdbQueryInput && tmdbResultsDisplayDiv) {
-                tmdbQueryInput.addEventListener('input', function () {
+                tmdbQueryInput.addEventListener('input', function () { /* ... (your existing input listener from #200) ... */
                     clearTimeout(tmdbSearchDebounceTimer);
                     const query = tmdbQueryInput.value;
-                    if (query.length < 4) {
-                        tmdbResultsDisplayDiv.innerHTML = '';
-                        tmdbResultsDisplayDiv.style.display = 'none';
-                        if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
-                        return;
-                    }
+                    if (query.length < 4) { tmdbResultsDisplayDiv.innerHTML = ''; tmdbResultsDisplayDiv.style.display = 'none'; if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none'; return; }
                     tmdbSearchDebounceTimer = setTimeout(async () => {
                         tmdbResultsDisplayDiv.innerHTML = '<div class="list-group-item disabled">Searching TMDB...</div>';
                         tmdbResultsDisplayDiv.style.display = 'block';
-                        // if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none'; // Already done for new search
-                        // The "keep preview on new search" fix for ADD page was to remove this line:
-                        // if (selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'none';
-                        // For the Add page, we DO want to hide the previous selection when a new search starts.
-                         if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
-
-
+                        if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
                         try {
                             const response = await fetch(`/Movies/SearchTmdbApi?query=${encodeURIComponent(query)}`);
                             if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                             const data = await response.json();
                             tmdbResultsDisplayDiv.innerHTML = '';
-
                             if (data.results && data.results.length > 0) {
                                 data.results.slice(0, 7).forEach(movie => {
                                     const releaseYear = movie.releaseDate ? movie.releaseDate.substring(0, 4) : 'N/A';
@@ -308,26 +259,36 @@
                                     movieItem.href = '#';
                                     movieItem.classList.add('list-group-item', 'list-group-item-action');
                                     movieItem.innerHTML = `<strong>${movie.title}</strong> (${releaseYear})<br><small class="text-muted">${(movie.overview || '').substring(0,100)}...</small>`;
-                                    movieItem.setAttribute('data-tmdb-id', movie.id);
+                                    movieItem.setAttribute('data-tmdb-id', movie.id); // movie.id is the TMDB ID from search result
 
                                     movieItem.addEventListener('click', async function(e) {
                                         e.preventDefault();
-                                        const tmdbId = this.getAttribute('data-tmdb-id');
+                                        const tmdbIdFromSearch = this.getAttribute('data-tmdb-id'); // Get ID from search result
                                         tmdbResultsDisplayDiv.innerHTML = `<div class="list-group-item disabled">Fetching details...</div>`;
-
                                         try {
-                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbId}`);
+                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbIdFromSearch}`);
                                             if (!detailsResponse.ok) { throw new Error(`HTTP error! status: ${detailsResponse.statusText}`); }
                                             const movieDetailsFromApi = await detailsResponse.json();
 
                                             if (movieDetailsFromApi) {
+                                                // Populate hidden fields INCLUDING TMDB ID
                                                 if (hiddenTitleField) hiddenTitleField.value = movieDetailsFromApi.title || '';
                                                 if (hiddenDirectorField) hiddenDirectorField.value = movieDetailsFromApi.director || "N/A";
                                                 if (hiddenYearField) hiddenYearField.value = movieDetailsFromApi.releaseYear || '';
                                                 if (hiddenPosterPathField) hiddenPosterPathField.value = movieDetailsFromApi.posterPath || '';
                                                 if (hiddenOverviewField) hiddenOverviewField.value = movieDetailsFromApi.overview || '';
 
-                                                updatePreviewCard(movieDetailsFromApi);
+                                                // VVVV ADD THIS LINE FOR TMDB ID VVVV
+                                                if (hiddenTmdbIdField && movieDetailsFromApi.tmdbId) { // Assuming your controller returns 'tmdbId'
+                                                    hiddenTmdbIdField.value = movieDetailsFromApi.tmdbId;
+                                                    console.log('Add.cshtml JS - Set hidden movieFormTmdbIdHidden to:', hiddenTmdbIdField.value);
+                                                } else if (hiddenTmdbIdField) {
+                                                    hiddenTmdbIdField.value = ''; // Clear it if not present in response
+                                                    if(!movieDetailsFromApi.tmdbId) console.warn("movieDetailsFromApi did not contain 'tmdbId' property or it was null/undefined.");
+                                                }
+                                                // VVVV END OF ADDED LINE VVVV
+
+                                                updatePreviewCard(movieDetailsFromApi); // Update the visual preview card
 
                                                 if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'block';
                                                 tmdbResultsDisplayDiv.innerHTML = '';
@@ -342,20 +303,13 @@
                                     });
                                     tmdbResultsDisplayDiv.appendChild(movieItem);
                                 });
-                            } else { /* ... */ }
-                        } catch (error) { /* ... */ }
+                            } else { /* ... (no results) ... */ }
+                        } catch (error) { /* ... (fetch error) ... */ }
                     }, 500);
                 });
-                // ... (click outside to hide suggestions for tmdbResultsDisplayDiv) ...
-                 document.addEventListener('click', function(event) {
-                    if (tmdbQueryInput && tmdbResultsDisplayDiv &&
-                        !tmdbQueryInput.contains(event.target) &&
-                        !tmdbResultsDisplayDiv.contains(event.target) &&
-                        !event.target.closest('#tmdbSearchResultsDisplay')) {
-                        tmdbResultsDisplayDiv.style.display = 'none';
-                    }
-                });
-            }
+                // ... (click outside to hide suggestions) ...
+                document.addEventListener('click', function(event) { /* ... */ });
+            } else { /* ... error if elements not found ... */ }
         });
     </script>
 }

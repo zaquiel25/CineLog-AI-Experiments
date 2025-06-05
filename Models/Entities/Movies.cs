@@ -26,6 +26,8 @@ namespace Ezequiel_Movies1.Models.Entities
 
         public decimal? UserRating { get; set; }
 
+        public int? TmdbId { get; set; }
+
 
     }
 }
