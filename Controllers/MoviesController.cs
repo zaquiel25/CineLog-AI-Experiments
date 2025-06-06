@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies.Data;
 using Ezequiel_Movies.Models;
 using Ezequiel_Movies.Helpers;
+using Ezequiel_Movies.Models.TmdbApi;
 
 namespace Ezequiel_Movies.Controllers
 {
@@ -20,6 +21,51 @@ namespace Ezequiel_Movies.Controllers
         {
             _dbContext = dbContext;
             _tmdbService = tmdbService;
+        }
+
+
+        // In MoviesController.cs
+
+        // ... (your existing List, Add, Edit, etc. actions are here) ...
+
+        [HttpGet]
+        public IActionResult Suggest()
+        {
+            // This action is for displaying the initial suggestion page.
+            // It doesn't need to fetch any data yet, it just shows the view with the criteria buttons.
+            // When it returns View(), it will look for Views/Movies/Suggest.cshtml.
+            return View();
+        }
+
+        // Your ShowSuggestions action (that we added previously) is also needed here.
+
+        // In MoviesController.cs
+
+        [HttpGet]
+        public async Task<IActionResult> ShowSuggestions(string suggestionType)
+        {
+            Console.WriteLine($"ShowSuggestions action invoked with type: {suggestionType}");
+            List<TmdbMovieBrief> suggestedMovies = new List<TmdbMovieBrief>();
+            string suggestionTitle = "Suggestions";
+
+            switch (suggestionType?.ToLower())
+            {
+                case "trending":
+                    suggestionTitle = "Trending Movies Today";
+                    var allTrendingMovies = await _tmdbService.GetTrendingMoviesAsync();
+                    suggestedMovies = allTrendingMovies.Take(3).ToList();
+                    break;
+
+                // We will add more cases here later for "surprise_me", "by_genre", etc.
+
+                default:
+                    // If the suggestionType is unknown or null, just go back to the main Suggest page
+                    return RedirectToAction("Suggest");
+            }
+
+            // Pass the title and the list of movies to the view
+            ViewData["SuggestionTitle"] = suggestionTitle;
+            return View("Suggest", suggestedMovies); // Re-use the Suggest.cshtml view to display results
         }
 
         // In MoviesController.cs
@@ -88,14 +134,32 @@ namespace Ezequiel_Movies.Controllers
         }
 
         // GET: Movies/Add
+        // In MoviesController.cs
+
         [HttpGet]
-        public IActionResult Add()
+        public async Task<IActionResult> Add(int? tmdbId) // <<< MODIFIED: Now accepts a tmdbId
         {
-            var viewModel = new AddMoviesViewModel
+            var viewModel = new AddMoviesViewModel();
+
+            if (tmdbId.HasValue)
             {
-                DateWatched = DateTime.Today
-            };
-            return View(viewModel);
+                // A TMDB ID was provided, so pre-fill the ViewModel
+                Console.WriteLine($"Add GET - Pre-filling form for TMDB ID: {tmdbId.Value}");
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId.Value);
+                if (movieDetails != null)
+                {
+                    viewModel.Title = movieDetails.Title;
+                    viewModel.Director = movieDetails.GetDirector() ?? "N/A";
+                    viewModel.ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
+                                                ? int.Parse(movieDetails.ReleaseDate.Substring(0, 4))
+                                                : null;
+                    viewModel.PosterPath = movieDetails.PosterPath;
+                    viewModel.Overview = movieDetails.Overview;
+                    viewModel.TmdbId = movieDetails.Id;
+                }
+            }
+
+            return View(viewModel); // Return the view with the (possibly pre-filled) ViewModel
         }
 
         // POST: Movies/Add

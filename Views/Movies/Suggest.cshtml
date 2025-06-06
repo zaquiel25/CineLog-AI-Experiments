@@ -1,0 +1,43 @@
+﻿@using Ezequiel_Movies.Models.TmdbApi
+@model List<TmdbMovieBrief>
+
+@{
+    ViewData["Title"] = "Movie Suggestions";
+}
+
+<div class="text-center">
+    <h1 class="display-4 mt-5 mb-3">Movie Suggestions</h1>
+    <p class="lead mb-5">How would you like to find your next movie?</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-9 mb-5">
+        @* <<< ADDED mb-5 HERE TO PREVENT FOOTER OVERLAP *@
+        <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+            <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="btn btn-lg btn-info">
+                <i class="bi bi-graph-up-arrow me-2"></i>Trending Movies Today
+            </a>
+            <a href="#" class="btn btn-lg btn-light disabled" title="Coming Soon!">
+                <i class="bi bi-shuffle me-2"></i>Surprise Me!
+            </a>
+            <a href="#" class="btn btn-lg btn-light disabled" title="Coming Soon!">
+                <i class="bi bi-tags me-2"></i>Popular by Genre
+            </a>
+        </div>
+
+        @* This section will only display if the controller has passed a list of movies to the view *@
+        @if (Model != null && Model.Any())
+        {
+            <hr class="my-5">
+            <h3 class="text-center mb-4">@ViewData["SuggestionTitle"]</h3>
+
+            @* ADDED justify-content-center TO THIS DIV TO CENTER THE CARDS *@
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+                @foreach (var movie in Model)
+                {
+                    <partial name="_MovieSuggestionCard" model="movie" />
+                }
+            </div>
+        }
+    </div>
+</div>
