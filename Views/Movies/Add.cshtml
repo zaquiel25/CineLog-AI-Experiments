@@ -261,40 +261,60 @@
                                     movieItem.innerHTML = `<strong>${movie.title}</strong> (${releaseYear})<br><small class="text-muted">${(movie.overview || '').substring(0,100)}...</small>`;
                                     movieItem.setAttribute('data-tmdb-id', movie.id); // movie.id is the TMDB ID from search result
 
-                                    movieItem.addEventListener('click', async function(e) {
+                                    // This function is inside your tmdbQueryInput.addEventListener('input', ...) -> forEach(movie => { ... }) block
+
+                                    movieItem.addEventListener('click', async function (e) {
                                         e.preventDefault();
-                                        const tmdbIdFromSearch = this.getAttribute('data-tmdb-id'); // Get ID from search result
+                                        const tmdbIdToFetch = this.getAttribute('data-tmdb-id');
                                         tmdbResultsDisplayDiv.innerHTML = `<div class="list-group-item disabled">Fetching details...</div>`;
+
                                         try {
-                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbIdFromSearch}`);
+                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbIdToFetch}`);
                                             if (!detailsResponse.ok) { throw new Error(`HTTP error! status: ${detailsResponse.statusText}`); }
                                             const movieDetailsFromApi = await detailsResponse.json();
 
                                             if (movieDetailsFromApi) {
-                                                // Populate hidden fields INCLUDING TMDB ID
+                                                // Populate hidden fields with new movie's data
                                                 if (hiddenTitleField) hiddenTitleField.value = movieDetailsFromApi.title || '';
                                                 if (hiddenDirectorField) hiddenDirectorField.value = movieDetailsFromApi.director || "N/A";
                                                 if (hiddenYearField) hiddenYearField.value = movieDetailsFromApi.releaseYear || '';
                                                 if (hiddenPosterPathField) hiddenPosterPathField.value = movieDetailsFromApi.posterPath || '';
                                                 if (hiddenOverviewField) hiddenOverviewField.value = movieDetailsFromApi.overview || '';
-
-                                                // VVVV ADD THIS LINE FOR TMDB ID VVVV
-                                                if (hiddenTmdbIdField && movieDetailsFromApi.tmdbId) { // Assuming your controller returns 'tmdbId'
-                                                    hiddenTmdbIdField.value = movieDetailsFromApi.tmdbId;
+                                                if (hiddenTmdbIdField) {
+                                                    hiddenTmdbIdField.value = movieDetailsFromApi.tmdbId || (movieDetailsFromApi.id || '');
                                                     console.log('Add.cshtml JS - Set hidden movieFormTmdbIdHidden to:', hiddenTmdbIdField.value);
-                                                } else if (hiddenTmdbIdField) {
-                                                    hiddenTmdbIdField.value = ''; // Clear it if not present in response
-                                                    if(!movieDetailsFromApi.tmdbId) console.warn("movieDetailsFromApi did not contain 'tmdbId' property or it was null/undefined.");
                                                 }
-                                                // VVVV END OF ADDED LINE VVVV
 
-                                                updatePreviewCard(movieDetailsFromApi); // Update the visual preview card
+                                                // Update the visual preview card
+                                                updatePreviewCard(movieDetailsFromApi);
 
+                                                // VVVV NEW LOGIC TO RESET USER-SPECIFIC FIELDS VVVV
+                                                console.log("Resetting user-specific log fields for new movie selection.");
+
+                                                // 1. Reset Date Watched
+                                                const dateWatchedField = document.getElementById('movieFormDateWatched');
+                                                if (dateWatchedField) dateWatchedField.value = '';
+
+                                                // 2. Reset Rewatched Checkbox
+                                                const isRewatchCheckbox = document.getElementById('addIsRewatchCheck');
+                                                if (isRewatchCheckbox) isRewatchCheckbox.checked = false;
+
+                                                // 3. Reset Star Rating (uses the function we already have)
+                                                setStarRating(0);
+
+                                                // 4. Reset Watched Location Radio Buttons
+                                                const locationRadios = document.querySelectorAll('input[type="radio"][name="WatchedLocation"]');
+                                                if (locationRadios) locationRadios.forEach(radio => radio.checked = false);
+                                                // ^^^^ END OF NEW RESET LOGIC ^^^^
+
+                                                // Show the main details/inputs section
                                                 if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'block';
+
+                                                // Clear suggestions and focus
                                                 tmdbResultsDisplayDiv.innerHTML = '';
                                                 tmdbResultsDisplayDiv.style.display = 'none';
-                                                const dateWatchedField = document.getElementById('movieFormDateWatched');
-                                                if(dateWatchedField) dateWatchedField.focus();
+
+                                                if (dateWatchedField) dateWatchedField.focus(); // Focus on the first user field
                                             }
                                         } catch (error) {
                                             console.error('Error in suggestion click (Add Page):', error);
