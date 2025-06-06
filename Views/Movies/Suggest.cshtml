@@ -12,26 +12,73 @@
 
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-9 mb-5">
-        @* <<< ADDED mb-5 HERE TO PREVENT FOOTER OVERLAP *@
-        <div class="d-grid gap-3 d-md-flex justify-content-md-center">
-            <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="btn btn-lg btn-info">
-                <i class="bi bi-graph-up-arrow me-2"></i>Trending Movies Today
+        @* <<< FIX #2: Added mb-5 to prevent footer overlap *@
+        @* In Views/Movies/Suggest.cshtml *@
+
+        <div class="list-group">
+            @* --- VVVV REVISED BUTTONS WITH UNIFORM COLOR & LIGHT TEXT VVVV --- *@
+            <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="list-group-item list-group-item-action list-group-item-primary text-light p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-graph-up-arrow me-2"></i>Trending Movies
+                    </h5>
+                </div>
+                <p class="mb-1 small">See what's popular on TMDB right now.</p>
             </a>
-            <a href="#" class="btn btn-lg btn-light disabled" title="Coming Soon!">
-                <i class="bi bi-shuffle me-2"></i>Surprise Me!
+
+            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-shuffle me-2"></i>Surprise Me!
+                    </h5>
+                </div>
+                <p class="mb-1 small">Get a random suggestion based on your taste.</p>
             </a>
-            <a href="#" class="btn btn-lg btn-light disabled" title="Coming Soon!">
-                <i class="bi bi-tags me-2"></i>Popular by Genre
+
+            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-tags me-2"></i>By Genre
+                    </h5>
+                </div>
+                <p class="mb-1 small">Get suggestions based on genres you've enjoyed.</p>
             </a>
+
+            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-person-video3 me-2"></i>By Director
+                    </h5>
+                </div>
+                <p class="mb-1 small">Discover more films from directors you like.</p>
+            </a>
+
+            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-people me-2"></i>By Cast
+                    </h5>
+                </div>
+                <p class="mb-1 small">Find movies featuring actors from your logged films.</p>
+            </a>
+
+            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <i class="bi bi-calendar3 me-2"></i>By Released Year
+                    </h5>
+                </div>
+                <p class="mb-1 small">Explore more movies from a specific era.</p>
+            </a>
+            @* --- ^^^^ END OF REVISED BUTTONS SECTION ^^^^ --- *@
         </div>
 
-        @* This section will only display if the controller has passed a list of movies to the view *@
+        @* This section displays the suggestion results *@
         @if (Model != null && Model.Any())
         {
             <hr class="my-5">
             <h3 class="text-center mb-4">@ViewData["SuggestionTitle"]</h3>
 
-            @* ADDED justify-content-center TO THIS DIV TO CENTER THE CARDS *@
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
                 @foreach (var movie in Model)
                 {
