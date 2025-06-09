@@ -136,18 +136,24 @@ namespace Ezequiel_Movies.Controllers
         // GET: Movies/Add
         // In MoviesController.cs
 
-        [HttpGet]
-        public async Task<IActionResult> Add(int? tmdbId) // <<< MODIFIED: Now accepts a tmdbId
-        {
-            var viewModel = new AddMoviesViewModel();
+        // In MoviesController.cs
 
-            if (tmdbId.HasValue)
+        [HttpGet]
+        public async Task<IActionResult> Add(int? tmdbId)
+        {
+            var viewModel = new AddMoviesViewModel
             {
-                // A TMDB ID was provided, so pre-fill the ViewModel
+                DateWatched = DateTime.Today // Set the default date here
+            };
+
+            if (tmdbId.HasValue && tmdbId.Value > 0)
+            {
+                // A TMDB ID was provided (e.g., from the Suggestion page), so pre-fill the ViewModel
                 Console.WriteLine($"Add GET - Pre-filling form for TMDB ID: {tmdbId.Value}");
                 var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId.Value);
                 if (movieDetails != null)
                 {
+                    // Overwrite TMDB fields, but DateWatched remains as DateTime.Today
                     viewModel.Title = movieDetails.Title;
                     viewModel.Director = movieDetails.GetDirector() ?? "N/A";
                     viewModel.ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
@@ -159,7 +165,9 @@ namespace Ezequiel_Movies.Controllers
                 }
             }
 
-            return View(viewModel); // Return the view with the (possibly pre-filled) ViewModel
+            // This will return the view with either a blank viewModel (with DateWatched set)
+            // or a pre-filled viewModel (which also has DateWatched set).
+            return View(viewModel);
         }
 
         // POST: Movies/Add

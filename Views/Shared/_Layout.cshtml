@@ -5,65 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CineLog</title>
     <link rel="stylesheet" href="~/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"> @* Ensure this is before site.css if site.css might override icon styles *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Ezequiel_Movies.styles.css" asp-append-version="true" />
 </head>
-<body class="d-flex flex-column min-vh-100">
-   
-    <header>
-       
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-film me-2"></i>CineLog
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                      
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Add">
-                                <i class="bi bi-plus-square-fill me-1"></i>Add New
-                                
-                            </a>
-                        </li>
-                        @* ^^^^ END OF NEW "ADD NEW" LINK ^^^^ *@
+<body>
+    @* We create a new wrapper div to control the flex layout, avoiding theme conflicts on the body tag *@
+    <div class="d-flex flex-column min-vh-100">
 
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="List">
-                                <i class="bi bi-collection-play me-1"></i>My Movies
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Suggest">
-                                <i class="bi bi-lightbulb me-1"></i>Movie Suggestions
-                            </a>
-                        </li>
-                    </ul>
+        <header>
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
+                <div class="container-fluid">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-film me-2"></i>CineLog
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Add">
+                                    <i class="bi bi-plus-square-fill me-1"></i>Add New
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="List">
+                                    <i class="bi bi-collection-play me-1"></i>My Movies
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Suggest">
+                                    <i class="bi bi-lightbulb me-1"></i>Movie Suggestions
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
+            </nav>
+        </header>
+
+        <main role="main" class="pb-5 flex-grow-1">
+            <div class="container">
+                @RenderBody()
             </div>
-        </nav>
-    </header>
+        </main>
 
-    @* Main content area that will grow to fill available space *@
-    <main role="main" class="pb-3 flex-grow-1">
-        @* <<< MODIFIED HERE: flex-grow-1 is on main *@
-        <div class="container">
-            @* Container is now inside main, for content padding/width *@
-            @RenderBody()
-        </div>
-    </main>
+        <footer class="border-top footer text-light bg-dark mt-auto py-3">
+            <div class="container text-center">
+                &copy; @DateTime.Now.Year - CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-light">Privacy</a>
+            </div>
+        </footer>
 
-    <footer class="border-top footer text-light bg-dark mt-auto py-3">
-        @* mt-auto pushes this to the bottom *@
-        <div class="container text-center">
-            &copy; @DateTime.Now.Year - CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-light">Privacy</a>
-        </div>
-    </footer>
+    </div> @* This closes the new wrapper div *@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -6,72 +6,79 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4 mt-5 mb-3">Movie Suggestions</h1>
-    <p class="lead mb-5">How would you like to find your next movie?</p>
+    <h1 class="display-4 mt-5 mb-3">Find your next movie</h1>
+    <p class="lead mb-5"></p>
 </div>
 
+@* The main container for the entire page content below the heading *@
 <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-9 mb-5">
-        @* <<< FIX #2: Added mb-5 to prevent footer overlap *@
-        @* In Views/Movies/Suggest.cshtml *@
+    <div class="col-md-10 col-lg-9">
 
-        <div class="list-group">
-            @* --- VVVV REVISED BUTTONS WITH UNIFORM COLOR & LIGHT TEXT VVVV --- *@
-            <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="list-group-item list-group-item-action list-group-item-primary text-light p-3">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-graph-up-arrow me-2"></i>Trending Movies
-                    </h5>
-                </div>
-                <p class="mb-1 small">See what's popular on TMDB right now.</p>
-            </a>
+        @* This is the grid for the suggestion buttons *@
+        <div class="row justify-content-center g-4">
 
-            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-shuffle me-2"></i>Surprise Me!
-                    </h5>
-                </div>
-                <p class="mb-1 small">Get a random suggestion based on your taste.</p>
-            </a>
+            <div class="col-lg-4 col-md-6">
+                <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">Trending Movies</h5>
+                        <p class="suggestion-description small mt-2">See what's popular on TMDB right now.</p>
+                    </div>
+                </a>
+            </div>
 
-            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-tags me-2"></i>By Genre
-                    </h5>
-                </div>
-                <p class="mb-1 small">Get suggestions based on genres you've enjoyed.</p>
-            </a>
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-shuffle display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">Surprise Me!</h5>
+                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
+                    </div>
+                </a>
+            </div>
 
-            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-person-video3 me-2"></i>By Director
-                    </h5>
-                </div>
-                <p class="mb-1 small">Discover more films from directors you like.</p>
-            </a>
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-tags display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">By Genre</h5>
+                        <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
+                    </div>
+                </a>
+            </div>
 
-            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-people me-2"></i>By Cast
-                    </h5>
-                </div>
-                <p class="mb-1 small">Find movies featuring actors from your logged films.</p>
-            </a>
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-person-video3 display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">By Director</h5>
+                        <p class="suggestion-description small mt-2">Discover more films from directors you like.</p>
+                    </div>
+                </a>
+            </div>
 
-            <a href="#" class="list-group-item list-group-item-action list-group-item-primary text-light p-3" title="Coming Soon!">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
-                        <i class="bi bi-calendar3 me-2"></i>By Released Year
-                    </h5>
-                </div>
-                <p class="mb-1 small">Explore more movies from a specific era.</p>
-            </a>
-            @* --- ^^^^ END OF REVISED BUTTONS SECTION ^^^^ --- *@
-        </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-people display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">By Cast</h5>
+                        <p class="suggestion-description small mt-2">Find movies featuring actors from your logged films.</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-calendar3 display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">By Released Year</h5>
+                        <p class="suggestion-description small mt-2">Explore more movies from a specific era.</p>
+                    </div>
+                </a>
+            </div>
+
+        </div> @* End of the buttons grid row *@
+
 
         @* This section displays the suggestion results *@
         @if (Model != null && Model.Any())
@@ -79,7 +86,8 @@
             <hr class="my-5">
             <h3 class="text-center mb-4">@ViewData["SuggestionTitle"]</h3>
 
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+            @* <<< MODIFIED: Added mb-5 to this row for footer spacing *@
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
                 @foreach (var movie in Model)
                 {
                     <partial name="_MovieSuggestionCard" model="movie" />
