@@ -8,6 +8,7 @@ using Ezequiel_Movies.Data;
 using Ezequiel_Movies.Models;
 using Ezequiel_Movies.Helpers;
 using Ezequiel_Movies.Models.TmdbApi;
+using Microsoft.Extensions.Logging;
 
 namespace Ezequiel_Movies.Controllers
 {
@@ -15,18 +16,59 @@ namespace Ezequiel_Movies.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly TmdbService _tmdbService;
+        private readonly ILogger<MoviesController> _logger;
 
         // Updated constructor to inject both DbContext and TmdbService
-        public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService)
+        public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger)
         {
             _dbContext = dbContext;
             _tmdbService = tmdbService;
+            _logger = logger;
+        }
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> SelectDirector()
+        {
+            Console.WriteLine("SelectDirector action invoked.");
+
+            var loggedMovies = await _dbContext.Movies
+                .Where(m => !string.IsNullOrEmpty(m.Director) && m.Director != "N/A")
+                .ToListAsync();
+
+            if (!loggedMovies.Any())
+            {
+                // Handle case where there are no logged movies with directors
+                ViewData["SuggestionTitle"] = "No directors found in your log yet!";
+                // We can return an empty list or handle this in the view
+                return View("Suggest", new List<TmdbMovieBrief>());
+            }
+
+            // Group movies by director and calculate a score for each
+            var directorScores = loggedMovies
+                .GroupBy(m => m.Director)
+                .Select(g => new {
+                    DirectorName = g.Key,
+                    // Simple scoring: 2 points for each high rating, 1 point for each watch
+                    Score = (g.Count(m => m.UserRating >= 4.5m) * 2) + g.Count()
+                })
+                .OrderByDescending(d => d.Score)
+                .Take(6) // Take the top 6 directors
+                .ToList();
+
+            // Pass this list of top directors to the Suggest view using ViewData
+            ViewData["DirectorSuggestions"] = directorScores.Select(d => d.DirectorName).ToList();
+            ViewData["SuggestionTitle"] = "Choose Your Favorite Director";
+
+            return View("Suggest"); // Re-render the Suggest page to show the director choices
         }
 
 
         // In MoviesController.cs
 
-        // ... (your existing List, Add, Edit, etc. actions are here) ...
+
 
         [HttpGet]
         public IActionResult Suggest()
@@ -37,16 +79,11 @@ namespace Ezequiel_Movies.Controllers
             return View();
         }
 
-        // Your ShowSuggestions action (that we added previously) is also needed here.
-
-        // In MoviesController.cs
-
-        // In MoviesController.cs
 
         [HttpGet]
-        public async Task<IActionResult> ShowSuggestions(string suggestionType, int page = 1)
+        public async Task<IActionResult> ShowSuggestions(string suggestionType, string? query = null, int page = 1)
         {
-            Console.WriteLine($"ShowSuggestions action invoked with type: {suggestionType}, page: {page}");
+            Console.WriteLine($"ShowSuggestions action invoked with type: {suggestionType}, query: {query}, page: {page}");
             List<TmdbMovieBrief> suggestedMovies = new List<TmdbMovieBrief>();
             string suggestionTitle = "Suggestions";
 
@@ -54,28 +91,54 @@ namespace Ezequiel_Movies.Controllers
             {
                 case "trending":
                     suggestionTitle = "Trending Movies Today";
-                    // Pass the requested page number to the service
                     var allTrendingMovies = await _tmdbService.GetTrendingMoviesAsync(page);
                     suggestedMovies = allTrendingMovies.Take(3).ToList();
                     break;
 
-                // We will add more cases here later for "surprise_me", "by_genre", etc.
+                case "director_movies":
+                    if (string.IsNullOrEmpty(query))
+                    {
+                        return RedirectToAction("Suggest");
+                    }
+                    suggestionTitle = $"More Movies by {query}";
+                    var directorId = await _tmdbService.GetPersonIdAsync(query);
 
+                    if (directorId.HasValue)
+                    {
+                        var allDirectorMovies = await _tmdbService.DiscoverMoviesByDirectorAsync(directorId.Value, page);
+
+                        // FIX for ToHashSetAsync: First get a List, then create a HashSet from it.
+                        var loggedTmdbIdsList = await _dbContext.Movies
+                                                            .Where(m => m.TmdbId.HasValue)
+                                                            .Select(m => m.TmdbId.Value)
+                                                            .ToListAsync();
+                        var loggedTmdbIds = new HashSet<int>(loggedTmdbIdsList);
+
+                        var newSuggestions = allDirectorMovies
+                                                .Where(tmdbMovie => !loggedTmdbIds.Contains(tmdbMovie.Id))
+                                                .ToList();
+                        suggestedMovies = newSuggestions.Take(3).ToList();
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Could not find director ID for '{DirectorName}'", query);
+                    }
+                    break;
                 default:
-                    // If the suggestionType is unknown or null, just go back to the main Suggest page
                     return RedirectToAction("Suggest");
             }
 
-            // Pass all necessary data to the view
             ViewData["SuggestionTitle"] = suggestionTitle;
-            ViewData["CurrentSuggestionType"] = suggestionType; // For the reshuffle button link
-            ViewData["CurrentPage"] = page;                     // For the reshuffle button link
-
-            return View("Suggest", suggestedMovies); // Re-use the Suggest.cshtml view to display results
+            ViewData["CurrentSuggestionType"] = suggestionType;
+            ViewData["CurrentPage"] = page;
+            ViewData["CurrentQuery"] = query;
+            return View("Suggest", suggestedMovies);
         }
-        // In MoviesController.cs
 
-        [HttpGet] // This action will respond to GET requests
+
+
+
+        [HttpGet] 
         public async Task<IActionResult> SearchTmdbApi(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -106,7 +169,7 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-        [HttpGet] // This action will respond to GET requests
+        [HttpGet] 
         public async Task<IActionResult> GetTmdbMovieDetailsJson(int id) // 'id' here is the TMDB movie ID
         {
             if (id <= 0)
@@ -138,10 +201,6 @@ namespace Ezequiel_Movies.Controllers
             return NotFound(new { error = "Movie details not found in TMDB." }); // Returns a 404 if TMDB doesn't find the movie
         }
 
-        // GET: Movies/Add
-        // In MoviesController.cs
-
-        // In MoviesController.cs
 
         [HttpGet]
         public async Task<IActionResult> Add(int? tmdbId)
@@ -175,8 +234,7 @@ namespace Ezequiel_Movies.Controllers
             return View(viewModel);
         }
 
-        // POST: Movies/Add
-        // In MoviesController.cs
+ 
 
         [HttpPost]
         public async Task<IActionResult> Add(AddMoviesViewModel viewModel)
@@ -311,8 +369,10 @@ namespace Ezequiel_Movies.Controllers
 
             return View(paginatedMovies);
         }
-        // GET: Movies/Edit/5
-        // In MoviesController.cs
+
+
+
+
 
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
@@ -366,10 +426,8 @@ namespace Ezequiel_Movies.Controllers
             return View(viewModel);
         }
 
-        // POST: Movies/Edit/5
-        // In MoviesController.cs
 
-        // In MoviesController.cs
+
 
         [HttpPost]
         public async Task<IActionResult> Edit(AddMoviesViewModel viewModel)
@@ -483,7 +541,8 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction("List");
         }
 
-        // GET: Movies/TestTmdbSearch?query=YourQuery
+
+
         [HttpGet]
         public async Task<IActionResult> TestTmdbSearch(string query)
         {

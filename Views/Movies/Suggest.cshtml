@@ -5,7 +5,7 @@
     ViewData["Title"] = "Movie Suggestions";
 }
 
-<div class="text-center">
+<div class="text-center pt-4">
     <h1 class="display-4 mt-5 mb-3">Find your next movie</h1>
     <p class="lead mb-5"></p>
 </div>
@@ -13,7 +13,7 @@
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-9 mb-5">
 
-        @* This is the grid for the suggestion buttons - NO CHANGES NEEDED HERE *@
+        @* This is the grid for the main suggestion criteria buttons *@
         <div class="row justify-content-center g-4">
             <div class="col-lg-4 col-md-6">
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
@@ -24,6 +24,7 @@
                     </div>
                 </a>
             </div>
+
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -42,8 +43,9 @@
                     </div>
                 </a>
             </div>
+
             <div class="col-lg-4 col-md-6">
-                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                <a asp-action="SelectDirector" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-person-video3 display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Director</h5>
@@ -51,6 +53,7 @@
                     </div>
                 </a>
             </div>
+
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -72,25 +75,17 @@
         </div>
 
 
-        @* This section displays the suggestion results *@
+        @* This section displays the MOVIE SUGGESTION results *@
         @if (Model != null && Model.Any())
         {
-            @* We add an ID to this container so the script can find it and scroll to it *@
             <div id="suggestion-results-area">
                 <hr class="my-5">
-
-                @* VVVV REVISED TITLE AND RESHUFFLE BUTTON AREA VVVV *@
                 <div class="text-center mb-4">
-                    <h3 class="text-info">@ViewData["SuggestionTitle"]</h3>
-                    <a asp-action="ShowSuggestions"
-                       asp-route-suggestionType="@ViewData["CurrentSuggestionType"]"
-                       asp-route-page="@((int)ViewData["CurrentPage"] + 1)"
-                       class="btn btn-outline-secondary mt-2">
+                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
+                    <a asp-action="ShowSuggestions" asp-route-suggestionType="@ViewData["CurrentSuggestionType"]" asp-route-page="@(((int?)ViewData["CurrentPage"] ?? 1) + 1)" class="btn btn-sm btn-outline-secondary mt-2">
                         <i class="bi bi-arrow-repeat"></i> Get New Suggestions
                     </a>
                 </div>
-                @* ^^^^ END OF REVISED AREA ^^^^ *@
-
                 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
                     @foreach (var movie in Model)
                     {
@@ -99,19 +94,49 @@
                 </div>
             </div>
         }
+
+        @* VVVV NEW SECTION TO DISPLAY DIRECTOR CHOICES VVVV *@
+        @{
+            var directorList = ViewData["DirectorSuggestions"] as List<string>;
+        }
+
+        @if (directorList != null && directorList.Any())
+        {
+            <div id="suggestion-results-area">
+                @* Use same ID for auto-scroll *@
+                <hr class="my-5">
+                <div class="text-center mb-4">
+                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
+                    <p class="text-muted small">Based on your logged movies</p>
+                </div>
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
+                    @foreach (var directorName in directorList)
+                    {
+                        <div class="col">
+                            @* This button links to the ShowSuggestions action to get movies for the selected director *@
+                            <a asp-action="ShowSuggestions"
+                               asp-route-suggestionType="director_movies"
+                               asp-route-query="@directorName"
+                               class="btn btn-lg btn-outline-success w-100 p-3">
+                                @directorName
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        @* ^^^^ END OF NEW SECTION ^^^^ *@
+
     </div>
 </div>
 
-@* ADDED THIS SCRIPT SECTION TO HANDLE AUTO-SCROLLING *@
+@* SCRIPT SECTION to handle auto-scrolling to results *@
 @section Scripts {
     <script>document.addEventListener('DOMContentLoaded', function () {
             console.log("Suggest.cshtml script with scroll-to-results loaded.");
-
             const resultsContainer = document.getElementById('suggestion-results-area');
-
-            // If the results container exists on the page (meaning results are being shown)...
             if (resultsContainer) {
-                // ...smoothly scroll it into view.
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });</script>
