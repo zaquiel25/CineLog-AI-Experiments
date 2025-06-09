@@ -10,13 +10,11 @@
     <p class="lead mb-5"></p>
 </div>
 
-@* The main container for the entire page content below the heading *@
 <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-9">
+    <div class="col-md-10 col-lg-9 mb-5">
 
-        @* This is the grid for the suggestion buttons *@
+        @* This is the grid for the suggestion buttons - NO CHANGES NEEDED HERE *@
         <div class="row justify-content-center g-4">
-
             <div class="col-lg-4 col-md-6">
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -26,7 +24,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -36,7 +33,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -46,7 +42,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -56,7 +51,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -66,7 +60,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -76,23 +69,50 @@
                     </div>
                 </a>
             </div>
-
-        </div> @* End of the buttons grid row *@
+        </div>
 
 
         @* This section displays the suggestion results *@
         @if (Model != null && Model.Any())
         {
-            <hr class="my-5">
-            <h3 class="text-center mb-4">@ViewData["SuggestionTitle"]</h3>
+            @* We add an ID to this container so the script can find it and scroll to it *@
+            <div id="suggestion-results-area">
+                <hr class="my-5">
 
-            @* <<< MODIFIED: Added mb-5 to this row for footer spacing *@
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
-                @foreach (var movie in Model)
-                {
-                    <partial name="_MovieSuggestionCard" model="movie" />
-                }
+                @* VVVV REVISED TITLE AND RESHUFFLE BUTTON AREA VVVV *@
+                <div class="text-center mb-4">
+                    <h3 class="text-info">@ViewData["SuggestionTitle"]</h3>
+                    <a asp-action="ShowSuggestions"
+                       asp-route-suggestionType="@ViewData["CurrentSuggestionType"]"
+                       asp-route-page="@((int)ViewData["CurrentPage"] + 1)"
+                       class="btn btn-outline-secondary mt-2">
+                        <i class="bi bi-arrow-repeat"></i> Get New Suggestions
+                    </a>
+                </div>
+                @* ^^^^ END OF REVISED AREA ^^^^ *@
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
+                    @foreach (var movie in Model)
+                    {
+                        <partial name="_MovieSuggestionCard" model="movie" />
+                    }
+                </div>
             </div>
         }
     </div>
 </div>
+
+@* ADDED THIS SCRIPT SECTION TO HANDLE AUTO-SCROLLING *@
+@section Scripts {
+    <script>document.addEventListener('DOMContentLoaded', function () {
+            console.log("Suggest.cshtml script with scroll-to-results loaded.");
+
+            const resultsContainer = document.getElementById('suggestion-results-area');
+
+            // If the results container exists on the page (meaning results are being shown)...
+            if (resultsContainer) {
+                // ...smoothly scroll it into view.
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });</script>
+}

@@ -41,10 +41,12 @@ namespace Ezequiel_Movies.Controllers
 
         // In MoviesController.cs
 
+        // In MoviesController.cs
+
         [HttpGet]
-        public async Task<IActionResult> ShowSuggestions(string suggestionType)
+        public async Task<IActionResult> ShowSuggestions(string suggestionType, int page = 1)
         {
-            Console.WriteLine($"ShowSuggestions action invoked with type: {suggestionType}");
+            Console.WriteLine($"ShowSuggestions action invoked with type: {suggestionType}, page: {page}");
             List<TmdbMovieBrief> suggestedMovies = new List<TmdbMovieBrief>();
             string suggestionTitle = "Suggestions";
 
@@ -52,7 +54,8 @@ namespace Ezequiel_Movies.Controllers
             {
                 case "trending":
                     suggestionTitle = "Trending Movies Today";
-                    var allTrendingMovies = await _tmdbService.GetTrendingMoviesAsync();
+                    // Pass the requested page number to the service
+                    var allTrendingMovies = await _tmdbService.GetTrendingMoviesAsync(page);
                     suggestedMovies = allTrendingMovies.Take(3).ToList();
                     break;
 
@@ -63,11 +66,13 @@ namespace Ezequiel_Movies.Controllers
                     return RedirectToAction("Suggest");
             }
 
-            // Pass the title and the list of movies to the view
+            // Pass all necessary data to the view
             ViewData["SuggestionTitle"] = suggestionTitle;
+            ViewData["CurrentSuggestionType"] = suggestionType; // For the reshuffle button link
+            ViewData["CurrentPage"] = page;                     // For the reshuffle button link
+
             return View("Suggest", suggestedMovies); // Re-use the Suggest.cshtml view to display results
         }
-
         // In MoviesController.cs
 
         [HttpGet] // This action will respond to GET requests
