@@ -7,33 +7,33 @@
 
 <div class="text-center pt-4">
     <h1 class="display-4 mt-5 mb-3">Find your next movie</h1>
-    <p class="lead mb-5"></p>
+    <p class="lead mb-5">Click a button to get personalized suggestions based on your log.</p>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-9 mb-5">
 
-        @* This is the grid for the main suggestion criteria buttons *@
         <div class="row justify-content-center g-4">
             <div class="col-lg-4 col-md-6">
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Trending Movies</h5>
-                        <p class="suggestion-description small mt-2">See what's popular on TMDB right now.</p>
+                        <p class="suggestion-description small mt-2">See what's popular right now.</p>
                     </div>
                 </a>
             </div>
 
             <div class="col-lg-4 col-md-6">
-                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                <a asp-action="ShowSuggestions" asp-route-suggestionType="director_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-shuffle display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">Surprise Me!</h5>
-                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
+                        <i class="bi bi-person-video3 display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">By Director</h5>
+                        <p class="suggestion-description small mt-2">From your recently watched, most frequent, or top-rated directors.</p>
                     </div>
                 </a>
             </div>
+
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -43,17 +43,6 @@
                     </div>
                 </a>
             </div>
-
-            <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="by_top_director" class="suggestion-card card h-100 text-decoration-none">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-person-video3 display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Director</h5>
-                        <p class="suggestion-description small mt-2">Discover more films from directors you like.</p>
-                    </div>
-                </a>
-            </div>
-
             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -72,69 +61,52 @@
                     </div>
                 </a>
             </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                        <i class="bi bi-shuffle display-4 mb-2"></i>
+                        <h5 class="card-title mb-0">Surprise Me!</h5>
+                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
+                    </div>
+                </a>
+            </div>
         </div>
 
-
-        @* This section displays the MOVIE SUGGESTION results *@
-        @if (Model != null && Model.Any())
+        @* This section displays the suggestion results *@
+        @if (ViewData["SuggestionTitle"] != null)
         {
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
                     <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
-                    <a asp-action="ShowSuggestions" asp-route-suggestionType="@ViewData["CurrentSuggestionType"]" asp-route-page="@(((int?)ViewData["CurrentPage"] ?? 1) + 1)" class="btn btn-sm btn-outline-secondary mt-2">
-                        <i class="bi bi-arrow-repeat"></i> Get New Suggestions
-                    </a>
-                </div>
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
-                    @foreach (var movie in Model)
+
+                    @if (Model != null && Model.Any())
                     {
-                        <partial name="_MovieSuggestionCard" model="movie" />
+                        <a asp-action="ShowSuggestions"
+                           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+                           asp-route-page="@ViewData["NextPage"]"
+                           class="btn btn-sm btn-outline-secondary mt-2">
+                            <i class="bi bi-arrow-repeat"></i> Reshuffle
+                        </a>
                     }
                 </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+                        @foreach (var movie in Model)
+                        {
+                            <partial name="_MovieSuggestionCard" model="movie" />
+                        }
+                    </div>
+                }
             </div>
         }
-
-        @* VVVV NEW SECTION TO DISPLAY DIRECTOR CHOICES VVVV *@
-        @{
-            var directorList = ViewData["DirectorSuggestions"] as List<string>;
-        }
-
-        @if (directorList != null && directorList.Any())
-        {
-            <div id="suggestion-results-area">
-                @* Use same ID for auto-scroll *@
-                <hr class="my-5">
-                <div class="text-center mb-4">
-                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
-                    <p class="text-muted small">Based on your logged movies</p>
-                </div>
-
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center mb-5">
-                    @foreach (var directorName in directorList)
-                    {
-                        <div class="col">
-                            @* This button links to the ShowSuggestions action to get movies for the selected director *@
-                            <a asp-action="ShowSuggestions"
-                               asp-route-suggestionType="director_movies"
-                               asp-route-query="@directorName"
-                               class="btn btn-lg btn-outline-success w-100 p-3">
-                                @directorName
-                            </a>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-        @* ^^^^ END OF NEW SECTION ^^^^ *@
-
     </div>
 </div>
 
-@* SCRIPT SECTION to handle auto-scrolling to results *@
 @section Scripts {
     <script>document.addEventListener('DOMContentLoaded', function () {
-            console.log("Suggest.cshtml script with scroll-to-results loaded.");
             const resultsContainer = document.getElementById('suggestion-results-area');
             if (resultsContainer) {
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
