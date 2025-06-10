@@ -26,11 +26,13 @@
     <None Remove="Models\Entities\" />
     <None Remove="Views\Movies\" />
     <None Remove="Helpers\" />
+    <None Remove="Extensions\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Models\Entities\" />
     <Folder Include="Views\Movies\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
 </Project>
