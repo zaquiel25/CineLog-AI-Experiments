@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic; // For List<T>
-using System.Net.Http;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Ezequiel_Movies.Models.TmdbApi; // For your TMDB DTOs
+using Ezequiel_Movies.Models.TmdbApi;
 using Microsoft.Extensions.Logging;
 
 namespace Ezequiel_Movies
@@ -21,152 +21,95 @@ namespace Ezequiel_Movies
 
         public async Task<TmdbSearchResponse?> SearchMoviesAsync(string query)
         {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return null;
-            }
+            if (string.IsNullOrWhiteSpace(query)) return null;
 
             var requestUri = $"search/movie?query={Uri.EscapeDataString(query)}";
             _logger.LogInformation("Requesting TMDB API: {RequestUri}", requestUri);
 
             try
             {
-                var response = await _httpClient.GetAsync(requestUri);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var searchResult = await response.Content.ReadFromJsonAsync<TmdbSearchResponse>();
-                    _logger.LogInformation("Successfully fetched {Count} movies for query '{Query}'.", searchResult?.Results?.Count ?? 0, query);
-                    return searchResult;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("TMDB API request failed with status code {StatusCode}. Query: {Query}. Response: {ErrorContent}",
-                                     response.StatusCode, query, errorContent);
-                    return null;
-                }
+                var searchResult = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
+                _logger.LogInformation("Successfully fetched {Count} movies for query '{Query}'.", searchResult?.Results?.Count ?? 0, query);
+                return searchResult;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception occurred while calling TMDB API for query '{Query}'.", query);
+                _logger.LogError(ex, "Exception occurred while searching TMDB for query '{Query}'.", query);
                 return null;
             }
         }
 
         public async Task<TmdbMovieDetails?> GetMovieDetailsAsync(int tmdbMovieId)
         {
-            if (tmdbMovieId <= 0)
-            {
-                _logger.LogWarning("GetMovieDetailsAsync called with invalid tmdbMovieId: {TmdbMovieId}", tmdbMovieId);
-                return null;
-            }
+            if (tmdbMovieId <= 0) return null;
 
             var requestUri = $"movie/{tmdbMovieId}?append_to_response=credits";
             _logger.LogInformation("Requesting TMDB API for movie details: {RequestUri}", requestUri);
 
             try
             {
-                var response = await _httpClient.GetAsync(requestUri);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var movieDetails = await response.Content.ReadFromJsonAsync<TmdbMovieDetails>();
-                    _logger.LogInformation("Successfully fetched details for movie ID {MovieId}.", tmdbMovieId);
-                    return movieDetails;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("TMDB API request for movie details failed with status code {StatusCode}. Movie ID: {MovieId}. Response: {ErrorContent}",
-                                     response.StatusCode, tmdbMovieId, errorContent);
-                    return null;
-                }
+                var movieDetails = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>(requestUri);
+                _logger.LogInformation("Successfully fetched details for movie ID {MovieId}.", tmdbMovieId);
+                return movieDetails;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception occurred while calling TMDB API for movie details with ID {MovieId}.", tmdbMovieId);
+                _logger.LogError(ex, "Exception occurred while getting TMDB details for ID {MovieId}.", tmdbMovieId);
                 return null;
             }
         }
 
-        // VVVV HERE IS THE NEW METHOD, NOW INSIDE THE CLASS VVVV
-        public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
-        {
-            _logger.LogInformation("Requesting TMDB API for trending movies (day).");
-            var response = await _httpClient.GetAsync($"trending/movie/day?language=en-US&page={page}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var searchResponse = await response.Content.ReadFromJsonAsync<TmdbSearchResponse>();
-                if (searchResponse?.Results != null)
-                {
-                    _logger.LogInformation($"Successfully fetched {searchResponse.Results.Count} trending movies.");
-                    return searchResponse.Results;
-                }
-            }
-            else
-            {
-                _logger.LogError($"Failed to fetch trending movies. Status code: {response.StatusCode}");
-            }
-            return new List<TmdbMovieBrief>(); // Return empty list on failure
-        }
-        // ^^^^ END OF NEW METHOD ^^^^
-
-
-        // In TmdbService.cs, inside the public class TmdbService { ... }
-
-        // ... (your other methods are here) ...
-
-        // VVVV ADD THESE TWO NEW METHODS VVVV
-
-        // Method to find a person's (e.g., director's) unique ID on TMDB
         public async Task<int?> GetPersonIdAsync(string personName)
         {
             _logger.LogInformation("Requesting TMDB API to find person ID for: {PersonName}", personName);
-            var response = await _httpClient.GetAsync($"search/person?query={Uri.EscapeDataString(personName)}");
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var searchResponse = await response.Content.ReadFromJsonAsync<TmdbPersonSearchResponse>();
-                // The search might return multiple people. Let's assume the most popular one is the correct one.
+                var searchResponse = await _httpClient.GetFromJsonAsync<TmdbPersonSearchResponse>($"search/person?query={Uri.EscapeDataString(personName)}");
                 var person = searchResponse?.Results?.OrderByDescending(p => p.Popularity).FirstOrDefault();
-
                 if (person != null)
                 {
                     _logger.LogInformation("Found person ID {PersonId} for name {PersonName}", person.Id, personName);
                     return person.Id;
                 }
+                _logger.LogWarning("Could not find a person ID for name {PersonName}", personName);
+                return null;
             }
-            _logger.LogWarning("Could not find a person ID for name {PersonName}", personName);
-            return null; // Return null if not found
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception finding person ID for name {PersonName}", personName);
+                return null;
+            }
         }
 
-        // Method to discover movies for a specific director using their ID
-        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDirectorAsync(int directorId, int page = 1)
+        public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId)
         {
-            _logger.LogInformation("Requesting TMDB API for movies by director ID: {DirectorId}", directorId);
-            // "with_crew" finds movies associated with the person. 
-            // "with_jobs=280" specifically filters for their work as a "Director".
-            var response = await _httpClient.GetAsync($"discover/movie?with_crew={directorId}&with_jobs=280&language=en-US&page={page}");
-
-            if (response.IsSuccessStatusCode)
+            _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}", directorId);
+            try
             {
-                var searchResponse = await response.Content.ReadFromJsonAsync<TmdbSearchResponse>();
-                if (searchResponse?.Results != null)
-                {
-                    _logger.LogInformation("Successfully fetched {Count} movies for director ID {DirectorId}", searchResponse.Results.Count, directorId);
-                    return searchResponse.Results;
-                }
+                var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US");
+                var filmography = creditsResponse?.Crew?.Where(movie => movie.Job == "Director").ToList();
+                return filmography ?? new List<TmdbMovieBrief>();
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogError("Failed to discover movies by director. Status code: {StatusCode}", response.StatusCode);
+                _logger.LogError(ex, "Failed to fetch filmography for person ID {PersonId}", directorId);
+                return new List<TmdbMovieBrief>();
             }
-            return new List<TmdbMovieBrief>(); // Return empty list on failure
         }
 
-        // ^^^^ END OF NEW METHODS ^^^^
-
-    } // <<< This is the correct closing brace for the TmdbService class
+        public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
+        {
+            _logger.LogInformation("Requesting TMDB API for trending movies (day).");
+            try
+            {
+                var searchResponse = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"trending/movie/day?language=en-US&page={page}");
+                return searchResponse?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch trending movies.");
+                return new List<TmdbMovieBrief>();
+            }
+        }
+    }
 }

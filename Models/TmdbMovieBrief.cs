@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization; // Required for JsonPropertyName
+﻿using System.Text.Json.Serialization;
 
 namespace Ezequiel_Movies.Models.TmdbApi
 {
@@ -11,12 +11,20 @@ namespace Ezequiel_Movies.Models.TmdbApi
         public string? Title { get; set; }
 
         [JsonPropertyName("release_date")]
-        public string? ReleaseDate { get; set; } // TMDB often provides dates as strings "YYYY-MM-DD"
+        public string? ReleaseDate { get; set; }
+
+        [JsonPropertyName("poster_path")]
+        public string? PosterPath { get; set; }
 
         [JsonPropertyName("overview")]
         public string? Overview { get; set; }
 
-        [JsonPropertyName("poster_path")]
-        public string? PosterPath { get; set; } // This will be a partial path
+        [JsonPropertyName("job")]
+        public string? Job { get; set; }
+
+        // VVVV ADD THIS NEW PROPERTY VVVV
+        [JsonPropertyName("popularity")]
+        public double Popularity { get; set; }
+        // ^^^^ END OF NEW PROPERTY ^^^^
     }
 }

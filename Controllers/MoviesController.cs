@@ -18,56 +18,14 @@ namespace Ezequiel_Movies.Controllers
         private readonly TmdbService _tmdbService;
         private readonly ILogger<MoviesController> _logger;
 
-        // Updated constructor to inject both DbContext and TmdbService
+        
         public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger)
         {
             _dbContext = dbContext;
             _tmdbService = tmdbService;
             _logger = logger;
         }
-
-
-
-
-        [HttpGet]
-        public async Task<IActionResult> SelectDirector()
-        {
-            Console.WriteLine("SelectDirector action invoked.");
-
-            var loggedMovies = await _dbContext.Movies
-                .Where(m => !string.IsNullOrEmpty(m.Director) && m.Director != "N/A")
-                .ToListAsync();
-
-            if (!loggedMovies.Any())
-            {
-                // Handle case where there are no logged movies with directors
-                ViewData["SuggestionTitle"] = "No directors found in your log yet!";
-                // We can return an empty list or handle this in the view
-                return View("Suggest", new List<TmdbMovieBrief>());
-            }
-
-            // Group movies by director and calculate a score for each
-            var directorScores = loggedMovies
-                .GroupBy(m => m.Director)
-                .Select(g => new {
-                    DirectorName = g.Key,
-                    // Simple scoring: 2 points for each high rating, 1 point for each watch
-                    Score = (g.Count(m => m.UserRating >= 4.5m) * 2) + g.Count()
-                })
-                .OrderByDescending(d => d.Score)
-                .Take(6) // Take the top 6 directors
-                .ToList();
-
-            // Pass this list of top directors to the Suggest view using ViewData
-            ViewData["DirectorSuggestions"] = directorScores.Select(d => d.DirectorName).ToList();
-            ViewData["SuggestionTitle"] = "Choose Your Favorite Director";
-
-            return View("Suggest"); // Re-render the Suggest page to show the director choices
-        }
-
-
-        // In MoviesController.cs
-
+      
 
 
         [HttpGet]
@@ -79,6 +37,9 @@ namespace Ezequiel_Movies.Controllers
             return View();
         }
 
+
+        // In MoviesController.cs
+        // In MoviesController.cs
 
         [HttpGet]
         public async Task<IActionResult> ShowSuggestions(string suggestionType, string? query = null, int page = 1)
@@ -93,80 +54,99 @@ namespace Ezequiel_Movies.Controllers
                     suggestionTitle = "Trending Movies Today";
                     var allTrendingMovies = await _tmdbService.GetTrendingMoviesAsync(page);
                     suggestedMovies = allTrendingMovies.Take(3).ToList();
+                    // Pass the current type and next page for the reshuffle button
+                    ViewData["CurrentSuggestionType"] = "trending";
+                    ViewData["CurrentPage"] = page;
                     break;
 
-                case "director_movies":
-                    if (string.IsNullOrEmpty(query))
-                    {
-                        return RedirectToAction("Suggest");
-                    }
-                    suggestionTitle = $"More Movies by {query}";
-                    var directorId = await _tmdbService.GetPersonIdAsync(query);
+                // VVVV NEW AND IMPROVED LOGIC FOR DIRECTOR SUGGESTIONS VVVV
+                case "by_top_director":
+                    // 1. Always get the user's ranked list of top directors first
+                    var loggedMovies = await _dbContext.Movies
+                        .Where(m => !string.IsNullOrEmpty(m.Director) && m.Director != "N/A")
+                        .ToListAsync();
 
+                    if (!loggedMovies.Any())
+                    {
+                        suggestionTitle = "Log more movies to get director suggestions!";
+                        break; // Exit the case, will show the message with no movies
+                    }
+
+                    var topDirectors = loggedMovies
+                        .GroupBy(m => m.Director)
+                        .Select(g => new {
+                            DirectorName = g.Key,
+                            Score = (g.Count(m => m.UserRating >= 4.5m) * 3) + g.Count() // Extra points for high ratings
+                        })
+                        .OrderByDescending(d => d.Score)
+                        .Select(d => d.DirectorName)
+                        .ToList();
+
+                    string directorToSuggest;
+
+                    // 2. Decide which director to use
+                    if (!string.IsNullOrEmpty(query))
+                    {
+                        // If a director name is passed in the query (i.e., from a reshuffle click), use it.
+                        directorToSuggest = query;
+                    }
+                    else
+                    {
+                        // This is the FIRST click. Pick one RANDOMLY from the top 3-5 directors.
+                        var random = new Random();
+                        int directorsToConsider = Math.Min(topDirectors.Count, 3); // Pick from top 3, or fewer if they don't have that many
+                        directorToSuggest = topDirectors[random.Next(directorsToConsider)];
+                    }
+
+                    suggestionTitle = $"Because you like movies by {directorToSuggest}...";
+
+                    // 3. Find the "next" director for the reshuffle button
+                    int currentIndex = topDirectors.IndexOf(directorToSuggest);
+                    // Get the next director in the list, or loop back to the start if we're at the end
+                    string nextDirectorForReshuffle = topDirectors[(currentIndex + 1) % topDirectors.Count];
+                    ViewData["NextDirectorForReshuffle"] = nextDirectorForReshuffle;
+
+                    // 4. Get movie suggestions for the chosen director
+                    var directorId = await _tmdbService.GetPersonIdAsync(directorToSuggest);
                     if (directorId.HasValue)
                     {
-                        var allDirectorMovies = await _tmdbService.DiscoverMoviesByDirectorAsync(directorId.Value, page);
-
-                        // FIX for ToHashSetAsync: First get a List, then create a HashSet from it.
-                        var loggedTmdbIdsList = await _dbContext.Movies
-                                                            .Where(m => m.TmdbId.HasValue)
-                                                            .Select(m => m.TmdbId.Value)
-                                                            .ToListAsync();
-                        var loggedTmdbIds = new HashSet<int>(loggedTmdbIdsList);
+                        var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
+                        var loggedTmdbIds = new HashSet<int>(await _dbContext.Movies.Where(m => m.TmdbId.HasValue).Select(m => m.TmdbId.Value).ToListAsync());
 
                         var newSuggestions = allDirectorMovies
-                                                .Where(tmdbMovie => !loggedTmdbIds.Contains(tmdbMovie.Id))
-                                                .ToList();
+                            .Where(tmdbMovie => !loggedTmdbIds.Contains(tmdbMovie.Id))
+                            .OrderByDescending(m => m.Popularity)
+                            .ToList();
+
                         suggestedMovies = newSuggestions.Take(3).ToList();
                     }
                     else
                     {
-                        _logger.LogWarning("Could not find director ID for '{DirectorName}'", query);
+                        _logger.LogWarning("Could not find director ID for '{DirectorName}'", directorToSuggest);
                     }
+
+                    ViewData["CurrentSuggestionType"] = "by_top_director"; // Ensure reshuffle knows its type
                     break;
+                // ^^^^ END OF NEW LOGIC ^^^^
+
                 default:
                     return RedirectToAction("Suggest");
             }
 
             ViewData["SuggestionTitle"] = suggestionTitle;
-            ViewData["CurrentSuggestionType"] = suggestionType;
             ViewData["CurrentPage"] = page;
             ViewData["CurrentQuery"] = query;
             return View("Suggest", suggestedMovies);
         }
 
-
-
-
-        [HttpGet] 
+        [HttpGet]
         public async Task<IActionResult> SearchTmdbApi(string query)
         {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return Json(new { results = new List<object>() }); // Return empty list if query is empty
-            }
-
             var searchResult = await _tmdbService.SearchMoviesAsync(query);
-
-            if (searchResult != null && searchResult.Results != null)
-            {
-                // We only need to send back the relevant parts for the search result display
-                // Let's select just a few properties from TmdbMovieBrief for the JSON response
-                var simplifiedResults = searchResult.Results.Select(m => new
-                {
-                    id = m.Id,
-                    title = m.Title,
-                    releaseDate = m.ReleaseDate, // Format YYYY-MM-DD from TMDB
-                    overview = m.Overview != null && m.Overview.Length > 150 ? m.Overview.Substring(0, 150) + "..." : m.Overview, // Truncate overview
-                    posterPath = m.PosterPath // We'll need the base URL for images later to display this
-                }).ToList();
-
-                return Json(new { results = simplifiedResults });
-            }
-
-            // Return an empty list or an error indicator if the search failed or returned no results
-            return Json(new { results = new List<object>(), error = "Search failed or no results found." });
+            return Json(searchResult);
         }
+
+        
 
 
         [HttpGet] 
@@ -200,6 +180,8 @@ namespace Ezequiel_Movies.Controllers
             System.Diagnostics.Debug.WriteLine($"--- Controller: Movie details not found in TMDB for ID: {id} ---");
             return NotFound(new { error = "Movie details not found in TMDB." }); // Returns a 404 if TMDB doesn't find the movie
         }
+
+
 
 
         [HttpGet]
