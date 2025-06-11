@@ -13,6 +13,7 @@
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-9 mb-5">
 
+        @* This is the full grid for all six suggestion buttons *@
         <div class="row justify-content-center g-4">
             <div class="col-lg-4 col-md-6">
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
@@ -23,7 +24,6 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="director_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
@@ -33,10 +33,9 @@
                     </div>
                 </a>
             </div>
-
             <div class="col-lg-4 col-md-6">
-                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-tags display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Genre</h5>
                         <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
@@ -52,7 +51,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-lg-4 col-md-6">
+             <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-calendar3 display-4 mb-2"></i>
@@ -61,9 +60,9 @@
                     </div>
                 </a>
             </div>
-            <div class="col-lg-4 col-md-6">
-                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+             <div class="col-lg-4 col-md-6">
+                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Surprise Me!</h5>
                         <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
@@ -72,27 +71,34 @@
             </div>
         </div>
 
-        @* This section displays the suggestion results *@
-        @if (ViewData["SuggestionTitle"] != null)
+        @* This section displays the suggestion results OR the message with the button *@
+        @if (Model != null)
         {
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
                     <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
-
-                    @if (Model != null && Model.Any())
+                    
+                    @if (Model.Any())
                     {
-                        <a asp-action="ShowSuggestions"
-                           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+                        <a asp-action="ShowSuggestions" 
+                           asp-route-suggestionType="@ViewData["NextSuggestionType"]" 
+                           asp-route-query="@ViewData["NextQuery"]"
                            asp-route-page="@ViewData["NextPage"]"
-                           asp-route-query="@ViewData["NextQuery"]" 
                            class="btn btn-sm btn-outline-secondary mt-2">
                             <i class="bi bi-arrow-repeat"></i> Reshuffle
                         </a>
                     }
+                    else if ((bool?)ViewData["ShowAddMovieButton"] == true)
+                    {
+                        @* VVVV HERE IS THE NEW BUTTON VVVV *@
+                        <a asp-controller="Movies" asp-action="Add" class="btn btn-lg btn-success mt-3">
+                            <i class="bi bi-plus-circle me-2"></i>Log a Movie
+                        </a>
+                    }
                 </div>
-
-                @if (Model != null && Model.Any())
+                
+                @if (Model.Any())
                 {
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
                         @foreach (var movie in Model)
@@ -107,10 +113,12 @@
 </div>
 
 @section Scripts {
-    <script>document.addEventListener('DOMContentLoaded', function () {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
             const resultsContainer = document.getElementById('suggestion-results-area');
             if (resultsContainer) {
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        });</script>
+        });
+    </script>
 }

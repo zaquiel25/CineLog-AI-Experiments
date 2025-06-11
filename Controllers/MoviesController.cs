@@ -28,8 +28,6 @@ namespace Ezequiel_Movies.Controllers
             _logger = logger;
         }
 
-
-
         [HttpGet]
         public async Task<IActionResult> SearchTmdbApi(string query)
         {
@@ -68,6 +66,7 @@ namespace Ezequiel_Movies.Controllers
             return View();
         }
 
+
         // In MoviesController.cs
 
         [HttpGet]
@@ -78,17 +77,16 @@ namespace Ezequiel_Movies.Controllers
             List<TmdbMovieBrief> suggestedMovies = new List<TmdbMovieBrief>();
             string suggestionTitle = "Suggestions";
             string nextSuggestionType = suggestionType;
-            string? nextQuery = query;
+            string? nextQuery = null;
 
             switch (suggestionType?.ToLower())
             {
                 case "trending":
-                    // For trending, we use the 'page' parameter, which we can get from the query string
+                    // We get the page from the query string for Trending, since it's a simple API call.
                     var page = !string.IsNullOrEmpty(Request.Query["page"]) ? int.Parse(Request.Query["page"]) : 1;
                     suggestionTitle = "Trending Movies Today";
-                    suggestedMovies = await _tmdbService.GetTrendingMoviesAsync(page);
-                    suggestedMovies = suggestedMovies.Take(3).ToList();
-                    ViewData["NextPage"] = page + 1; // For "Trending" reshuffle
+                    suggestedMovies = (await _tmdbService.GetTrendingMoviesAsync(page)).Take(3).ToList();
+                    ViewData["NextPage"] = page + 1;
                     break;
 
                 case "director_recent":
@@ -96,18 +94,17 @@ namespace Ezequiel_Movies.Controllers
                 case "director_rated":
                 case "director_random":
                     var loggedMovies = await _dbContext.Movies
-                        .Where(m => m.Director != null && m.Director != "N/A" && m.TmdbId.HasValue)
+                        .Where(m => !string.IsNullOrEmpty(m.Director) && m.Director != "N/A")
                         .ToListAsync();
 
                     if (!loggedMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get personalized suggestions!";
+                        ViewData["ShowAddMovieButton"] = true;
                         break;
                     }
 
-                    var loggedTmdbIds = new HashSet<int>(loggedMovies.Select(m => m.TmdbId!.Value));
-
-                    // --- Build the de-duplicated queue of top directors ---
+                    // --- Build the de-duplicated queue of your top directors ---
                     var topDirectorQueue = new List<string>();
                     if (loggedMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director is string rd) topDirectorQueue.Add(rd);
                     if (loggedMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
@@ -115,7 +112,7 @@ namespace Ezequiel_Movies.Controllers
 
                     string? directorToSuggest = null;
 
-                    // --- Determine which director to use and the NEXT reshuffle type ---
+                    // --- Logic to cycle through your directors ---
                     if (suggestionType == "director_recent")
                     {
                         directorToSuggest = topDirectorQueue.ElementAtOrDefault(0);
@@ -134,11 +131,10 @@ namespace Ezequiel_Movies.Controllers
                     else if (suggestionType == "director_random")
                     {
                         var allDirectors = loggedMovies.Select(m => m.Director!).Distinct().ToList();
-                        var potentialDirectors = allDirectors.Where(d => d != query).ToList(); // Avoid immediate repetition
+                        var potentialDirectors = allDirectors.Where(d => d != query).ToList();
                         if (!potentialDirectors.Any()) potentialDirectors = allDirectors;
-
                         directorToSuggest = potentialDirectors.Any() ? potentialDirectors[new Random().Next(potentialDirectors.Count)] : null;
-                        nextSuggestionType = "director_random"; // Stay in random mode
+                        nextSuggestionType = "director_random";
                     }
 
                     if (string.IsNullOrEmpty(directorToSuggest))
@@ -146,15 +142,10 @@ namespace Ezequiel_Movies.Controllers
                         return RedirectToAction("ShowSuggestions", new { suggestionType = "director_random" });
                     }
 
-                    suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, loggedTmdbIds);
-
-                    suggestionTitle = $"Because you like {directorToSuggest}...";
-                    nextQuery = directorToSuggest; // Pass this director's name to the next reshuffle
-
-                    if (!suggestedMovies.Any())
-                    {
-                        suggestionTitle = $"You've seen all available movies by {directorToSuggest}! Try reshuffling.";
-                    }
+                    // --- Get 3 random movies for the chosen director ---
+                    suggestedMovies = await GetSuggestionsForDirector(directorToSuggest);
+                    suggestionTitle = $"Because you watched {directorToSuggest}...";
+                    nextQuery = directorToSuggest; // Prepare for the next reshuffle
                     break;
 
                 default:
@@ -167,51 +158,31 @@ namespace Ezequiel_Movies.Controllers
             return View("Suggest", suggestedMovies);
         }
 
-        // THIS HELPER METHOD CORRECTLY USES THE SESSION FOR PAGING
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName, HashSet<int> loggedTmdbIds)
+        // THIS IS THE NEW, SIMPLIFIED HELPER METHOD
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName)
         {
             var directorId = await _tmdbService.GetPersonIdAsync(directorName);
             if (!directorId.HasValue) return new List<TmdbMovieBrief>();
 
-            var directorPageTracker = HttpContext.Session.Get<Dictionary<string, int>>("DirectorPageTracker") ?? new Dictionary<string, int>();
-            int pageToFetch = directorPageTracker.GetValueOrDefault(directorName, 1);
+            // Get the director's ENTIRE filmography from our service
+            var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
 
-            var filmography = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value, pageToFetch);
-
-            // If we run out of movies for this director on TMDB, reset the tracker and return their top popular movies as a fallback
-            if (!filmography.Any())
+            if (!allDirectorMovies.Any())
             {
-                _logger.LogWarning("No more filmography pages for director {Director}. Resetting page tracker and showing top movies.", directorName);
-                directorPageTracker[directorName] = 1;
-                HttpContext.Session.Set("DirectorPageTracker", directorPageTracker);
-
-                var topMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value, 1);
-                return topMovies.OrderByDescending(m => m.Popularity).Take(3).ToList();
+                return new List<TmdbMovieBrief>(); // Return empty if they have no movies
             }
 
-            var newSuggestions = filmography
-                .Where(movie => !loggedTmdbIds.Contains(movie.Id))
-                .OrderByDescending(m => m.Popularity)
-                .Take(3)
-                .ToList();
-
-            // If we found suggestions on this page, update the tracker to fetch the NEXT page next time.
-            if (newSuggestions.Any())
+            // If they have 3 or fewer movies, just return them all.
+            if (allDirectorMovies.Count <= 3)
             {
-                directorPageTracker[directorName] = pageToFetch + 1;
-            }
-            else
-            {
-                // If this page had movies, but none were new to us, we should try the next page
-                // But to avoid complex loops, for now we will just use the fallback logic below.
-                _logger.LogWarning("Found no new movies for {Director} on page {Page}. Showing popular movies as fallback.", directorName, pageToFetch);
-                directorPageTracker[directorName] = 1; // Reset for next time
+                return allDirectorMovies;
             }
 
-            HttpContext.Session.Set("DirectorPageTracker", directorPageTracker);
+            // Otherwise, shuffle the entire list and take 3 random ones.
+            var random = new Random();
+            var randomSuggestions = allDirectorMovies.OrderBy(x => random.Next()).Take(3).ToList();
 
-            // If we found new suggestions, return them. Otherwise, run the fallback.
-            return newSuggestions.Any() ? newSuggestions : (await _tmdbService.GetDirectorFilmographyAsync(directorId.Value, 1)).OrderByDescending(m => m.Popularity).Take(3).ToList();
+            return randomSuggestions;
         }
 
         [HttpGet] 

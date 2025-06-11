@@ -81,31 +81,21 @@ namespace Ezequiel_Movies
             }
         }
 
+        // In TmdbService.cs
         public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId, int page = 1)
         {
             _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}, page: {Page}", directorId, page);
-
             try
             {
-                // We now include the page number in the API request URL
                 var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US&page={page}");
-
-                var filmography = creditsResponse?.Crew?
-                    .Where(movie => movie.Job == "Director")
-                    .ToList();
-
-                if (filmography != null)
-                {
-                    _logger.LogInformation("Successfully fetched {Count} directed movies for person ID {PersonId} on page {Page}", filmography.Count, directorId, page);
-                    return filmography;
-                }
+                var filmography = creditsResponse?.Crew?.Where(movie => movie.Job == "Director").ToList();
+                return filmography ?? new List<TmdbMovieBrief>();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to fetch filmography for person ID {PersonId}", directorId);
+                return new List<TmdbMovieBrief>();
             }
-
-            return new List<TmdbMovieBrief>();
         }
 
         public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
