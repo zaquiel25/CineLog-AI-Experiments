@@ -1,32 +1,9 @@
-﻿// In Ezequiel_Movies/Models/TmdbApi/TmdbMovieDetails.cs (or your chosen path)
-using System.Collections.Generic;
-using System.Linq; // Required for .Where(), .Select(), .FirstOrDefault()
-using System.Text.Json.Serialization; // Required for JsonPropertyName
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
 
-namespace Ezequiel_Movies.Models.TmdbApi // Ensure this namespace matches your other DTOs
+namespace Ezequiel_Movies.Models.TmdbApi
 {
-    public class TmdbCrewMember
-    {
-        [JsonPropertyName("job")]
-        public string? Job { get; set; }
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        // You could add other crew properties if needed, e.g., "department"
-        // [JsonPropertyName("department")]
-        // public string? Department { get; set; }
-    }
-
-    public class TmdbCredits
-    {
-        [JsonPropertyName("crew")]
-        public List<TmdbCrewMember>? Crew { get; set; }
-        // You could also add "cast" here if you need actor information
-        // [JsonPropertyName("cast")]
-        // public List<TmdbCastMember>? Cast { get; set; }
-    }
-
     public class TmdbMovieDetails
     {
         [JsonPropertyName("id")]
@@ -35,30 +12,42 @@ namespace Ezequiel_Movies.Models.TmdbApi // Ensure this namespace matches your o
         [JsonPropertyName("title")]
         public string? Title { get; set; }
 
-        [JsonPropertyName("overview")]
-        public string? Overview { get; set; }
-
         [JsonPropertyName("release_date")]
-        public string? ReleaseDate { get; set; } // Format from TMDB: "YYYY-MM-DD"
+        public string? ReleaseDate { get; set; }
 
         [JsonPropertyName("poster_path")]
-        public string? PosterPath { get; set; } // This is a partial path, e.g., "/xyz.jpg"
+        public string? PosterPath { get; set; }
+
+        [JsonPropertyName("overview")]
+        public string? Overview { get; set; }
 
         [JsonPropertyName("credits")]
         public TmdbCredits? Credits { get; set; }
 
-        // Helper method to extract the first director's name
+        [JsonPropertyName("genres")]
+        public List<TmdbGenre> Genres { get; set; } = new();
+
+        // This helper method MUST be inside the TmdbMovieDetails class
         public string? GetDirector()
         {
-            if (Credits?.Crew == null)
-            {
-                return null;
-            }
-            // Find the first crew member whose job is "Director"
+            if (Credits?.Crew == null) return null;
             var director = Credits.Crew.FirstOrDefault(c => c.Job == "Director");
             return director?.Name;
-            // If you expect multiple directors, you could use:
-            // return string.Join(", ", Credits.Crew.Where(c => c.Job == "Director").Select(c => c.Name));
         }
+    } // <<< This is the correct closing brace for the TmdbMovieDetails class
+
+    public class TmdbCredits
+    {
+        [JsonPropertyName("crew")]
+        public List<TmdbCrewPerson> Crew { get; set; } = new();
+    }
+
+    public class TmdbCrewPerson
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("job")]
+        public string? Job { get; set; }
     }
 }

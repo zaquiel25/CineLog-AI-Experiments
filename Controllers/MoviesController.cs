@@ -28,6 +28,61 @@ namespace Ezequiel_Movies.Controllers
             _logger = logger;
         }
 
+        // In MoviesController.cs
+
+        [HttpGet]
+        public async Task<IActionResult> SelectGenre()
+        {
+            _logger.LogInformation("SelectGenre action invoked.");
+
+            var loggedMovies = await _dbContext.Movies
+                .Where(m => m.TmdbId.HasValue)
+                .ToListAsync();
+
+            if (!loggedMovies.Any())
+            {
+                ViewData["SuggestionTitle"] = "Log some movies to get genre suggestions!";
+                ViewData["ShowAddMovieButton"] = true;
+                return View("Suggest");
+            }
+
+            // Fetch all genres from our service one time
+            var allGenres = await _tmdbService.GetAllGenresAsync();
+            var allGenresDict = allGenres.ToDictionary(g => g.Id, g => g.Name);
+
+            var genreCounts = new Dictionary<int, int>();
+
+            // This can be slow if there are many movies. We can optimize it later.
+            foreach (var movie in loggedMovies)
+            {
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                if (movieDetails?.Genres != null)
+                {
+                    foreach (var genre in movieDetails.Genres)
+                    {
+                        if (genreCounts.ContainsKey(genre.Id))
+                        {
+                            genreCounts[genre.Id]++;
+                        }
+                        else
+                        {
+                            genreCounts[genre.Id] = 1;
+                        }
+                    }
+                }
+            }
+
+            // Get the top 6 genres based on frequency
+            var topGenreIds = genreCounts.OrderByDescending(kvp => kvp.Value).Take(6).Select(kvp => kvp.Key).ToList();
+
+            var topGenres = allGenres.Where(g => topGenreIds.Contains(g.Id)).ToList();
+
+            ViewData["GenreSuggestions"] = topGenres;
+            ViewData["SuggestionTitle"] = "Choose Your Favorite Genre";
+
+            return View("Suggest");
+        }
+
         [HttpGet]
         public async Task<IActionResult> SearchTmdbApi(string query)
         {
@@ -290,6 +345,19 @@ namespace Ezequiel_Movies.Controllers
                     TmdbId = viewModel.TmdbId
                 }; // Object initializer for 'movie' ends here
 
+                // VVVV NEW LOGIC TO FETCH AND SAVE GENRES VVVV
+                if (movie.TmdbId.HasValue)
+                {
+                    var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                    if (movieDetails?.Genres != null && movieDetails.Genres.Any())
+                    {
+                        // Join the list of genre names into a single, comma-separated string
+                        movie.Genres = string.Join(", ", movieDetails.Genres.Select(g => g.Name));
+                        _logger.LogInformation("Saving genres for movie '{Title}': {Genres}", movie.Title, movie.Genres);
+                    }
+                }
+                // ^^^^ END OF NEW LOGIC ^^^^
+
                 // Logging line for IsRewatch, after 'movie' object is created
                 Console.WriteLine($"Adding Movie '{movie.Title}', UserRating from ViewModel: {viewModel.UserRating}, Value being saved to entity: {movie.UserRating}");
 
@@ -427,7 +495,8 @@ namespace Ezequiel_Movies.Controllers
                 Overview = movieEntity.Overview,
                 IsRewatch = movieEntity.IsRewatch,
                 UserRating = movieEntity.UserRating,
-                TmdbId = movieEntity.TmdbId
+                TmdbId = movieEntity.TmdbId,
+                Genres = movieEntity.Genres
             };
 
             // Enhanced log for the ViewModel being sent to the View
@@ -487,7 +556,20 @@ namespace Ezequiel_Movies.Controllers
                     movieEntity.IsRewatch = viewModel.IsRewatch;
                     movieEntity.Subscribed = viewModel.Subscribed;
                     movieEntity.UserRating = viewModel.UserRating;
-                    movieEntity.TmdbId = viewModel.TmdbId; // <<< This assignment is crucial and already in your code
+                    movieEntity.TmdbId = viewModel.TmdbId;
+                    movieEntity.Genres = viewModel.Genres;// <<< This assignment is crucial and already in your code
+
+                    // VVVV NEW LOGIC TO FETCH AND SAVE GENRES IF THEY ARE MISSING VVVV
+                    if (movieEntity.TmdbId.HasValue && string.IsNullOrEmpty(movieEntity.Genres))
+                    {
+                        var movieDetails = await _tmdbService.GetMovieDetailsAsync(movieEntity.TmdbId.Value);
+                        if (movieDetails?.Genres != null && movieDetails.Genres.Any())
+                        {
+                            movieEntity.Genres = string.Join(", ", movieDetails.Genres.Select(g => g.Name));
+                            _logger.LogInformation("Populated missing genres for movie '{Title}': {Genres}", movieEntity.Title, movieEntity.Genres);
+                        }
+                    }
+                    // ^^^^ END OF NEW LOGIC ^^^^
 
                     // Log entity values just before saving, including TmdbId
                     Console.WriteLine($"Edit POST - Entity values BEFORE SaveChangesAsync (ID: {movieEntity.Id}) - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: '{movieEntity.ReleasedYear}', IsRewatch: {movieEntity.IsRewatch}, TmdbId: {movieEntity.TmdbId}, UserRating: {movieEntity.UserRating}");

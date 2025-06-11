@@ -13,6 +13,24 @@ namespace Ezequiel_Movies
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
 
+       
+
+        // Method to get the master list of all official genres from TMDB
+        public async Task<List<TmdbGenre>> GetAllGenresAsync()
+        {
+            _logger.LogInformation("Requesting TMDB API for all movie genres.");
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<TmdbGenreListResponse>("genre/movie/list?language=en-US");
+                return response?.Genres ?? new List<TmdbGenre>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch genre list from TMDB.");
+                return new List<TmdbGenre>();
+            }
+        }
+
         public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger)
         {
             _httpClient = httpClient;

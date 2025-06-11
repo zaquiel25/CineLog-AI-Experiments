@@ -28,6 +28,8 @@ namespace Ezequiel_Movies1.Models.Entities
 
         public int? TmdbId { get; set; }
 
+        public string? Genres { get; set; }
+
 
     }
 }

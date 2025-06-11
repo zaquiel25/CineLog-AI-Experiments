@@ -34,8 +34,8 @@
                 </a>
             </div>
             <div class="col-lg-4 col-md-6">
-                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
-                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                <a  asp-action="SelectGenre" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-tags display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Genre</h5>
                         <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
@@ -51,7 +51,7 @@
                     </div>
                 </a>
             </div>
-             <div class="col-lg-4 col-md-6">
+            <div class="col-lg-4 col-md-6">
                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-calendar3 display-4 mb-2"></i>
@@ -60,9 +60,9 @@
                     </div>
                 </a>
             </div>
-             <div class="col-lg-4 col-md-6">
-                 <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
-                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+            <div class="col-lg-4 col-md-6">
+                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Surprise Me!</h5>
                         <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
@@ -78,11 +78,11 @@
                 <hr class="my-5">
                 <div class="text-center mb-4">
                     <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
-                    
+
                     @if (Model.Any())
                     {
-                        <a asp-action="ShowSuggestions" 
-                           asp-route-suggestionType="@ViewData["NextSuggestionType"]" 
+                        <a asp-action="ShowSuggestions"
+                           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
                            asp-route-query="@ViewData["NextQuery"]"
                            asp-route-page="@ViewData["NextPage"]"
                            class="btn btn-sm btn-outline-secondary mt-2">
@@ -97,7 +97,7 @@
                         </a>
                     }
                 </div>
-                
+
                 @if (Model.Any())
                 {
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
@@ -111,14 +111,48 @@
         }
     </div>
 </div>
+@* In Views/Movies/Suggest.cshtml *@
+
+@*... The block for showing movie cards ends here ...*@
+
+@* VVVV ADD THIS NEW BLOCK TO DISPLAY GENRE CHOICES VVVV *@
+@{
+    var genreList = ViewData["GenreSuggestions"] as List<TmdbGenre>;
+}
+
+@if (genreList != null && genreList.Any())
+{
+    <div id="suggestion-results-area">
+        @* Use same ID for auto-scroll *@
+        <hr class="my-5">
+        <div class="text-center mb-4">
+            <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
+            <p class="text-muted small">Based on genres from your logged movies</p>
+        </div>
+
+        <div class="row row-cols-2 row-cols-sm-3 g-3 justify-content-center mb-5">
+            @foreach (var genre in genreList)
+            {
+                <div class="col text-center">
+                    @* This will be the link for the next step *@
+                    <a asp-action="ShowSuggestions"
+                       asp-route-suggestionType="movies_by_genre"
+                       asp-route-query="@genre.Id"
+                       class="btn btn-lg btn-outline-warning w-100 p-3">
+                        @genre.Name
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+}
+@* ^^^^ END OF NEW BLOCK ^^^^ *@
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+    <script>document.addEventListener('DOMContentLoaded', function () {
             const resultsContainer = document.getElementById('suggestion-results-area');
             if (resultsContainer) {
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        });
-    </script>
+        });</script>
 }

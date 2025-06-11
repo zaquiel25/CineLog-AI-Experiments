@@ -37,5 +37,7 @@ namespace Ezequiel_Movies.Models
         public decimal? UserRating { get; set; } // <<< ADD THIS NEW PROPERTY
 
         public int? TmdbId { get; set; }
+
+        public string? Genres { get; set; }
     }
 }
