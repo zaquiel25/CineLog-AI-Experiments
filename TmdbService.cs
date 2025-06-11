@@ -116,6 +116,24 @@ namespace Ezequiel_Movies
             }
         }
 
+        // In TmdbService.cs
+
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1)
+        {
+            _logger.LogInformation("Requesting TMDB API for movies by genre ID: {GenreId}, page: {Page}", genreId, page);
+            try
+            {
+                // This endpoint discovers movies, filtering by genre and sorting by popularity.
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"discover/movie?with_genres={genreId}&sort_by=popularity.desc&language=en-US&page={page}");
+                return response?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies by genre ID {GenreId}", genreId);
+                return new List<TmdbMovieBrief>();
+            }
+        }
+
         public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
         {
             _logger.LogInformation("Requesting TMDB API for trending movies (day).");
