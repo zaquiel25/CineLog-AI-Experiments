@@ -22,9 +22,13 @@ namespace Ezequiel_Movies.Models.TmdbApi
         [JsonPropertyName("job")]
         public string? Job { get; set; }
 
-        // VVVV ADD THIS NEW PROPERTY VVVV
         [JsonPropertyName("popularity")]
         public double Popularity { get; set; }
-        // ^^^^ END OF NEW PROPERTY ^^^^
+
+        [JsonPropertyName("vote_average")]
+        public double VoteAverage { get; set; }
+
+        [JsonPropertyName("vote_count")]
+        public int VoteCount { get; set; }
     }
 }

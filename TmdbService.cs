@@ -99,15 +99,35 @@ namespace Ezequiel_Movies
             }
         }
 
-        // In TmdbService.cs
-        public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId, int page = 1)
+        
+
+        public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId)
         {
-            _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}, page: {Page}", directorId, page);
+            _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}", directorId);
             try
             {
-                var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US&page={page}");
-                var filmography = creditsResponse?.Crew?.Where(movie => movie.Job == "Director").ToList();
-                return filmography ?? new List<TmdbMovieBrief>();
+                // 1. Call the accurate '/person/{id}/movie_credits' endpoint
+                var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US");
+
+                if (creditsResponse?.Crew == null)
+                {
+                    return new List<TmdbMovieBrief>();
+                }
+
+                // 2. In our own code, filter to get ONLY the movies where the job was "Director"
+                var filmography = creditsResponse.Crew
+                    .Where(movie => movie.Job == "Director")
+                    .ToList();
+
+                // 3. Now, sort this accurate list by rating and vote count ourselves
+                var sortedFilmography = filmography
+                    .OrderByDescending(m => m.VoteAverage)
+                    .ThenByDescending(m => m.VoteCount) // Use vote count as a tie-breaker
+                    .ToList();
+
+                _logger.LogInformation("Successfully fetched and sorted {Count} directed movies for person ID {PersonId}", sortedFilmography.Count, directorId);
+
+                return sortedFilmography;
             }
             catch (Exception ex)
             {
@@ -116,15 +136,18 @@ namespace Ezequiel_Movies
             }
         }
 
-        // In TmdbService.cs
+
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1)
         {
             _logger.LogInformation("Requesting TMDB API for movies by genre ID: {GenreId}, page: {Page}", genreId, page);
             try
             {
-                // This endpoint discovers movies, filtering by genre and sorting by popularity.
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"discover/movie?with_genres={genreId}&sort_by=popularity.desc&language=en-US&page={page}");
+                // VVVV THIS IS THE ONLY LINE WE ARE CHANGING VVVV
+                // We changed sort_by=popularity.desc to sort_by=vote_average.desc
+                // and added vote_count.gte=500 to ensure quality.
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"discover/movie?with_genres={genreId}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
+
                 return response?.Results ?? new List<TmdbMovieBrief>();
             }
             catch (Exception ex)

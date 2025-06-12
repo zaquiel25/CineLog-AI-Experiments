@@ -122,7 +122,7 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-        // In MoviesController.cs - PASTE THIS ENTIRE BLOCK OF CODE
+        
 
         #region Suggestion Actions & Helpers
 
