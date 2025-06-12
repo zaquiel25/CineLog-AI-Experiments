@@ -121,8 +121,7 @@ namespace Ezequiel_Movies
 
                 // 3. Now, sort this accurate list by rating and vote count ourselves
                 var sortedFilmography = filmography
-                    .OrderByDescending(m => m.VoteAverage)
-                    .ThenByDescending(m => m.VoteCount) // Use vote count as a tie-breaker
+                    
                     .ToList();
 
                 _logger.LogInformation("Successfully fetched and sorted {Count} directed movies for person ID {PersonId}", sortedFilmography.Count, directorId);
