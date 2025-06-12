@@ -99,14 +99,15 @@ namespace Ezequiel_Movies
             }
         }
 
-        
+
+        // In TmdbService.cs
 
         public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId)
         {
             _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}", directorId);
             try
             {
-                // 1. Call the accurate '/person/{id}/movie_credits' endpoint
+                // 1. Call the accurate '/person/{id}/movie_credits' endpoint. This is correct.
                 var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US");
 
                 if (creditsResponse?.Crew == null)
@@ -114,14 +115,22 @@ namespace Ezequiel_Movies
                     return new List<TmdbMovieBrief>();
                 }
 
-                // 2. In our own code, filter to get ONLY the movies where the job was "Director"
+                // 2. Filter to get ONLY the movies where the job was "Director". This is correct.
                 var filmography = creditsResponse.Crew
                     .Where(movie => movie.Job == "Director")
                     .ToList();
 
-                // 3. Now, sort this accurate list by rating and vote count ourselves
-                var sortedFilmography = filmography
-                    
+                // VVVV THIS IS THE ONLY CHANGE: A NEW FILTER VVVV
+                // 3. From that accurate list, remove movies with too few votes to be considered "rated".
+                var ratedFilmography = filmography
+                    .Where(m => m.VoteCount > 25) // Only keeps movies with more than 25 votes
+                    .ToList();
+                // ^^^^ END OF THE ONLY CHANGE ^^^^
+
+                // 4. Sort this accurate, rated list by vote average, as you wanted.
+                var sortedFilmography = ratedFilmography
+                    .OrderByDescending(m => m.VoteAverage)
+                    .ThenByDescending(m => m.VoteCount)
                     .ToList();
 
                 _logger.LogInformation("Successfully fetched and sorted {Count} directed movies for person ID {PersonId}", sortedFilmography.Count, directorId);
