@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// In Models/TmdbApi/TmdbMovieDetails.cs
+
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -27,19 +29,22 @@ namespace Ezequiel_Movies.Models.TmdbApi
         [JsonPropertyName("genres")]
         public List<TmdbGenre> Genres { get; set; } = new();
 
-        // This helper method MUST be inside the TmdbMovieDetails class
         public string? GetDirector()
         {
             if (Credits?.Crew == null) return null;
             var director = Credits.Crew.FirstOrDefault(c => c.Job == "Director");
             return director?.Name;
         }
-    } // <<< This is the correct closing brace for the TmdbMovieDetails class
+    }
 
     public class TmdbCredits
     {
         [JsonPropertyName("crew")]
         public List<TmdbCrewPerson> Crew { get; set; } = new();
+
+        // VVVV THIS IS THE CORRECT PLACE FOR THE NEW CAST PROPERTY VVVV
+        [JsonPropertyName("cast")]
+        public List<TmdbCastPerson> Cast { get; set; } = new();
     }
 
     public class TmdbCrewPerson

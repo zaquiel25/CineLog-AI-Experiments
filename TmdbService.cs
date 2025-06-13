@@ -13,7 +13,43 @@ namespace Ezequiel_Movies
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
 
-       
+
+
+        // In TmdbService.cs
+
+        // This method gets the details for a single person, including their profile picture path.
+        public async Task<TmdbPersonDetails?> GetPersonDetailsAsync(int personId)
+        {
+            _logger.LogInformation("Requesting TMDB API for person details for ID: {PersonId}", personId);
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<TmdbPersonDetails>($"person/{personId}?language=en-US");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch person details for ID {PersonId}", personId);
+                return null;
+            }
+        }
+
+        // This method discovers top-rated movies starring a specific actor.
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId, int page = 1)
+        {
+            _logger.LogInformation("Requesting TMDB API for movies with actor ID: {ActorId}, page: {Page}", actorId, page);
+            try
+            {
+                // We use the 'discover' endpoint, filtering by 'with_cast' and sorting by rating.
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
+                    $"discover/movie?with_cast={actorId}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
+
+                return response?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies by actor ID {ActorId}", actorId);
+                return new List<TmdbMovieBrief>();
+            }
+        }
 
         // Method to get the master list of all official genres from TMDB
         public async Task<List<TmdbGenre>> GetAllGenresAsync()

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// In Models/TmdbApi/TmdbPersonCredits.cs
+
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Ezequiel_Movies.Models.TmdbApi
@@ -11,5 +13,18 @@ namespace Ezequiel_Movies.Models.TmdbApi
 
         [JsonPropertyName("cast")]
         public List<TmdbMovieBrief> Cast { get; set; } = new();
+    }
+
+    // This class represents a single cast member in a movie's credits
+    public class TmdbCastPerson
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("popularity")]
+        public double Popularity { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace Ezequiel_Movies.Controllers
         private readonly TmdbService _tmdbService;
         private readonly ILogger<MoviesController> _logger;
 
-        
+
         public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger)
         {
             _dbContext = dbContext;
@@ -227,6 +227,54 @@ namespace Ezequiel_Movies.Controllers
                     #endregion
                     break;
 
+                case "cast_recent":
+                case "cast_frequent":
+                case "cast_rated": // We'll use TMDB popularity as a proxy for "rated"
+                case "cast_random":
+                    var loggedCastMovies = await _dbContext.Movies.Where(m => m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
+                    if (!loggedCastMovies.Any())
+                    {
+                        suggestionTitle = "Log some movies to get cast suggestions!";
+                        ViewData["ShowAddMovieButton"] = true;
+                        break;
+                    }
+
+                    // NOTE: This part is slow. We can optimize it later by storing cast info locally.
+                    var allTopActors = new List<TmdbCastPerson>();
+                    foreach (var movie in loggedCastMovies.Take(15)) // Analyze last 15 movies for speed
+                    {
+                        var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                        if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(5));
+                    }
+                    if (!allTopActors.Any()) { suggestionTitle = "Could not find cast info in your recent logs."; break; }
+
+                    var topActorQueue = new List<TmdbCastPerson>();
+                    if (allTopActors.FirstOrDefault() is TmdbCastPerson ra) topActorQueue.Add(ra);
+                    if (allTopActors.GroupBy(a => a.Id).OrderByDescending(g => g.Count()).Select(g => g.First()).FirstOrDefault() is TmdbCastPerson fa && !topActorQueue.Any(p => p.Id == fa.Id)) topActorQueue.Add(fa);
+                    if (allTopActors.OrderByDescending(a => a.Popularity).FirstOrDefault() is TmdbCastPerson pa && !topActorQueue.Any(p => p.Id == pa.Id)) topActorQueue.Add(pa);
+
+                    TmdbCastPerson? actorToSuggest = null;
+                    if (suggestionType == "cast_recent") { actorToSuggest = topActorQueue.ElementAtOrDefault(0); nextSuggestionType = "cast_frequent"; }
+                    else if (suggestionType == "cast_frequent") { actorToSuggest = topActorQueue.ElementAtOrDefault(1); nextSuggestionType = "cast_rated"; }
+                    else if (suggestionType == "cast_rated") { actorToSuggest = topActorQueue.ElementAtOrDefault(2); nextSuggestionType = "cast_random"; }
+                    else if (suggestionType == "cast_random")
+                    {
+                        var potentialActors = allTopActors.DistinctBy(p => p.Id).Where(p => p.Name != query).ToList();
+                        if (!potentialActors.Any()) potentialActors = allTopActors.DistinctBy(p => p.Id).ToList();
+                        actorToSuggest = potentialActors.Any() ? potentialActors[new Random().Next(potentialActors.Count)] : null;
+                        nextSuggestionType = "cast_random";
+                    }
+
+                    if (actorToSuggest == null) { return RedirectToAction("ShowSuggestions", new { suggestionType = "cast_random" }); }
+
+                    var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id);
+                    suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id);
+
+                    suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
+                    ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
+                    nextQuery = actorToSuggest.Name;
+                    break;
+
                 default:
                     return RedirectToAction("Suggest");
             }
@@ -237,7 +285,7 @@ namespace Ezequiel_Movies.Controllers
             return View("Suggest", suggestedMovies);
         }
 
-      
+
 
         // THIS IS THE NEW, SIMPLIFIED HELPER METHOD
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName)
@@ -292,9 +340,35 @@ namespace Ezequiel_Movies.Controllers
             return movies.Take(3).ToList();
         }
 
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForActor(int actorId)
+        {
+            // This uses the same session-based paging logic as our working Genre helper
+            string sessionKey = $"ActorPage_{actorId}";
+            int pageToFetch = HttpContext.Session.GetInt32(sessionKey) ?? 1;
+
+            _logger.LogInformation("HELPER: Finding movies for actor {ActorId}, starting at page {Page}", actorId, pageToFetch);
+
+            var movies = await _tmdbService.DiscoverMoviesByActorAsync(actorId, pageToFetch);
+
+            if (movies.Any())
+            {
+                // If we found movies, update the session to get the next page next time
+                HttpContext.Session.SetInt32(sessionKey, pageToFetch + 1);
+            }
+            else
+            {
+                // If we ran out of movies for this actor, reset the page tracker for next time and fetch page 1 again
+                _logger.LogWarning("No movies found on page {Page} for actor {ActorId}. Resetting to page 1.", pageToFetch, actorId);
+                HttpContext.Session.SetInt32(sessionKey, 1);
+                movies = await _tmdbService.DiscoverMoviesByActorAsync(actorId, 1);
+            }
+
+            return movies.Take(3).ToList();
+        }
+
         #endregion
 
-        [HttpGet] 
+        [HttpGet]
         public async Task<IActionResult> GetTmdbMovieDetailsJson(int id) // 'id' here is the TMDB movie ID
         {
             if (id <= 0)
@@ -361,7 +435,7 @@ namespace Ezequiel_Movies.Controllers
             return View(viewModel);
         }
 
- 
+
 
         [HttpPost]
         public async Task<IActionResult> Add(AddMoviesViewModel viewModel)
