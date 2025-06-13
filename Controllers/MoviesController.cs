@@ -229,8 +229,9 @@ namespace Ezequiel_Movies.Controllers
 
                 case "cast_recent":
                 case "cast_frequent":
-                case "cast_rated": // We'll use TMDB popularity as a proxy for "rated"
+                case "cast_rated":
                 case "cast_random":
+                    #region Cast Suggestion Logic
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
                     if (!loggedCastMovies.Any())
                     {
@@ -239,9 +240,9 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
 
-                    // NOTE: This part is slow. We can optimize it later by storing cast info locally.
                     var allTopActors = new List<TmdbCastPerson>();
-                    foreach (var movie in loggedCastMovies.Take(15)) // Analyze last 15 movies for speed
+                    // NOTE: This part is slow. We can optimize it later.
+                    foreach (var movie in loggedCastMovies.Take(15))
                     {
                         var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                         if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(5));
@@ -264,18 +265,20 @@ namespace Ezequiel_Movies.Controllers
                         actorToSuggest = potentialActors.Any() ? potentialActors[new Random().Next(potentialActors.Count)] : null;
                         nextSuggestionType = "cast_random";
                     }
-
                     if (actorToSuggest == null) { return RedirectToAction("ShowSuggestions", new { suggestionType = "cast_random" }); }
 
                     var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id);
+
+                    // This line creates the `loggedTmdbIds` variable that was missing before the call
+                    var loggedTmdbIds = new HashSet<int>(loggedCastMovies.Select(m => m.TmdbId!.Value));
                     suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id);
 
                     suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
                     nextQuery = actorToSuggest.Name;
-                    break;
-
                     #endregion
+                    break;
+                #endregion
 
 
 
@@ -387,30 +390,32 @@ namespace Ezequiel_Movies.Controllers
             return movies.Take(3).ToList();
         }
 
+        // In MoviesController.cs
+
+        // In MoviesController.cs
+
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForActor(int actorId)
         {
-            // This uses the same session-based paging logic as our working Genre helper
-            string sessionKey = $"ActorPage_{actorId}";
-            int pageToFetch = HttpContext.Session.GetInt32(sessionKey) ?? 1;
+            _logger.LogInformation("HELPER: Getting random movies for actor ID {ActorId}", actorId);
 
-            _logger.LogInformation("HELPER: Finding movies for actor {ActorId}, starting at page {Page}", actorId, pageToFetch);
+            // 1. Get the actor's filmography using the service
+            var allActorMovies = await _tmdbService.DiscoverMoviesByActorAsync(actorId);
 
-            var movies = await _tmdbService.DiscoverMoviesByActorAsync(actorId, pageToFetch);
-
-            if (movies.Any())
+            if (!allActorMovies.Any())
             {
-                // If we found movies, update the session to get the next page next time
-                HttpContext.Session.SetInt32(sessionKey, pageToFetch + 1);
-            }
-            else
-            {
-                // If we ran out of movies for this actor, reset the page tracker for next time and fetch page 1 again
-                _logger.LogWarning("No movies found on page {Page} for actor {ActorId}. Resetting to page 1.", pageToFetch, actorId);
-                HttpContext.Session.SetInt32(sessionKey, 1);
-                movies = await _tmdbService.DiscoverMoviesByActorAsync(actorId, 1);
+                return new List<TmdbMovieBrief>();
             }
 
-            return movies.Take(3).ToList();
+            // 2. If they have 3 or fewer movies, just return them all
+            if (allActorMovies.Count <= 3)
+            {
+                return allActorMovies;
+            }
+
+            // 3. Otherwise, shuffle the entire list using Guid.NewGuid() and take 3 random ones
+            var randomSuggestions = allActorMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+
+            return randomSuggestions;
         }
 
         // In MoviesController.cs, add this new helper method

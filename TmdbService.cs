@@ -76,17 +76,18 @@ namespace Ezequiel_Movies
             }
         }
 
-        // This method discovers top-rated movies starring a specific actor.
-        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId, int page = 1)
+        // In TmdbService.cs
+
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId)
         {
-            _logger.LogInformation("Requesting TMDB API for movies with actor ID: {ActorId}, page: {Page}", actorId, page);
+            _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {ActorId}", actorId);
             try
             {
-                // We use the 'discover' endpoint, filtering by 'with_cast' and sorting by rating.
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
-                    $"discover/movie?with_cast={actorId}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
+                // This endpoint gets the full, accurate list of movies a person was in the cast for.
+                var response = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{actorId}/movie_credits?language=en-US");
 
-                return response?.Results ?? new List<TmdbMovieBrief>();
+                // We return the entire cast list, which we will sort and page in the controller.
+                return response?.Cast ?? new List<TmdbMovieBrief>();
             }
             catch (Exception ex)
             {
