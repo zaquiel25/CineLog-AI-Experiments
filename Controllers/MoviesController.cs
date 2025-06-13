@@ -275,8 +275,55 @@ namespace Ezequiel_Movies.Controllers
                     nextQuery = actorToSuggest.Name;
                     break;
 
-                default:
-                    return RedirectToAction("Suggest");
+                    #endregion
+
+
+
+                case "year_recent":
+                case "year_frequent":
+                case "year_rated":
+                case "year_random":
+                    var loggedYearMovies = await _dbContext.Movies.Where(m => m.ReleasedYear.HasValue).ToListAsync();
+                    if (!loggedYearMovies.Any())
+                    {
+                        suggestionTitle = "Log some movies to get year-based suggestions!";
+                        ViewData["ShowAddMovieButton"] = true;
+                        break;
+                    }
+
+                    var decades = loggedYearMovies.Select(m => (m.ReleasedYear!.Value / 10) * 10);
+                    var topYearQueue = new List<int>();
+
+                    if (loggedYearMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.ReleasedYear is int ry) topYearQueue.Add((ry / 10) * 10);
+                    if (decades.GroupBy(d => d).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is int fy && fy > 0 && !topYearQueue.Contains(fy)) topYearQueue.Add(fy);
+                    var ratedDecade = loggedYearMovies.Where(m => m.UserRating.HasValue).GroupBy(m => (m.ReleasedYear!.Value / 10) * 10).Select(g => new { Decade = g.Key, Avg = g.Average(m => m.UserRating!.Value) }).OrderByDescending(d => d.Avg).Select(d => d.Decade).FirstOrDefault();
+                    if (ratedDecade > 0 && !topYearQueue.Contains(ratedDecade)) topYearQueue.Add(ratedDecade);
+
+                    int? decadeToSuggest = null;
+                    if (suggestionType == "year_recent") { decadeToSuggest = topYearQueue.ElementAtOrDefault(0); nextSuggestionType = "year_frequent"; }
+                    else if (suggestionType == "year_frequent") { decadeToSuggest = topYearQueue.ElementAtOrDefault(1); nextSuggestionType = "year_rated"; }
+                    else if (suggestionType == "year_rated") { decadeToSuggest = topYearQueue.ElementAtOrDefault(2); nextSuggestionType = "year_random"; }
+                    else if (suggestionType == "year_random")
+                    {
+                        var allDecades = decades.Distinct().ToList();
+                        var potentialDecades = allDecades.Where(d => d.ToString() != query).ToList();
+                        if (!potentialDecades.Any()) potentialDecades = allDecades;
+                        decadeToSuggest = potentialDecades.Any() ? potentialDecades[new Random().Next(potentialDecades.Count)] : null;
+                        nextSuggestionType = "year_random";
+                    }
+
+                    if (!decadeToSuggest.HasValue || decadeToSuggest == 0)
+                    {
+                        return RedirectToAction("ShowSuggestions", new { suggestionType = "year_random" });
+                    }
+
+                    suggestedMovies = await GetSuggestionsForDecade(decadeToSuggest.Value);
+                    suggestionTitle = $"Top-Rated movies from the {decadeToSuggest}s";
+                    nextQuery = decadeToSuggest.Value.ToString();
+                    break;
+                // ^^^^ END OF NEW YEAR LOGIC ^^^^
+
+                default: return RedirectToAction("Suggest");
             }
 
             ViewData["SuggestionTitle"] = suggestionTitle;
@@ -366,7 +413,37 @@ namespace Ezequiel_Movies.Controllers
             return movies.Take(3).ToList();
         }
 
-        #endregion
+        // In MoviesController.cs, add this new helper method
+
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDecade(int decade)
+        {
+            // Use a unique session key to remember the page for this specific decade
+            string sessionKey = $"DecadePage_{decade}";
+            int pageToFetch = HttpContext.Session.GetInt32(sessionKey) ?? 1;
+
+            _logger.LogInformation("HELPER: Finding movies for decade {Decade}, starting at page {Page}", decade, pageToFetch);
+
+            var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, pageToFetch);
+
+            if (movies.Any())
+            {
+                // If we found movies, save the NEXT page number for the next reshuffle.
+                HttpContext.Session.SetInt32(sessionKey, pageToFetch + 1);
+            }
+            else
+            {
+                // If we ran out of pages, reset the page counter and fetch page 1 again as a fallback.
+                _logger.LogWarning("No movies found on page {Page} for {Decade}. Resetting to page 1.", pageToFetch, decade);
+                HttpContext.Session.SetInt32(sessionKey, 1);
+                movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, 1);
+            }
+
+            return movies.Take(3).ToList();
+        }
+
+
+
+        ///
 
         [HttpGet]
         public async Task<IActionResult> GetTmdbMovieDetailsJson(int id) // 'id' here is the TMDB movie ID

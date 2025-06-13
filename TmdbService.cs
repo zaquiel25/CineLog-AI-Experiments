@@ -17,6 +17,50 @@ namespace Ezequiel_Movies
 
         // In TmdbService.cs
 
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDecadeAsync(int decade, int page = 1)
+        {
+            _logger.LogInformation("Requesting TMDB API for movies from decade: {Decade}, page: {Page}", decade, page);
+            try
+            {
+                // Define the start and end dates for the decade
+                string startDate = $"{decade}-01-01";
+                string endDate = $"{decade + 9}-12-31";
+
+                // Ask for movies within the date range, sorted by rating, with a minimum number of votes.
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
+                    $"discover/movie?primary_release_date.gte={startDate}&primary_release_date.lte={endDate}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
+
+                return response?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies by decade {Decade}", decade);
+                return new List<TmdbMovieBrief>();
+            }
+        }
+
+        // In TmdbService.cs
+
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByYearAsync(int year, int page = 1)
+        {
+            _logger.LogInformation("Requesting TMDB API for movies from year: {Year}, page: {Page}", year, page);
+            try
+            {
+                // VVVV THIS IS THE CORRECTED LINE VVVV
+                // We now sort by vote_average and require a minimum vote count for quality results.
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
+                    $"discover/movie?primary_release_year={year}&sort_by=vote_average.desc&vote_count.gte=300&language=en-US&page={page}");
+
+                return response?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies by year {Year}", year);
+                return new List<TmdbMovieBrief>();
+            }
+        }
+
+
         // This method gets the details for a single person, including their profile picture path.
         public async Task<TmdbPersonDetails?> GetPersonDetailsAsync(int personId)
         {
