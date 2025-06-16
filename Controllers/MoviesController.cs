@@ -245,7 +245,7 @@ namespace Ezequiel_Movies.Controllers
                     foreach (var movie in loggedCastMovies.Take(15))
                     {
                         var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
-                        if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(5));
+                        if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(3));
                     }
                     if (!allTopActors.Any()) { suggestionTitle = "Could not find cast info in your recent logs."; break; }
 
@@ -546,7 +546,7 @@ namespace Ezequiel_Movies.Controllers
                     Director = viewModel.Director,
                     ReleasedYear = viewModel.ReleasedYear,
                     DateWatched = viewModel.DateWatched,
-                    WatchedLocation = viewModel.WatchedLocation!.Value, // Assuming WatchedLocation is required
+                    WatchedLocation = viewModel.WatchedLocation,
                     PosterPath = viewModel.PosterPath,
                     Overview = viewModel.Overview,
                     IsRewatch = viewModel.IsRewatch,       // Assign IsRewatch
@@ -760,7 +760,7 @@ namespace Ezequiel_Movies.Controllers
                     movieEntity.Director = viewModel.Director;
                     movieEntity.ReleasedYear = viewModel.ReleasedYear;
                     movieEntity.DateWatched = viewModel.DateWatched;
-                    movieEntity.WatchedLocation = viewModel.WatchedLocation!.Value;
+                    movieEntity.WatchedLocation = viewModel.WatchedLocation;
                     movieEntity.PosterPath = viewModel.PosterPath;
                     movieEntity.Overview = viewModel.Overview;
                     movieEntity.IsRewatch = viewModel.IsRewatch;

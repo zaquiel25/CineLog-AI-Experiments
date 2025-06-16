@@ -14,7 +14,7 @@ namespace Ezequiel_Movies1.Models.Entities
 
         public DateTime? DateWatched { get; set; }
 
-        public WatchedLocationType WatchedLocation { get; set; }
+        public WatchedLocationType? WatchedLocation { get; set; }
 
         public bool Subscribed { get; set; }
 

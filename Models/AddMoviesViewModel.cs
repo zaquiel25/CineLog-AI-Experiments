@@ -21,7 +21,7 @@ namespace Ezequiel_Movies.Models
         [NoFutureDate(ErrorMessage = "Date watched cannot be in the future.")]
         public DateTime? DateWatched { get; set; }
 
-        [Required(ErrorMessage = "Please select where you watched the movie.")]
+        
         public WatchedLocationType? WatchedLocation { get; set; }
 
         public bool Subscribed { get; set; }
