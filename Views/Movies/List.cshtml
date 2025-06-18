@@ -110,8 +110,7 @@ else
                             {
                                 <li class="mb-1"><strong>Watched:</strong> @movie.DateWatched?.ToString("dd/MM/yyyy")</li>
                             }
-                            <li class="mb-1"><strong>At:</strong> @movie.WatchedLocation</li>
-
+                        <li class="mb-1"><strong>At:</strong> @(movie.WatchedLocation.HasValue ? movie.WatchedLocation.ToString() : "—")</li>
                             @if (movie.IsRewatch)
                             {
                                 <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>

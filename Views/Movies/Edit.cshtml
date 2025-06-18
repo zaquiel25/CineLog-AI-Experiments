@@ -167,6 +167,24 @@ else
 
             const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
 
+            // VVVV ADD THIS NEW LOGIC FOR UN-SELECTABLE RADIO BUTTONS VVVV
+            const locationRadios = document.querySelectorAll('input[type="radio"][name="WatchedLocation"]');
+            let lastCheckedLocation = document.querySelector('input[type="radio"][name="WatchedLocation"]:checked');
+
+            locationRadios.forEach(radio => {
+                radio.addEventListener('click', function (e) {
+                    if (lastCheckedLocation === e.target) {
+                        // If the clicked radio is the same as the one we remember, un-check it.
+                        e.target.checked = false;
+                        lastCheckedLocation = null;
+                    } else {
+                        // Otherwise, remember this new selection.
+                        lastCheckedLocation = e.target;
+                    }
+                });
+            });
+            // ^^^^ END OF NEW LOGIC ^^^^
+
             // --- Element existence checks ---
             if (!titleQueryInput) console.error("SCRIPT ERROR: 'editMovieFormTitle' not found!");
             if (!selectedMoviePreviewDiv) console.error("SCRIPT ERROR: 'editTmdbSelectedMoviePreview' not found!");

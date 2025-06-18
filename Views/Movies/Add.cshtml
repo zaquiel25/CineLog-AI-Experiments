@@ -119,6 +119,7 @@
             console.log('Add.cshtml - Full script loaded.');
 
             // --- Get all DOM Elements first ---
+
             const tmdbQueryInput = document.getElementById('tmdbSearchQueryInput');
             const tmdbResultsDisplayDiv = document.getElementById('tmdbSearchResultsDisplay');
             const movieDetailsAndUserInputsSection = document.getElementById('movieDetailsAndUserInputsSection');
@@ -141,6 +142,7 @@
             const dateWatchedField = document.getElementById('movieFormDateWatched');
             const isRewatchCheckbox = document.getElementById('addIsRewatchCheck');
             const locationRadios = document.querySelectorAll('input[type="radio"][name="WatchedLocation"]');
+            let lastCheckedLocation = null;
 
             const starRatingContainer = document.getElementById('starRatingContainer');
             const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
@@ -210,6 +212,27 @@
             // Note: We no longer set the date here. The server does it. The check below handles the reset.
 
             // --- Event Listeners and Main Logic ---
+            locationRadios.forEach(radio => {
+                if (radio.checked) {
+                    lastCheckedLocation = radio;
+                }
+            });
+
+            // Add a click listener to every radio button in the group
+            locationRadios.forEach(radio => {
+                radio.addEventListener('click', function (e) {
+                    if (lastCheckedLocation === e.target) {
+                        // If the clicked radio is the same as the one we remember,
+                        // un-check it and forget it.
+                        e.target.checked = false;
+                        lastCheckedLocation = null;
+                    } else {
+                        // Otherwise, remember this new selection.
+                        lastCheckedLocation = e.target;
+                    }
+                });
+            });
+
             if (starRatingContainer) {
                 starRatingContainer.addEventListener('mousemove', function(e) { if (currentRating > 0) { return; } const targetStarElement = e.target.closest('.star'); if (targetStarElement && stars.includes(targetStarElement)) { const starIndex = stars.indexOf(targetStarElement); const starElementFullValue = starIndex + 1; const rect = targetStarElement.getBoundingClientRect(); const mouseX = e.clientX - rect.left; let hoverRating = starElementFullValue; if (mouseX <= rect.width / 2) { hoverRating -= 0.5; } renderStarsForRating(hoverRating); stars.forEach(s => s.classList.add('hover')); } });
                 starRatingContainer.addEventListener('mouseleave', function() { renderStarsForRating(currentRating); });
