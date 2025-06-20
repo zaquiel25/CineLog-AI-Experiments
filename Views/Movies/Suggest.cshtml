@@ -61,7 +61,7 @@
                 </a>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a href="#" class="suggestion-card card h-100 text-decoration-none" title="Coming Soon!">
+                <a asp-action="GetSurpriseSuggestion" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Surprise Me!</h5>
@@ -83,6 +83,7 @@
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
+
                     <div class="d-flex justify-content-center align-items-center">
                         @if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"].ToString()))
                         {
@@ -94,13 +95,35 @@
 
                     @if (Model.Any())
                     {
-                        <a asp-action="ShowSuggestions"
-                           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-                           asp-route-query="@ViewData["NextQuery"]"
-                           asp-route-page="@ViewData["NextPage"]"
-                           class="btn btn-sm btn-outline-secondary mt-3">
-                            <i class="bi bi-arrow-repeat"></i> Reshuffle
-                        </a>
+                        @* VVVV THIS IS THE NEW, SMARTER RESHUFFLE LOGIC VVVV *@
+                        @if (Model.Any())
+                        {
+
+                            var nextAction = (ViewData["NextSuggestionType"] as string) == "surprise_me"
+                                ? "GetSurpriseSuggestion"
+                                : "ShowSuggestions";
+
+                            <a asp-action="@nextAction"
+                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+                               asp-route-query="@ViewData["NextQuery"]"
+                               asp-route-page="@ViewData["NextPage"]"
+                               class="btn btn-sm btn-outline-secondary mt-3">
+                                <i class="bi bi-arrow-repeat"></i>
+                                @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle")
+                            </a>
+                        }
+                        else
+                        {
+                            // Otherwise, use the normal reshuffle logic for Director, Genre, Trending etc.
+                            <a asp-action="ShowSuggestions"
+                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+                               asp-route-query="@ViewData["NextQuery"]"
+                               asp-route-page="@ViewData["NextPage"]"
+                               class="btn btn-sm btn-outline-secondary mt-3">
+                                <i class="bi bi-arrow-repeat"></i> Reshuffle
+                            </a>
+                        }
+                        @* ^^^^ END OF NEW LOGIC ^^^^ *@
                     }
                     else if ((bool?)ViewData["ShowAddMovieButton"] == true)
                     {
@@ -108,6 +131,7 @@
                             <i class="bi bi-plus-circle me-2"></i> Log a Movie
                         </a>
                     }
+                </div>
                 </div>
 
                 @if (Model.Any())
@@ -119,7 +143,7 @@
                         }
                     </div>
                 }
-            </div>
+            
         }
         else if (genreList != null && genreList.Any()) // Logic to show Genre buttons
         {

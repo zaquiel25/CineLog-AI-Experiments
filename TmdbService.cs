@@ -12,10 +12,52 @@ namespace Ezequiel_Movies
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
+        private static readonly Random _random = new Random();
 
 
+
+        public async Task<TmdbMovieBrief?> GetRandomPopularMovieAsync()
+        {
+            _logger.LogInformation("Requesting a random popular movie for fallback.");
+            try
+            {
+                int randomPage = _random.Next(1, 21); // Use the static random instance
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"movie/popular?language=en-US&page={randomPage}");
+                var movies = response?.Results;
+                if (movies != null && movies.Any())
+                {
+                    return movies[_random.Next(movies.Count)]; // Use the static random instance again
+                }
+            }
+            catch (Exception ex) { /* ... */ }
+            return null;
+        }
 
         // In TmdbService.cs
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesAsync(int? directorId, int? actorId, int? genreId, int? decade)
+        {
+            var queryBuilder = new System.Text.StringBuilder("discover/movie?language=en-US&sort_by=popularity.desc&vote_count.gte=100");
+            if (directorId.HasValue) queryBuilder.Append($"&with_crew={directorId.Value}");
+            if (actorId.HasValue) queryBuilder.Append($"&with_cast={actorId.Value}");
+            if (genreId.HasValue) queryBuilder.Append($"&with_genres={genreId.Value}");
+            if (decade.HasValue)
+            {
+                queryBuilder.Append($"&primary_release_date.gte={decade.Value}-01-01");
+                queryBuilder.Append($"&primary_release_date.lte={decade.Value + 9}-12-31");
+            }
+            var requestUri = queryBuilder.ToString();
+            _logger.LogInformation("DISCOVER: Requesting TMDB API: {RequestUri}", requestUri);
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
+                return response?.Results ?? new List<TmdbMovieBrief>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed during discover API call for URI: {RequestUri}", requestUri);
+                return new List<TmdbMovieBrief>();
+            }
+        }
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDecadeAsync(int decade, int page = 1)
         {

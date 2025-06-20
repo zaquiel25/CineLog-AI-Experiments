@@ -28,7 +28,107 @@ namespace Ezequiel_Movies.Controllers
             _logger = logger;
         }
 
+
         // In MoviesController.cs
+
+        [HttpGet]
+        public async Task<IActionResult> GetSurpriseSuggestion()
+        {
+            _logger.LogInformation("GetSurpriseSuggestion action invoked.");
+
+            var loggedMovies = await _dbContext.Movies
+                .Where(m => m.TmdbId.HasValue && !string.IsNullOrEmpty(m.Director) && !string.IsNullOrEmpty(m.Genres) && m.ReleasedYear.HasValue)
+                .ToListAsync();
+
+            if (loggedMovies.Count < 3)
+            {
+                ViewData["SuggestionTitle"] = "Log at least 3 movies to get a 'Surprise Me!' suggestion.";
+                ViewData["ShowAddMovieButton"] = true;
+                return View("Suggest", new List<TmdbMovieBrief>());
+            }
+
+            // --- 1. Create Ingredient Pools and Pick Random Ingredients ---
+            var random = new Random();
+            var directorPool = loggedMovies.Select(m => m.Director!).Distinct().ToList();
+            var genrePool = loggedMovies.SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)).Distinct().ToList();
+            var actorPool = new List<TmdbCastPerson>();
+            foreach (var movie in loggedMovies.OrderByDescending(m => m.DateWatched).Take(15))
+            {
+                var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                if (details?.Credits?.Cast != null) actorPool.AddRange(details.Credits.Cast.Take(3));
+            }
+            actorPool = actorPool.DistinctBy(p => p.Id).ToList();
+
+            if (!actorPool.Any())
+            {
+                ViewData["SuggestionTitle"] = "Could not find cast info in your recent logs.";
+                return View("Suggest", new List<TmdbMovieBrief>());
+            }
+
+            var randDirectorId = await _tmdbService.GetPersonIdAsync(directorPool[random.Next(directorPool.Count)]);
+            var randActorId = actorPool[random.Next(actorPool.Count)].Id;
+            var allGenres = await _tmdbService.GetAllGenresAsync();
+            var randGenreId = allGenres.FirstOrDefault(g => g.Name == genrePool[random.Next(genrePool.Count)])?.Id;
+
+            // --- 2. The "Progressive Fallback" Search ---
+            var potentialMovies = new List<TmdbMovieBrief>();
+            potentialMovies.AddRange(await _tmdbService.DiscoverMoviesAsync(randDirectorId, randActorId, randGenreId, null));
+            if (!potentialMovies.Any())
+            {
+                _logger.LogInformation("Surprise Me: 3/3 match failed, trying 2/3 fallbacks.");
+                potentialMovies.AddRange(await _tmdbService.DiscoverMoviesAsync(randDirectorId, randActorId, null, null));
+                potentialMovies.AddRange(await _tmdbService.DiscoverMoviesAsync(null, randActorId, randGenreId, null));
+            }
+
+            // --- 3. Filter and Select the Final Surprise ---
+            var shownSurpriseIds = HttpContext.Session.Get<List<int>>("ShownSurpriseIds") ?? new List<int>();
+            var finalFilteredList = potentialMovies
+                .DistinctBy(m => m.Id)
+                .Where(m => m.VoteAverage >= 4.0)
+                .Where(m => !shownSurpriseIds.Contains(m.Id))
+                .ToList();
+
+            TmdbMovieBrief? suggestedMovie = finalFilteredList.Any() ? finalFilteredList[random.Next(finalFilteredList.Count)] : null;
+
+            // --- 4. The "Memory Reset" ---
+            // If our filters removed all possibilities, clear the memory and try one more time.
+            if (suggestedMovie == null && potentialMovies.Any())
+            {
+                shownSurpriseIds.Clear();
+                finalFilteredList = potentialMovies.Where(m => m.VoteAverage >= 4.0).ToList();
+                suggestedMovie = finalFilteredList.Any() ? finalFilteredList[random.Next(finalFilteredList.Count)] : null;
+            }
+
+            // --- 5. Prepare the Final Result ---
+            var suggestedMoviesList = new List<TmdbMovieBrief>();
+            string suggestionTitle;
+
+            if (suggestedMovie != null)
+            {
+                // SUCCESS: We found a surprise.
+                suggestionTitle = "Your Surprise Suggestion...";
+                suggestedMoviesList.Add(suggestedMovie);
+
+                // Update our session "memory".
+                shownSurpriseIds.Add(suggestedMovie.Id);
+                if (shownSurpriseIds.Count > 20) shownSurpriseIds.RemoveAt(0); // Keep memory list from growing too big
+                HttpContext.Session.Set("ShownSurpriseIds", shownSurpriseIds);
+            }
+            else
+            {
+                // THE "CAN'T FAIL" FALLBACK: If all else fails, get a random popular movie.
+                suggestionTitle = "Your Surprise Suggestion...";
+                var fallbackMovie = await _tmdbService.GetRandomPopularMovieAsync();
+                if (fallbackMovie != null) suggestedMoviesList.Add(fallbackMovie);
+
+                // Reset the surprise memory since we had to use the final fallback.
+                HttpContext.Session.Remove("ShownSurpriseIds");
+            }
+
+            ViewData["SuggestionTitle"] = suggestionTitle;
+            ViewData["NextSuggestionType"] = "surprise_me";
+            return View("Suggest", suggestedMoviesList);
+        }
 
         [HttpGet]
         public async Task<IActionResult> SelectGenre()
