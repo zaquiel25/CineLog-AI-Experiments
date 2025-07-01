@@ -1,10 +1,11 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies1.Models.Entities; // Assuming this is the correct namespace for your Movies entity
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Ezequiel_Movies.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
