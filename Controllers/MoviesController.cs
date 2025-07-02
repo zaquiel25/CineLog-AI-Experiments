@@ -11,25 +11,32 @@ using Ezequiel_Movies.Models.TmdbApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Ezequiel_Movies.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace Ezequiel_Movies.Controllers
 {
+
+    [Authorize]
     public class MoviesController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly TmdbService _tmdbService;
         private readonly ILogger<MoviesController> _logger;
+        private readonly UserManager<IdentityUser> _userManager;
 
 
-        public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger)
+        public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger, UserManager<IdentityUser> userManager)
         {
             _dbContext = dbContext;
             _tmdbService = tmdbService;
             _logger = logger;
+            _userManager = userManager;
+
         }
 
 
-        // In MoviesController.cs
+        // In MoviesController.cs   
 
         [HttpGet]
         public async Task<IActionResult> GetSurpriseSuggestion()
@@ -639,7 +646,19 @@ namespace Ezequiel_Movies.Controllers
 
             if (ModelState.IsValid)
             {
-                var movie = new Ezequiel_Movies1.Models.Entities.Movies // Ensure this namespace is correct
+
+
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                // This will prevent non-logged-in users from adding movies.
+                // We'll improve this with an [Authorize] tag later.
+                return Unauthorized();
+            }
+            // ^^^^ END OF NEW LOGIC ^^^^
+
+
+            var movie = new Ezequiel_Movies1.Models.Entities.Movies // Ensure this namespace is correct
                 {
                     Id = Guid.NewGuid(),
                     Title = viewModel.Title,
@@ -652,8 +671,9 @@ namespace Ezequiel_Movies.Controllers
                     IsRewatch = viewModel.IsRewatch,       // Assign IsRewatch
                     Subscribed = viewModel.Subscribed,
                     UserRating = viewModel.UserRating,
-                    TmdbId = viewModel.TmdbId
-                }; // Object initializer for 'movie' ends here
+                    TmdbId = viewModel.TmdbId,
+                    UserId = userId
+            }; // Object initializer for 'movie' ends here
 
                 // VVVV NEW LOGIC TO FETCH AND SAVE GENRES VVVV
                 if (movie.TmdbId.HasValue)
@@ -705,6 +725,21 @@ namespace Ezequiel_Movies.Controllers
         [HttpGet]
         public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber)
         {
+
+            // 1. Get the current logged-in user's ID
+            var userId = _userManager.GetUserId(User);
+
+            // 2. Start the query AND immediately filter it to only include movies where the UserId matches.
+            var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
+
+            // ^^^^ END OF CHANGES ^^^^
+
+
+            // The rest of your existing logic for sorting and searching will now
+            // automatically apply only to this filtered list of the user's own movies.
+
+            _logger.LogInformation("Fetching movie list for User ID: {UserId}", userId);
+
             Console.WriteLine($"--- List Action Invoked --- SortOrder: [{sortOrder}], SearchString: [{searchString}], PageNumber: [{pageNumber}]");
 
             ViewData["CurrentFilter"] = searchString;
@@ -727,7 +762,7 @@ namespace Ezequiel_Movies.Controllers
             ViewData["RatingSortParm"] = actualSortToApply == "rating_desc" ? "rating_asc" : "rating_desc";
             // --- ^^^^ END OF REVISED LOGIC ^^^^ ---
 
-            var moviesQuery = _dbContext.Movies.AsQueryable();
+            
 
             if (!String.IsNullOrEmpty(searchString))
             {
