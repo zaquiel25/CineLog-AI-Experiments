@@ -808,10 +808,15 @@ namespace Ezequiel_Movies.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var movieEntity = await _dbContext.Movies.FindAsync(id);
+            var userId = _userManager.GetUserId(User);
+
+            // Find the movie only if the ID matches AND it belongs to the current user.
+            var movieEntity = await _dbContext.Movies
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
             if (movieEntity == null)
             {
-                Console.WriteLine($"Edit GET - Movie with ID {id} not found in DB.");
+                // If the movie doesn't exist or doesn't belong to the user, return Not Found.
                 return NotFound();
             }
 
@@ -882,10 +887,14 @@ namespace Ezequiel_Movies.Controllers
 
             if (ModelState.IsValid)
             {
-                Console.WriteLine("Edit POST - ModelState IS VALID. Proceeding to save.");
-                var movieEntity = await _dbContext.Movies.FindAsync(viewModel.Id);
+                var userId = _userManager.GetUserId(User);
 
-                if (movieEntity is not null)
+                // VVVV THIS IS THE KEY CHANGE VVVV
+                // We now find the movie only if the ID and UserId both match.
+                var movieEntity = await _dbContext.Movies
+                    .FirstOrDefaultAsync(m => m.Id == viewModel.Id && m.UserId == userId);
+
+                if (movieEntity != null)
                 {
                     // Log original values from DB, including TmdbId
                     Console.WriteLine($"Edit POST - Movie Found (ID: {movieEntity.Id}). Original DB Values - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: {movieEntity.ReleasedYear}, IsRewatch: {movieEntity.IsRewatch}, UserRating: {movieEntity.UserRating}, TmdbId: {movieEntity.TmdbId}");
@@ -971,13 +980,18 @@ namespace Ezequiel_Movies.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             Console.WriteLine($"DEBUG: Delete action in MoviesController hit. ID received: {id}");
-            var movie = await _dbContext.Movies.FindAsync(id);
-            if (movie != null)
+            // First, find the movie only if the ID matches AND it belongs to the current user.
+            var userId = _userManager.GetUserId(User);
+            var movieToDelete = await _dbContext.Movies
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
+            if (movieToDelete != null)
+                
             {
-                Console.WriteLine($"DEBUG: Movie found with Title: {movie.Title}. Preparing to remove.");
-                _dbContext.Movies.Remove(movie);
+                
+                _dbContext.Movies.Remove(movieToDelete);
                 await _dbContext.SaveChangesAsync();
-                Console.WriteLine($"DEBUG: Changes saved. Movie should be deleted.");
+                
             }
             else
             {
