@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Ezequiel_Movies.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Ezequiel_Movies1.Models.Entities;
 
 namespace Ezequiel_Movies.Controllers
 {
@@ -35,6 +36,63 @@ namespace Ezequiel_Movies.Controllers
 
         }
 
+        // In MoviesController.cs
+
+        [HttpGet]
+        public async Task<IActionResult> Wishlist()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // Find all items in the WishlistItems table that belong to the current user
+            var wishlistItems = await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId)
+                .OrderByDescending(w => w.DateAdded) // Show the most recently added items first
+                .ToListAsync();
+
+            return View(wishlistItems);
+        }
+
+        // In MoviesController.cs
+
+        [HttpPost]
+        public async Task<IActionResult> AddToWishlist(int tmdbId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId) || tmdbId == 0)
+            {
+                return BadRequest(); // Invalid request
+            }
+
+            // Check if this movie is already in the user's wishlist to prevent duplicates
+            var alreadyInWishlist = await _dbContext.WishlistItems
+                .AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+
+            if (!alreadyInWishlist)
+            {
+                // Get movie details from TMDB to save some basic info
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+                if (movieDetails != null)
+                {
+                    var wishlistItem = new WishlistItem
+                    {
+                        TmdbId = tmdbId,
+                        UserId = userId,
+                        Title = movieDetails.Title,
+                        PosterPath = movieDetails.PosterPath,
+                        ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
+                                         ? int.Parse(movieDetails.ReleaseDate.Substring(0, 4))
+                                         : null,
+                        DateAdded = DateTime.UtcNow
+                    };
+
+                    _dbContext.WishlistItems.Add(wishlistItem);
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+
+            // Redirect back to the preview page the user was on
+            return RedirectToAction("Wishlist");
+        }
 
         // In MoviesController.cs
 
