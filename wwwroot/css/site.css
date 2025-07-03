@@ -1,5 +1,12 @@
 ﻿/* Custom styles for CineLog */
 
+/* A helper class to make a link look like normal text */
+.link-as-text,
+.link-as-text:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
 html {
     font-size: 14px;
 }

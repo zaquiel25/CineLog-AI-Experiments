@@ -36,7 +36,24 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-        // In MoviesController.cs   
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // Find the movie in the database, but only if the ID matches AND it belongs to the current user.
+            var movie = await _dbContext.Movies
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
+            if (movie == null)
+            {
+                // If the movie doesn't exist or doesn't belong to the user, return a "Not Found" page.
+                return NotFound();
+            }
+
+            // If the movie is found and owned by the user, pass the movie object to the Details view.
+            return View(movie);
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetSurpriseSuggestion()

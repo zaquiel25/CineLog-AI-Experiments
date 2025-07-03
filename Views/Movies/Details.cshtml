@@ -1,0 +1,73 @@
+﻿@model Ezequiel_Movies1.Models.Entities.Movies
+
+@{
+    ViewData["Title"] = Model.Title;
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w500"; // Larger poster size
+}
+
+<div>
+    <h1 class="display-4">@Model.Title</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(Model.PosterPath))
+            {
+                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="img-fluid rounded shadow-sm" alt="@Model.Title Poster">
+            }
+            else
+            {
+                <div class="d-flex align-items-center justify-content-center bg-light rounded shadow-sm" style="width: 100%; height: 450px; border: 1px dashed #ccc;">
+                    <span class="text-muted">No Poster Available</span>
+                </div>
+            }
+        </div>
+        <div class="col-md-8">
+            <dl class="row">
+                <dt class="col-sm-3">Director</dt>
+                <dd class="col-sm-9">@Model.Director</dd>
+
+                <dt class="col-sm-3">Released</dt>
+                <dd class="col-sm-9">@(Model.ReleasedYear.HasValue ? Model.ReleasedYear.Value.ToString() : "N/A")</dd>
+
+                <dt class="col-sm-3">Genres</dt>
+                <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.Genres) ? "N/A" : Model.Genres)</dd>
+
+                <dt class="col-sm-3">Date Watched</dt>
+                <dd class="col-sm-9">@(Model.DateWatched.HasValue ? Model.DateWatched.Value.ToString("D") : "N/A")</dd>
+
+                <dt class="col-sm-3">Watched At</dt>
+                <dd class="col-sm-9">@(Model.WatchedLocation.HasValue ? Model.WatchedLocation.ToString() : "—")</dd>
+
+                <dt class="col-sm-3">Your Rating</dt>
+                <dd class="col-sm-9">
+                    @if (Model.UserRating.HasValue && Model.UserRating.Value > 0)
+                    {
+                        <span class="star-rating-display" style="color: #ffc107; font-size: 1.2rem;">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (Model.UserRating.Value >= i)
+                                {<i class="bi bi-star-fill"></i> }
+                                else if (Model.UserRating.Value >= (i - 0.5m))
+                                { <i class="bi bi-star-half"></i> }
+                                else
+                                { <i class="bi bi-star"></i>}
+                            }
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not Rated</span>
+                    }
+                </dd>
+            </dl>
+
+            <h5 class="mt-4">Overview</h5>
+            <p>@Model.Overview</p>
+        </div>
+    </div>
+</div>
+<hr />
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+    <a asp-action="List" class="btn btn-outline-secondary">Back to List</a>
+</div>
