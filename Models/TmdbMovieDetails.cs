@@ -8,6 +8,12 @@ namespace Ezequiel_Movies.Models.TmdbApi
 {
     public class TmdbMovieDetails
     {
+        [JsonPropertyName("tagline")]
+        public string? Tagline { get; set; }
+
+        [JsonPropertyName("vote_average")]
+        public double VoteAverage { get; set; }
+
         [JsonPropertyName("id")]
         public int Id { get; set; }
 

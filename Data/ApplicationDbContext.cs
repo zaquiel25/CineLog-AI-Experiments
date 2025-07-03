@@ -13,6 +13,10 @@ namespace Ezequiel_Movies.Data
 
         public DbSet<Movies> Movies { get; set; }
 
+        // VVVV ADD THESE TWO NEW LINES VVVV
+        public DbSet<WishlistItem> WishlistItems { get; set; }
+        public DbSet<BlacklistedMovie> BlacklistedMovies { get; set; }
+
         // VVVV ADD THIS METHOD VVVV
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -39,6 +39,45 @@ namespace Ezequiel_Movies.Controllers
         // In MoviesController.cs
 
         [HttpGet]
+        public async Task<IActionResult> Preview(int tmdbId)
+        {
+            if (tmdbId == 0)
+            {
+                return BadRequest();
+            }
+
+            // 1. Get all the movie details from TMDB
+            var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+            if (movieDetails == null)
+            {
+                return NotFound();
+            }
+
+            // 2. Get the "Where to Watch" providers
+            var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId);
+            if (watchProviders?.Results != null)
+            {
+                // Prioritize Ireland, but fall back to US or GB for provider info
+                if (watchProviders.Results.TryGetValue("IE", out var providers) ||
+                    watchProviders.Results.TryGetValue("US", out providers) ||
+                    watchProviders.Results.TryGetValue("GB", out providers))
+                {
+                    ViewData["StreamingProviders"] = providers.Streaming;
+                }
+            }
+
+            // 3. Check if the currently logged-in user has already logged this movie
+            var userId = _userManager.GetUserId(User);
+            bool isAlreadyLogged = await _dbContext.Movies
+                .AnyAsync(m => m.UserId == userId && m.TmdbId == tmdbId);
+
+            ViewData["IsAlreadyLogged"] = isAlreadyLogged;
+
+            // Pass the full movie details object from TMDB to the new view
+            return View(movieDetails);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
             var userId = _userManager.GetUserId(User);

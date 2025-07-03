@@ -6,22 +6,29 @@
 
 <div class="col">
     <div class="card h-100 shadow-sm">
-        @if (!string.IsNullOrEmpty(Model.PosterPath))
-        {
-            <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="height: 300px; width: 100%; object-fit: contain;">
-        }
-        else
-        {
-            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 300px; font-size:0.8rem; color: #6c757d;">
-                <span>No Poster Available</span>
-            </div>
-        }
+        @* The link is now wrapped around the image *@
+        <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">
+            @if (!string.IsNullOrEmpty(Model.PosterPath))
+            {
+                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="height: 300px; width: 100%; object-fit: contain;">
+            }
+            else
+            {
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 300px; font-size:0.8rem; color: #6c757d;">
+                    <span>No Poster Available</span>
+                </div>
+            }
+        </a>
         <div class="card-body d-flex flex-column">
-            <h6 class="card-title" style="font-size: 0.9rem;">@Model.Title</h6>
+            <h6 class="card-title" style="font-size: 0.9rem;">
+                @* The title is also a link *@
+                <a asp-action="Preview" asp-controller="Movies" asp-route-tmdbId="@Model.Id" class="link-as-text">
+                    @Model.Title
+                </a>
+            </h6>
+            <p class="card-text mb-2"><small class="text-muted">@(!string.IsNullOrEmpty(Model.ReleaseDate) && Model.ReleaseDate.Length >= 4 ? Model.ReleaseDate.Substring(0, 4) : "")</small></p>
 
-            @* VVVV THIS IS THE CORRECTED LINE VVVV *@
-            <p class="card-text mb-2"><small class="text-muted">@(!string.IsNullOrEmpty(Model.ReleaseDate) && Model.ReleaseDate.Length >= 4 ? Model.ReleaseDate.Substring(0, 4) : "N/A")</small></p>
-
+            @* We are keeping the "View on TMDB" button as a convenient external link *@
             <div class="mt-auto">
                 <a href="https://www.themoviedb.org/movie/@Model.Id" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info w-100">
                     <i class="bi bi-box-arrow-up-right me-1"></i> View on TMDB
