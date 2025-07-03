@@ -63,9 +63,61 @@
 
             <h5 class="mt-4">Overview</h5>
             <p>@Model.Overview</p>
+
+            @* VVVV ADD THIS NEW SECTION FOR THE CAST VVVV *@
+            @{
+                var cast = ViewData["Cast"] as List<Ezequiel_Movies.Models.TmdbApi.TmdbCastPerson>;
+            }
+
+            @if (cast != null && cast.Any())
+            {
+                <h5 class="mt-4">Starring</h5>
+                <div class="d-flex">
+                    @foreach (var actor in cast)
+                    {
+                        <div class="text-center me-3">
+                            @if (!string.IsNullOrEmpty(actor.ProfilePath))
+                            {
+                                <img src="@(tmdbImageBaseUrl + actor.ProfilePath)"
+                                     class="rounded-circle"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     title="@actor.Name"
+                                     alt="@actor.Name profile picture">
+                            }
+                            <p class="mb-0" style="font-size: 0.8rem;">@actor.Name</p>
+                        </div>
+                    }
+                </div>
+            }
+            @* ^^^^ END OF NEW SECTION ^^^^ *@
+
+            @{
+                var streamingProviders = ViewData["StreamingProviders"] as List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>;
+
+            }
+
+            @if (streamingProviders != null && streamingProviders.Any())
+            {
+                <h5 class="mt-4">Where to Watch</h5>
+                <div class="d-flex flex-wrap">
+                    @foreach (var provider in streamingProviders)
+                    {
+                        <div class="me-2 mb-2">
+                            <img src="@(tmdbImageBaseUrl + provider.LogoPath)"
+                                 class="rounded"
+                                 style="width: 50px; height: 50px;"
+                                 title="@provider.ProviderName"
+                                 alt="@provider.ProviderName logo">
+                        </div>
+                    }
+                </div>
+            }
         </div>
+@* ^^^^ END OF NEW SECTION ^^^^ *@
     </div>
 </div>
+
+
 <hr />
 <div class="mt-3">
     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>

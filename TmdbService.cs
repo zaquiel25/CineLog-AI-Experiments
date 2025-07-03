@@ -16,6 +16,20 @@ namespace Ezequiel_Movies
 
 
 
+        public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbId)
+        {
+            _logger.LogInformation("Requesting Watch Providers for movie ID: {MovieId}", tmdbId);
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<WatchProviderResponse>($"movie/{tmdbId}/watch/providers");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch watch providers for movie ID {MovieId}", tmdbId);
+                return null;
+            }
+        }
+
         public async Task<TmdbMovieBrief?> GetRandomPopularMovieAsync()
         {
             _logger.LogInformation("Requesting a random popular movie for fallback.");

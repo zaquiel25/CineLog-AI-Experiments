@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Ezequiel_Movies.Models.TmdbApi
 {
+
+
     public class TmdbPersonBrief
     {
         [JsonPropertyName("id")]

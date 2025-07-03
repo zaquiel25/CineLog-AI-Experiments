@@ -1,6 +1,4 @@
-﻿// In Models/TmdbApi/TmdbPersonCredits.cs
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Ezequiel_Movies.Models.TmdbApi
@@ -26,5 +24,21 @@ namespace Ezequiel_Movies.Models.TmdbApi
 
         [JsonPropertyName("popularity")]
         public double Popularity { get; set; }
+
+        [JsonPropertyName("profile_path")]
+        public string? ProfilePath { get; set; }
+    }
+
+    // This class holds the full details for one person (used to get their picture)
+    public class TmdbPersonDetails
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("profile_path")]
+        public string? ProfilePath { get; set; }
     }
 }

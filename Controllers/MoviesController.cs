@@ -36,22 +36,45 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
+        // In MoviesController.cs
+
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
             var userId = _userManager.GetUserId(User);
-
-            // Find the movie in the database, but only if the ID matches AND it belongs to the current user.
-            var movie = await _dbContext.Movies
-                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+            var movie = await _dbContext.Movies.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (movie == null)
             {
-                // If the movie doesn't exist or doesn't belong to the user, return a "Not Found" page.
                 return NotFound();
             }
 
-            // If the movie is found and owned by the user, pass the movie object to the Details view.
+            if (movie.TmdbId.HasValue)
+            {
+                // Get "Where to Watch" info
+                var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value);
+                if (watchProviders?.Results != null)
+                {
+                    if (watchProviders.Results.TryGetValue("IE", out var irishProviders) && irishProviders.Streaming != null)
+                    {
+                        ViewData["StreamingProviders"] = irishProviders.Streaming;
+                    }
+                    else if (watchProviders.Results.TryGetValue("US", out var usProviders) && usProviders.Streaming != null)
+                    {
+                        ViewData["StreamingProviders"] = usProviders.Streaming;
+                    }
+                }
+
+                // VVVV NEW LOGIC TO GET THE CAST VVVV
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                if (movieDetails?.Credits?.Cast != null)
+                {
+                    // Pass the top 3 cast members to the view
+                    ViewData["Cast"] = movieDetails.Credits.Cast.Take(3).ToList();
+                }
+                // ^^^^ END OF NEW LOGIC ^^^^
+            }
+
             return View(movie);
         }
 
