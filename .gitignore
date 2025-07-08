@@ -64,3 +64,4 @@ dist-server/
 # *.db-wal
 
 .vs/
+.fake
