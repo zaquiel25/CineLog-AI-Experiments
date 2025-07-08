@@ -869,9 +869,8 @@ namespace Ezequiel_Movies.Controllers
             // 2. Start the query AND immediately filter it to only include movies where the UserId matches.
             var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
 
-            // ^^^^ END OF CHANGES ^^^^
-
-
+            // Get the total movie count for this user and store it in ViewData.
+            ViewData["MovieCount"] = await moviesQuery.CountAsync();
             // The rest of your existing logic for sorting and searching will now
             // automatically apply only to this filtered list of the user's own movies.
 
