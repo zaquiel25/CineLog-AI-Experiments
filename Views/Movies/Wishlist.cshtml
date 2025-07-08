@@ -1,5 +1,4 @@
 ﻿@model IEnumerable<Ezequiel_Movies1.Models.Entities.WishlistItem>
-
 @{
     ViewData["Title"] = "My Wishlist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
@@ -38,13 +37,18 @@ else
                 <h6 class="card-title">@item.Title <small class="text-muted">(@item.ReleasedYear)</small></h6>
 
                 <div class="mt-auto">
-                    @* This button takes the user to the Add page to log the movie *@
-                    <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@item.TmdbId" class="btn btn-success btn-sm">
-                        <i class="bi bi-check-lg"></i> I've Watched It
-                    </a>
-                    <a href="#" class="btn btn-danger btn-sm ms-1" title="Coming Soon!">
-                        <i class="bi bi-trash"></i>
-                    </a>
+    @* This button takes the user to the Add page to log the movie *@
+    <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@item.TmdbId" class="btn btn-success btn-sm">
+        <i class="bi bi-check-lg"></i> I've Watched It
+    </a>
+    <form asp-action="RemoveFromWishlist" asp-route-tmdbId="@item.TmdbId" method="post" class="d-inline">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger btn-sm ms-1"
+            onclick="return confirm('Are you sure you want to remove \'@item.Title?.Replace("'", "\\'")\' from your wishlist?');"
+            title="Remove from wishlist">
+        <i class="bi bi-trash"></i>
+    </button>
+</form>
                 </div>
             </div>
         </div>

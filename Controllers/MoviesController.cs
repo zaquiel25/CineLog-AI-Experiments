@@ -94,6 +94,29 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction("Wishlist");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> RemoveFromWishlist(int tmdbId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId) || tmdbId == 0)
+            {
+                return BadRequest();
+            }
+
+            var wishlistItem = await _dbContext.WishlistItems
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+
+            if (wishlistItem != null)
+            {
+                _dbContext.WishlistItems.Remove(wishlistItem);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Wishlist");
+        }
+
         // In MoviesController.cs
 
         [HttpGet]
