@@ -36,6 +36,99 @@ namespace Ezequiel_Movies.Controllers
 
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddToBlacklist(int tmdbId, string returnUrl = "/")
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            // Check if already blacklisted
+            var existingBlacklistedMovie = await _dbContext.BlacklistedMovies
+                .FirstOrDefaultAsync(b => b.UserId == userId && b.TmdbId == tmdbId);
+            if (existingBlacklistedMovie != null)
+            {
+                // Already exists, redirect to blacklist page
+                return RedirectToAction(nameof(Blacklist));
+            }
+            // Get movie details from TMDB
+            var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+            if (movieDetails == null)
+            {
+                return NotFound();
+            }
+            // Create new blacklist entry with poster path
+            var blacklistedMovie = new Ezequiel_Movies1.Models.Entities.BlacklistedMovie
+            {
+                UserId = userId,
+                TmdbId = tmdbId,
+                Title = movieDetails.Title ?? string.Empty,
+                BlacklistedDate = DateTime.Now,
+                PosterUrl = movieDetails.PosterPath
+            };
+            _dbContext.BlacklistedMovies.Add(blacklistedMovie);
+            await _dbContext.SaveChangesAsync();
+            // ALWAYS redirect to blacklist page
+            return RedirectToAction(nameof(Blacklist));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Blacklist()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            var blacklistedMovies = await _dbContext.BlacklistedMovies
+                .Where(b => b.UserId == userId)
+                .OrderByDescending(b => b.BlacklistedDate)
+                .ToListAsync();
+
+            // Fetch posters from TMDB for each movie
+            var blacklistedMoviesWithPosters = new List<dynamic>();
+            foreach (var movie in blacklistedMovies)
+            {
+                string? posterUrl = null;
+                try
+                {
+                    var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId);
+                    posterUrl = movieDetails?.PosterPath;
+                }
+                catch { }
+                blacklistedMoviesWithPosters.Add(new {
+                    Id = movie.Id,
+                    Title = movie.Title,
+                    TmdbId = movie.TmdbId,
+                    BlacklistedDate = movie.BlacklistedDate,
+                    PosterUrl = posterUrl
+                });
+            }
+            return View(blacklistedMoviesWithPosters);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFromBlacklist(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            var blacklistedMovie = await _dbContext.BlacklistedMovies
+                .FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
+            if (blacklistedMovie == null)
+            {
+                return NotFound();
+            }
+            _dbContext.BlacklistedMovies.Remove(blacklistedMovie);
+            await _dbContext.SaveChangesAsync();
+            return RedirectToAction(nameof(Blacklist));
+        }
+
         // In MoviesController.cs
 
         [HttpGet]

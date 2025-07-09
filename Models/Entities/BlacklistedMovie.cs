@@ -11,7 +11,7 @@ namespace Ezequiel_Movies1.Models.Entities
             Title = string.Empty;
         }
 
-    public string Title { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
 
         [Key]
         public int Id { get; set; }
@@ -23,5 +23,12 @@ namespace Ezequiel_Movies1.Models.Entities
         [Required]
         public string UserId { get; set; }
         public IdentityUser? User { get; set; }
+
+    // Date when the movie was blacklisted
+    [Required]
+    public DateTime BlacklistedDate { get; set; }
+
+    // Poster path from TMDB (optional, for display)
+    public string? PosterUrl { get; set; }
     }
 }

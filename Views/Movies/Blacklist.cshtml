@@ -1,0 +1,54 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "My Blacklist";
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
+}
+
+<h1>My Blacklist</h1>
+<p class="text-muted">Movies you want to avoid or never see in suggestions.</p>
+<hr />
+
+@if (!Model.Any())
+{
+    <p>Your blacklist is empty. Movies you add here will not appear in your suggestions.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
+                        @if (!string.IsNullOrEmpty(item.PosterUrl))
+                        {
+                            <img src="@(tmdbImageBaseUrl + item.PosterUrl)" alt="@item.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">@item.Title</h6>
+                        <p class="card-text text-muted flex-grow-1">
+                            <small>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</small>
+                        </p>
+                        <div class="mt-auto">
+                            <form asp-action="RemoveFromBlacklist" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm w-100"
+                                        onclick="return confirm('Are you sure you want to remove \'@item.Title?.Replace("'", "\\'")\' from your blacklist?');"
+                                        title="Remove from blacklist">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
