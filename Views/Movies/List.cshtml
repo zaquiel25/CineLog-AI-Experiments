@@ -17,19 +17,147 @@
 </div>
 <hr />
 
-@* Search and Sort UI from your working code *@
-<form asp-controller="Movies" asp-action="List" method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by Title, Director, or Year..." />
-        <button type="submit" class="btn btn-info">Search</button>
-        <a asp-action="List" class="btn btn-secondary ms-1">Clear Search</a>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="get" action="@Url.Action("List")">
+            <div class="input-group">
+                <input type="text" 
+                       name="searchString" 
+                       value="@ViewData["CurrentFilter"]" 
+                       class="form-control" 
+                       placeholder="Search by Title, Director, or Year..." />
+                <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a href="@Url.Action("List")" class="btn btn-secondary">Clear Search</a>
+            </div>
+        </form>
     </div>
-</form>
+    <div class="col-md-4">
+        <div class="dropdown">
+            <button class="btn dropdown-toggle w-100" 
+                    type="button" 
+                    id="sortDropdown" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    style="background-color: #6c757d; color: white; border: 1px solid #5a6268; padding: 8px 12px; font-size: 14px; min-height: 38px; box-shadow: none;">
+                <i class="fas fa-sort me-2"></i>Sort By
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark w-100" 
+                aria-labelledby="sortDropdown">
+                <!-- Date Watched -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-calendar me-2"></i>Date Watched
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("date") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "date_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Title -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-font me-2"></i>Title
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("title") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "title_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Director -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-user-tie me-2"></i>Director
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("director") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "director_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Released Year -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-clock me-2"></i>Released Year
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("year") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "year_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Rating -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-star me-2"></i>Rating
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("rating") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "rating_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Watched At (Location) -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["LocationSortParm"], searchString = ViewData["CurrentFilter"] })">
+                        <i class="fas fa-map-marker-alt me-2"></i>Watched At
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("location") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "location_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
 <p>
     <a asp-controller="Movies" asp-action="Add" class="btn btn-success mb-3">Add New Movie</a>
 </p>
-<div class="mb-3 d-flex justify-content-end">
-    @* ... (Your full, working dropdown menu code goes here) ... *@
+
+
+@{
+    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "title_asc" => "Title (A-Z)",
+        "title_desc" => "Title (Z-A)",
+        "date_asc" => "Date Watched (Oldest First)",
+        "date_desc" => "Date Watched (Newest First)",
+        "director_asc" => "Director (A-Z)",
+        "director_desc" => "Director (Z-A)",
+        "year_asc" => "Released Year (Oldest First)",
+        "year_desc" => "Released Year (Newest First)",
+        "rating_asc" => "Rating (Lowest First)",
+        "rating_desc" => "Rating (Highest First)",
+        "location_asc" => "Watched At (A-Z)",
+        "location_desc" => "Watched At (Z-A)",
+        _ => "Date Watched (Newest First)"
+    };
+}
+<div class="mb-3">
+    <small class="text-muted">
+        <i class="fas fa-sort me-1"></i>Currently sorted by: <strong>@currentSortDisplay</strong>
+        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+        {
+            <span class="ms-2">| <i class="fas fa-search me-1"></i>Filtered by: "@ViewData["CurrentFilter"]"</span>
+        }
+    </small>
 </div>
 
 
@@ -48,20 +176,18 @@ else
     {
         <div class="col">
             <div class="card h-100 shadow-sm">
-
-                @* This div is the placeholder for the poster image *@
+                @* Poster image *@
                 <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
                     @if (!string.IsNullOrEmpty(movie.PosterPath))
                     {
                         <a asp-action="Details" asp-route-id="@movie.Id">
                             <img src="@(tmdbImageBaseUrl + posterSize + movie.PosterPath)"
-                                 alt="@movie.Title Poster"
+                                 alt="@(movie.Title ?? "Movie Poster")"
                                  style="height: 100%; width: 100%; object-fit: contain;">
                         </a>
                     }
                     else
                     {
-                        @* Fallback for no poster *@
                         <div class="d-flex align-items-center justify-content-center h-100">
                             <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
                         </div>
@@ -69,40 +195,40 @@ else
                 </div>
 
                 <div class="card-body d-flex flex-column">
-                    @* VVVV THIS IS THE UPDATED TITLE VVVV *@
                     <h5 class="card-title">
                         <a asp-action="Details" asp-route-id="@movie.Id" class="link-as-text">
-                            @movie.Title
+                            @(movie.Title ?? "Untitled")
                         </a>
                     </h5>
-                    @* ^^^^ END OF UPDATE ^^^^ *@
 
-                    <p class="card-text mb-1"><small class="text-muted">Directed by: @movie.Director</small></p>
+                    @{
+                        var director = movie.Director ?? "Unknown";
+                        var year = movie.ReleasedYear?.ToString() ?? "Unknown";
+                        var location = movie.WatchedLocation?.ToString() ?? "Unknown";
+                        var rating = movie.UserRating ?? 0;
+                    }
+                    <p class="card-text mb-1"><small class="text-muted">Directed by: @director</small></p>
 
                     <ul class="list-unstyled mt-2 mb-2" style="font-size: 0.85rem;">
-                        @if (movie.ReleasedYear.HasValue)
-                        {
-                            <li class="mb-1"><strong>Released:</strong> @movie.ReleasedYear</li>
-}
+                        <li class="mb-1"><strong>Released:</strong> @year</li>
                         @if (movie.DateWatched.HasValue)
                         {
                             <li class="mb-1"><strong>Watched:</strong> @movie.DateWatched?.ToString("dd/MM/yyyy")</li>
-}
-                        <li class="mb-1"><strong>At:</strong> @(movie.WatchedLocation.HasValue ? movie.WatchedLocation.ToString() : "—")</li>
+                        }
+                        <li class="mb-1"><strong>At:</strong> @location</li>
                         @if (movie.IsRewatch)
                         {
                             <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>
-}
-
-                        @if (movie.UserRating.HasValue && movie.UserRating.Value > 0)
+                        }
+                        @if (rating > 0)
                         {
                             <li class="mt-1">
                                 <span class="star-rating-display" style="color: #ffc107; font-size: 0.9rem;">
                                     @for (int i = 1; i <= 5; i++)
                                     {
-                                        if (movie.UserRating.Value >= i)
+                                        if (rating >= i)
                                         {<i class="bi bi-star-fill"></i> }
-                                        else if (movie.UserRating.Value >= (i - 0.5m))
+                                        else if (rating >= (i - 0.5m))
                                         { <i class="bi bi-star-half"></i> }
                                         else
                                         { <i class="bi bi-star"></i>}
@@ -113,14 +239,16 @@ else
                         else
                         {
                             <li class="mt-1"><small class="text-muted" style="font-size:0.8em;">Not Rated</small></li>
-}
+                        }
                     </ul>
+
+                    @* No review property on Movies model, so no review display *@
 
                     <div class="mt-auto">
                         <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@movie.Id">Edit</a>
                         <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display: inline; margin-left: 5px;">
                             <button type="submit" class="btn btn-danger btn-sm"
-                                    onclick="return confirm('Are you sure you want to delete the movie: \'@movie.Title?.Replace("'", "\\'")\'?');">
+                                    onclick="return confirm('Are you sure you want to delete the movie: \'@(movie.Title ?? "")\'?');">
                                 Delete
                             </button>
                         </form>
@@ -181,7 +309,6 @@ else
 @if (Model.Any())
 {
     <div class="mt-4 pt-4 border-top text-center mb-5">
-        @* <<< ADDED mb-5 HERE *@
         <a asp-controller="Movies" asp-action="Add" class="btn btn-success btn-lg">
             <i class="bi bi-plus-circle-fill me-2"></i>Add New Movie
         </a>

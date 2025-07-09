@@ -124,6 +124,12 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction(nameof(Blacklist));
             }
+            // Mutual exclusion: Prevent adding to blacklist if in wishlist
+            if (await MovieExistsInWishlistAsync(userId, tmdbId))
+            {
+                TempData["ErrorMessage"] = "Cannot add to blacklist: Movie is in your wishlist. Remove from wishlist first.";
+                return LocalRedirect(returnUrl);
+            }
             try
             {
                 var movieDetails = await GetMovieDetailsWithLoggingAsync(tmdbId);
@@ -151,18 +157,48 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction(nameof(Blacklist));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Blacklist()
+    // Removed duplicate Blacklist() method. Only the version with searchString and sortOrder remains.
+    [HttpGet]
+    public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");
             }
-            var blacklistedMovies = await _dbContext.BlacklistedMovies
+            var blacklistQuery = _dbContext.BlacklistedMovies
                 .Where(b => b.UserId == userId)
-                .OrderByDescending(b => b.BlacklistedDate)
-                .ToListAsync();
+                .AsQueryable();
+
+            // Case-insensitive search by title
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                blacklistQuery = blacklistQuery.Where(b => b.Title.ToLower().Contains(searchString.ToLower()));
+            }
+
+            // Sorting
+            ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentSort"] = sortOrder;
+
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.Title);
+                    break;
+                case "Date":
+                    blacklistQuery = blacklistQuery.OrderBy(b => b.BlacklistedDate);
+                    break;
+                case "date_desc":
+                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.BlacklistedDate);
+                    break;
+                default:
+                    blacklistQuery = blacklistQuery.OrderBy(b => b.Title);
+                    break;
+            }
+
+            var blacklistedMovies = await blacklistQuery.ToListAsync();
 
             // Use DRY helper for poster fetching
             var moviesWithPosters = new List<dynamic>();
@@ -202,24 +238,56 @@ namespace Ezequiel_Movies.Controllers
 
         // In MoviesController.cs
 
-        [HttpGet]
-        public async Task<IActionResult> Wishlist()
+    // Removed duplicate Wishlist() method. Only the version with searchString and sortOrder remains.
+    [HttpGet]
+    public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null)
         {
             var userId = _userManager.GetUserId(User);
-
-            // Find all items in the WishlistItems table that belong to the current user
-            var wishlistItems = await _dbContext.WishlistItems
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            var wishlistQuery = _dbContext.WishlistItems
                 .Where(w => w.UserId == userId)
-                .OrderByDescending(w => w.DateAdded) // Show the most recently added items first
-                .ToListAsync();
+                .AsQueryable();
 
+            // Case-insensitive search by title
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                wishlistQuery = wishlistQuery.Where(w => w.Title.ToLower().Contains(searchString.ToLower()));
+            }
+
+            // Sorting
+            ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["CurrentSort"] = sortOrder;
+
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.Title);
+                    break;
+                case "Date":
+                    wishlistQuery = wishlistQuery.OrderBy(w => w.DateAdded);
+                    break;
+                case "date_desc":
+                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.DateAdded);
+                    break;
+                default:
+                    wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
+                    break;
+            }
+
+            var wishlistItems = await wishlistQuery.ToListAsync();
             return View(wishlistItems);
         }
 
         // In MoviesController.cs
 
         [HttpPost]
-        public async Task<IActionResult> AddToWishlist(int tmdbId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddToWishlist(int tmdbId, string returnUrl = "/")
         {
             var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId) || tmdbId == 0)
@@ -229,7 +297,14 @@ namespace Ezequiel_Movies.Controllers
 
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
-                return RedirectToAction("Wishlist");
+                return LocalRedirect(returnUrl);
+            }
+
+            // Mutual exclusion: Prevent adding to wishlist if in blacklist
+            if (await MovieExistsInBlacklistAsync(userId, tmdbId))
+            {
+                TempData["ErrorMessage"] = "Cannot add to wishlist: Movie is in your blacklist. Remove from blacklist first.";
+                return LocalRedirect(returnUrl);
             }
 
             try
@@ -265,6 +340,47 @@ namespace Ezequiel_Movies.Controllers
             }
 
             return RedirectToAction("Wishlist");
+        }
+        // Helper to remove from wishlist by TMDB ID (for Option 2, not used in Option 1)
+        private async Task RemoveFromWishlistByTmdbIdAsync(string userId, int tmdbId)
+        {
+            try
+            {
+                var wishlistItem = await _dbContext.WishlistItems
+                    .FirstOrDefaultAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+                if (wishlistItem != null)
+                {
+                    _dbContext.WishlistItems.Remove(wishlistItem);
+                    await _dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Movie {TmdbId} removed from wishlist for user {UserId}", tmdbId, userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing movie {TmdbId} from wishlist for user {UserId}", tmdbId, userId);
+                throw;
+            }
+        }
+
+        // Helper to remove from blacklist by TMDB ID (for Option 2, not used in Option 1)
+        private async Task RemoveFromBlacklistByTmdbIdAsync(string userId, int tmdbId)
+        {
+            try
+            {
+                var blacklistedMovie = await _dbContext.BlacklistedMovies
+                    .FirstOrDefaultAsync(b => b.UserId == userId && b.TmdbId == tmdbId);
+                if (blacklistedMovie != null)
+                {
+                    _dbContext.BlacklistedMovies.Remove(blacklistedMovie);
+                    await _dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Movie {TmdbId} removed from blacklist for user {UserId}", tmdbId, userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing movie {TmdbId} from blacklist for user {UserId}", tmdbId, userId);
+                throw;
+            }
         }
 
         [HttpPost]
@@ -324,8 +440,12 @@ namespace Ezequiel_Movies.Controllers
             var userId = _userManager.GetUserId(User);
             bool isAlreadyLogged = await _dbContext.Movies
                 .AnyAsync(m => m.UserId == userId && m.TmdbId == tmdbId);
+            bool isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+            bool isInBlacklist = await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == tmdbId);
 
             ViewData["IsAlreadyLogged"] = isAlreadyLogged;
+            ViewData["IsInWishlist"] = isInWishlist;
+            ViewData["IsInBlacklist"] = isInBlacklist;
 
             // Pass the full movie details object from TMDB to the new view
             return View(movieDetails);

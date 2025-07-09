@@ -4,9 +4,30 @@
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
 }
 
-<h1>My Blacklist</h1>
-<p class="text-muted">Movies you want to avoid or never see in suggestions.</p>
+
+<div class="d-flex align-items-center mb-2">
+    <h1 class="mb-0">My Blacklist</h1>
+</div>
 <hr />
+
+<form asp-controller="Movies" asp-action="Blacklist" method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by Title..." />
+        <button type="submit" class="btn btn-info">Search</button>
+        <a asp-action="Blacklist" class="btn btn-secondary ms-1">Clear Search</a>
+    </div>
+</form>
+<div class="mb-3 d-flex justify-content-end">
+    <form asp-controller="Movies" asp-action="Blacklist" method="get" class="d-inline">
+        <input type="hidden" name="searchString" value="@ViewData["CurrentFilter"]" />
+        <select name="sortOrder" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
+            <option value="" selected="@(ViewData["CurrentSort"] == null ? "selected" : null)">Sort by Title (A-Z)</option>
+            <option value="title_desc" selected="@(ViewData["CurrentSort"] as string == "title_desc" ? "selected" : null)">Sort by Title (Z-A)</option>
+            <option value="Date" selected="@(ViewData["CurrentSort"] as string == "Date" ? "selected" : null)">Sort by Date Added (Oldest)</option>
+            <option value="date_desc" selected="@(ViewData["CurrentSort"] as string == "date_desc" ? "selected" : null)">Sort by Date Added (Newest)</option>
+        </select>
+    </form>
+</div>
 
 @if (!Model.Any())
 {
