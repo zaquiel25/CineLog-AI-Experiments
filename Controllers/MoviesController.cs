@@ -21,56 +21,133 @@ namespace Ezequiel_Movies.Controllers
     [Authorize]
     public class MoviesController : Controller
     {
+        // Helper: Get current user ID with logging
+        private string? GetCurrentUserId()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                _logger.LogWarning("User authentication failed - no user ID found");
+            }
+            return userId;
+        }
+
+        // Helper: Check if movie exists in wishlist
+        private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
+        {
+            try
+            {
+                return await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if movie {TmdbId} exists in wishlist for user {UserId}", tmdbId, userId);
+                throw;
+            }
+        }
+
+        // Helper: Check if movie exists in blacklist
+        private async Task<bool> MovieExistsInBlacklistAsync(string userId, int tmdbId)
+        {
+            try
+            {
+                return await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == tmdbId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if movie {TmdbId} exists in blacklist for user {UserId}", tmdbId, userId);
+                throw;
+            }
+        }
+
+        // Helper: Get TMDB movie details with error logging
+        private async Task<TmdbMovieDetails?> GetMovieDetailsWithLoggingAsync(int tmdbId)
+        {
+            try
+            {
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+                if (movieDetails == null)
+                {
+                    _logger.LogWarning("Movie details not found for TMDB ID: {TmdbId}", tmdbId);
+                }
+                return movieDetails;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching movie details for TMDB ID: {TmdbId}", tmdbId);
+                throw;
+            }
+        }
         private readonly ApplicationDbContext _dbContext;
         private readonly TmdbService _tmdbService;
         private readonly ILogger<MoviesController> _logger;
         private readonly UserManager<IdentityUser> _userManager;
 
 
-        public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger, UserManager<IdentityUser> userManager)
-        {
-            _dbContext = dbContext;
-            _tmdbService = tmdbService;
-            _logger = logger;
-            _userManager = userManager;
+    public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger, UserManager<IdentityUser> userManager)
+    {
+        _dbContext = dbContext;
+        _tmdbService = tmdbService;
+        _logger = logger;
+        _userManager = userManager;
+    }
 
+        // DRY Helper: Get poster URL for a TMDB movie, with fallback to TMDB API if missing
+        private async Task<string?> GetPosterUrlAsync(int tmdbId, string? existingPosterUrl)
+        {
+            if (!string.IsNullOrEmpty(existingPosterUrl))
+            {
+                return existingPosterUrl;
+            }
+            try
+            {
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+                return movieDetails?.PosterPath;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching TMDB details for movie {TmdbId}", tmdbId);
+                return null;
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToBlacklist(int tmdbId, string returnUrl = "/")
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");
             }
-            // Check if already blacklisted
-            var existingBlacklistedMovie = await _dbContext.BlacklistedMovies
-                .FirstOrDefaultAsync(b => b.UserId == userId && b.TmdbId == tmdbId);
-            if (existingBlacklistedMovie != null)
+            if (await MovieExistsInBlacklistAsync(userId, tmdbId))
             {
-                // Already exists, redirect to blacklist page
                 return RedirectToAction(nameof(Blacklist));
             }
-            // Get movie details from TMDB
-            var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
-            if (movieDetails == null)
+            try
             {
-                return NotFound();
+                var movieDetails = await GetMovieDetailsWithLoggingAsync(tmdbId);
+                if (movieDetails == null)
+                {
+                    return NotFound();
+                }
+                var blacklistedMovie = new Ezequiel_Movies1.Models.Entities.BlacklistedMovie
+                {
+                    UserId = userId,
+                    TmdbId = tmdbId,
+                    Title = movieDetails.Title ?? string.Empty,
+                    BlacklistedDate = DateTime.Now,
+                    PosterUrl = movieDetails.PosterPath
+                };
+                _dbContext.BlacklistedMovies.Add(blacklistedMovie);
+                await _dbContext.SaveChangesAsync();
+                _logger.LogInformation("Movie {TmdbId} added to blacklist for user {UserId}", tmdbId, userId);
             }
-            // Create new blacklist entry with poster path
-            var blacklistedMovie = new Ezequiel_Movies1.Models.Entities.BlacklistedMovie
+            catch (Exception ex)
             {
-                UserId = userId,
-                TmdbId = tmdbId,
-                Title = movieDetails.Title ?? string.Empty,
-                BlacklistedDate = DateTime.Now,
-                PosterUrl = movieDetails.PosterPath
-            };
-            _dbContext.BlacklistedMovies.Add(blacklistedMovie);
-            await _dbContext.SaveChangesAsync();
-            // ALWAYS redirect to blacklist page
+                _logger.LogError(ex, "Error adding movie {TmdbId} to blacklist for user {UserId}", tmdbId, userId);
+                throw;
+            }
             return RedirectToAction(nameof(Blacklist));
         }
 
@@ -87,18 +164,12 @@ namespace Ezequiel_Movies.Controllers
                 .OrderByDescending(b => b.BlacklistedDate)
                 .ToListAsync();
 
-            // Fetch posters from TMDB for each movie
-            var blacklistedMoviesWithPosters = new List<dynamic>();
+            // Use DRY helper for poster fetching
+            var moviesWithPosters = new List<dynamic>();
             foreach (var movie in blacklistedMovies)
             {
-                string? posterUrl = null;
-                try
-                {
-                    var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId);
-                    posterUrl = movieDetails?.PosterPath;
-                }
-                catch { }
-                blacklistedMoviesWithPosters.Add(new {
+                var posterUrl = await GetPosterUrlAsync(movie.TmdbId, movie.PosterUrl);
+                moviesWithPosters.Add(new {
                     Id = movie.Id,
                     Title = movie.Title,
                     TmdbId = movie.TmdbId,
@@ -106,7 +177,7 @@ namespace Ezequiel_Movies.Controllers
                     PosterUrl = posterUrl
                 });
             }
-            return View(blacklistedMoviesWithPosters);
+            return View(moviesWithPosters);
         }
 
         [HttpPost]
@@ -150,20 +221,20 @@ namespace Ezequiel_Movies.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToWishlist(int tmdbId)
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId) || tmdbId == 0)
             {
                 return BadRequest(); // Invalid request
             }
 
-            // Check if this movie is already in the user's wishlist to prevent duplicates
-            var alreadyInWishlist = await _dbContext.WishlistItems
-                .AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
-
-            if (!alreadyInWishlist)
+            if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
-                // Get movie details from TMDB to save some basic info
-                var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+                return RedirectToAction("Wishlist");
+            }
+
+            try
+            {
+                var movieDetails = await GetMovieDetailsWithLoggingAsync(tmdbId);
                 if (movieDetails != null)
                 {
                     var wishlistItem = new WishlistItem
@@ -180,10 +251,19 @@ namespace Ezequiel_Movies.Controllers
 
                     _dbContext.WishlistItems.Add(wishlistItem);
                     await _dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Movie {TmdbId} added to wishlist for user {UserId}", tmdbId, userId);
+                }
+                else
+                {
+                    return NotFound();
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding movie {TmdbId} to wishlist for user {UserId}", tmdbId, userId);
+                throw;
+            }
 
-            // Redirect back to the preview page the user was on
             return RedirectToAction("Wishlist");
         }
 
