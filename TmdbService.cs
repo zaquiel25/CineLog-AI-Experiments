@@ -43,7 +43,7 @@ namespace Ezequiel_Movies
                     return movies[_random.Next(movies.Count)]; // Use the static random instance again
                 }
             }
-            catch (Exception ex) { /* ... */ }
+            catch (Exception) { }
             return null;
         }
 

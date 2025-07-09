@@ -349,12 +349,12 @@ else
 
             // --- INITIAL PAGE LOAD SETUP for Edit Page ---
             const initialDetailsFromModel = {
-                title: @Json.Serialize(Model.Title ?? string.Empty),
-                director: @Json.Serialize(Model.Director ?? string.Empty),
-                releaseYear: @Json.Serialize(Model.ReleasedYear?.ToString() ?? string.Empty),
-                overview: @Json.Serialize(Model.Overview ?? string.Empty),
-                posterPath: @Json.Serialize(Model.PosterPath ?? string.Empty),
-                tmdbId: @Json.Serialize(Model.TmdbId ?? null) // Get TmdbId from Model
+                title: @Json.Serialize(Model?.Title ?? string.Empty),
+                director: @Json.Serialize(Model?.Director ?? string.Empty),
+                releaseYear: @Json.Serialize(Model?.ReleasedYear?.ToString() ?? string.Empty),
+                overview: @Json.Serialize(Model?.Overview ?? string.Empty),
+                posterPath: @Json.Serialize(Model?.PosterPath ?? string.Empty),
+                tmdbId: @Json.Serialize(Model?.TmdbId ?? null) // Get TmdbId from Model
             };
             console.log("Initial Model Data for JS (Edit Page):", JSON.stringify(initialDetailsFromModel, null, 2));
 
@@ -366,7 +366,7 @@ else
 
             // Initialize star rating from Model.UserRating
             // Ensure Model.UserRating is correctly passed as nullable decimal and serialized
-            const initialUserRatingValue = @Json.Serialize(Model.UserRating);
+            const initialUserRatingValue = @Json.Serialize(Model?.UserRating);
             const initialUserRating = initialUserRatingValue === null ? 0 : parseFloat(initialUserRatingValue);
             if (starRatingContainer) {
                 setAndRenderStarRating(initialUserRating);

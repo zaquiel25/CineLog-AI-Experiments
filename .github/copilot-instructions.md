@@ -1,0 +1,74 @@
+# Copilot Instructions for CineLog-AI-Experiments
+
+## Project Overview
+- **CineLog-AI-Experiments** is an ASP.NET Core MVC web application for logging, suggesting, and managing movies, with deep integration to TMDB (The Movie Database) APIs.
+- The main business logic is in `Controllers/MoviesController.cs`, which handles user movie lists, suggestions, and TMDB interactions.
+- Data access is via Entity Framework Core, with models in `Models/` and database context in `Data/ApplicationDbContext.cs`.
+- TMDB API communication is abstracted in `TmdbService.cs`.
+
+## Key Architectural Patterns
+- **Separation of Concerns:**
+  - Controllers handle HTTP and user logic.
+  - Data models/entities are in `Models/` and `Ezequiel_Movies1.Models.Entities`.
+  - External API logic is in `TmdbService.cs`.
+- **User-specific Data:**
+  - All movie and wishlist actions are filtered by the current user's ID (via ASP.NET Identity).
+  - Example: `MoviesController` always queries with `.Where(m => m.UserId == userId)`.
+- **Suggestion System:**
+  - Movie suggestions are generated based on user's logged data (directors, genres, actors, decades).
+  - Helper methods like `GetSuggestionsForDirector`, `GetSuggestionsForGenre`, etc., encapsulate this logic.
+
+## Developer Workflows
+- **Build:**
+  - Use `dotnet build` in the project root.
+- **Run:**
+  - Use `dotnet run` or launch via Visual Studio/VS Code.
+- **Migrations:**
+  - Use `dotnet ef migrations add <Name>` and `dotnet ef database update` for schema changes.
+- **Debugging:**
+  - Console and logger output is used extensively in controllers for tracing data flow and debugging.
+
+## Project Conventions
+- **Model Validation:**
+  - Uses custom attributes (e.g., `NoFutureDateAttribute`, `ValidReleasedYearAttribute`) for model validation.
+- **Session Usage:**
+  - Session is used to store temporary state for suggestions (e.g., `ShownSurpriseIds`).
+- **ViewModels:**
+  - `AddMoviesViewModel` is used for add/edit forms, mapping to/from entity models.
+- **TMDB Integration:**
+  - All TMDB lookups and suggestions go through `TmdbService.cs`.
+  - Example: `await _tmdbService.GetMovieDetailsAsync(tmdbId)`.
+
+  **UI & Styling:** The project uses **Bootstrap 5** and the dark **'Cyborg' Bootswatch theme**. New UI elements should match this style, using standard Bootstrap classes (card, btn, list-group, etc.).
+
+## Notable Files & Directories
+- `Controllers/MoviesController.cs`: Main controller for movie logic and suggestions.
+- `Models/`: Contains view models, TMDB models, and validation attributes.
+- `Data/ApplicationDbContext.cs`: Entity Framework Core DB context.
+- `TmdbService.cs`: Handles all TMDB API calls.
+- `Migrations/`: Entity Framework migration files.
+
+## Patterns & Examples
+- **User Filtering:**
+  ```csharp
+  var userId = _userManager.GetUserId(User);
+  var movies = _dbContext.Movies.Where(m => m.UserId == userId);
+  ```
+- **TMDB API Usage:**
+  ```csharp
+  var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+  ```
+- **Suggestion Helper:**
+  ```csharp
+  private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName) { ... }
+  ```
+
+## Integration Points
+- **TMDB API:** All external movie data and suggestions are fetched via TMDB.
+- **ASP.NET Identity:** Used for user authentication and per-user data isolation.
+- **Data Mapping:** Data from the TMDB API is mapped to C# classes in the 'Models/TmdbApi/' folder, such as TmdbMovieDetails and TmdbMovieBrief.
+
+
+---
+
+For new features, follow the established patterns in `MoviesController.cs` and use `TmdbService` for all TMDB interactions. Always filter data by user ID for privacy and correctness.

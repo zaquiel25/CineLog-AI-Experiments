@@ -77,7 +77,7 @@ namespace Ezequiel_Movies.Controllers
                     {
                         TmdbId = tmdbId,
                         UserId = userId,
-                        Title = movieDetails.Title,
+                        Title = movieDetails.Title ?? string.Empty,
                         PosterPath = movieDetails.PosterPath,
                         ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
                                          ? int.Parse(movieDetails.ReleaseDate.Substring(0, 4))
@@ -221,8 +221,17 @@ namespace Ezequiel_Movies.Controllers
             var actorPool = new List<TmdbCastPerson>();
             foreach (var movie in loggedMovies.OrderByDescending(m => m.DateWatched).Take(15))
             {
-                var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
-                if (details?.Credits?.Cast != null) actorPool.AddRange(details.Credits.Cast.Take(3));
+                if (!movie.TmdbId.HasValue)
+                {
+                    continue;
+                }
+                var tmdbIdValue = movie.TmdbId ?? 0;
+                if (tmdbIdValue == 0) continue;
+                var details = await _tmdbService.GetMovieDetailsAsync(tmdbIdValue);
+                if (details?.Credits?.Cast != null)
+                {
+                    actorPool.AddRange(details.Credits.Cast.Take(3));
+                }
             }
             actorPool = actorPool.DistinctBy(p => p.Id).ToList();
 
@@ -315,13 +324,17 @@ namespace Ezequiel_Movies.Controllers
 
             // Fetch all genres from our service one time
             var allGenres = await _tmdbService.GetAllGenresAsync();
-            var allGenresDict = allGenres.ToDictionary(g => g.Id, g => g.Name);
+            var allGenresDict = (allGenres ?? new List<TmdbGenre>()).ToDictionary(g => g.Id, g => g.Name ?? string.Empty);
 
             var genreCounts = new Dictionary<int, int>();
 
             // This can be slow if there are many movies. We can optimize it later.
             foreach (var movie in loggedMovies)
             {
+                if (!movie.TmdbId.HasValue)
+                {
+                    continue;
+                }
                 var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                 if (movieDetails?.Genres != null)
                 {
@@ -342,7 +355,7 @@ namespace Ezequiel_Movies.Controllers
             // Get the top 6 genres based on frequency
             var topGenreIds = genreCounts.OrderByDescending(kvp => kvp.Value).Take(6).Select(kvp => kvp.Key).ToList();
 
-            var topGenres = allGenres.Where(g => topGenreIds.Contains(g.Id)).ToList();
+            var topGenres = (allGenres ?? new List<TmdbGenre>()).Where(g => topGenreIds.Contains(g.Id)).ToList();
 
             ViewData["GenreSuggestions"] = topGenres;
             ViewData["SuggestionTitle"] = "Choose Your Favorite Genre";
@@ -500,7 +513,7 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_random":
                     #region Cast Suggestion Logic
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
-                    if (!loggedCastMovies.Any())
+                    if (loggedCastMovies == null || !loggedCastMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get cast suggestions!";
                         ViewData["ShowAddMovieButton"] = true;
@@ -511,6 +524,10 @@ namespace Ezequiel_Movies.Controllers
                     // NOTE: This part is slow. We can optimize it later.
                     foreach (var movie in loggedCastMovies.Take(15))
                     {
+                        if (!movie.TmdbId.HasValue)
+                        {
+                            continue;
+                        }
                         var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                         if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(3));
                     }
@@ -537,7 +554,7 @@ namespace Ezequiel_Movies.Controllers
                     var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id);
 
                     // This line creates the `loggedTmdbIds` variable that was missing before the call
-                    var loggedTmdbIds = new HashSet<int>(loggedCastMovies.Select(m => m.TmdbId!.Value));
+                    var loggedTmdbIds = new HashSet<int>(loggedCastMovies.Where(m => m.TmdbId.HasValue).Select(m => m.TmdbId!.Value));
                     suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id);
 
                     suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
@@ -768,7 +785,7 @@ namespace Ezequiel_Movies.Controllers
                 if (movieDetails != null)
                 {
                     // Overwrite TMDB fields, but DateWatched remains as DateTime.Today
-                    viewModel.Title = movieDetails.Title;
+                    viewModel.Title = movieDetails.Title ?? string.Empty;
                     viewModel.Director = movieDetails.GetDirector() ?? "N/A";
                     viewModel.ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
                                                 ? int.Parse(movieDetails.ReleaseDate.Substring(0, 4))
@@ -818,43 +835,56 @@ namespace Ezequiel_Movies.Controllers
             // ^^^^ END OF NEW LOGIC ^^^^
 
 
-            var movie = new Ezequiel_Movies1.Models.Entities.Movies // Ensure this namespace is correct
-                {
-                    Id = Guid.NewGuid(),
-                    Title = viewModel.Title,
-                    Director = viewModel.Director,
-                    ReleasedYear = viewModel.ReleasedYear,
-                    DateWatched = viewModel.DateWatched,
-                    WatchedLocation = viewModel.WatchedLocation,
-                    PosterPath = viewModel.PosterPath,
-                    Overview = viewModel.Overview,
-                    IsRewatch = viewModel.IsRewatch,       // Assign IsRewatch
-                    Subscribed = viewModel.Subscribed,
-                    UserRating = viewModel.UserRating,
-                    TmdbId = viewModel.TmdbId,
-                    UserId = userId
-            }; // Object initializer for 'movie' ends here
+            var movie = new Ezequiel_Movies1.Models.Entities.Movies
+            {
+                Id = Guid.NewGuid(),
+                Title = viewModel.Title,
+                Director = viewModel.Director,
+                ReleasedYear = viewModel.ReleasedYear,
+                DateWatched = viewModel.DateWatched,
+                WatchedLocation = viewModel.WatchedLocation,
+                PosterPath = viewModel.PosterPath,
+                Overview = viewModel.Overview,
+                IsRewatch = viewModel.IsRewatch,
+                Subscribed = viewModel.Subscribed,
+                UserRating = viewModel.UserRating,
+                TmdbId = viewModel.TmdbId,
+                UserId = userId
+            };
 
-                // VVVV NEW LOGIC TO FETCH AND SAVE GENRES VVVV
-                if (movie.TmdbId.HasValue)
+            // VVVV NEW LOGIC TO FETCH AND SAVE GENRES VVVV
+            if (movie.TmdbId.HasValue)
+            {
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                if (movieDetails?.Genres != null && movieDetails.Genres.Any())
                 {
-                    var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
-                    if (movieDetails?.Genres != null && movieDetails.Genres.Any())
-                    {
-                        // Join the list of genre names into a single, comma-separated string
-                        movie.Genres = string.Join(", ", movieDetails.Genres.Select(g => g.Name));
-                        _logger.LogInformation("Saving genres for movie '{Title}': {Genres}", movie.Title, movie.Genres);
-                    }
+                    movie.Genres = string.Join(", ", movieDetails.Genres.Select(g => g.Name));
+                    _logger.LogInformation("Saving genres for movie '{Title}': {Genres}", movie.Title, movie.Genres);
                 }
-                // ^^^^ END OF NEW LOGIC ^^^^
+            }
+            // ^^^^ END OF NEW LOGIC ^^^^
 
-                // Logging line for IsRewatch, after 'movie' object is created
-                Console.WriteLine($"Adding Movie '{movie.Title}', UserRating from ViewModel: {viewModel.UserRating}, Value being saved to entity: {movie.UserRating}");
+            // Logging line for IsRewatch, after 'movie' object is created
+            Console.WriteLine($"Adding Movie '{movie.Title}', UserRating from ViewModel: {viewModel.UserRating}, Value being saved to entity: {movie.UserRating}");
 
-                await _dbContext.Movies.AddAsync(movie);
-                await _dbContext.SaveChangesAsync();
-                Console.WriteLine($"Add POST - Movie Added Successfully: {movie.Title}");
-                return RedirectToAction("List");
+            await _dbContext.Movies.AddAsync(movie);
+
+            // --- WISHLIST REMOVAL LOGIC (Atomic, User-Scoped) ---
+            if (movie.TmdbId.HasValue)
+            {
+                var wishlistItem = await _dbContext.WishlistItems
+                    .FirstOrDefaultAsync(w => w.UserId == userId && w.TmdbId == movie.TmdbId);
+                if (wishlistItem != null)
+                {
+                    _dbContext.WishlistItems.Remove(wishlistItem);
+                    Console.WriteLine($"WishlistItem with TmdbId {(movie.TmdbId.HasValue ? movie.TmdbId.Value.ToString() : "N/A")} removed for user {userId} during Add.");
+                }
+            }
+            // --- END WISHLIST REMOVAL LOGIC ---
+
+            await _dbContext.SaveChangesAsync();
+            Console.WriteLine($"Add POST - Movie Added Successfully: {movie.Title}");
+            return RedirectToAction("List");
             }
             else // ModelState is NOT valid
             {
@@ -862,7 +892,7 @@ namespace Ezequiel_Movies.Controllers
                 foreach (var modelStateKey in ModelState.Keys)
                 {
                     var value = ModelState[modelStateKey];
-                    if (value.Errors.Any())
+                    if (value != null && value.Errors != null && value.Errors.Any())
                     {
                         Console.WriteLine($"-- Errors for '{modelStateKey}' --");
                         foreach (var error in value.Errors)
@@ -926,8 +956,8 @@ namespace Ezequiel_Movies.Controllers
             if (!String.IsNullOrEmpty(searchString))
             {
                 moviesQuery = moviesQuery.Where(m =>
-                    m.Title.Contains(searchString) ||
-                    m.Director.Contains(searchString) ||
+                    (!string.IsNullOrEmpty(m.Title) && m.Title.Contains(searchString)) ||
+                    (!string.IsNullOrEmpty(m.Director) && m.Director.Contains(searchString)) ||
                     (m.ReleasedYear != null && m.ReleasedYear.Value.ToString().Contains(searchString))
                 );
             }
@@ -994,8 +1024,8 @@ namespace Ezequiel_Movies.Controllers
             var viewModel = new AddMoviesViewModel
             {
                 Id = movieEntity.Id,
-                Title = movieEntity.Title,
-                Director = movieEntity.Director,
+                Title = movieEntity.Title ?? string.Empty,
+                Director = movieEntity.Director ?? string.Empty,
                 ReleasedYear = movieEntity.ReleasedYear,
                 DateWatched = movieEntity.DateWatched,
                 WatchedLocation = movieEntity.WatchedLocation,
@@ -1101,7 +1131,10 @@ namespace Ezequiel_Movies.Controllers
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Edit POST - Exception during SaveChangesAsync for Movie ID {movieEntity.Id}: {ex.Message}");
-                        ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
+                        if (ModelState != null)
+                        {
+                            ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
+                        }
                     }
                 }
                 else
@@ -1116,7 +1149,7 @@ namespace Ezequiel_Movies.Controllers
                 foreach (var modelStateKey in ModelState.Keys)
                 {
                     var value = ModelState[modelStateKey];
-                    if (value.Errors.Any())
+                    if (value != null && value.Errors != null && value.Errors.Any())
                     {
                         Console.WriteLine($"-- Errors for '{modelStateKey}' --");
                         foreach (var error in value.Errors)

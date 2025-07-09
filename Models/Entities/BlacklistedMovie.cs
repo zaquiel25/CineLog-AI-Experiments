@@ -5,6 +5,14 @@ namespace Ezequiel_Movies1.Models.Entities
 {
     public class BlacklistedMovie
     {
+        public BlacklistedMovie()
+        {
+            UserId = string.Empty;
+            Title = string.Empty;
+        }
+
+    public string Title { get; set; } = string.Empty;
+
         [Key]
         public int Id { get; set; }
 
@@ -14,6 +22,6 @@ namespace Ezequiel_Movies1.Models.Entities
         // Foreign key for the user who owns this blacklist entry
         [Required]
         public string UserId { get; set; }
-        public IdentityUser User { get; set; }
+        public IdentityUser? User { get; set; }
     }
 }
