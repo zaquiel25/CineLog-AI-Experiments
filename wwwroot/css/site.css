@@ -1,4 +1,23 @@
-﻿/* Custom styles for CineLog */
+﻿/* Ensure footer always appears above cards (stacking context fix) */
+footer {
+    z-index: 1000;
+    position: relative;
+}
+.card {
+    z-index: 1;
+    position: relative;
+}
+/* Wishlist page layout fix: ensures content grows to fill viewport and pushes footer down */
+.wishlist-page {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+}
+.wishlist-content {
+    flex: 1;
+    margin-bottom: 2.5rem; /* Ensure space before footer to prevent overlap */
+}
+/* Custom styles for CineLog */
 
 /* A helper class to make a link look like normal text */
 .link-as-text,

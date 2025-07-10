@@ -22,7 +22,11 @@ namespace Ezequiel_Movies1.Models.Entities
 
         public string? PosterPath { get; set; }
 
-        public int? ReleasedYear { get; set; }
+
+    public int? ReleasedYear { get; set; }
+
+    // Name of the director (optional, for display)
+    public string? Director { get; set; }
 
         public DateTime DateAdded { get; set; }
 

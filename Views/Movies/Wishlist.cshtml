@@ -1,9 +1,8 @@
-﻿@model IEnumerable<Ezequiel_Movies1.Models.Entities.WishlistItem>
+﻿@model IEnumerable<dynamic>
 @{
     ViewData["Title"] = "My Wishlist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
 }
-
 
 <div class="d-flex align-items-center mb-2">
     <h1 class="mb-0">My Wishlist</h1>
@@ -38,14 +37,16 @@
 else
 {
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var item in Model)
+        @foreach (var wishlistItem in Model)
         {
             <div class="col">
                 <div class="card h-100 shadow-sm">
                     <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
-                        @if (!string.IsNullOrEmpty(item.PosterPath))
+                        @if (!string.IsNullOrEmpty(wishlistItem.PosterPath))
                         {
-                            <img src="@(tmdbImageBaseUrl + item.PosterPath)" alt="@item.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
+                            <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@wishlistItem.TmdbId">
+                                <img src="@(tmdbImageBaseUrl + wishlistItem.PosterPath)" alt="@wishlistItem.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
+                            </a>
                         }
                         else
                         {
@@ -55,15 +56,27 @@ else
                         }
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h6 class="card-title">@item.Title <small class="text-muted">(@item.ReleasedYear)</small></h6>
+                        <h5 class="card-title mb-1">
+                            <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@wishlistItem.TmdbId" class="link-as-text">
+                                @wishlistItem.Title
+                            </a>
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                @if (!string.IsNullOrEmpty(wishlistItem.Director) && wishlistItem.Director != "Director TBD") {
+                                    <text>Directed by @wishlistItem.Director &bull; </text>
+                                }
+                                @wishlistItem.ReleasedYear
+                            </small>
+                        </p>
                         <div class="mt-auto">
-                            <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@item.TmdbId" class="btn btn-success btn-sm">
+                            <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@wishlistItem.TmdbId" class="btn btn-success btn-sm position-relative" style="z-index:2;">
                                 <i class="bi bi-check-lg"></i> I've Watched It
                             </a>
-                            <form asp-action="RemoveFromWishlist" asp-route-tmdbId="@item.TmdbId" method="post" class="d-inline">
+                            <form asp-action="RemoveFromWishlist" asp-route-tmdbId="@wishlistItem.TmdbId" method="post" class="d-inline position-relative" style="z-index:2;">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-danger btn-sm ms-1"
-                                        onclick="return confirm('Are you sure you want to remove \'@item.Title?.Replace("'", "\\'")\' from your wishlist?');"
+                                        onclick="return confirm('Are you sure you want to remove \'@wishlistItem.Title?.Replace("'", "\\'")\' from your wishlist?');"
                                         title="Remove from wishlist">
                                     <i class="bi bi-trash"></i>
                                 </button>

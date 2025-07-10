@@ -250,45 +250,60 @@ namespace Ezequiel_Movies.Controllers
     [HttpGet]
     public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null)
         {
-            var userId = _userManager.GetUserId(User);
-            if (userId == null)
+        var userId = _userManager.GetUserId(User);
+        if (userId == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        // Get wishlist items for user
+        var wishlistItems = await _dbContext.WishlistItems
+            .Where(w => w.UserId == userId)
+            .ToListAsync();
+
+        // Get all user's logged movies (for join)
+        var userMovies = await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+            .ToListAsync();
+
+        var wishlistWithDetails = new List<dynamic>();
+
+        foreach (var w in wishlistItems)
+        {
+            var movie = userMovies.FirstOrDefault(m => m.TmdbId == w.TmdbId);
+            string director = string.Empty;
+            if (movie != null)
             {
-                return RedirectToAction("Login", "Account");
+                director = string.IsNullOrEmpty(movie.Director) ? "No Director in DB" : movie.Director;
             }
-            var wishlistQuery = _dbContext.WishlistItems
-                .Where(w => w.UserId == userId)
-                .AsQueryable();
-
-            // Case-insensitive search by title
-            if (!string.IsNullOrEmpty(searchString))
+            else
             {
-                wishlistQuery = wishlistQuery.Where(w => w.Title.ToLower().Contains(searchString.ToLower()));
+                // Fallback: fetch from TMDB if not found in Movies table
+                var tmdbDetails = await _tmdbService.GetMovieDetailsAsync(w.TmdbId);
+                if (tmdbDetails?.Credits?.Crew != null)
+                {
+                    var directorPerson = tmdbDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director");
+                    director = directorPerson?.Name ?? "Unknown (TMDB)";
+                }
+                else
+                {
+                    director = "Unknown (TMDB)";
+                }
             }
-
-            // Sorting
-            ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
-            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["CurrentSort"] = sortOrder;
-
-            switch (sortOrder)
+            wishlistWithDetails.Add(new
             {
-                case "title_desc":
-                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.Title);
-                    break;
-                case "Date":
-                    wishlistQuery = wishlistQuery.OrderBy(w => w.DateAdded);
-                    break;
-                case "date_desc":
-                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.DateAdded);
-                    break;
-                default:
-                    wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
-                    break;
-            }
+                w.Id,
+                w.TmdbId,
+                w.Title,
+                w.PosterPath,
+                w.ReleasedYear,
+                Director = director,
+                MovieTitle = movie != null ? movie.Title : "N/A",
+                MovieTmdbId = movie != null ? movie.TmdbId : (int?)null
+            });
+        }
 
-            var wishlistItems = await wishlistQuery.ToListAsync();
-            return View(wishlistItems);
+        return View(wishlistWithDetails);
         }
 
         // In MoviesController.cs
@@ -314,6 +329,8 @@ namespace Ezequiel_Movies.Controllers
                 TempData["ErrorMessage"] = "Cannot add to wishlist: Movie is in your blacklist. Remove from blacklist first.";
                 return LocalRedirect(returnUrl);
             }
+
+
 
             try
             {
