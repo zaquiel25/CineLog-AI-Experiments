@@ -40,6 +40,17 @@
   - Example: `await _tmdbService.GetMovieDetailsAsync(tmdbId)`.
 
   **UI & Styling:** The project uses **Bootstrap 5** and the dark **'Cyborg' Bootswatch theme**. New UI elements should match this style, using standard Bootstrap classes (card, btn, list-group, etc.).
+  - The "Sort By" dropdown on the "My Movies" page must always be visible, with a static grey background (`#6c757d`), white text, and no hover/focus effects. Use inline styles or a dedicated CSS class to ensure consistent appearance.
+
+## UI/UX Consistency
+- Always verify that UI changes are visually correct, accessible, and consistent with the app's design system.
+- The "Sort By" dropdown must remain always visible and styled as described above.
+
+## Code Efficiency & Quality
+- Regularly review for DRYness, async/await usage, null safety, and error handling.
+- Optimize database queries and TMDB API calls to avoid unnecessary work (e.g., use helpers, avoid redundant loops, and consider caching for repeated API data).
+- Ensure all user data queries are filtered by UserId for security and privacy.
+- Document any new architectural or UI conventions in this file after major changes.
 
 ## Notable Files & Directories
 - `Controllers/MoviesController.cs`: Main controller for movie logic and suggestions.
