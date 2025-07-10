@@ -1,34 +1,88 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
+﻿
 using Ezequiel_Movies.Models.TmdbApi;
-using Microsoft.Extensions.Logging;
 
 namespace Ezequiel_Movies
 {
     public class TmdbService
     {
+
+        // --- TMDB Watch URL Simplification ---
+        private const string TMDB_BASE_URL = "https://www.themoviedb.org";
+        private readonly HashSet<string> _allowedRegions = new() { "IE", "US", "GB", "CA", "AU" };
+
+        private string GetTmdbWatchUrl(int tmdbId, string region = "IE")
+        {
+            if (tmdbId <= 0) throw new ArgumentException("Invalid TMDB ID");
+            if (string.IsNullOrWhiteSpace(region) || region.Length != 2 || !_allowedRegions.Contains(region.ToUpper()))
+                region = "IE";
+            var url = $"{TMDB_BASE_URL}/movie/{tmdbId}/watch?locale={region.ToUpper()}";
+            _logger.LogInformation("TMDB watch URL generated for movie {TmdbId} in region {Region}", tmdbId, region);
+            return url;
+        }
+
+
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
         private static readonly Random _random = new Random();
 
-
-
-        public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbId)
+        // Whitelist of allowed provider domains (add more as needed)
+        private static readonly HashSet<string> AllowedProviderDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            _logger.LogInformation("Requesting Watch Providers for movie ID: {MovieId}", tmdbId);
-            try
-            {
-                return await _httpClient.GetFromJsonAsync<WatchProviderResponse>($"movie/{tmdbId}/watch/providers");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to fetch watch providers for movie ID {MovieId}", tmdbId);
-                return null;
-            }
+            "netflix.com",
+            "disneyplus.com",
+            "primevideo.com",
+            "hulu.com",
+            "hbomax.com",
+            "apple.com",
+            "paramountplus.com",
+            "peacocktv.com",
+            "mubi.com",
+            "starz.com",
+            "amcplus.com",
+            "crunchyroll.com",
+            "curiositystream.com",
+            "shudder.com",
+            "kanopy.com",
+            "plex.tv",
+            "youtube.com",
+            "google.com",
+            "vudu.com",
+            "rakuten.tv",
+            "nowtv.com",
+            "itv.com",
+            "bbc.co.uk",
+            "all4.com",
+            "iplayer.com",
+            "viaplay.com",
+            "viu.com",
+            "viaplay.se",
+            "viaplay.dk",
+            "viaplay.no",
+            "viaplay.fi",
+            "viaplay.pl",
+            "viaplay.is",
+            "viaplay.lv",
+            "viaplay.lt",
+            "viaplay.ee",
+            "viaplay.nl",
+            "viaplay.de",
+            "viaplay.com",
+            // Add more as needed
+        };
+
+        // Helper: Validate and sanitize a provider link
+        private static string? ValidateProviderLink(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return null;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
+            if (uri.Scheme != Uri.UriSchemeHttps) return null; // Only allow HTTPS
+            var host = uri.Host.StartsWith("www.") ? uri.Host.Substring(4) : uri.Host;
+            if (!AllowedProviderDomains.Any(domain => host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))) return null;
+            return uri.ToString();
         }
+
+
+
 
         public async Task<TmdbMovieBrief?> GetRandomPopularMovieAsync()
         {
@@ -36,7 +90,7 @@ namespace Ezequiel_Movies
             try
             {
                 int randomPage = _random.Next(1, 21); // Use the static random instance
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"movie/popular?language=en-US&page={randomPage}");
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>("movie/popular?language=en-US&page="+randomPage);
                 var movies = response?.Results;
                 if (movies != null && movies.Any())
                 {
@@ -46,6 +100,7 @@ namespace Ezequiel_Movies
             catch (Exception) { }
             return null;
         }
+        // Gets the watch providers for a given movie from TMDB
 
         // In TmdbService.cs
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesAsync(int? directorId, int? actorId, int? genreId, int? decade)
@@ -173,6 +228,53 @@ namespace Ezequiel_Movies
         {
             _httpClient = httpClient;
             _logger = logger;
+        }
+
+        // Gets the watch providers for a given movie from TMDB
+    public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbMovieId, string? region = "IE")
+        {
+            if (tmdbMovieId <= 0) return null;
+            var requestUri = $"movie/{tmdbMovieId}/watch/providers";
+            _logger.LogInformation("Requesting TMDB API for watch providers: {RequestUri}", requestUri);
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<WatchProviderResponse>(requestUri);
+                _logger.LogInformation("Successfully fetched watch providers for movie ID {MovieId}.", tmdbMovieId);
+                if (response?.Results != null)
+                {
+                    foreach (var country in response.Results.Values)
+                    {
+                        string regionCode = country.Link?.Split("locale=").LastOrDefault()?.Substring(0,2) ?? region ?? "IE";
+                        string tmdbWatchUrl;
+                        try
+                        {
+                            tmdbWatchUrl = GetTmdbWatchUrl(tmdbMovieId, regionCode);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error generating TMDB watch URL");
+                            tmdbWatchUrl = string.Empty;
+                        }
+                        void SetProviderLinks(List<ProviderInfo>? providers)
+                        {
+                            if (providers == null) return;
+                            foreach (var provider in providers)
+                            {
+                                provider.Link = tmdbWatchUrl;
+                            }
+                        }
+                        SetProviderLinks(country.Streaming);
+                        SetProviderLinks(country.Buy);
+                        SetProviderLinks(country.Rent);
+                    }
+                }
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while getting TMDB watch providers for ID {MovieId}.", tmdbMovieId);
+                return null;
+            }
         }
 
         public async Task<TmdbSearchResponse?> SearchMoviesAsync(string query)

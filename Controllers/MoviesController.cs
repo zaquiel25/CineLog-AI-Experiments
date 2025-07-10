@@ -432,7 +432,7 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // 2. Get the "Where to Watch" providers (Streaming, Buy, Rent)
-            var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId);
+            var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId, movieDetails.Title ?? string.Empty);
             if (watchProviders?.Results != null)
             {
                 // Region priority: IE → US → GB
@@ -484,7 +484,8 @@ namespace Ezequiel_Movies.Controllers
             if (movie.TmdbId.HasValue)
             {
                 // Get "Where to Watch" info (Streaming, Buy, Rent)
-                var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value);
+                var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value, movieDetails?.Title ?? string.Empty);
                 if (watchProviders?.Results != null)
                 {
                     WatchProviderCountry? providers = null;
@@ -507,7 +508,6 @@ namespace Ezequiel_Movies.Controllers
                 }
 
                 // VVVV NEW LOGIC TO GET THE CAST VVVV
-                var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                 if (movieDetails?.Credits?.Cast != null)
                 {
                     // Pass the top 3 cast members to the view
@@ -988,13 +988,25 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
 
-                    var allUserGenres = loggedGenreMovies.SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.None)).ToList();
+                    // Defensive: Only use genres from movies where Genres is not null
+                    var allUserGenres = loggedGenreMovies
+                        .Where(m => !string.IsNullOrEmpty(m.Genres))
+                        .SelectMany(m => (m.Genres ?? string.Empty).Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries))
+                        .ToList();
 
                     var topGenreQueue = new List<string>();
-                    if (loggedGenreMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault() is string rg) topGenreQueue.Add(rg.Trim());
-                    if (allUserGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is string fg && !topGenreQueue.Contains(fg)) topGenreQueue.Add(fg);
-                    var highestRatedGenres = loggedGenreMovies.Where(m => m.UserRating >= 4.0m).SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.None)).ToList();
-                    if (highestRatedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is string hg && !topGenreQueue.Contains(hg)) topGenreQueue.Add(hg);
+                    var firstGenre = loggedGenreMovies
+                        .OrderByDescending(m => m.DateWatched)
+                        .FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(firstGenre)) topGenreQueue.Add(firstGenre.Trim());
+                    var mostFrequentGenre = allUserGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(mostFrequentGenre) && !topGenreQueue.Contains(mostFrequentGenre)) topGenreQueue.Add(mostFrequentGenre);
+                    var highestRatedGenres = loggedGenreMovies
+                        .Where(m => m.UserRating.HasValue && m.UserRating.Value >= 4.0m && !string.IsNullOrEmpty(m.Genres))
+                        .SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.None))
+                        .ToList();
+                    var highestRatedGenre = highestRatedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(highestRatedGenre) && !topGenreQueue.Contains(highestRatedGenre)) topGenreQueue.Add(highestRatedGenre);
 
                     string? genreToSuggest = null;
                     List<TmdbMovieBrief> genreSuggestions = new();

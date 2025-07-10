@@ -6,11 +6,17 @@ namespace Ezequiel_Movies.Models.TmdbApi
     // This represents a single provider like Netflix or Disney+
     public class ProviderInfo
     {
+        [JsonPropertyName("provider_id")]
+        public int ProviderId { get; set; }
+
         [JsonPropertyName("logo_path")]
         public string? LogoPath { get; set; }
 
         [JsonPropertyName("provider_name")]
         public string? ProviderName { get; set; }
+
+        // Direct link to the provider (set in TmdbService)
+        public string? Link { get; set; }
     }
 
     // This holds the results for a specific country
