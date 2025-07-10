@@ -204,7 +204,7 @@ else
                     @{
                         var director = movie.Director ?? "Unknown";
                         var year = movie.ReleasedYear?.ToString() ?? "Unknown";
-                        var location = movie.WatchedLocation?.ToString() ?? "Unknown";
+                        var location = movie.WatchedLocation?.ToString() ?? "-";
                         var rating = movie.UserRating ?? 0;
                     }
                     <p class="card-text mb-1"><small class="text-muted">Directed by: @director</small></p>
@@ -215,7 +215,7 @@ else
                         {
                             <li class="mb-1"><strong>Watched:</strong> @movie.DateWatched?.ToString("dd/MM/yyyy")</li>
                         }
-                        <li class="mb-1"><strong>At:</strong> @location</li>
+                        <li class="mb-1"><strong>At:</strong> @(string.IsNullOrWhiteSpace(location) || location == "Unknown" ? "-" : location)</li>
                         @if (movie.IsRewatch)
                         {
                             <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>

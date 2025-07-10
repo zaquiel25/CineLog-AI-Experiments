@@ -62,7 +62,17 @@ else
 
                     <div class="mb-3">
                         <label asp-for="DateWatched" class="form-label">Date Watched</label>
-                        <input asp-for="DateWatched" type="date" class="form-control" id="editMovieFormDateWatched" />
+                        <div class="d-flex align-items-center">
+                            <input asp-for="DateWatched" type="date" class="form-control me-3" id="editMovieFormDateWatched" />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="editDateWatchedSpecific" value="specific" checked />
+                                <label class="form-check-label" for="editDateWatchedSpecific">Specific Date</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="editDateWatchedDontRemember" value="dontRemember" />
+                                <label class="form-check-label" for="editDateWatchedDontRemember">I don't remember</label>
+                            </div>
+                        </div>
                         <span asp-validation-for="DateWatched" class="text-danger"></span>
                     </div>
 
@@ -139,6 +149,23 @@ else
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Date radio toggle logic
+            const dateInput = document.getElementById('editMovieFormDateWatched');
+            const radioSpecific = document.getElementById('editDateWatchedSpecific');
+            const radioDontRemember = document.getElementById('editDateWatchedDontRemember');
+            function toggleDateInput() {
+                if (radioDontRemember.checked) {
+                    dateInput.value = '';
+                    dateInput.disabled = true;
+                } else {
+                    dateInput.disabled = false;
+                }
+            }
+            if (radioSpecific && radioDontRemember && dateInput) {
+                radioSpecific.addEventListener('change', toggleDateInput);
+                radioDontRemember.addEventListener('change', toggleDateInput);
+                toggleDateInput();
+            }
             console.log('Edit.cshtml - Fully Integrated Script Loaded (TMDB, Preview, Stars, TmdbId).');
 
             // --- Get DOM Elements ---
