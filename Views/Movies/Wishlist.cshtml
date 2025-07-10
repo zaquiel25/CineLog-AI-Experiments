@@ -10,6 +10,8 @@
 </div>
 <hr />
 
+<p class="text-muted mb-4">Your curated list of films to watch</p>
+
 <form asp-controller="Movies" asp-action="Wishlist" method="get" class="mb-3">
     <div class="input-group">
         <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by Title..." />
