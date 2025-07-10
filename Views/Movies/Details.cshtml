@@ -92,24 +92,71 @@
             @* ^^^^ END OF NEW SECTION ^^^^ *@
 
             @{
-                var streamingProviders = ViewData["StreamingProviders"] as List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>;
-
+                var watchProviders = ViewData["WatchProviders"] as Dictionary<string, List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>>;
+                bool hasProviders = watchProviders != null && watchProviders.Any(kvp => kvp.Value != null && kvp.Value.Any());
             }
-
-            @if (streamingProviders != null && streamingProviders.Any())
+            <h5 class="mt-4">Where to Watch</h5>
+            @if (hasProviders && watchProviders != null)
             {
-                <h5 class="mt-4">Where to Watch</h5>
-                <div class="d-flex flex-wrap">
-                    @foreach (var provider in streamingProviders)
-                    {
-                        <div class="me-2 mb-2">
-                            <img src="@(tmdbImageBaseUrl + provider.LogoPath)"
-                                 class="rounded"
-                                 style="width: 50px; height: 50px;"
-                                 title="@provider.ProviderName"
-                                 alt="@provider.ProviderName logo">
+                if (watchProviders.ContainsKey("Streaming"))
+                {
+                    <div class="provider-category mb-2">
+                        <h6>🎬 Stream</h6>
+                        <div class="d-flex flex-wrap">
+                            @foreach (var provider in watchProviders["Streaming"])
+                            {
+                                <div class="me-2 mb-2">
+                                    <img src="@(tmdbImageBaseUrl + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
+                                </div>
+                            }
                         </div>
-                    }
+                    </div>
+                }
+                if (watchProviders.ContainsKey("Buy"))
+                {
+                    <div class="provider-category mb-2">
+                        <h6>💰 Buy</h6>
+                        <div class="d-flex flex-wrap">
+                            @foreach (var provider in watchProviders["Buy"])
+                            {
+                                <div class="me-2 mb-2">
+                                    <img src="@(tmdbImageBaseUrl + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                if (watchProviders.ContainsKey("Rent"))
+                {
+                    <div class="provider-category mb-2">
+                        <h6>📱 Rent</h6>
+                        <div class="d-flex flex-wrap">
+                            @foreach (var provider in watchProviders["Rent"])
+                            {
+                                <div class="me-2 mb-2">
+                                    <img src="@(tmdbImageBaseUrl + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-providers">
+                    <p class="text-muted">Not currently available in your region</p>
                 </div>
             }
         </div>

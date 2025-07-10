@@ -431,17 +431,28 @@ namespace Ezequiel_Movies.Controllers
                 return NotFound();
             }
 
-            // 2. Get the "Where to Watch" providers
+            // 2. Get the "Where to Watch" providers (Streaming, Buy, Rent)
             var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId);
             if (watchProviders?.Results != null)
             {
-                // Prioritize Ireland, but fall back to US or GB for provider info
-                if (watchProviders.Results.TryGetValue("IE", out var providers) ||
-                    watchProviders.Results.TryGetValue("US", out providers) ||
-                    watchProviders.Results.TryGetValue("GB", out providers))
+                // Region priority: IE → US → GB
+                WatchProviderCountry? providers = null;
+                if (watchProviders.Results.TryGetValue("IE", out var ie)) providers = ie;
+                else if (watchProviders.Results.TryGetValue("US", out var us)) providers = us;
+                else if (watchProviders.Results.TryGetValue("GB", out var gb)) providers = gb;
+                else if (watchProviders.Results.Count > 0) providers = watchProviders.Results.Values.FirstOrDefault();
+
+                var allProviders = new Dictionary<string, List<ProviderInfo>>();
+                if (providers != null)
                 {
-                    ViewData["StreamingProviders"] = providers.Streaming;
+                    if (providers.Streaming?.Any() == true)
+                        allProviders["Streaming"] = providers.Streaming.ToList();
+                    if (providers.Buy?.Any() == true)
+                        allProviders["Buy"] = providers.Buy.ToList();
+                    if (providers.Rent?.Any() == true)
+                        allProviders["Rent"] = providers.Rent.ToList();
                 }
+                ViewData["WatchProviders"] = allProviders;
             }
 
             // 3. Check if the currently logged-in user has already logged this movie
@@ -472,18 +483,27 @@ namespace Ezequiel_Movies.Controllers
 
             if (movie.TmdbId.HasValue)
             {
-                // Get "Where to Watch" info
+                // Get "Where to Watch" info (Streaming, Buy, Rent)
                 var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value);
                 if (watchProviders?.Results != null)
                 {
-                    if (watchProviders.Results.TryGetValue("IE", out var irishProviders) && irishProviders.Streaming != null)
+                    WatchProviderCountry? providers = null;
+                    if (watchProviders.Results.TryGetValue("IE", out var ie)) providers = ie;
+                    else if (watchProviders.Results.TryGetValue("US", out var us)) providers = us;
+                    else if (watchProviders.Results.TryGetValue("GB", out var gb)) providers = gb;
+                    else if (watchProviders.Results.Count > 0) providers = watchProviders.Results.Values.FirstOrDefault();
+
+                    var allProviders = new Dictionary<string, List<ProviderInfo>>();
+                    if (providers != null)
                     {
-                        ViewData["StreamingProviders"] = irishProviders.Streaming;
+                        if (providers.Streaming?.Any() == true)
+                            allProviders["Streaming"] = providers.Streaming.ToList();
+                        if (providers.Buy?.Any() == true)
+                            allProviders["Buy"] = providers.Buy.ToList();
+                        if (providers.Rent?.Any() == true)
+                            allProviders["Rent"] = providers.Rent.ToList();
                     }
-                    else if (watchProviders.Results.TryGetValue("US", out var usProviders) && usProviders.Streaming != null)
-                    {
-                        ViewData["StreamingProviders"] = usProviders.Streaming;
-                    }
+                    ViewData["WatchProviders"] = allProviders;
                 }
 
                 // VVVV NEW LOGIC TO GET THE CAST VVVV
