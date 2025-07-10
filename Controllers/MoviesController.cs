@@ -709,6 +709,12 @@ namespace Ezequiel_Movies.Controllers
             string nextSuggestionType = suggestionType;
             string? nextQuery = query;
 
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
             switch (suggestionType?.ToLower())
             {
                 case "trending":
@@ -723,7 +729,7 @@ namespace Ezequiel_Movies.Controllers
                 case "director_random":
                     // This entire block handles the director suggestion cycle
                     #region Director Suggestion Logic
-                    var loggedDirectorMovies = await _dbContext.Movies.Where(m => !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue).ToListAsync();
+                    var loggedDirectorMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue).ToListAsync();
                     if (!loggedDirectorMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get director suggestions!";
@@ -751,7 +757,7 @@ namespace Ezequiel_Movies.Controllers
 
                     if (string.IsNullOrEmpty(directorToSuggest)) return RedirectToAction("ShowSuggestions", new { suggestionType = "director_random" });
 
-                    suggestedMovies = await GetSuggestionsForDirector(directorToSuggest); suggestionTitle = $"Because you like {directorToSuggest}...";
+                    suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId); suggestionTitle = $"Because you like {directorToSuggest}...";
                     nextQuery = directorToSuggest;
                     if (!suggestedMovies.Any()) suggestionTitle = $"You've seen all available movies by {directorToSuggest}! Try reshuffling.";
                     #endregion
@@ -763,7 +769,7 @@ namespace Ezequiel_Movies.Controllers
                 case "genre_random":
                     // This entire block handles the genre suggestion cycle
                     #region Genre Suggestion Logic
-                    var loggedGenreMovies = await _dbContext.Movies.Where(m => !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
+                    var loggedGenreMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
                     if (!loggedGenreMovies.Any())
                     {
                         suggestionTitle = "Log movies with genres to get suggestions!";
@@ -793,7 +799,7 @@ namespace Ezequiel_Movies.Controllers
 
                     if (string.IsNullOrEmpty(genreToSuggest)) { return RedirectToAction("ShowSuggestions", new { suggestionType = "genre_random" }); }
 
-                    suggestedMovies = await GetSuggestionsForGenre(genreToSuggest);
+                    suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId);
                     suggestionTitle = $"Popular {genreToSuggest} Movies";
                     nextQuery = genreToSuggest;
                     if (!suggestedMovies.Any()) { suggestionTitle = $"Couldn't find new suggestions for {genreToSuggest}. Try reshuffling."; }
@@ -805,7 +811,7 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_rated":
                 case "cast_random":
                     #region Cast Suggestion Logic
-                    var loggedCastMovies = await _dbContext.Movies.Where(m => m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
+                    var loggedCastMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
                     if (loggedCastMovies == null || !loggedCastMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get cast suggestions!";
@@ -848,22 +854,19 @@ namespace Ezequiel_Movies.Controllers
 
                     // This line creates the `loggedTmdbIds` variable that was missing before the call
                     var loggedTmdbIds = new HashSet<int>(loggedCastMovies.Where(m => m.TmdbId.HasValue).Select(m => m.TmdbId!.Value));
-                    suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id);
+                    suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id, userId);
 
                     suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
                     nextQuery = actorToSuggest.Name;
                     #endregion
                     break;
-                #endregion
-
-
 
                 case "year_recent":
                 case "year_frequent":
                 case "year_rated":
                 case "year_random":
-                    var loggedYearMovies = await _dbContext.Movies.Where(m => m.ReleasedYear.HasValue).ToListAsync();
+                    var loggedYearMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.ReleasedYear.HasValue).ToListAsync();
                     if (!loggedYearMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get year-based suggestions!";
@@ -897,7 +900,7 @@ namespace Ezequiel_Movies.Controllers
                         return RedirectToAction("ShowSuggestions", new { suggestionType = "year_random" });
                     }
 
-                    suggestedMovies = await GetSuggestionsForDecade(decadeToSuggest.Value);
+                    suggestedMovies = await GetSuggestionsForDecade(decadeToSuggest.Value, userId);
                     suggestionTitle = $"Top-Rated movies from the {decadeToSuggest}s";
                     nextQuery = decadeToSuggest.Value.ToString();
                     break;
@@ -915,13 +918,17 @@ namespace Ezequiel_Movies.Controllers
 
 
         // THIS IS THE NEW, SIMPLIFIED HELPER METHOD
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName)
+
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName, string userId)
         {
             var directorId = await _tmdbService.GetPersonIdAsync(directorName);
             if (!directorId.HasValue) return new List<TmdbMovieBrief>();
 
             // Get the director's ENTIRE filmography from our service
             var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
+
+            // DO NOT filter out movies already logged by this user (allow repetition)
+            // Preserve any existing quality filters (none here, but keep for future)
 
             if (!allDirectorMovies.Any())
             {
@@ -941,7 +948,8 @@ namespace Ezequiel_Movies.Controllers
             return randomSuggestions;
         }
 
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName)
+
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName, string userId)
         {
             var allGenres = await _tmdbService.GetAllGenresAsync();
             var genre = allGenres.FirstOrDefault(g => g.Name != null && g.Name.Equals(genreName, StringComparison.OrdinalIgnoreCase));
@@ -953,6 +961,16 @@ namespace Ezequiel_Movies.Controllers
 
             var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, pageToFetch);
 
+            // Filter out movies already logged by this user
+            var userLoggedTmdbIds = (await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Select(m => m.TmdbId)
+                .ToListAsync())
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToList();
+            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+
             if (movies.Any())
             {
                 HttpContext.Session.SetInt32(sessionKey, pageToFetch + 1);
@@ -962,6 +980,7 @@ namespace Ezequiel_Movies.Controllers
                 // If we ran out of pages, reset and fetch page 1 again as a fallback.
                 HttpContext.Session.SetInt32(sessionKey, 1);
                 movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, 1);
+                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
             }
 
             return movies.Take(3).ToList();
@@ -971,12 +990,23 @@ namespace Ezequiel_Movies.Controllers
 
         // In MoviesController.cs
 
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForActor(int actorId)
+
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForActor(int actorId, string userId)
         {
             _logger.LogInformation("HELPER: Getting random movies for actor ID {ActorId}", actorId);
 
             // 1. Get the actor's filmography using the service
             var allActorMovies = await _tmdbService.DiscoverMoviesByActorAsync(actorId);
+
+            // Filter out movies already logged by this user
+            var userLoggedTmdbIds = (await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Select(m => m.TmdbId)
+                .ToListAsync())
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToList();
+            allActorMovies = allActorMovies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
 
             if (!allActorMovies.Any())
             {
@@ -997,7 +1027,8 @@ namespace Ezequiel_Movies.Controllers
 
         // In MoviesController.cs, add this new helper method
 
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDecade(int decade)
+
+        private async Task<List<TmdbMovieBrief>> GetSuggestionsForDecade(int decade, string userId)
         {
             // Use a unique session key to remember the page for this specific decade
             string sessionKey = $"DecadePage_{decade}";
@@ -1006,6 +1037,16 @@ namespace Ezequiel_Movies.Controllers
             _logger.LogInformation("HELPER: Finding movies for decade {Decade}, starting at page {Page}", decade, pageToFetch);
 
             var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, pageToFetch);
+
+            // Filter out movies already logged by this user
+            var userLoggedTmdbIds = (await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Select(m => m.TmdbId)
+                .ToListAsync())
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToList();
+            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
 
             if (movies.Any())
             {
@@ -1018,6 +1059,7 @@ namespace Ezequiel_Movies.Controllers
                 _logger.LogWarning("No movies found on page {Page} for {Decade}. Resetting to page 1.", pageToFetch, decade);
                 HttpContext.Session.SetInt32(sessionKey, 1);
                 movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, 1);
+                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
             }
 
             return movies.Take(3).ToList();
@@ -1519,4 +1561,6 @@ namespace Ezequiel_Movies.Controllers
             }
         }
     }
+// ...existing code...
+#endregion
 }
