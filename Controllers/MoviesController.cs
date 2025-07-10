@@ -21,6 +21,14 @@ namespace Ezequiel_Movies.Controllers
     [Authorize]
     public class MoviesController : Controller
     {
+        // DRY Helper: Get all blacklisted TMDB IDs for a user
+        private async Task<HashSet<int>> GetUserBlacklistedTmdbIdsAsync(string userId)
+        {
+            return (await _dbContext.BlacklistedMovies
+                .Where(b => b.UserId == userId)
+                .Select(b => b.TmdbId)
+                .ToListAsync()).ToHashSet();
+        }
         // Helper: Get current user ID with logging
         private string? GetCurrentUserId()
         {
@@ -727,7 +735,7 @@ namespace Ezequiel_Movies.Controllers
                 case "director_frequent":
                 case "director_rated":
                 case "director_random":
-                    // This entire block handles the director suggestion cycle
+                    // Director Suggestion Logic with skip for all-blacklisted
                     #region Director Suggestion Logic
                     var loggedDirectorMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue).ToListAsync();
                     if (!loggedDirectorMovies.Any())
@@ -742,24 +750,53 @@ namespace Ezequiel_Movies.Controllers
                     if (loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
                     if (loggedDirectorMovies.Where(m => m.UserRating.HasValue).GroupBy(m => m.Director!).Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) }).OrderByDescending(d => d.Avg).Select(d => d.Name).FirstOrDefault() is string trd && !topDirectorQueue.Contains(trd)) topDirectorQueue.Add(trd);
 
+                    // Try each director in priority order, skipping those with no available movies
                     string? directorToSuggest = null;
-                    if (suggestionType == "director_recent") { directorToSuggest = topDirectorQueue.ElementAtOrDefault(0); nextSuggestionType = "director_frequent"; }
-                    else if (suggestionType == "director_frequent") { directorToSuggest = topDirectorQueue.ElementAtOrDefault(1); nextSuggestionType = "director_rated"; }
-                    else if (suggestionType == "director_rated") { directorToSuggest = topDirectorQueue.ElementAtOrDefault(2); nextSuggestionType = "director_random"; }
-                    else if (suggestionType == "director_random")
+                    List<TmdbMovieBrief> directorSuggestions = new();
+                    int startIdx = 0;
+                    if (suggestionType == "director_recent") startIdx = 0;
+                    else if (suggestionType == "director_frequent") startIdx = 1;
+                    else if (suggestionType == "director_rated") startIdx = 2;
+                    else startIdx = 0;
+
+                    for (int i = startIdx; i < topDirectorQueue.Count; i++)
+                    {
+                        var d = topDirectorQueue[i];
+                        var movies = await GetSuggestionsForDirector(d, userId);
+                        if (movies.Any())
+                        {
+                            directorToSuggest = d;
+                            directorSuggestions = movies;
+                            nextSuggestionType = i == 0 ? "director_frequent" : i == 1 ? "director_rated" : "director_random";
+                            break;
+                        }
+                    }
+                    // If none found, try random
+                    if (directorSuggestions.Count == 0)
                     {
                         var allDirectors = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
                         var potentialDirectors = allDirectors.Where(d => d != query).ToList();
                         if (!potentialDirectors.Any()) potentialDirectors = allDirectors;
-                        directorToSuggest = potentialDirectors.Any() ? potentialDirectors[new Random().Next(potentialDirectors.Count)] : null;
-                        nextSuggestionType = "director_random";
+                        foreach (var d in potentialDirectors.OrderBy(_ => Guid.NewGuid()))
+                        {
+                            var movies = await GetSuggestionsForDirector(d, userId);
+                            if (movies.Any())
+                            {
+                                directorToSuggest = d;
+                                directorSuggestions = movies;
+                                nextSuggestionType = "director_random";
+                                break;
+                            }
+                        }
                     }
-
-                    if (string.IsNullOrEmpty(directorToSuggest)) return RedirectToAction("ShowSuggestions", new { suggestionType = "director_random" });
-
-                    suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId); suggestionTitle = $"Because you like {directorToSuggest}...";
+                    if (directorSuggestions.Count == 0)
+                    {
+                        suggestionTitle = "No available director suggestions. Try reshuffling or logging more movies.";
+                        break;
+                    }
+                    suggestedMovies = directorSuggestions;
+                    suggestionTitle = $"Because you like {directorToSuggest}...";
                     nextQuery = directorToSuggest;
-                    if (!suggestedMovies.Any()) suggestionTitle = $"You've seen all available movies by {directorToSuggest}! Try reshuffling.";
                     #endregion
                     break;
 
@@ -767,7 +804,7 @@ namespace Ezequiel_Movies.Controllers
                 case "genre_frequent":
                 case "genre_rated":
                 case "genre_random":
-                    // This entire block handles the genre suggestion cycle
+                    // Genre Suggestion Logic with skip for all-blacklisted
                     #region Genre Suggestion Logic
                     var loggedGenreMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
                     if (!loggedGenreMovies.Any())
@@ -786,23 +823,50 @@ namespace Ezequiel_Movies.Controllers
                     if (highestRatedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is string hg && !topGenreQueue.Contains(hg)) topGenreQueue.Add(hg);
 
                     string? genreToSuggest = null;
-                    if (suggestionType == "genre_recent") { genreToSuggest = topGenreQueue.ElementAtOrDefault(0); nextSuggestionType = "genre_frequent"; }
-                    else if (suggestionType == "genre_frequent") { genreToSuggest = topGenreQueue.ElementAtOrDefault(1); nextSuggestionType = "genre_rated"; }
-                    else if (suggestionType == "genre_rated") { genreToSuggest = topGenreQueue.ElementAtOrDefault(2); nextSuggestionType = "genre_random"; }
-                    else if (suggestionType == "genre_random")
+                    List<TmdbMovieBrief> genreSuggestions = new();
+                    int genreStartIdx = 0;
+                    if (suggestionType == "genre_recent") genreStartIdx = 0;
+                    else if (suggestionType == "genre_frequent") genreStartIdx = 1;
+                    else if (suggestionType == "genre_rated") genreStartIdx = 2;
+                    else genreStartIdx = 0;
+
+                    for (int i = genreStartIdx; i < topGenreQueue.Count; i++)
+                    {
+                        var g = topGenreQueue[i];
+                        var movies = await GetSuggestionsForGenre(g, userId);
+                        if (movies.Any())
+                        {
+                            genreToSuggest = g;
+                            genreSuggestions = movies;
+                            nextSuggestionType = i == 0 ? "genre_frequent" : i == 1 ? "genre_rated" : "genre_random";
+                            break;
+                        }
+                    }
+                    // If none found, try random
+                    if (genreSuggestions.Count == 0)
                     {
                         var potentialGenres = allUserGenres.Distinct().Where(g => g != query).ToList();
                         if (!potentialGenres.Any()) potentialGenres = allUserGenres.Distinct().ToList();
-                        genreToSuggest = potentialGenres.Any() ? potentialGenres[new Random().Next(potentialGenres.Count)] : null;
-                        nextSuggestionType = "genre_random";
+                        foreach (var g in potentialGenres.OrderBy(_ => Guid.NewGuid()))
+                        {
+                            var movies = await GetSuggestionsForGenre(g, userId);
+                            if (movies.Any())
+                            {
+                                genreToSuggest = g;
+                                genreSuggestions = movies;
+                                nextSuggestionType = "genre_random";
+                                break;
+                            }
+                        }
                     }
-
-                    if (string.IsNullOrEmpty(genreToSuggest)) { return RedirectToAction("ShowSuggestions", new { suggestionType = "genre_random" }); }
-
-                    suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId);
+                    if (genreSuggestions.Count == 0)
+                    {
+                        suggestionTitle = "No available genre suggestions. Try reshuffling or logging more movies.";
+                        break;
+                    }
+                    suggestedMovies = genreSuggestions;
                     suggestionTitle = $"Popular {genreToSuggest} Movies";
                     nextQuery = genreToSuggest;
-                    if (!suggestedMovies.Any()) { suggestionTitle = $"Couldn't find new suggestions for {genreToSuggest}. Try reshuffling."; }
                     #endregion
                     break;
 
@@ -810,6 +874,7 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_frequent":
                 case "cast_rated":
                 case "cast_random":
+                    // Cast Suggestion Logic with skip for all-blacklisted
                     #region Cast Suggestion Logic
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
                     if (loggedCastMovies == null || !loggedCastMovies.Any())
@@ -820,13 +885,9 @@ namespace Ezequiel_Movies.Controllers
                     }
 
                     var allTopActors = new List<TmdbCastPerson>();
-                    // NOTE: This part is slow. We can optimize it later.
                     foreach (var movie in loggedCastMovies.Take(15))
                     {
-                        if (!movie.TmdbId.HasValue)
-                        {
-                            continue;
-                        }
+                        if (!movie.TmdbId.HasValue) continue;
                         var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                         if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(3));
                     }
@@ -838,24 +899,49 @@ namespace Ezequiel_Movies.Controllers
                     if (allTopActors.OrderByDescending(a => a.Popularity).FirstOrDefault() is TmdbCastPerson pa && !topActorQueue.Any(p => p.Id == pa.Id)) topActorQueue.Add(pa);
 
                     TmdbCastPerson? actorToSuggest = null;
-                    if (suggestionType == "cast_recent") { actorToSuggest = topActorQueue.ElementAtOrDefault(0); nextSuggestionType = "cast_frequent"; }
-                    else if (suggestionType == "cast_frequent") { actorToSuggest = topActorQueue.ElementAtOrDefault(1); nextSuggestionType = "cast_rated"; }
-                    else if (suggestionType == "cast_rated") { actorToSuggest = topActorQueue.ElementAtOrDefault(2); nextSuggestionType = "cast_random"; }
-                    else if (suggestionType == "cast_random")
+                    List<TmdbMovieBrief> actorSuggestions = new();
+                    int actorStartIdx = 0;
+                    if (suggestionType == "cast_recent") actorStartIdx = 0;
+                    else if (suggestionType == "cast_frequent") actorStartIdx = 1;
+                    else if (suggestionType == "cast_rated") actorStartIdx = 2;
+                    else actorStartIdx = 0;
+
+                    for (int i = actorStartIdx; i < topActorQueue.Count; i++)
+                    {
+                        var a = topActorQueue[i];
+                        var movies = await GetSuggestionsForActor(a.Id, userId);
+                        if (movies.Any())
+                        {
+                            actorToSuggest = a;
+                            actorSuggestions = movies;
+                            nextSuggestionType = i == 0 ? "cast_frequent" : i == 1 ? "cast_rated" : "cast_random";
+                            break;
+                        }
+                    }
+                    // If none found, try random
+                    if (actorSuggestions.Count == 0)
                     {
                         var potentialActors = allTopActors.DistinctBy(p => p.Id).Where(p => p.Name != query).ToList();
                         if (!potentialActors.Any()) potentialActors = allTopActors.DistinctBy(p => p.Id).ToList();
-                        actorToSuggest = potentialActors.Any() ? potentialActors[new Random().Next(potentialActors.Count)] : null;
-                        nextSuggestionType = "cast_random";
+                        foreach (var a in potentialActors.OrderBy(_ => Guid.NewGuid()))
+                        {
+                            var movies = await GetSuggestionsForActor(a.Id, userId);
+                            if (movies.Any())
+                            {
+                                actorToSuggest = a;
+                                actorSuggestions = movies;
+                                nextSuggestionType = "cast_random";
+                                break;
+                            }
+                        }
                     }
-                    if (actorToSuggest == null) { return RedirectToAction("ShowSuggestions", new { suggestionType = "cast_random" }); }
-
-                    var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id);
-
-                    // This line creates the `loggedTmdbIds` variable that was missing before the call
-                    var loggedTmdbIds = new HashSet<int>(loggedCastMovies.Where(m => m.TmdbId.HasValue).Select(m => m.TmdbId!.Value));
-                    suggestedMovies = await GetSuggestionsForActor(actorToSuggest.Id, userId);
-
+                    if (actorSuggestions.Count == 0)
+                    {
+                        suggestionTitle = "No available cast suggestions. Try reshuffling or logging more movies.";
+                        break;
+                    }
+                    var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest!.Id);
+                    suggestedMovies = actorSuggestions;
                     suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
                     nextQuery = actorToSuggest.Name;
@@ -866,6 +952,7 @@ namespace Ezequiel_Movies.Controllers
                 case "year_frequent":
                 case "year_rated":
                 case "year_random":
+                    // Decade Suggestion Logic with skip for all-blacklisted
                     var loggedYearMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.ReleasedYear.HasValue).ToListAsync();
                     if (!loggedYearMovies.Any())
                     {
@@ -883,26 +970,51 @@ namespace Ezequiel_Movies.Controllers
                     if (ratedDecade > 0 && !topYearQueue.Contains(ratedDecade)) topYearQueue.Add(ratedDecade);
 
                     int? decadeToSuggest = null;
-                    if (suggestionType == "year_recent") { decadeToSuggest = topYearQueue.ElementAtOrDefault(0); nextSuggestionType = "year_frequent"; }
-                    else if (suggestionType == "year_frequent") { decadeToSuggest = topYearQueue.ElementAtOrDefault(1); nextSuggestionType = "year_rated"; }
-                    else if (suggestionType == "year_rated") { decadeToSuggest = topYearQueue.ElementAtOrDefault(2); nextSuggestionType = "year_random"; }
-                    else if (suggestionType == "year_random")
+                    List<TmdbMovieBrief> decadeSuggestions = new();
+                    int decadeStartIdx = 0;
+                    if (suggestionType == "year_recent") decadeStartIdx = 0;
+                    else if (suggestionType == "year_frequent") decadeStartIdx = 1;
+                    else if (suggestionType == "year_rated") decadeStartIdx = 2;
+                    else decadeStartIdx = 0;
+
+                    for (int i = decadeStartIdx; i < topYearQueue.Count; i++)
+                    {
+                        var d = topYearQueue[i];
+                        var movies = await GetSuggestionsForDecade(d, userId);
+                        if (movies.Any())
+                        {
+                            decadeToSuggest = d;
+                            decadeSuggestions = movies;
+                            nextSuggestionType = i == 0 ? "year_frequent" : i == 1 ? "year_rated" : "year_random";
+                            break;
+                        }
+                    }
+                    // If none found, try random
+                    if (decadeSuggestions.Count == 0)
                     {
                         var allDecades = decades.Distinct().ToList();
                         var potentialDecades = allDecades.Where(d => d.ToString() != query).ToList();
                         if (!potentialDecades.Any()) potentialDecades = allDecades;
-                        decadeToSuggest = potentialDecades.Any() ? potentialDecades[new Random().Next(potentialDecades.Count)] : null;
-                        nextSuggestionType = "year_random";
+                        foreach (var d in potentialDecades.OrderBy(_ => Guid.NewGuid()))
+                        {
+                            var movies = await GetSuggestionsForDecade(d, userId);
+                            if (movies.Any())
+                            {
+                                decadeToSuggest = d;
+                                decadeSuggestions = movies;
+                                nextSuggestionType = "year_random";
+                                break;
+                            }
+                        }
                     }
-
-                    if (!decadeToSuggest.HasValue || decadeToSuggest == 0)
+                    if (decadeSuggestions.Count == 0)
                     {
-                        return RedirectToAction("ShowSuggestions", new { suggestionType = "year_random" });
+                        suggestionTitle = "No available decade suggestions. Try reshuffling or logging more movies.";
+                        break;
                     }
-
-                    suggestedMovies = await GetSuggestionsForDecade(decadeToSuggest.Value, userId);
+                    suggestedMovies = decadeSuggestions;
                     suggestionTitle = $"Top-Rated movies from the {decadeToSuggest}s";
-                    nextQuery = decadeToSuggest.Value.ToString();
+                    nextQuery = decadeToSuggest?.ToString();
                     break;
                 // ^^^^ END OF NEW YEAR LOGIC ^^^^
 
@@ -927,8 +1039,9 @@ namespace Ezequiel_Movies.Controllers
             // Get the director's ENTIRE filmography from our service
             var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
 
-            // DO NOT filter out movies already logged by this user (allow repetition)
-            // Preserve any existing quality filters (none here, but keep for future)
+            // Blacklist filter
+            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+            allDirectorMovies = allDirectorMovies.Where(m => !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (!allDirectorMovies.Any())
             {
@@ -969,7 +1082,9 @@ namespace Ezequiel_Movies.Controllers
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .ToList();
-            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+            // Blacklist filter
+            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (movies.Any())
             {
@@ -980,7 +1095,7 @@ namespace Ezequiel_Movies.Controllers
                 // If we ran out of pages, reset and fetch page 1 again as a fallback.
                 HttpContext.Session.SetInt32(sessionKey, 1);
                 movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, 1);
-                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
             }
 
             return movies.Take(3).ToList();
@@ -1006,7 +1121,9 @@ namespace Ezequiel_Movies.Controllers
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .ToList();
-            allActorMovies = allActorMovies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+            // Blacklist filter
+            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+            allActorMovies = allActorMovies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (!allActorMovies.Any())
             {
@@ -1046,7 +1163,9 @@ namespace Ezequiel_Movies.Controllers
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .ToList();
-            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+            // Blacklist filter
+            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (movies.Any())
             {
@@ -1059,7 +1178,7 @@ namespace Ezequiel_Movies.Controllers
                 _logger.LogWarning("No movies found on page {Page} for {Decade}. Resetting to page 1.", pageToFetch, decade);
                 HttpContext.Session.SetInt32(sessionKey, 1);
                 movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, 1);
-                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id)).ToList();
+                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
             }
 
             return movies.Take(3).ToList();
