@@ -211,10 +211,7 @@ else
 
                     <ul class="list-unstyled mt-2 mb-2" style="font-size: 0.85rem;">
                         <li class="mb-1"><strong>Released:</strong> @year</li>
-                        @if (movie.DateWatched.HasValue)
-                        {
-                            <li class="mb-1"><strong>Watched:</strong> @movie.DateWatched?.ToString("dd/MM/yyyy")</li>
-                        }
+                        <li class="mb-1"><strong>Watched:</strong> @(movie.DateWatched.HasValue ? movie.DateWatched.Value.ToString("dd/MM/yyyy") : "-")</li>
                         <li class="mb-1"><strong>At:</strong> @(string.IsNullOrWhiteSpace(location) || location == "Unknown" ? "-" : location)</li>
                         @if (movie.IsRewatch)
                         {
