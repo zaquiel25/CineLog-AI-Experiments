@@ -28,12 +28,27 @@
 
 /* --- HERO LANDING PAGE ULTRA CLEAN (Apple-style) --- */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
-.body, .hero-section {
-  background: #000 !important;
-  color: #fff;
-  font-family: 'Inter', 'Poppins', 'Roboto', Arial, sans-serif;
+body, p, .btn, .navbar, .subtitle {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+.brand-title, h1 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+}
+
+.hero-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 4rem;
+}
+
+.hero-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
 }
 
 .navbar {
