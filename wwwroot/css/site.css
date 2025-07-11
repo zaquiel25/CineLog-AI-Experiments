@@ -1,4 +1,23 @@
-﻿/* RESTORE bold to all strong elements in list items */
+﻿/* Make overview text look like natural paragraph */
+.overview-section p,
+.movie-overview,
+.movie-overview p,
+[class*="overview"] p {
+    text-align: left !important;
+    text-justify: none !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+/* Reduce overview text size and formatting */
+.overview-section p,
+.movie-overview,
+[class*="overview"] p {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    font-weight: 400 !important;
+}
+/* RESTORE bold to all strong elements in list items */
 .list-unstyled li strong {
     font-weight: 700 !important;
 }
