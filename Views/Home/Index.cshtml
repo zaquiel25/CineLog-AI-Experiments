@@ -2,20 +2,56 @@
     ViewData["Title"] = "Home - CineLog";
 }
 
+
+@* --- HERO LANDING PAGE TRANSFORMATION (Apple-esque) --- *@
+
+<!--
+  Backup original Spanish strings:
+  Title: CineLog
+  Subtitle: Tu bitácora personal de películas, simple, elegante y siempre contigo.
+  Primary Button: Comenzar mi colección
+  Secondary Button: Explorar sugerencias
+-->
+
+
+<!--
+  Previous hero-section and buttons code commented for rollback.
+  <div class="hero-section">
+      <h1 class="hero-title">CineLog</h1>
+      <p class="hero-subtitle">Your personal movie companion, simple, elegant, always with you.</p>
+      <div>
+          <a asp-controller="Movies" asp-action="Add" class="hero-btn hero-btn-primary">
+              Start My Collection
+          </a>
+          <a asp-controller="Movies" asp-action="Suggest" class="hero-btn hero-btn-secondary">
+              Explore Suggestions
+          </a>
+      </div>
+  </div>
+-->
+
+<h1>CineLog</h1>
+<p>Your personal movie companion</p>
+<div style="margin-top:2.2rem; display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;">
+    <a asp-controller="Movies" asp-action="Add" class="btn-custom">Start My Collection</a>
+    <a asp-controller="Movies" asp-action="Suggest" class="btn-custom">Explore Suggestions</a>
+</div>
+
+<!--
+--- CÓDIGO ORIGINAL COMENTADO PARA ROLLBACK ---
 <div class="text-center">
     <h1 class="display-4 mt-5 mb-3">Welcome to CineLog!</h1>
     <p class="lead mb-5">Your personal movie watching log and suggestion companion.</p>
-
     <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
         <a asp-controller="Movies" asp-action="Add" class="btn btn-primary btn-lg px-4 gap-3">
             <i class="bi bi-film me-2"></i>Log a New Movie
         </a>
         <a asp-controller="Movies" asp-action="Suggest" class="btn btn-warning btn-lg px-4">
-            @* Changed btn-outline-secondary to btn-warning *@
             <i class="bi bi-lightbulb me-2"></i>Get Movie Suggestions
         </a>
     </div>
 </div>
+-->
 
 @* You can add more content to your home page later if you like,
     such as a brief overview of features, or maybe some stats if you implement them.
