@@ -207,9 +207,8 @@ else
                         var location = movie.WatchedLocation?.ToString() ?? "-";
                         var rating = movie.UserRating ?? 0;
                     }
-                    <p class="card-text mb-1"><small class="text-muted">Directed by: @director</small></p>
-
                     <ul class="list-unstyled mt-2 mb-2" style="font-size: 0.85rem;">
+                        <li class="mb-1"><strong>Directed by:</strong> @director</li>
                         <li class="mb-1"><strong>Released:</strong> @year</li>
                         <li class="mb-1"><strong>Watched:</strong> @(movie.DateWatched.HasValue ? movie.DateWatched.Value.ToString("dd/MM/yyyy") : "-")</li>
                         <li class="mb-1"><strong>At:</strong> @(string.IsNullOrWhiteSpace(location) || location == "Unknown" ? "-" : location)</li>
@@ -235,7 +234,7 @@ else
                         }
                         else
                         {
-                            <li class="mt-1"><small class="text-muted" style="font-size:0.8em;">Not Rated</small></li>
+                            <li class="mt-1"><strong>Not Rated</strong></li>
                         }
                     </ul>
 

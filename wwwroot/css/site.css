@@ -1,4 +1,160 @@
-﻿/* Both buttons identical styling */
+﻿/* RESTORE bold to all strong elements in list items */
+.list-unstyled li strong {
+    font-weight: 700 !important;
+}
+
+/* Remove bold specifically from 'Not Rated' only (li.mt-1) */
+.list-unstyled li.mt-1 strong {
+    font-weight: 400 !important;
+}
+
+/* Ensure other list items (mb-1) remain bold */
+.list-unstyled li.mb-1 strong {
+    font-weight: 700 !important;
+}
+/* Remove bold from 'Not Rated' only */
+.list-unstyled li strong {
+    font-weight: 400;
+}
+/* Make movie titles more visible and use card width better */
+.card-title,
+.card-title a,
+a.link-as-text {
+    color: #f8f9fa !important;
+}
+
+.card-title {
+    font-size: 1rem !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word;
+    white-space: normal;
+    width: 100%;
+}
+/* Make "Directed by:" (small.text-muted) exactly identical to "Released:" (strong) */
+small.text-muted {
+    font-size: 11.9px !important;
+    font-weight: 700 !important;
+    color: rgb(173, 175, 174) !important;
+    line-height: 17.85px !important;
+    text-align: left !important;
+}
+/* Make "Directed by:" (small.text-muted) look exactly like "Released:" (strong) */
+small.text-muted {
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    color: rgb(108, 117, 125) !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+}
+
+/* REVERT: Remove previous h5.card-title override */
+h5.card-title {
+    /* font-size, color, margin, etc. reverted to default or previous state */
+}
+/* h5.card-title matches p.card-text.mb-1 (released year) */
+h5.card-title {
+    font-size: 10.5px;
+    color: rgb(224, 224, 224);
+    margin: 0px 117.18px 3.5px 0px;
+}
+/* Override H5.card-title (Directed by:) to look exactly like P.card-text.text-secondary (Released:) */
+H5.card-title,
+.card-title {
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    color: rgb(108, 117, 125) !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    margin-bottom: 0.5rem;
+}
+/* Make 'Directed by:' match 'Released:' style */
+.card-subtitle,
+.director-info,
+[class*="Directed"] {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #e0e0e0;
+    text-align: left;
+}
+/* === EMERGENCY ROLLBACK: All card CSS changes from today commented out ===
+.container .row .col .card,
+.movie-card,
+.card {
+    /* height: 100% !important; */
+    /* display: flex !important; */
+    /* flex-direction: column !important; */
+    /* min-height: 420px !important; */
+}
+
+.container .row .col .card .card-body,
+.card-body {
+    /* flex-grow: 1 !important; */
+    /* display: flex !important; */
+    /* flex-direction: column !important; */
+    /* justify-content: space-between !important; */
+}
+
+.container .row,
+.row {
+    /* align-items: stretch !important; */
+    /* margin-bottom: 1rem; */
+}
+
+[class*="col-"] {
+    /* display: flex !important; */
+    /* margin-bottom: 1rem; */
+}
+
+.card-body .btn-group,
+.card-body .d-flex {
+    /* margin-top: auto !important; */
+}
+=== END EMERGENCY ROLLBACK === */
+/* All secondary text elements - make smaller */
+.card-text, .card-subtitle, 
+.director-info, .release-info, .watched-info,
+.movie-details, .card-body small,
+[class*="Released"], [class*="Watched"], [class*="At:"] {
+    font-size: 0.75rem;
+}
+
+/* Specifically target secondary info lines */
+.card-body p, .card-body div:not(.card-title) {
+    font-size: 0.75rem;
+}
+/* === BACKUP: Previous movie card title/director alignment ===
+.card-title, .movie-title {
+    font-size: 1.1rem;
+    /* text-align: center; */
+}
+.director-text, .card-subtitle {
+    font-size: 0.9rem;
+    /* text-align: center; */
+}
+=== END BACKUP === */
+
+/* MOVIE CARDS - TEXT ALIGNMENT FIX */
+.card-title,
+.movie-title,
+h5.card-title {
+    text-align: left !important;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.card-subtitle,
+.director-info,
+[class*="Directed"],
+.card-body p:first-of-type {
+    text-align: left !important;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.card-body {
+    text-align: left;
+}
+/* Both buttons identical styling */
 .btn-custom {
   background: #000;
   color: #fff;
