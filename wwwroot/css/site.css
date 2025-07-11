@@ -1,4 +1,105 @@
-﻿/* Make overview text look like natural paragraph */
+﻿/* Suggestion cards - Homepage style consistency */
+.suggestion-card {
+    background: transparent !important;
+    border: 2px solid white !important;
+    color: white !important;
+    transition: all 0.3s ease !important;
+}
+
+.suggestion-card:hover {
+    background: white !important;
+    color: black !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    text-decoration: none !important;
+}
+
+.suggestion-card .card-title,
+.suggestion-card .suggestion-description,
+.suggestion-card i {
+    color: inherit !important;
+}
+
+.suggestion-card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+/* Target ONLY suggestion cards - restore proper centering */
+.suggestion-card .card-body {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    height: 100% !important;
+}
+
+.suggestion-card .card-title,
+.suggestion-card .suggestion-description {
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+.suggestion-card i {
+    text-align: center !important;
+}
+
+/* REVERT any overview changes that broke movie details */
+.overview-section p,
+.movie-overview p {
+    text-align: left !important;
+    text-justify: none !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+/* Emergency: Center text in blue suggestion cards */
+.suggestion-buttons .card,
+.btn[class*="suggestion"],
+[href*="ShowSuggestions"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+.suggestion-buttons .card-text,
+.suggestion-buttons {
+    text-align: center !important;
+    align-self: center !important;
+}
+/* SUGGESTION CARDS: Center text and match home page button style */
+.suggestion-cards .card,
+[class*="suggestion"] .card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.suggestion-cards .card-text,
+.suggestion-cards .card-title {
+    color: white;
+    text-align: center;
+}
+
+.suggestion-cards .btn,
+[class*="suggestion"] .btn {
+    background: transparent !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+.suggestion-cards .btn:hover,
+[class*="suggestion"] .btn:hover {
+    background: white !important;
+    color: black !important;
+}
+/* Make overview text look like natural paragraph */
 .overview-section p,
 .movie-overview,
 .movie-overview p,
