@@ -1,4 +1,11 @@
-﻿/* Suggestion cards - Homepage style consistency */
+﻿/* Overview text - Preview/Details consistency */
+.movie-overview {
+    font-size: 0.9rem !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    text-justify: none !important;
+}
+/* Suggestion cards - Homepage style consistency */
 .suggestion-card {
     background: transparent !important;
     border: 2px solid white !important;
