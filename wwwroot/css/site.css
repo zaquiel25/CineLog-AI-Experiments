@@ -174,10 +174,7 @@ small.text-muted {
     text-align: left !important;
 }
 
-/* REVERT: Remove previous h5.card-title override */
-h5.card-title {
-    /* font-size, color, margin, etc. reverted to default or previous state */
-}
+/* REVERT: Remove previous h5.card-title override (regla vacía eliminada) */
 /* h5.card-title matches p.card-text.mb-1 (released year) */
 h5.card-title {
     font-size: 10.5px;
@@ -203,40 +200,7 @@ H5.card-title,
     color: #e0e0e0;
     text-align: left;
 }
-/* === EMERGENCY ROLLBACK: All card CSS changes from today commented out ===
-.container .row .col .card,
-.movie-card,
-.card {
-    /* height: 100% !important; */
-    /* display: flex !important; */
-    /* flex-direction: column !important; */
-    /* min-height: 420px !important; */
-}
-
-.container .row .col .card .card-body,
-.card-body {
-    /* flex-grow: 1 !important; */
-    /* display: flex !important; */
-    /* flex-direction: column !important; */
-    /* justify-content: space-between !important; */
-}
-
-.container .row,
-.row {
-    /* align-items: stretch !important; */
-    /* margin-bottom: 1rem; */
-}
-
-[class*="col-"] {
-    /* display: flex !important; */
-    /* margin-bottom: 1rem; */
-}
-
-.card-body .btn-group,
-.card-body .d-flex {
-    /* margin-top: auto !important; */
-}
-=== END EMERGENCY ROLLBACK === */
+/* Limpieza: Eliminado bloque de rollback y reglas vacías para validación CSS */
 /* All secondary text elements - make smaller */
 .card-text, .card-subtitle, 
 .director-info, .release-info, .watched-info,
@@ -249,16 +213,7 @@ H5.card-title,
 .card-body p, .card-body div:not(.card-title) {
     font-size: 0.75rem;
 }
-/* === BACKUP: Previous movie card title/director alignment ===
-.card-title, .movie-title {
-    font-size: 1.1rem;
-    /* text-align: center; */
-}
-.director-text, .card-subtitle {
-    font-size: 0.9rem;
-    /* text-align: center; */
-}
-=== END BACKUP === */
+/* Limpieza: Eliminado bloque de backup y reglas vacías para validación CSS */
 
 /* MOVIE CARDS - TEXT ALIGNMENT FIX */
 .card-title,
