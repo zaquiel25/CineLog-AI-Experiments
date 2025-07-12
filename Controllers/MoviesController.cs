@@ -1245,8 +1245,41 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_frequent":
                 case "cast_rated":
                 case "cast_random":
-                    // Cast Suggestion Logic with skip for all-blacklisted
-                    #region Cast Suggestion Logic
+                    // === CAST SUGGESTION LOGIC WITH BULLETPROOF FIXES ===
+                    // PHASE 1: Session-based sequence management (like directors)
+                    string castTypeKey = $"CastTypeSequence_{userId}";
+                    bool isFreshStartCast = string.IsNullOrWhiteSpace(query);
+                    int castTypeCount;
+                    if (isFreshStartCast)
+                    {
+                        HttpContext.Session.SetInt32(castTypeKey, 0);
+                        castTypeCount = 0;
+                        _logger.LogInformation("[SEQUENCE RESET] Fresh start detected, resetting cast sequence to 0 (recent)");
+                    }
+                    else
+                    {
+                        castTypeCount = HttpContext.Session.GetInt32(castTypeKey) ?? 0;
+                    }
+                    string[] castTypes = new[] { "cast_recent", "cast_frequent", "cast_rated" };
+                    int maxCastTypeIndex = castTypes.Length - 1;
+                    string currentCastType = castTypeCount <= maxCastTypeIndex ? castTypes[castTypeCount] : "cast_random";
+                    string nextCastType = castTypeCount < maxCastTypeIndex ? castTypes[castTypeCount + 1] : "cast_random";
+                    if (castTypeCount <= maxCastTypeIndex)
+                    {
+                        HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
+                    }
+                    else
+                    {
+                        HttpContext.Session.SetInt32(castTypeKey, maxCastTypeIndex + 1);
+                    }
+                    _logger.LogInformation("=== CAST SEQUENCE DEBUG ===");
+                    _logger.LogInformation("Session key: {Key}", castTypeKey);
+                    _logger.LogInformation("Session value: {Value}", castTypeCount);
+                    _logger.LogInformation("Current cast type: {Type}", currentCastType);
+                    _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
+                    _logger.LogInformation("Cast suggestion type: {CastType} for user {UserId}", currentCastType, userId);
+
+                    // PHASE 2: Build and deduplicate actor queue
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
                     if (loggedCastMovies == null || !loggedCastMovies.Any())
                     {
@@ -1254,7 +1287,6 @@ namespace Ezequiel_Movies.Controllers
                         ViewData["ShowAddMovieButton"] = true;
                         break;
                     }
-
                     var allTopActors = new List<TmdbCastPerson>();
                     foreach (var movie in loggedCastMovies.Take(15))
                     {
@@ -1264,59 +1296,223 @@ namespace Ezequiel_Movies.Controllers
                     }
                     if (!allTopActors.Any()) { suggestionTitle = "Could not find cast info in your recent logs."; break; }
 
+                    /*
+                     * === CAST VARIETY IMPLEMENTATION ===
+                     * 
+                     * PROBLEM SOLVED: Cast suggestions were too predictable
+                     * - Recent: Always showed lead actor from last movie
+                     * - Frequent: Complex but repetitive selection
+                     * - Rated: Always most popular actor
+                     * 
+                     * SOLUTION IMPLEMENTED:
+                     * - Recent: Random selection from top 5 cast of most recent movie
+                     * - Frequent: Random selection from top 3 most frequent actors in user's log
+                     * - Rated: Random selection from top 5 cast of highest rated movie
+                     * 
+                     * BENEFITS:
+                     * - Much more variety and less predictability
+                     * - Still maintains logical meaning of each suggestion type
+                     * - Performance conscious (only 2 additional API calls)
+                     * - Preserves all session management and bulletproof fallback
+                     * 
+                     * SAFETY FEATURES:
+                     * - Null-safe with pattern matching
+                     * - Automatic deduplication prevents same actor in multiple categories
+                     * - Handles edge cases: no ratings, no cast data, empty results
+                     * - Detailed logging for debugging
+                     * 
+                     * WARNING: This logic has been carefully tuned for variety vs performance.
+                     * Test thoroughly before making changes.
+                     */
+
+                    // === INTEGRATION WITH EXISTING SYSTEMS ===
+                    // - Works seamlessly with session-based sequence management
+                    // - Compatible with smart skip deduplication 
+                    // - Preserves bulletproof fallback behavior
+                    // - Maintains anti-repetition in random mode
+                    // - Supports fresh start reset functionality
+
+                    // --- New topActorQueue Building Logic with Variety and Safety ---
                     var topActorQueue = new List<TmdbCastPerson>();
-                    if (allTopActors.FirstOrDefault() is TmdbCastPerson ra) topActorQueue.Add(ra);
-                    if (allTopActors.GroupBy(a => a.Id).OrderByDescending(g => g.Count()).Select(g => g.First()).FirstOrDefault() is TmdbCastPerson fa && !topActorQueue.Any(p => p.Id == fa.Id)) topActorQueue.Add(fa);
-                    if (allTopActors.OrderByDescending(a => a.Popularity).FirstOrDefault() is TmdbCastPerson pa && !topActorQueue.Any(p => p.Id == pa.Id)) topActorQueue.Add(pa);
+                    var randomCast = Random.Shared;
+
+                    // === RECENT CAST VARIETY ===
+                    // Selects random actor from top 5 cast of most recently watched movie
+                    // Provides variety while maintaining "recent" meaning
+                    var mostRecentMovie = loggedCastMovies.FirstOrDefault();
+                    if (mostRecentMovie?.TmdbId is int recentTmdbId)
+                    {
+                        var recentDetails = await _tmdbService.GetMovieDetailsAsync(recentTmdbId);
+                        var recentCast = recentDetails?.Credits?.Cast?.Take(5).ToList();
+                        if (recentCast != null && recentCast.Any())
+                        {
+                        var recentActor = recentCast[randomCast.Next(recentCast.Count)];
+                            topActorQueue.Add(recentActor);
+                            _logger.LogInformation("Recent: Selected {Actor} from most recent movie '{Title}'", recentActor.Name, mostRecentMovie.Title);
+                        }
+                    }
+
+                    // === FREQUENT CAST VARIETY ===  
+                    // Selects random actor from top 3 most frequent actors in user's log
+                    // Balances predictability with variety
+                    var allActorsById = allTopActors.GroupBy(a => a.Id)
+                        .Select(g => new { Actor = g.First(), Count = g.Count() })
+                        .OrderByDescending(x => x.Count)
+                        .ToList();
+
+                    if (allActorsById.Any())
+                    {
+                        // Take top 3 frequent actors for variety
+                        var topFrequentActors = allActorsById.Take(3).Select(x => x.Actor).ToList();
+                        var frequentActor = topFrequentActors[randomCast.Next(topFrequentActors.Count)];
+                        // Avoid duplicate if already added as recent
+                        if (!topActorQueue.Any(a => a.Id == frequentActor.Id))
+                        {
+                            topActorQueue.Add(frequentActor);
+                            _logger.LogInformation("Frequent: Selected {Actor} from top frequent actors", frequentActor.Name);
+                        }
+                    }
+
+                    // === RATED CAST VARIETY ===
+                    // Selects random actor from top 5 cast of highest rated movie
+                    // Connects suggestions to user's favorite films
+                    var highestRatedMovie = loggedCastMovies
+                        .Where(m => m.UserRating.HasValue)
+                        .OrderByDescending(m => m.UserRating)
+                        .FirstOrDefault();
+
+                    if (highestRatedMovie?.TmdbId is int ratedTmdbId)
+                    {
+                        var ratedDetails = await _tmdbService.GetMovieDetailsAsync(ratedTmdbId);
+                        var ratedCast = ratedDetails?.Credits?.Cast?.Take(5).ToList();
+                        if (ratedCast != null && ratedCast.Any())
+                        {
+                            var ratedActor = ratedCast[randomCast.Next(ratedCast.Count)];
+                            if (!topActorQueue.Any(a => a.Id == ratedActor.Id))
+                            {
+                                topActorQueue.Add(ratedActor);
+                                _logger.LogInformation("Rated: Selected {Actor} from highest rated movie '{Title}'", ratedActor.Name, highestRatedMovie.Title);
+                            }
+                        }
+                    }
+
+                    // --- End of new topActorQueue logic ---
+                    // Deduplicate as before:
+                    var dedupedActorQueue = topActorQueue.DistinctBy(a => a.Id).ToList();
+                    _logger.LogInformation("Original topActorQueue count: {Count}", topActorQueue.Count);
+                    _logger.LogInformation("Deduplicated queue count: {Count}", dedupedActorQueue.Count);
+
+                    /*
+                     * HISTORICAL CONTEXT - WHY THIS VARIETY WAS ADDED:
+                     * 
+                     * ORIGINAL PROBLEM:
+                     * - User complained: "Why does the first cast suggestion always show 
+                     *   the same actor from the last movie?"
+                     * - Cast suggestions were too predictable and boring
+                     * - Always showed lead actors, never supporting cast
+                     * 
+                     * LESSONS LEARNED FROM DIRECTOR FIXES:
+                     * - Ask for Copilot's approach before implementing
+                     * - Preserve existing robustness (session, bulletproof fallback)
+                     * - Make minimal, targeted changes
+                     * - Add comprehensive logging for debugging
+                     * 
+                     * IMPLEMENTATION NOTES:
+                     * - Top 5 cast limit balances variety with relevance
+                     * - Top 3 frequent actors prevents too much randomness
+                     * - Deduplication ensures no repeated actors in same suggestion
+                     * - Performance optimized (only necessary API calls)
+                     */
 
                     TmdbCastPerson? actorToSuggest = null;
                     List<TmdbMovieBrief> actorSuggestions = new();
-                    int actorStartIdx = 0;
-                    if (suggestionType == "cast_recent") actorStartIdx = 0;
-                    else if (suggestionType == "cast_frequent") actorStartIdx = 1;
-                    else if (suggestionType == "cast_rated") actorStartIdx = 2;
-                    else actorStartIdx = 0;
-
-                    for (int i = actorStartIdx; i < topActorQueue.Count; i++)
+                    // PHASE 3: Sequence logic using deduped queue
+                    if (currentCastType == "cast_recent" && dedupedActorQueue.Count > 0)
                     {
-                        var a = topActorQueue[i];
+                        _logger.LogInformation("EXECUTING: cast_recent block");
+                        var a = dedupedActorQueue[0];
                         var movies = await GetSuggestionsForActor(a.Id, userId);
                         if (movies.Any())
                         {
                             actorToSuggest = a;
                             actorSuggestions = movies;
-                            nextSuggestionType = i == 0 ? "cast_frequent" : i == 1 ? "cast_rated" : "cast_random";
+                        }
+                    }
+                    else if (currentCastType == "cast_frequent" && dedupedActorQueue.Count > 1)
+                    {
+                        _logger.LogInformation("EXECUTING: cast_frequent block");
+                        var a = dedupedActorQueue[1];
+                        var movies = await GetSuggestionsForActor(a.Id, userId);
+                        if (movies.Any())
+                        {
+                            actorToSuggest = a;
+                            actorSuggestions = movies;
+                        }
+                    }
+                    else if (currentCastType == "cast_rated" && dedupedActorQueue.Count > 2)
+                    {
+                        _logger.LogInformation("EXECUTING: cast_rated block");
+                        var a = dedupedActorQueue[2];
+                        var movies = await GetSuggestionsForActor(a.Id, userId);
+                        if (movies.Any())
+                        {
+                            actorToSuggest = a;
+                            actorSuggestions = movies;
+                        }
+                    }
+                    // PHASE 4: Anti-repetition in random
+                    var allActors = allTopActors.DistinctBy(p => p.Id).ToList();
+                    if (currentCastType == "cast_random")
+                    {
+                        _logger.LogInformation("EXECUTING: cast_random block");
+                        string lastRandomActorKey = $"LastRandomActor_{userId}";
+                        string? lastRandomActor = HttpContext.Session.GetString(lastRandomActorKey);
+                        var availableActors = allActors;
+                        if (!string.IsNullOrEmpty(lastRandomActor) && availableActors.Count > 1)
+                        {
+                            var filtered = availableActors.Where(a => a.Name != lastRandomActor).ToList();
+                            if (filtered.Any()) availableActors = filtered;
+                        }
+                        var random = Random.Shared;
+                        var randomIndex = random.Next(0, availableActors.Count);
+                        var selectedActor = availableActors[randomIndex];
+                        _logger.LogInformation("Selected actor (before checking movies): {Actor}", selectedActor.Name);
+                        var movies = await GetSuggestionsForActor(selectedActor.Id, userId);
+                        actorToSuggest = selectedActor;
+                        actorSuggestions = movies.Take(Math.Min(3, movies.Count)).ToList();
+                        nextCastType = "cast_random";
+                        if (!string.IsNullOrEmpty(selectedActor.Name))
+                        {
+                            HttpContext.Session.SetString(lastRandomActorKey, selectedActor.Name);
+                        }
+                    }
+                    // PHASE 5: Bulletproof fallback
+                    if (actorSuggestions.Count == 0)
+                    {
+                        _logger.LogWarning("No cast suggestions found, forcing random fallback");
+                        var fallbackActors = allActors;
+                        if (fallbackActors.Any())
+                        {
+                            var random = Random.Shared;
+                            var fallbackActor = fallbackActors[random.Next(fallbackActors.Count)];
+                            var fallbackMovies = await GetSuggestionsForActor(fallbackActor.Id, userId);
+                            actorToSuggest = fallbackActor;
+                            actorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
+                            suggestionTitle = $"Because you like movies with {fallbackActor.Name} (Random)";
+                            _logger.LogInformation("Fallback actor selected: {Actor}", fallbackActor.Name);
+                        }
+                        else
+                        {
+                            suggestionTitle = "Log some movies to get cast suggestions!";
+                            ViewData["ShowAddMovieButton"] = true;
                             break;
                         }
                     }
-                    // If none found, try random
-                    if (actorSuggestions.Count == 0)
-                    {
-                        var potentialActors = allTopActors.DistinctBy(p => p.Id).Where(p => p.Name != query).ToList();
-                        if (!potentialActors.Any()) potentialActors = allTopActors.DistinctBy(p => p.Id).ToList();
-                        foreach (var a in potentialActors.OrderBy(_ => Guid.NewGuid()))
-                        {
-                            var movies = await GetSuggestionsForActor(a.Id, userId);
-                            if (movies.Any())
-                            {
-                                actorToSuggest = a;
-                                actorSuggestions = movies;
-                                nextSuggestionType = "cast_random";
-                                break;
-                            }
-                        }
-                    }
-                    if (actorSuggestions.Count == 0)
-                    {
-                        suggestionTitle = "No available cast suggestions. Try reshuffling or logging more movies.";
-                        break;
-                    }
-                    var actorDetails = await _tmdbService.GetPersonDetailsAsync(actorToSuggest!.Id);
+                    var actorDetails = actorToSuggest != null ? await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id) : null;
                     suggestedMovies = actorSuggestions;
-                    suggestionTitle = $"Because you like movies with {actorToSuggest.Name}";
+                    suggestionTitle = $"Because you like movies with {actorToSuggest?.Name}";
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
-                    nextQuery = actorToSuggest.Name;
-                    #endregion
+                    nextQuery = actorToSuggest?.Name;
                     break;
 
                 case "year_recent":
