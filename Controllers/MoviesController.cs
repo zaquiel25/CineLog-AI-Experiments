@@ -1299,7 +1299,7 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
                     var allTopActors = new List<TmdbCastPerson>();
-                    foreach (var movie in loggedCastMovies.Take(15))
+                    foreach (var movie in loggedCastMovies.Take(5))
                     {
                         if (!movie.TmdbId.HasValue) continue;
                         var details = await GetMovieDetailsWithPoolAsync(movie.TmdbId.Value);
