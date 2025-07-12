@@ -1027,7 +1027,7 @@ namespace Ezequiel_Movies.Controllers
     }
     // True random director selection y anti-repetición de películas SOLO para director_random
     var allDirectors = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
-    if (directorSuggestions.Count == 0 && currentDirectorType == "director_random")
+                if (currentDirectorType == "director_random")
     {
         _logger.LogInformation("EXECUTING: director_random block");
         if (!allDirectors.Any())
@@ -1060,11 +1060,30 @@ namespace Ezequiel_Movies.Controllers
         // Guardar el último director random sugerido
         HttpContext.Session.SetString(lastRandomDirectorKey, selectedDirector);
     }
-    if (directorSuggestions.Count == 0)
-    {
-        suggestionTitle = "No available director suggestions. Try reshuffling or logging more movies.";
-        break;
-    }
+                // Bulletproof fallback: if no director suggestions found, force random selection
+                if (directorSuggestions.Count == 0)
+                {
+                    _logger.LogWarning("No director suggestions found for {Type}, forcing random fallback", currentDirectorType);
+                    // Force random selection as ultimate fallback
+                    var allDirectorsFallback = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
+                    if (allDirectorsFallback.Any())
+                    {
+                        var random = Random.Shared;
+                        var fallbackDirector = allDirectorsFallback[random.Next(allDirectorsFallback.Count)];
+                        var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
+                        directorToSuggest = fallbackDirector;
+                        directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
+                        suggestionTitle = $"Because you like {fallbackDirector}... (Random)";
+                        _logger.LogInformation("Fallback director selected: {Director}", fallbackDirector);
+                    }
+                    else
+                    {
+                        // Absolute last resort (should never happen)
+                        suggestionTitle = "Log some movies to get director suggestions!";
+                        ViewData["ShowAddMovieButton"] = true;
+                        break;
+                    }
+                }
     suggestedMovies = directorSuggestions;
     suggestionTitle = $"Because you like {directorToSuggest}...";
     nextSuggestionType = nextDirectorType;
