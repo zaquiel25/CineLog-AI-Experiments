@@ -1279,7 +1279,18 @@ namespace Ezequiel_Movies.Controllers
                     _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
                     _logger.LogInformation("Cast suggestion type: {CastType} for user {UserId}", currentCastType, userId);
 
-                    // PHASE 2: Build and deduplicate actor queue
+                    // PHASE 2: Build and deduplicate actor queue (with local TMDB details pool scoped to this block only)
+                    // Local per-request TMDB details pool (scoped strictly to cast logic)
+                    var tmdbDetailsPool = new Dictionary<int, TmdbMovieDetails?>();
+                    async Task<TmdbMovieDetails?> GetMovieDetailsWithPoolAsync(int tmdbId)
+                    {
+                        if (tmdbDetailsPool.TryGetValue(tmdbId, out var cached))
+                            return cached;
+                        var details = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+                        tmdbDetailsPool[tmdbId] = details;
+                        return details;
+                    }
+
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
                     if (loggedCastMovies == null || !loggedCastMovies.Any())
                     {
@@ -1291,10 +1302,13 @@ namespace Ezequiel_Movies.Controllers
                     foreach (var movie in loggedCastMovies.Take(15))
                     {
                         if (!movie.TmdbId.HasValue) continue;
-                        var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                        var details = await GetMovieDetailsWithPoolAsync(movie.TmdbId.Value);
                         if (details?.Credits?.Cast != null) allTopActors.AddRange(details.Credits.Cast.Take(3));
                     }
                     if (!allTopActors.Any()) { suggestionTitle = "Could not find cast info in your recent logs."; break; }
+
+                    // ...existing code for cast suggestion logic...
+                    // (No changes to the rest of the cast suggestion logic)
 
                     /*
                      * === CAST VARIETY IMPLEMENTATION ===
@@ -1342,11 +1356,11 @@ namespace Ezequiel_Movies.Controllers
                     var mostRecentMovie = loggedCastMovies.FirstOrDefault();
                     if (mostRecentMovie?.TmdbId is int recentTmdbId)
                     {
-                        var recentDetails = await _tmdbService.GetMovieDetailsAsync(recentTmdbId);
+                        var recentDetails = await GetMovieDetailsWithPoolAsync(recentTmdbId);
                         var recentCast = recentDetails?.Credits?.Cast?.Take(5).ToList();
                         if (recentCast != null && recentCast.Any())
                         {
-                        var recentActor = recentCast[randomCast.Next(recentCast.Count)];
+                            var recentActor = recentCast[randomCast.Next(recentCast.Count)];
                             topActorQueue.Add(recentActor);
                             _logger.LogInformation("Recent: Selected {Actor} from most recent movie '{Title}'", recentActor.Name, mostRecentMovie.Title);
                         }
@@ -1383,7 +1397,7 @@ namespace Ezequiel_Movies.Controllers
 
                     if (highestRatedMovie?.TmdbId is int ratedTmdbId)
                     {
-                        var ratedDetails = await _tmdbService.GetMovieDetailsAsync(ratedTmdbId);
+                        var ratedDetails = await GetMovieDetailsWithPoolAsync(ratedTmdbId);
                         var ratedCast = ratedDetails?.Credits?.Cast?.Take(5).ToList();
                         if (ratedCast != null && ratedCast.Any())
                         {
