@@ -1440,38 +1440,30 @@ namespace Ezequiel_Movies.Controllers
 
                     TmdbCastPerson? actorToSuggest = null;
                     List<TmdbMovieBrief> actorSuggestions = new();
-                    // PHASE 3: Sequence logic using deduped queue
-                    if (currentCastType == "cast_recent" && dedupedActorQueue.Count > 0)
+                    // PHASE 3: Sequence logic using deduped queue, avoiding consecutive repeats across all reshuffles
+                    int castStep = -1;
+                    if (currentCastType == "cast_recent") castStep = 0;
+                    else if (currentCastType == "cast_frequent") castStep = 1;
+                    else if (currentCastType == "cast_rated") castStep = 2;
+
+                    // Get last actor ID from session (cross-reshuffle)
+                    string lastActorSessionKey = $"LastCastActorId_{userId}";
+                    int? lastActorId = null;
+                    var lastActorIdStr = HttpContext.Session.GetString(lastActorSessionKey);
+                    if (int.TryParse(lastActorIdStr, out var parsedId))
+                        lastActorId = parsedId;
+
+                    // Find the first actor in the queue for this step that is not the same as the previous one
+                    if (castStep >= 0 && dedupedActorQueue.Count > castStep)
                     {
-                        _logger.LogInformation("EXECUTING: cast_recent block");
-                        var a = dedupedActorQueue[0];
-                        var movies = await GetSuggestionsForActor(a.Id, userId);
+                        var candidate = dedupedActorQueue.Skip(castStep).FirstOrDefault(a => a.Id != lastActorId) ?? dedupedActorQueue[castStep];
+                        var movies = await GetSuggestionsForActor(candidate.Id, userId);
                         if (movies.Any())
                         {
-                            actorToSuggest = a;
+                            actorToSuggest = candidate;
                             actorSuggestions = movies;
-                        }
-                    }
-                    else if (currentCastType == "cast_frequent" && dedupedActorQueue.Count > 1)
-                    {
-                        _logger.LogInformation("EXECUTING: cast_frequent block");
-                        var a = dedupedActorQueue[1];
-                        var movies = await GetSuggestionsForActor(a.Id, userId);
-                        if (movies.Any())
-                        {
-                            actorToSuggest = a;
-                            actorSuggestions = movies;
-                        }
-                    }
-                    else if (currentCastType == "cast_rated" && dedupedActorQueue.Count > 2)
-                    {
-                        _logger.LogInformation("EXECUTING: cast_rated block");
-                        var a = dedupedActorQueue[2];
-                        var movies = await GetSuggestionsForActor(a.Id, userId);
-                        if (movies.Any())
-                        {
-                            actorToSuggest = a;
-                            actorSuggestions = movies;
+                            // Store this actor as last shown for next reshuffle
+                            HttpContext.Session.SetString(lastActorSessionKey, candidate.Id.ToString());
                         }
                     }
                     // PHASE 4: Anti-repetition in random
