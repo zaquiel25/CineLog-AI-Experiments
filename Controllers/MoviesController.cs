@@ -976,6 +976,7 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
 
+
     var topDirectorQueue = new List<string>();
     var recentDirector = loggedDirectorMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director;
     var frequentDirector = loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
@@ -983,19 +984,24 @@ namespace Ezequiel_Movies.Controllers
     if (recentDirector is string rd) topDirectorQueue.Add(rd);
     if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
     if (ratedDirector is string trd && !topDirectorQueue.Contains(trd)) topDirectorQueue.Add(trd);
+    // Debug: Log original and deduplicated director queues
+    _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
+    var dedupedDirectorQueue = topDirectorQueue.Distinct().ToList();
+    _logger.LogInformation("Deduplicated queue: {Queue}", string.Join(", ", dedupedDirectorQueue));
+    _logger.LogInformation("Deduped queue count: {Count}", dedupedDirectorQueue.Count);
     _logger.LogInformation("=== TOP DIRECTOR QUEUE DEBUG ===");
     _logger.LogInformation("Recent director: {Recent}", recentDirector);
     _logger.LogInformation("Frequent director: {Frequent}", frequentDirector);
     _logger.LogInformation("Rated director: {Rated}", ratedDirector);
-    _logger.LogInformation("Top director queue: {Queue}", string.Join(", ", topDirectorQueue));
 
                     string? directorToSuggest = null;
                     List<TmdbMovieBrief> directorSuggestions = new();
 
-    if (currentDirectorType == "director_recent" && topDirectorQueue.Count > 0)
+    if (currentDirectorType == "director_recent" && dedupedDirectorQueue.Count > 0)
     {
         _logger.LogInformation("EXECUTING: director_recent block");
-        var d = topDirectorQueue[0];
+        _logger.LogInformation("Using director from index {Index}: {Director}", 0, dedupedDirectorQueue[0]);
+        var d = dedupedDirectorQueue[0];
         var movies = await GetSuggestionsForDirector(d, userId);
         if (movies.Any())
         {
@@ -1003,10 +1009,11 @@ namespace Ezequiel_Movies.Controllers
             directorSuggestions = movies;
         }
     }
-    else if (currentDirectorType == "director_frequent" && topDirectorQueue.Count > 1)
+    else if (currentDirectorType == "director_frequent" && dedupedDirectorQueue.Count > 1)
     {
         _logger.LogInformation("EXECUTING: director_frequent block");
-        var d = topDirectorQueue[1];
+        _logger.LogInformation("Using director from index {Index}: {Director}", 1, dedupedDirectorQueue[1]);
+        var d = dedupedDirectorQueue[1];
         var movies = await GetSuggestionsForDirector(d, userId);
         if (movies.Any())
         {
@@ -1014,10 +1021,11 @@ namespace Ezequiel_Movies.Controllers
             directorSuggestions = movies;
         }
     }
-    else if (currentDirectorType == "director_rated" && topDirectorQueue.Count > 2)
+    else if (currentDirectorType == "director_rated" && dedupedDirectorQueue.Count > 2)
     {
         _logger.LogInformation("EXECUTING: director_rated block");
-        var d = topDirectorQueue[2];
+        _logger.LogInformation("Using director from index {Index}: {Director}", 2, dedupedDirectorQueue[2]);
+        var d = dedupedDirectorQueue[2];
         var movies = await GetSuggestionsForDirector(d, userId);
         if (movies.Any())
         {
