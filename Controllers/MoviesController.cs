@@ -278,10 +278,39 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        // Get wishlist items for user
-        var wishlistItems = await _dbContext.WishlistItems
+        var wishlistQuery = _dbContext.WishlistItems
             .Where(w => w.UserId == userId)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Case-insensitive search by title
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            wishlistQuery = wishlistQuery.Where(w => w.Title.ToLower().Contains(searchString.ToLower()));
+        }
+
+        // Sorting
+        ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+        ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+        ViewData["CurrentFilter"] = searchString;
+        ViewData["CurrentSort"] = sortOrder;
+
+        switch (sortOrder)
+        {
+            case "title_desc":
+                wishlistQuery = wishlistQuery.OrderByDescending(w => w.Title);
+                break;
+            case "Date":
+                wishlistQuery = wishlistQuery.OrderBy(w => w.DateAdded);
+                break;
+            case "date_desc":
+                wishlistQuery = wishlistQuery.OrderByDescending(w => w.DateAdded);
+                break;
+            default:
+                wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
+                break;
+        }
+
+        var wishlistItems = await wishlistQuery.ToListAsync();
 
         // Get all user's logged movies (for join)
         var userMovies = await _dbContext.Movies
