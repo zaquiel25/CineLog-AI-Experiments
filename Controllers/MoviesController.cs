@@ -1245,6 +1245,40 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_frequent":
                 case "cast_rated":
                 case "cast_random":
+                    /*
+                     * =================== CAST SUGGESTION SYSTEM DOCUMENTATION ===================
+                     *
+                     * 1. Estrategia general:
+                     *    - Se toma un pool de las últimas 5 películas logueadas por el usuario (ordenadas por DateWatched DESC).
+                     *    - De cada película se extraen hasta 3 actores principales (top 3 cast TMDB), generando típicamente ~15 actores únicos.
+                     *    - Se utiliza un caché local por request para detalles de TMDB (ver TmdbService), y TMDBService implementa un caché de 6 horas para evitar llamadas redundantes y mejorar performance.
+                     *    - Se implementa un sistema anti-duplicado: nunca se muestra el mismo actor dos veces seguidas en ningún reshuffle (se guarda el último actor sugerido en sesión por usuario).
+                     *
+                     * 2. Lógica de cada tipo de sugerencia:
+                     *    - cast_recent: Sugiere 1 actor random del top 5 cast de la película más reciente.
+                     *    - cast_frequent: Sugiere 1 actor random de los actores que aparecen en 2+ películas del usuario (si es igual al anterior, salta al siguiente distinto; si no hay, fallback a rated).
+                     *    - cast_rated: Sugiere 1 actor random del top 5 cast de la película mejor puntuada por el usuario (si es igual al anterior, salta al siguiente distinto; si no hay, fallback a random).
+                     *    - cast_random: Sugiere 1 actor random del pool completo de actores únicos (anti-repetición usando sesión).
+                     *
+                     * 3. Optimizaciones implementadas:
+                     *    - Se usan solo 5 películas recientes para balancear performance y variedad: menos llamadas a TMDB, pero suficiente diversidad para la mayoría de los usuarios.
+                     *    - El caché TMDB (6h) y el pool local por request minimizan latencia y evitan sobrecargar la API.
+                     *    - Si un reshuffle no encuentra actor válido (por anti-duplicado o falta de datos), se hace fallback automático al siguiente tipo (frequent → rated → random).
+                     *
+                     * 4. Decisiones de diseño:
+                     *    - No se tocan los filtros existentes (por usuario, blacklists, etc.) para mantener seguridad y privacidad.
+                     *    - Se mantiene el uso de ViewData y Session para compatibilidad con el resto del sistema y la UI.
+                     *    - El anti-duplicado es simple (solo evita repeticiones consecutivas) porque es suficiente para la experiencia y fácil de mantener/extender.
+                     *
+                     * 5. Futuras mejoras posibles:
+                     *    - Permitir expandir el pool a más de 5 películas si usuarios avanzados piden más variedad.
+                     *    - Mejorar el anti-duplicado para evitar repeticiones "salteadas" (A, B, A) si hay feedback negativo.
+                     *    - Considerar otros criterios de frecuencia (por ejemplo, actores con más películas vistas, o ponderar por rating).
+                     *
+                     * 6. Objetivo:
+                     *    - Que cualquier desarrollador (o nosotros en el futuro) pueda entender exactamente cómo y por qué funciona el sistema de sugerencias de cast, y qué se puede ajustar según necesidades o feedback.
+                     * ===============================================================================
+                     */
                     // === CAST SUGGESTION LOGIC WITH BULLETPROOF FIXES ===
                     // PHASE 1: Session-based sequence management (like directors)
                     string castTypeKey = $"CastTypeSequence_{userId}";
