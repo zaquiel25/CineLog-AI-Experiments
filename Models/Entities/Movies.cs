@@ -12,6 +12,15 @@ namespace Ezequiel_Movies1.Models.Entities
             UserId = string.Empty;
             DateCreated = DateTime.UtcNow;
         }
+        /// <summary>
+        /// Fecha de creación del registro de película en CineLog.
+        /// </summary>
+        /// <remarks>
+        /// Se utiliza como fallback para ordenamiento y sugerencias cuando DateWatched es null.
+        /// Decisión: DateCreated es inmutable y se setea automáticamente al crear el registro.
+        /// Trade-off: No se expone al usuario ni se edita nunca, solo para lógica interna y robustez.
+        /// TODO: Si se agregan migraciones futuras, asegurar que DateCreated siempre se setee correctamente.
+        /// </remarks>
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
         public Guid Id { get; set; }

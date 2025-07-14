@@ -1057,9 +1057,20 @@ namespace Ezequiel_Movies.Controllers
     _logger.LogInformation("Director suggestion type: {DirectorType} for user {UserId}", currentDirectorType, userId);
 
                     // Forzar el tipo de sugerencia según la secuencia
+                    //
+                    // <summary>
+                    // Estrategia de optimización de directores: limitar a los últimos 20 si hay más de 25 únicos.
+                    // </summary>
+                    // <remarks>
+                    // - Se prioriza DateWatched (fecha real de visionado) y se usa DateCreated como fallback para robustez.
+                    // - Decisión: Limitar solo en usuarios avanzados para evitar degradación de performance.
+                    // - Trade-off: Directores viejos pueden quedar fuera hasta que el usuario vuelva a loguear películas de ellos.
+                    // - TODO: Medir cuántos usuarios superan el umbral y ajustar el límite si es necesario.
+                    // - Warnings: Cambiar este límite puede afectar la variedad de sugerencias y la experiencia de power users.
+                    // </remarks>
                     var allUserMovies = await _dbContext.Movies
                         .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue)
-                        .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
+                        .OrderByDescending(m => m.DateWatched ?? m.DateCreated) // Estrategia híbrida: prioriza DateWatched, fallback DateCreated
                         .ToListAsync();
                     if (!allUserMovies.Any())
                     {
@@ -1069,6 +1080,17 @@ namespace Ezequiel_Movies.Controllers
                     }
 
                     // Limitar a los últimos 20 directores si hay más de 25 únicos
+                    //
+                    // <summary>
+                    // Limitación condicional de directores únicos para optimizar performance.
+                    // </summary>
+                    // <remarks>
+                    // - Si el usuario tiene más de 25 directores únicos, solo se consideran los 20 más recientes (por DateWatched/DateCreated).
+                    // - Decisión: Esto previene degradación de performance en usuarios avanzados sin afectar la mayoría.
+                    // - Trade-off: Directores “viejos” pueden quedar fuera de sugerencias hasta que el usuario vuelva a loguear películas de ellos.
+                    // - TODO: Medir cuántos usuarios superan el umbral y ajustar el límite si es necesario.
+                    // - Warnings: Cambiar este límite puede afectar la variedad de sugerencias y la experiencia de power users.
+                    // </remarks>
                     var uniqueDirectorsOrdered = allUserMovies
                         .Select(m => m.Director!)
                         .Distinct()
@@ -1088,11 +1110,20 @@ namespace Ezequiel_Movies.Controllers
     var topDirectorQueue = new List<string>();
     var recentDirector = loggedDirectorMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director;
     var frequentDirector = loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+    //
+    // <summary>
     // Obtener lista ordenada de directores por promedio de rating (mínimo 2 películas calificadas)
+    // </summary>
+    // <remarks>
+    // - DateWatched tiene prioridad sobre DateCreated para reflejar la experiencia real del usuario.
+    // - Solo se consideran directores con al menos 2 películas calificadas para evitar sesgos.
+    // - Trade-off: Directores con pocas películas pueden quedar fuera del modo rated.
+    // TODO: Analizar si conviene ajustar el umbral de cantidad mínima según uso real.
+    // </remarks>
     var ratedDirectors = loggedDirectorMovies
         .Where(m => m.UserRating.HasValue)
         .GroupBy(m => m.Director!)
-        .Where(g => g.Count() >= 2) // Opcional: mínimo 2 películas calificadas
+        .Where(g => g.Count() >= 2)
         .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) })
         .OrderByDescending(d => d.Avg)
         .Select(d => d.Name)
@@ -1101,6 +1132,17 @@ namespace Ezequiel_Movies.Controllers
     if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
     if (ratedDirectors.Any() && !topDirectorQueue.Contains(ratedDirectors[0])) topDirectorQueue.Add(ratedDirectors[0]);
     // Debug: Log original and deduplicated director queues
+    /// <summary>
+    /// Logs críticos para monitorear la secuencia y calidad de sugerencias.
+    /// </summary>
+    /// <remarks>
+    /// Importante monitorear:
+    /// - El contenido de topDirectorQueue y dedupedDirectorQueue
+    /// - El director sugerido en cada modo (recent, frequent, rated, random)
+    /// - El conteo de directores únicos y si se aplica la limitación
+    /// TODO: Agregar métricas de engagement (clicks, skips, reshuffles) para mejorar la lógica.
+    /// Warnings: Si los logs muestran siempre los mismos directores o pocos cambios, revisar la lógica de limitación.
+    /// </remarks>
     _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
     var dedupedDirectorQueue = topDirectorQueue.Distinct().ToList();
     _logger.LogInformation("Deduplicated queue: {Queue}", string.Join(", ", dedupedDirectorQueue));
