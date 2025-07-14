@@ -10,7 +10,9 @@ namespace Ezequiel_Movies1.Models.Entities
         {
             Title = string.Empty;
             UserId = string.Empty;
+            DateCreated = DateTime.UtcNow;
         }
+        public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
         public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;

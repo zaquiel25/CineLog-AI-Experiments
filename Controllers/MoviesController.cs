@@ -1057,13 +1057,32 @@ namespace Ezequiel_Movies.Controllers
     _logger.LogInformation("Director suggestion type: {DirectorType} for user {UserId}", currentDirectorType, userId);
 
                     // Forzar el tipo de sugerencia según la secuencia
-                    var loggedDirectorMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue).ToListAsync();
-                    if (!loggedDirectorMovies.Any())
+                    var allUserMovies = await _dbContext.Movies
+                        .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue)
+                        .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
+                        .ToListAsync();
+                    if (!allUserMovies.Any())
                     {
                         suggestionTitle = "Log some movies to get director suggestions!";
                         ViewData["ShowAddMovieButton"] = true;
                         break;
                     }
+
+                    // Limitar a los últimos 20 directores si hay más de 25 únicos
+                    var uniqueDirectorsOrdered = allUserMovies
+                        .Select(m => m.Director!)
+                        .Distinct()
+                        .ToList();
+                    List<string> limitedDirectors;
+                    if (uniqueDirectorsOrdered.Count > 25)
+                        limitedDirectors = uniqueDirectorsOrdered.Take(20).ToList();
+                    else
+                        limitedDirectors = uniqueDirectorsOrdered;
+
+                    // Filtrar películas solo de los directores seleccionados
+                    var loggedDirectorMovies = allUserMovies
+                        .Where(m => limitedDirectors.Contains(m.Director!))
+                        .ToList();
 
 
     var topDirectorQueue = new List<string>();
