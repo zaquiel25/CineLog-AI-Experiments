@@ -60,6 +60,9 @@ namespace EzequielMovies.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("DateWatched")
                         .HasColumnType("datetime2");
 
