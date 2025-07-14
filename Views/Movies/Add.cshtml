@@ -19,7 +19,7 @@
             <fieldset class="mb-4 p-3 border rounded mx-auto" style="max-width: 600px;">
                 <div class="mb-2" style="position: relative;">
                     <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
-                    <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg" placeholder="Start typing movie title (min. 4 chars)..." autocomplete="off" />
+                    <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg" placeholder="Start typing movie title (min. 2 chars)..." autocomplete="off" />
                     <div id="tmdbSearchResultsDisplay" class="list-group mt-1"
                          style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
                         @* TMDB Search suggestions will appear here *@
@@ -272,7 +272,7 @@
                 tmdbQueryInput.addEventListener('input', function () {
                     clearTimeout(tmdbSearchDebounceTimer);
                     const query = tmdbQueryInput.value;
-                    if (query.length < 4) {
+                    if (query.length < 2) {
                         tmdbResultsDisplayDiv.innerHTML = '';
                         tmdbResultsDisplayDiv.style.display = 'none';
                         if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';

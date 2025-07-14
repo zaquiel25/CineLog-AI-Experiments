@@ -24,7 +24,7 @@ else
                 @* Main "Title" input - can be used to edit title OR trigger new TMDB search *@
                 <div class="mb-3 mx-auto" style="position: relative; max-width: 600px;">
                     <label asp-for="Title" class="form-label">Title (edit or type to search TMDB)</label>
-                    <input asp-for="Title" class="form-control form-control-lg" id="editMovieFormTitle" autocomplete="off" placeholder="Edit title or type new title for suggestions..." />
+                    <input asp-for="Title" class="form-control form-control-lg" id="editMovieFormTitle" autocomplete="off" placeholder="Edit title or type new title for suggestions (min. 2 chars)..." />
                     <span asp-validation-for="Title" class="text-danger"></span>
                     <div id="editTmdbTitleSuggestions" class="list-group mt-1"
                          style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
@@ -409,7 +409,7 @@ else
                 titleQueryInput.addEventListener('input', function () {
                     clearTimeout(tmdbSearchDebounceTimer);
                     const query = titleQueryInput.value;
-                    if (query.length < 3) {
+                    if (query.length < 2) {
                         suggestionsDiv.innerHTML = '';
                         suggestionsDiv.style.display = 'none';
                         return;
