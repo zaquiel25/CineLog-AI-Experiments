@@ -1069,10 +1069,18 @@ namespace Ezequiel_Movies.Controllers
     var topDirectorQueue = new List<string>();
     var recentDirector = loggedDirectorMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director;
     var frequentDirector = loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-    var ratedDirector = loggedDirectorMovies.Where(m => m.UserRating.HasValue).GroupBy(m => m.Director!).Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) }).OrderByDescending(d => d.Avg).Select(d => d.Name).FirstOrDefault();
+    // Obtener lista ordenada de directores por promedio de rating (mínimo 2 películas calificadas)
+    var ratedDirectors = loggedDirectorMovies
+        .Where(m => m.UserRating.HasValue)
+        .GroupBy(m => m.Director!)
+        .Where(g => g.Count() >= 2) // Opcional: mínimo 2 películas calificadas
+        .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) })
+        .OrderByDescending(d => d.Avg)
+        .Select(d => d.Name)
+        .ToList();
     if (recentDirector is string rd) topDirectorQueue.Add(rd);
     if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
-    if (ratedDirector is string trd && !topDirectorQueue.Contains(trd)) topDirectorQueue.Add(trd);
+    if (ratedDirectors.Any() && !topDirectorQueue.Contains(ratedDirectors[0])) topDirectorQueue.Add(ratedDirectors[0]);
     // Debug: Log original and deduplicated director queues
     _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
     var dedupedDirectorQueue = topDirectorQueue.Distinct().ToList();
@@ -1081,7 +1089,7 @@ namespace Ezequiel_Movies.Controllers
     _logger.LogInformation("=== TOP DIRECTOR QUEUE DEBUG ===");
     _logger.LogInformation("Recent director: {Recent}", recentDirector);
     _logger.LogInformation("Frequent director: {Frequent}", frequentDirector);
-    _logger.LogInformation("Rated director: {Rated}", ratedDirector);
+    _logger.LogInformation("Rated director: {Rated}", ratedDirectors.FirstOrDefault());
 
                     string? directorToSuggest = null;
                     List<TmdbMovieBrief> directorSuggestions = new();
@@ -1113,13 +1121,19 @@ namespace Ezequiel_Movies.Controllers
     else if (currentDirectorType == "director_rated" && dedupedDirectorQueue.Count > 2)
     {
         _logger.LogInformation("EXECUTING: director_rated block");
-        _logger.LogInformation("Using director from index {Index}: {Director}", 2, dedupedDirectorQueue[2]);
-        var d = dedupedDirectorQueue[2];
-        var movies = await GetSuggestionsForDirector(d, userId);
-        if (movies.Any())
+        foreach (var d in ratedDirectors)
         {
-            directorToSuggest = d;
-            directorSuggestions = movies;
+            if (dedupedDirectorQueue.Contains(d)) // Solo sugerir si está en la queue deduplicada
+            {
+                var movies = await GetSuggestionsForDirector(d, userId);
+                if (movies.Any())
+                {
+                    _logger.LogInformation("Using rated director: {Director}", d);
+                    directorToSuggest = d;
+                    directorSuggestions = movies;
+                    break;
+                }
+            }
         }
     }
     // True random director selection y anti-repetición de películas SOLO para director_random
