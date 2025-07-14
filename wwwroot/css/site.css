@@ -1,4 +1,84 @@
-﻿/* Overview text - Preview/Details consistency */
+﻿/* Justificar texto en la tarjeta de movie preview */
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieOverviewText {
+    font-size: 0.85rem !important;
+    line-height: 1.5 !important;
+    color: #b8bcc8 !important;
+    margin-top: 0.75rem !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+/* Jerarquía visual mejorada en la tarjeta */
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white h3 {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 0.6rem !important;
+    text-align: left !important;
+}
+
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
+    font-size: 1rem !important;
+    margin-bottom: 0.4rem !important;
+    line-height: 1.4 !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
+    font-size: 0.95rem !important;
+    color: #4a90e2 !important;
+    font-weight: 600 !important;
+}
+
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
+    font-size: 1rem !important;
+    color: #ffffff !important;
+    font-weight: 400 !important;
+}
+/* TEST DEFINITIVO - REMOVER DESPUÉS */
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
+    background-color: #1e2124 !important;
+    border: 2px solid #4a90e2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
+    transition: all 0.3s ease !important;
+}
+
+html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:hover {
+    background-color: #252830 !important;
+    border-color: #5aa3f0 !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-2px) !important;
+}
+/* Search results - Override inline styles */
+div#tmdbSearchResultsDisplay.list-group {
+    background-color: #212529 !important;
+    border: 1px solid #495057 !important;
+}
+
+div#tmdbSearchResultsDisplay.list-group > .list-group-item {
+    background: #23272b !important;
+    border: 1px solid #343a40 !important;
+    border-radius: 6px !important;
+    margin-bottom: 4px !important;
+    transition: background-color 0.2s ease !important;
+    color: #fff !important;
+}
+
+div#tmdbSearchResultsDisplay.list-group > .list-group-item:hover {
+    background: #2a2f34 !important;
+    border-color: #495057 !important;
+    text-decoration: none !important;
+}
+
+div#tmdbSearchResultsDisplay.list-group > .list-group-item strong {
+    color: #fff !important;
+}
+
+div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
+    color: #adb5bd !important;
+}
+/* Overview text - Preview/Details consistency */
 .movie-overview {
     font-size: 0.9rem !important;
     line-height: 1.5 !important;
