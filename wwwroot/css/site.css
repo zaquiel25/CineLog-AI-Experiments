@@ -1,4 +1,23 @@
-﻿/* Justificar texto en la tarjeta de movie preview */
+﻿/*
+============================================================
+  CineLog - Movie Preview Card (Ultra Específico)
+  Última actualización: 2025-07-15
+
+  Mejoras implementadas:
+  1. Selector ultra específico para vencer la especificidad de Bootstrap/Cyborg.
+  2. Colores profesionales: fondo oscuro, borde azul, sombra pronunciada.
+  3. Efectos hover con elevación y transición suave.
+  4. Jerarquía tipográfica clara (título, labels, valores, overview).
+  5. Overview sin scrollbar, justificado y con tamaño reducido.
+
+  NOTAS DE MANTENIMIENTO:
+  - No reducir la especificidad del selector, o los estilos pueden ser sobrescritos por Bootstrap o temas futuros.
+  - Si se cambia la estructura HTML o clases Bootstrap de la tarjeta, revisar y actualizar estos selectores.
+  - Probar visualmente en todos los navegadores y dispositivos tras cualquier cambio.
+  - Para cambios mayores, documentar en CHANGELOG.md y en este bloque.
+============================================================
+*/
+/* Justificar texto en la tarjeta de movie preview */
 html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieOverviewText {
     font-size: 0.85rem !important;
     line-height: 1.5 !important;

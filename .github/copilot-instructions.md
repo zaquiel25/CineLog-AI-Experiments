@@ -1,3 +1,12 @@
+## Movie Preview Card (Add/Edit Movie) - Notas de Estilo y Mantenimiento (2025-07-15)
+
+- Se utiliza un selector ultra específico en el CSS de la tarjeta de movie preview para garantizar que los estilos personalizados prevalezcan sobre Bootstrap y el tema Cyborg.
+- No reducir la especificidad del selector ni cambiar la estructura HTML/clases de la tarjeta sin revisar los estilos, ya que puede romper la visual.
+- Los colores, jerarquía tipográfica y efectos hover están documentados en la cabecera de `site.css`.
+- El overview ahora se muestra completo, sin scrollbar, y con texto justificado para mejor legibilidad.
+- Todas las mejoras visuales y de UX se documentan en `CHANGELOG.md`.
+- Tras cualquier cambio visual, probar la tarjeta en todos los navegadores y dispositivos para asegurar consistencia.
+
 # Copilot Instructions for CineLog-AI-Experiments
 
 ## Project Overview
