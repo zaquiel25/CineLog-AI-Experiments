@@ -249,17 +249,49 @@ namespace Ezequiel_Movies.Controllers
 
             var blacklistedMovies = await blacklistQuery.ToListAsync();
 
-            // Use DRY helper for poster fetching
+            // Obtener detalles de TMDB para cada película (patrón seguro Wishlist)
             var moviesWithPosters = new List<dynamic>();
             foreach (var movie in blacklistedMovies)
             {
                 var posterUrl = await GetPosterUrlAsync(movie.TmdbId, movie.PosterUrl);
+
+                string director = "Unknown (TMDB)";
+                int? releasedYear = null;
+
+                try
+                {
+                    var tmdbDetails = await GetMovieDetailsWithLoggingAsync(movie.TmdbId);
+                    if (tmdbDetails != null)
+                    {
+                        // Extraer director
+                        if (tmdbDetails.Credits?.Crew != null)
+                        {
+                            var directorPerson = tmdbDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director");
+                            if (!string.IsNullOrEmpty(directorPerson?.Name))
+                                director = directorPerson.Name;
+                        }
+                        // Extraer año
+                        if (!string.IsNullOrEmpty(tmdbDetails.ReleaseDate) && tmdbDetails.ReleaseDate.Length >= 4)
+                        {
+                            if (int.TryParse(tmdbDetails.ReleaseDate.Substring(0, 4), out var year))
+                                releasedYear = year;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error fetching TMDB details for Blacklist movie {TmdbId}", movie.TmdbId);
+                    // director y releasedYear quedan con valores por defecto
+                }
+
                 moviesWithPosters.Add(new {
                     Id = movie.Id,
                     Title = movie.Title,
                     TmdbId = movie.TmdbId,
                     BlacklistedDate = movie.BlacklistedDate,
-                    PosterUrl = posterUrl
+                    PosterUrl = posterUrl,
+                    Director = director,
+                    ReleasedYear = releasedYear
                 });
             }
             return View(moviesWithPosters);

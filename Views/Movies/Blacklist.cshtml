@@ -56,9 +56,26 @@ else
                             }
                         </div>
                         <div class="card-body d-flex flex-column position-relative">
-                            <h6 class="card-title">@item.Title</h6>
-                            <p class="card-text text-muted flex-grow-1">
-                                <small>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</small>
+                            <h5 class="card-title mb-1">@item.Title</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
+                                    {
+                                        <text>Directed by @item.Director</text>
+                                        @if (item.ReleasedYear != null)
+                                        {
+                                            <text> &bull; @item.ReleasedYear</text>
+                                        }
+                                    }
+                                    else if (item.ReleasedYear != null)
+                                    {
+                                        <text>@item.ReleasedYear</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</text>
+                                    }
+                                </small>
                             </p>
                             <div class="mt-auto">
                                 <form asp-action="RemoveFromBlacklist" method="post" class="d-inline position-relative" style="z-index:2;">
