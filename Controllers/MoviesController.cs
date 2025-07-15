@@ -167,13 +167,32 @@ namespace Ezequiel_Movies.Controllers
                 {
                     return NotFound();
                 }
+                string? director = null;
+                int? releasedYear = null;
+                try
+                {
+                    director = movieDetails.GetDirector();
+                    if (!string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4)
+                    {
+                        if (int.TryParse(movieDetails.ReleaseDate.Substring(0, 4), out var year))
+                        {
+                            releasedYear = year;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not extract director/year for TMDB {TmdbId}", tmdbId);
+                }
                 var blacklistedMovie = new Ezequiel_Movies1.Models.Entities.BlacklistedMovie
                 {
                     UserId = userId,
                     TmdbId = tmdbId,
                     Title = movieDetails.Title ?? string.Empty,
                     BlacklistedDate = DateTime.Now,
-                    PosterUrl = movieDetails.PosterPath
+                    PosterUrl = movieDetails.PosterPath,
+                    Director = director,
+                    ReleasedYear = releasedYear
                 };
                 _dbContext.BlacklistedMovies.Add(blacklistedMovie);
                 await _dbContext.SaveChangesAsync();
