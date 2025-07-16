@@ -1801,8 +1801,21 @@ namespace Ezequiel_Movies.Controllers
             // Get the director's ENTIRE filmography from our service
             var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
 
-            // Blacklist filter
+            // Get user state sets
+            var userLoggedTmdbIds = (await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+                .Select(m => m.TmdbId)
+                .ToListAsync())
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToHashSet();
+            var userWishlistTmdbIds = (await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId)
+                .Select(w => w.TmdbId)
+                .ToListAsync()).ToHashSet();
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+            // Blacklist filter
             allDirectorMovies = allDirectorMovies.Where(m => !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (!allDirectorMovies.Any())
@@ -1811,16 +1824,18 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // If they have 3 or fewer movies, just return them all.
-            if (allDirectorMovies.Count <= 3)
+            var suggestions = allDirectorMovies.Count <= 3
+                ? allDirectorMovies
+                : allDirectorMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+
+            // Populate state properties
+            foreach (var movie in suggestions)
             {
-                return allDirectorMovies;
+                movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
+                movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
+                movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
             }
-
-            // Otherwise, shuffle the entire list and take 3 random ones.
-            var random = new Random();
-            var randomSuggestions = allDirectorMovies.OrderBy(x => random.Next()).Take(3).ToList();
-
-            return randomSuggestions;
+            return suggestions;
         }
 
 
@@ -1836,16 +1851,21 @@ namespace Ezequiel_Movies.Controllers
 
             var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, pageToFetch);
 
-            // Filter out movies already logged by this user
+            // Get user state sets
             var userLoggedTmdbIds = (await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
                 .Select(m => m.TmdbId)
                 .ToListAsync())
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
-                .ToList();
-            // Blacklist filter
+                .ToHashSet();
+            var userWishlistTmdbIds = (await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId)
+                .Select(w => w.TmdbId)
+                .ToListAsync()).ToHashSet();
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+            // Filter out movies already logged or blacklisted
             movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (movies.Any())
@@ -1860,7 +1880,14 @@ namespace Ezequiel_Movies.Controllers
                 movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
             }
 
-            return movies.Take(3).ToList();
+            var suggestions = movies.Take(3).ToList();
+            foreach (var movie in suggestions)
+            {
+                movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
+                movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
+                movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
+            }
+            return suggestions;
         }
 
       
@@ -1872,16 +1899,21 @@ namespace Ezequiel_Movies.Controllers
             // 1. Get the actor's filmography using the service
             var allActorMovies = await _tmdbService.DiscoverMoviesByActorAsync(actorId);
 
-            // Filter out movies already logged by this user
+            // Get user state sets
             var userLoggedTmdbIds = (await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
                 .Select(m => m.TmdbId)
                 .ToListAsync())
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
-                .ToList();
-            // Blacklist filter
+                .ToHashSet();
+            var userWishlistTmdbIds = (await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId)
+                .Select(w => w.TmdbId)
+                .ToListAsync()).ToHashSet();
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+            // Filter out movies already logged or blacklisted
             allActorMovies = allActorMovies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (!allActorMovies.Any())
@@ -1889,16 +1921,17 @@ namespace Ezequiel_Movies.Controllers
                 return new List<TmdbMovieBrief>();
             }
 
-            // 2. If they have 3 or fewer movies, just return them all
-            if (allActorMovies.Count <= 3)
+            var suggestions = allActorMovies.Count <= 3
+                ? allActorMovies
+                : allActorMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+
+            foreach (var movie in suggestions)
             {
-                return allActorMovies;
+                movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
+                movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
+                movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
             }
-
-            // 3. Otherwise, shuffle the entire list using Guid.NewGuid() and take 3 random ones
-            var randomSuggestions = allActorMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
-
-            return randomSuggestions;
+            return suggestions;
         }
 
         // In MoviesController.cs, add this new helper method
@@ -1914,16 +1947,21 @@ namespace Ezequiel_Movies.Controllers
 
             var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, pageToFetch);
 
-            // Filter out movies already logged by this user
+            // Get user state sets
             var userLoggedTmdbIds = (await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.TmdbId.HasValue && m.TmdbId != null)
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
                 .Select(m => m.TmdbId)
                 .ToListAsync())
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
-                .ToList();
-            // Blacklist filter
+                .ToHashSet();
+            var userWishlistTmdbIds = (await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId)
+                .Select(w => w.TmdbId)
+                .ToListAsync()).ToHashSet();
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+            // Filter out movies already logged or blacklisted
             movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
             if (movies.Any())
@@ -1940,7 +1978,14 @@ namespace Ezequiel_Movies.Controllers
                 movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
             }
 
-            return movies.Take(3).ToList();
+            var suggestions = movies.Take(3).ToList();
+            foreach (var movie in suggestions)
+            {
+                movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
+                movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
+                movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
+            }
+            return suggestions;
         }
 
 

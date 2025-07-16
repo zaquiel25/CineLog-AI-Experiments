@@ -30,5 +30,11 @@ namespace Ezequiel_Movies.Models.TmdbApi
 
         [JsonPropertyName("vote_count")]
         public int VoteCount { get; set; }
+
+        // Estado de usuario para sugerencias
+        public bool? IsWatched { get; set; }
+        public bool? IsInWishlist { get; set; }
+        public bool? IsInBlacklist { get; set; }
+
     }
 }

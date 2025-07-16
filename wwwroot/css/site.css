@@ -1,4 +1,20 @@
-﻿/*
+﻿/* Pastel/soft button colors for suggestion cards */
+.btn-soft-primary {
+    background-color: #6fa8dc;
+    border-color: #6fa8dc;
+    color: white;
+}
+.btn-soft-danger {
+    background-color: #ea9999;
+    border-color: #ea9999;
+    color: white;
+}
+.btn-soft-success {
+    background-color: #93c47d;
+    border-color: #93c47d;
+    color: white;
+}
+/*
 ============================================================
   CineLog - Movie Preview Card (Ultra Específico)
   Última actualización: 2025-07-15
@@ -28,6 +44,22 @@ html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selec
 }
 
 /* Jerarquía visual mejorada en la tarjeta */
+/* Custom pastel button colors for suggestion cards */
+.btn-soft-primary {
+    background-color: #6fa8dc;
+    border-color: #6fa8dc;
+    color: white;
+}
+.btn-soft-danger {
+    background-color: #ea9999;
+    border-color: #ea9999;
+    color: white;
+}
+.btn-soft-success {
+    background-color: #93c47d;
+    border-color: #93c47d;
+    color: white;
+}
 html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white h3 {
     font-size: 1.4rem !important;
     font-weight: 700 !important;
@@ -453,6 +485,7 @@ p {
   background: rgba(44, 62, 80, 0.85);
   color: #fff;
   border: 1.5px solid #fff;
+
 }
 .hero-btn-secondary:hover, .hero-btn-secondary:focus {
   background: rgba(44, 62, 80, 1);
