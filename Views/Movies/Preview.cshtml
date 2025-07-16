@@ -215,8 +215,10 @@
     }
     else if (isInWishlist)
     {
-        <span class="badge bg-primary">In Wishlist</span>
-        <small class="text-muted ms-2">Remove from wishlist to add to blacklist</small>
+        <button type="button" class="btn btn-info text-white" disabled>
+            <i class="bi bi-heart-fill"></i> In Wishlist
+        </button>
+        <span class="text-info ms-2">Delete from Wishlist for Blacklist</span>
     }
     else if (isInBlacklist)
     {

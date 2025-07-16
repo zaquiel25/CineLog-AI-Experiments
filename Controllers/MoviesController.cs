@@ -594,11 +594,23 @@ namespace Ezequiel_Movies.Controllers
         {
             var userId = _userManager.GetUserId(User);
             var movie = await _dbContext.Movies.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
-
             if (movie == null)
             {
                 return NotFound();
             }
+
+            // Determinar si está en wishlist
+            bool isInWishlist = false;
+            if (movie.TmdbId.HasValue)
+            {
+                isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == movie.TmdbId.Value);
+            }
+            else
+            {
+                // Si no tiene TmdbId, buscar por Id local (si WishlistItem lo soporta)
+                isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == 0);
+            }
+            ViewData["IsInWishlist"] = isInWishlist;
 
             if (movie.TmdbId.HasValue)
             {
