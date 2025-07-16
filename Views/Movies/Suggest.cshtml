@@ -171,10 +171,50 @@
 </div>
 
 @section Scripts {
-    <script>document.addEventListener('DOMContentLoaded', function () {
-            const resultsContainer = document.getElementById('suggestion-results-area');
-            if (resultsContainer) {
-                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });</script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Scroll to results area if present
+        const resultsContainer = document.getElementById('suggestion-results-area');
+        if (resultsContainer) {
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // AJAX Blacklist functionality for suggestion cards
+        document.querySelectorAll('.blacklist-form').forEach(function(form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('.blacklist-btn');
+                btn.disabled = true;
+                var card = form.closest('.movie-suggestion-card');
+                var formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(function (response) {
+                    if (response.ok) {
+                        // Animate: fade out + slide up
+                        card.style.transition = 'opacity 0.4s, transform 0.4s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95) translateY(-20px)';
+                        setTimeout(function () {
+                            card.remove();
+                        }, 400);
+                    } else {
+                        throw new Error('Failed to add to blacklist.');
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    alert('Could not add to blacklist. Please try again.');
+                });
+            });
+        });
+    });
+    </script>
 }

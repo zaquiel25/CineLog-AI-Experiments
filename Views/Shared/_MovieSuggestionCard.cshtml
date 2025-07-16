@@ -5,7 +5,7 @@
 }
 
 <div class="col">
-    <div class="card h-100 shadow-sm">
+    <div class="card h-100 shadow-sm movie-suggestion-card" id="movie-card-@Model.Id">
         @* The link is now wrapped around the image *@
         <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">
             @if (!string.IsNullOrEmpty(Model.PosterPath))
@@ -40,7 +40,16 @@
                         <button class="btn btn-soft-primary btn-sm w-100">Add to Wishlist</button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-soft-danger btn-sm w-100">Add to Blacklist</button>
+                        @* Only show blacklist form if not in wishlist (mutual exclusion) *@
+                        @if (!(Model.IsInWishlist ?? false))
+                        {
+                            <form class="blacklist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToBlacklist">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="tmdbId" value="@Model.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button type="submit" class="btn btn-soft-danger btn-sm w-100 blacklist-btn">Add to Blacklist</button>
+                            </form>
+                        }
                     </div>
                 </div>
                 <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@Model.Id" class="btn btn-soft-success btn-sm w-100">
