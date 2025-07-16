@@ -1,4 +1,46 @@
-﻿/* Pastel/soft button colors for suggestion cards */
+﻿/* Ultra-specific: Edit page TMDB preview card label color (matches Add page blue) */
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
+    color: #4a90e2 !important;
+    font-weight: 600 !important;
+}
+/* Ultra-specific: Edit page TMDB preview card text styling (matches Add page) */
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white h3 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+    margin-bottom: 0.5rem !important;
+}
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
+    font-size: 1rem !important;
+    color: #b8bcc8 !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1.5 !important;
+}
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
+    color: #b8bcc8 !important;
+}
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #editSelectedMovieOverviewText {
+    font-size: 0.85rem !important;
+    line-height: 1.5 !important;
+    color: #b8bcc8 !important;
+    text-align: justify !important;
+    margin-top: 0.75rem !important;
+}
+/* Ultra-specific: Edit page TMDB preview card blue border/glow (matches Add page) */
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
+    background-color: #1e2124 !important;
+    border: 2px solid #4a90e2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
+    transition: all 0.3s ease !important;
+}
+
+html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:hover {
+    background-color: #252830 !important;
+    border-color: #5aa3f0 !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-2px) !important;
+}
+/* Pastel/soft button colors for suggestion cards */
 .btn-soft-primary {
     background-color: #6fa8dc;
     border-color: #6fa8dc;
