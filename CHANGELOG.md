@@ -14,6 +14,19 @@
 - Probar visualmente en todos los navegadores y dispositivos tras cualquier cambio visual.
 - Documentar futuras mejoras UX en este archivo y en los comentarios del CSS.
 
+## [Version X.X.X] - 2025-07-16
+
+### 🎯 Enhanced User Experience
+- **AJAX Blacklist/Wishlist**: Added instant feedback for blacklist and wishlist actions without page reloads
+- **Mutual Exclusion Logic**: Movies cannot be in both wishlist and blacklist simultaneously
+- **Smart Reshuffle Fallback**: Improved suggestion system with bulletproof fallback when all results are blacklisted
+- **UI Edge Case Handling**: Reshuffle button always provides a way forward, even with empty suggestion results
+
+### 🔧 Technical Improvements
+- Implemented AJAX handlers for seamless movie list management
+- Enhanced suggestion sequence logic with robust error handling
+- Added strategic comments for complex business rules and UI interactions
+
 ---
 
 Para cambios anteriores, revisar el historial de commits en GitHub.

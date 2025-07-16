@@ -154,7 +154,8 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction(nameof(Blacklist));
             }
-            // Mutual exclusion: Prevent adding to blacklist if in wishlist
+            // Mutual exclusion: a movie cannot be in both wishlist and blacklist for the same user.
+            // This business rule ensures data integrity and prevents conflicting user intentions.
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
                 TempData["ErrorMessage"] = "Cannot add to blacklist: Movie is in your wishlist. Remove from wishlist first.";

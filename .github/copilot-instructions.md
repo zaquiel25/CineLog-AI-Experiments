@@ -88,6 +88,41 @@
 - **ASP.NET Identity:** Used for user authentication and per-user data isolation.
 - **Data Mapping:** Data from the TMDB API is mapped to C# classes in the 'Models/TmdbApi/' folder, such as TmdbMovieDetails and TmdbMovieBrief.
 
+---
+
+## Business Rules
+
+### Mutual Exclusion Policy
+- A movie cannot exist in both wishlist and blacklist for the same user
+- When adding to one list, check if movie exists in the other
+- Provide clear error messages guiding user to resolve conflicts
+
+### UI/UX Principles
+- Always provide a way to reshuffle suggestions, even if no results available
+- Use AJAX for non-navigational actions (add/remove from lists)
+- Maintain visual feedback for all user interactions
+- Preserve user's place in suggestion flow during list management
+
+### Suggestion System Behavior
+- Implement bulletproof fallbacks for edge cases
+- Track session state to avoid repetitive suggestions
+- Handle empty result sets gracefully with actionable next steps
+
+## AJAX Implementation Notes
+
+### Anti-Forgery Protection
+- All AJAX requests include anti-forgery tokens via Razor helpers
+- Use `@Html.AntiForgeryToken()` in forms submitted via JavaScript
+
+### User Security
+- All POST actions are filtered by `UserId` to ensure data isolation
+- Authorization attributes protect all user-specific operations
+- No user data exposure across accounts
+
+### Error Handling
+- AJAX operations include comprehensive error handling
+- Failed operations provide user feedback and restore UI state
+- Network errors are handled gracefully with retry options
 
 ---
 

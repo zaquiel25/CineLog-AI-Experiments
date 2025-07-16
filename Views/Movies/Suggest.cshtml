@@ -130,6 +130,8 @@
                             <i class="bi bi-plus-circle me-2"></i> Log a Movie
                         </a>
                     }
+                    @* Handle edge case: suggestion title exists but movie list is empty 
+                       (occurs when all movies from selected director/genre/etc are blacklisted) *@
                     else if (!Model.Any() && !string.IsNullOrEmpty(ViewData["SuggestionTitle"] as string))
                     {
                         // Show reshuffle button if we have a suggestion title but no movies and not in the add-movie case
@@ -190,7 +192,8 @@
         }
 
         // AJAX Blacklist functionality for suggestion cards
-        document.querySelectorAll('.blacklist-form').forEach(function(form) {
+// AJAX handler for blacklist buttons - removes card with fade animation on success
+document.querySelectorAll('.blacklist-form').forEach(function(form) {
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var btn = form.querySelector('.blacklist-btn');
@@ -226,7 +229,8 @@
             });
         });
         // AJAX Wishlist functionality for suggestion cards
-        document.querySelectorAll('.wishlist-form').forEach(function(form) {
+// AJAX handler for wishlist buttons - updates button state on success  
+document.querySelectorAll('.wishlist-form').forEach(function(form) {
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var btn = form.querySelector('.wishlist-btn');

@@ -59,7 +59,8 @@
                         @* Only show blacklist form if not in wishlist (mutual exclusion) *@
                         @if (!(Model.IsInWishlist ?? false))
                         {
-                            <form class="blacklist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToBlacklist">
+@* AJAX form for blacklist - removes card on success without page reload *@
+<form class="blacklist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToBlacklist">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="tmdbId" value="@Model.Id" />
                                 <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
