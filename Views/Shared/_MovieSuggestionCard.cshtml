@@ -37,7 +37,23 @@
             <div class="mt-auto">
                 <div class="row g-1 mb-1">
                     <div class="col-6">
-                        <button class="btn btn-soft-primary btn-sm w-100">Add to Wishlist</button>
+                        @if (Model.IsInWishlist == true)
+                        {
+                            <div>
+                                <button class="btn btn-secondary btn-sm w-100 wishlist-btn" type="button" disabled>In Wishlist</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <form class="wishlist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToWishlist">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="tmdbId" value="@Model.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="btn btn-soft-primary btn-sm w-100 wishlist-btn">Add to Wishlist</button>
+                                </form>
+                            </div>
+                        }
                     </div>
                     <div class="col-6">
                         @* Only show blacklist form if not in wishlist (mutual exclusion) *@

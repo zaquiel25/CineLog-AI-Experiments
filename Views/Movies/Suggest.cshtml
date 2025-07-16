@@ -215,6 +215,44 @@
                 });
             });
         });
+        // AJAX Wishlist functionality for suggestion cards
+        document.querySelectorAll('.wishlist-form').forEach(function(form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('.wishlist-btn');
+                btn.disabled = true;
+                btn.textContent = 'Adding...';
+                var formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(function (response) {
+                    if (response.ok) {
+                        btn.textContent = 'Added ✓';
+                        btn.classList.remove('btn-soft-primary');
+                        btn.classList.add('btn-success');
+                        btn.disabled = true;
+                        // Optionally, replace form with a disabled button for accessibility
+                        // (not strictly necessary, but improves semantics)
+                        // var newBtn = btn.cloneNode(true);
+                        // form.parentNode.replaceChild(newBtn, form);
+                    } else {
+                        throw new Error('Failed to add to wishlist.');
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    btn.textContent = 'Add to Wishlist';
+                    alert('Could not add to wishlist. Please try again.');
+                });
+            });
+        });
     });
     </script>
 }
