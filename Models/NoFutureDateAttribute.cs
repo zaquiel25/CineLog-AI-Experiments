@@ -38,7 +38,7 @@ namespace Ezequiel_Movies.Models
                 }
             }
 
-            // This would be reached if the property type isn't DateTime or DateTime?
+// Handles invalid type scenarios for non-DateTime properties
             return new ValidationResult($"Invalid date format for {validationContext.DisplayName}.");
         }
 

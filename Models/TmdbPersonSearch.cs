@@ -9,17 +9,12 @@ namespace Ezequiel_Movies.Models.TmdbApi
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; } // Make Name nullable
-
         [JsonPropertyName("popularity")]
         public double Popularity { get; set; }
     }
-
     public class TmdbPersonSearchResponse
     {
         [JsonPropertyName("results")]
-        public List<TmdbPersonBrief> Results { get; set; } = new(); // Initialize the list
+        public List<TmdbPersonBrief> Results { get; set; } = new();
     }
 }

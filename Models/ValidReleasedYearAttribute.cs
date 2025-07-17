@@ -49,8 +49,7 @@ namespace Ezequiel_Movies.Models
                 }
             }
 
-            // This should ideally not be reached if the property type is int?
-            // and a non-integer value was somehow passed.
+// Handles edge case where non-integer value is passed to integer property validation
             return new ValidationResult("Invalid year format provided.");
         }
 

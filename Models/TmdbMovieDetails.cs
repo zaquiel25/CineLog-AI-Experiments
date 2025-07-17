@@ -48,8 +48,8 @@ namespace Ezequiel_Movies.Models.TmdbApi
         [JsonPropertyName("crew")]
         public List<TmdbCrewPerson> Crew { get; set; } = new();
 
-        // VVVV THIS IS THE CORRECT PLACE FOR THE NEW CAST PROPERTY VVVV
         [JsonPropertyName("cast")]
+        // Cast information from TMDB credits response
         public List<TmdbCastPerson> Cast { get; set; } = new();
     }
 
