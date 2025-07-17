@@ -21,7 +21,7 @@ namespace Ezequiel_Movies.Controllers
     [Authorize]
     public class MoviesController : Controller
     {
-        // DRY Helper: Get all blacklisted TMDB IDs for a user
+        // Returns all TMDB IDs blacklisted by the specified user
         private async Task<HashSet<int>> GetUserBlacklistedTmdbIdsAsync(string userId)
         {
             return (await _dbContext.BlacklistedMovies
@@ -29,7 +29,7 @@ namespace Ezequiel_Movies.Controllers
                 .Select(b => b.TmdbId)
                 .ToListAsync()).ToHashSet();
         }
-        // Helper: Get current user ID with logging
+        // Retrieves the current user's ID, logging a warning if unavailable
         private string? GetCurrentUserId()
         {
             var userId = _userManager.GetUserId(User);
@@ -40,7 +40,7 @@ namespace Ezequiel_Movies.Controllers
             return userId;
         }
 
-        // Helper: Check if movie exists in wishlist
+        // Checks if a movie exists in the user's wishlist
         private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
         {
             try
@@ -54,7 +54,7 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        // Helper: Check if movie exists in blacklist
+        // Checks if a movie exists in the user's blacklist
         private async Task<bool> MovieExistsInBlacklistAsync(string userId, int tmdbId)
         {
             try
@@ -68,7 +68,7 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        // Helper: Get TMDB movie details with error logging
+        // Retrieves TMDB movie details, logging errors if any
         private async Task<TmdbMovieDetails?> GetMovieDetailsWithLoggingAsync(int tmdbId)
         {
             try
@@ -100,7 +100,7 @@ namespace Ezequiel_Movies.Controllers
         _userManager = userManager;
     }
 
-        // DRY Helper: Get poster URL for a TMDB movie, with fallback to TMDB API if missing
+        // Returns the poster URL for a TMDB movie, using the API as a fallback if missing
         private async Task<string?> GetPosterUrlAsync(int tmdbId, string? existingPosterUrl)
         {
             if (!string.IsNullOrEmpty(existingPosterUrl))
@@ -132,8 +132,7 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction(nameof(Blacklist));
             }
-            // Mutual exclusion: a movie cannot be in both wishlist and blacklist for the same user.
-            // This business rule ensures data integrity and prevents conflicting user intentions.
+            // Enforces mutual exclusion: a movie cannot be in both wishlist and blacklist for the same user
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
                 TempData["ErrorMessage"] = "Cannot add to blacklist: Movie is in your wishlist. Remove from wishlist first.";
@@ -185,7 +184,6 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction(nameof(Blacklist));
         }
 
-    // Removed duplicate Blacklist() method. Only the version with searchString and sortOrder remains.
     [HttpGet]
     public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null)
         {
@@ -228,7 +226,7 @@ namespace Ezequiel_Movies.Controllers
 
             var blacklistedMovies = await blacklistQuery.ToListAsync();
 
-            // Obtener detalles de TMDB para cada película (patrón seguro Wishlist)
+            // Fetch TMDB details for each movie (mirrors Wishlist pattern)
             var moviesWithPosters = new List<dynamic>();
             foreach (var movie in blacklistedMovies)
             {
@@ -297,7 +295,6 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-    // Removed duplicate Wishlist() method. Only the version with searchString and sortOrder remains.
     [HttpGet]
     public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null)
         {
@@ -358,7 +355,7 @@ namespace Ezequiel_Movies.Controllers
             }
             else
             {
-                // Fallback: fetch from TMDB if not found in Movies table
+                // If not found in Movies table, fetch director from TMDB
                 var tmdbDetails = await _tmdbService.GetMovieDetailsAsync(w.TmdbId);
                 if (tmdbDetails?.Credits?.Crew != null)
                 {
@@ -402,7 +399,7 @@ namespace Ezequiel_Movies.Controllers
                 return LocalRedirect(returnUrl);
             }
 
-            // Mutual exclusion: Prevent adding to wishlist if in blacklist
+            // Enforces mutual exclusion: cannot add to wishlist if movie is in blacklist
             if (await MovieExistsInBlacklistAsync(userId, tmdbId))
             {
                 TempData["ErrorMessage"] = "Cannot add to wishlist: Movie is in your blacklist. Remove from blacklist first.";
@@ -445,7 +442,7 @@ namespace Ezequiel_Movies.Controllers
 
             return RedirectToAction("Wishlist");
         }
-        // Helper to remove from wishlist by TMDB ID (for Option 2, not used in Option 1)
+        // Alternative removal method for wishlist items by TMDB ID
         private async Task RemoveFromWishlistByTmdbIdAsync(string userId, int tmdbId)
         {
             try
@@ -466,7 +463,7 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        // Helper to remove from blacklist by TMDB ID (for Option 2, not used in Option 1)
+        // Alternative removal method for blacklist items by TMDB ID
         private async Task RemoveFromBlacklistByTmdbIdAsync(string userId, int tmdbId)
         {
             try
@@ -519,14 +516,14 @@ namespace Ezequiel_Movies.Controllers
                 return BadRequest();
             }
 
-            // 1. Get all the movie details from TMDB
+            // Step 1: Retrieve all movie details from TMDB
             var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
             if (movieDetails == null)
             {
                 return NotFound();
             }
 
-            // 2. Get the "Where to Watch" providers (Streaming, Buy, Rent)
+            // Step 2: Retrieve "Where to Watch" providers (Streaming, Buy, Rent)
             var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId, movieDetails.Title ?? string.Empty);
             if (watchProviders?.Results != null)
             {
@@ -550,7 +547,7 @@ namespace Ezequiel_Movies.Controllers
                 ViewData["WatchProviders"] = allProviders;
             }
 
-            // 3. Check if the currently logged-in user has already logged this movie
+            // Step 3: Check if the user has already logged this movie
             var userId = _userManager.GetUserId(User);
             bool isAlreadyLogged = await _dbContext.Movies
                 .AnyAsync(m => m.UserId == userId && m.TmdbId == tmdbId);
@@ -561,7 +558,7 @@ namespace Ezequiel_Movies.Controllers
             ViewData["IsInWishlist"] = isInWishlist;
             ViewData["IsInBlacklist"] = isInBlacklist;
 
-            // Pass the full movie details object from TMDB to the new view
+            // Pass the full TMDB movie details object to the view
             return View(movieDetails);
         }
 
@@ -575,7 +572,7 @@ namespace Ezequiel_Movies.Controllers
                 return NotFound();
             }
 
-            // Determinar si está en wishlist
+            // Determine if the movie is in the user's wishlist
             bool isInWishlist = false;
             if (movie.TmdbId.HasValue)
             {
@@ -583,14 +580,14 @@ namespace Ezequiel_Movies.Controllers
             }
             else
             {
-                // Si no tiene TmdbId, buscar por Id local (si WishlistItem lo soporta)
+                // If no TmdbId, search by local Id (if supported by WishlistItem)
                 isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == 0);
             }
             ViewData["IsInWishlist"] = isInWishlist;
 
             if (movie.TmdbId.HasValue)
             {
-                // Get "Where to Watch" info (Streaming, Buy, Rent)
+                // Retrieve "Where to Watch" info (Streaming, Buy, Rent)
                 var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
                 var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value, movieDetails?.Title ?? string.Empty);
                 if (watchProviders?.Results != null)
@@ -614,13 +611,13 @@ namespace Ezequiel_Movies.Controllers
                     ViewData["WatchProviders"] = allProviders;
                 }
 
-                // VVVV NEW LOGIC TO GET THE CAST VVVV
+                // Pass the top 3 cast members to the view
                 if (movieDetails?.Credits?.Cast != null)
                 {
                     // Pass the top 3 cast members to the view
                     ViewData["Cast"] = movieDetails.Credits.Cast.Take(3).ToList();
                 }
-                // ^^^^ END OF NEW LOGIC ^^^^
+                // End of cast logic
             }
 
             return View(movie);
@@ -826,7 +823,7 @@ namespace Ezequiel_Movies.Controllers
                 }
             }
 
-            // If no suggestion found, fallback to random popular (with all filters except anti-repetition), infinite retry
+            // Fallback: If no suggestion found, use random popular movie with filters
             if (suggestedMovie == null)
             {
                 int maxRetries = 10;
@@ -862,9 +859,9 @@ namespace Ezequiel_Movies.Controllers
                     suggestedMovie = fallbackMovie;
                 }
             }
-            // Never show a failure message; always find something
+            // Always provide a suggestion; never show a failure message
 
-            // --- 8. Session anti-repetition memory update ---
+            // Step 8: Update session anti-repetition memory
             var suggestedMoviesList = new List<TmdbMovieBrief>();
             if (suggestedMovie != null)
             {
@@ -878,7 +875,7 @@ namespace Ezequiel_Movies.Controllers
                 HttpContext.Session.Remove("ShownSurpriseIds");
             }
 
-            // --- 9. Advance cycle step ---
+            // Step 9: Advance the suggestion cycle step
             int nextStep = (cycleStep % 4) + 1;
             _logger.LogInformation($"DEBUG: Setting next Surprise Cycle Step to: {nextStep}");
             HttpContext.Session.SetInt32(cycleKey, nextStep);
@@ -904,13 +901,13 @@ namespace Ezequiel_Movies.Controllers
                 return View("Suggest");
             }
 
-            // Fetch all genres from our service one time
+            // Fetch all genres from the TMDB service once
             var allGenres = await _tmdbService.GetAllGenresAsync();
             var allGenresDict = (allGenres ?? new List<TmdbGenre>()).ToDictionary(g => g.Id, g => g.Name ?? string.Empty);
 
             var genreCounts = new Dictionary<int, int>();
 
-            // This can be slow if there are many movies. We can optimize it later.
+            // Performance bottleneck: Consider implementing caching for large movie collections
             foreach (var movie in loggedMovies)
             {
                 if (!movie.TmdbId.HasValue)
@@ -934,7 +931,7 @@ namespace Ezequiel_Movies.Controllers
                 }
             }
 
-            // Get the top 6 genres based on frequency
+            // Select the top 6 genres based on frequency
             var topGenreIds = genreCounts.OrderByDescending(kvp => kvp.Value).Take(6).Select(kvp => kvp.Key).ToList();
 
             var topGenres = (allGenres ?? new List<TmdbGenre>()).Where(g => topGenreIds.Contains(g.Id)).ToList();
@@ -957,8 +954,7 @@ namespace Ezequiel_Movies.Controllers
 
             if (searchResult != null && searchResult.Results != null)
             {
-                // This part is the fix: It creates a clean list of results
-                // in the exact format the JavaScript expects.
+                // Transform TMDB search results to match JavaScript client expectations
                 var simplifiedResults = searchResult.Results.Select(m => new
                 {
                     id = m.Id,
@@ -1231,7 +1227,7 @@ namespace Ezequiel_Movies.Controllers
                 case "genre_frequent":
                 case "genre_rated":
                 case "genre_random":
-                    // Genre Suggestion Logic with skip for all-blacklisted
+                    // Genre suggestion logic, skipping all-blacklisted genres
                     #region Genre Suggestion Logic
                     var loggedGenreMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
                     if (!loggedGenreMovies.Any())
@@ -1241,7 +1237,7 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
 
-                    // Defensive: Only use genres from movies where Genres is not null
+                    // Only use genres from movies where Genres is not null
                     var allUserGenres = loggedGenreMovies
                         .Where(m => !string.IsNullOrEmpty(m.Genres))
                         .SelectMany(m => (m.Genres ?? string.Empty).Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries))
@@ -1313,11 +1309,9 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_frequent":
                 case "cast_rated":
                 case "cast_random":
-                    // Cast suggestion system: recent → frequent → rated → random with anti-repetition
-                    // Uses last 5 movies, top 3 cast per movie, local TMDB cache for performance
-                    // Anti-repetition prevents same actor in consecutive suggestions
+                    // Cast suggestion system: recent → frequent → rated → random, with anti-repetition and local TMDB cache for performance
                     
-                    // Cast sequence management (like directors)
+                    // Manages cast suggestion sequence (mirrors director logic)
                     string castTypeKey = $"CastTypeSequence_{userId}";
                     bool isFreshStartCast = string.IsNullOrWhiteSpace(query);
                     int castTypeCount;
@@ -1369,7 +1363,7 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
                     
-                    // Build actor pool from last 5 movies (top 3 cast each)
+                    // Build actor pool from last 5 movies (top 3 cast per movie)
                     var allTopActors = new List<TmdbCastPerson>();
                     foreach (var movie in loggedCastMovies.Take(5))
                     {
@@ -1450,7 +1444,7 @@ namespace Ezequiel_Movies.Controllers
                     else if (currentCastType == "cast_frequent") castStep = 1;
                     else if (currentCastType == "cast_rated") castStep = 2;
 
-                    // Get last actor ID from session for anti-repetition
+                    // Retrieve last actor ID from session for anti-repetition
                     string lastActorSessionKey = $"LastCastActorId_{userId}";
                     int? lastActorId = null;
                     var lastActorIdStr = HttpContext.Session.GetString(lastActorSessionKey);
@@ -1497,7 +1491,7 @@ namespace Ezequiel_Movies.Controllers
                         }
                     }
                     
-                    // Bulletproof fallback: force random selection if no suggestions found
+                    // Fallback: force random selection if no suggestions found
                     if (actorSuggestions.Count == 0)
                     {
                         _logger.LogWarning("No cast suggestions found, forcing random fallback");
@@ -1530,7 +1524,7 @@ namespace Ezequiel_Movies.Controllers
                 case "year_frequent":
                 case "year_rated":
                 case "year_random":
-                    // Decade Suggestion Logic with skip for all-blacklisted
+                    // Decade suggestion logic, skipping all-blacklisted decades
                     var loggedYearMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.ReleasedYear.HasValue).ToListAsync();
                     if (!loggedYearMovies.Any())
                     {
@@ -1567,7 +1561,7 @@ namespace Ezequiel_Movies.Controllers
                             break;
                         }
                     }
-                    // If none found, try random
+                    // If none found, try random decade
                     if (decadeSuggestions.Count == 0)
                     {
                         var allDecades = decades.Distinct().ToList();
@@ -1594,7 +1588,7 @@ namespace Ezequiel_Movies.Controllers
                     suggestionTitle = $"Top-Rated movies from the {decadeToSuggest}s";
                     nextQuery = decadeToSuggest?.ToString();
                     break;
-                // ^^^^ END OF NEW YEAR LOGIC ^^^^
+                // End of decade suggestion logic
 
                 default: return RedirectToAction("Suggest");
             }

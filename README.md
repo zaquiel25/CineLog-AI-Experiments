@@ -1,3 +1,8 @@
+## 📝 Code Quality & Documentation
+
+- All controller comments (especially in `MoviesController.cs`) follow a professional, business-logic-focused style.
+- Development artifacts and redundant comments have been removed for clarity and maintainability.
+- Please maintain this standard for all future contributions.
 # CineLog-AI-Experiments
 
 ## ✨ Key Features

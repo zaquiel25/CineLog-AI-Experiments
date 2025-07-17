@@ -38,6 +38,12 @@
   - Console and logger output is used extensively in controllers for tracing data flow and debugging.
 
 ## Project Conventions
+## Commenting & Documentation Standards
+- All controller comments (especially in `MoviesController.cs`) now follow a professional, business-logic-focused style.
+- Development artifacts, redundant, and shallow comments have been removed.
+- Comments should explain "why" for business rules, suggestion systems, and session/anti-repetition logic.
+- Future contributions must maintain this standard: avoid obsolete, non-English, or low-value comments.
+- See `CHANGELOG.md` (2025-07-17) for details on the latest comment refactor.
 - **Model Validation:**
   - Uses custom attributes (e.g., `NoFutureDateAttribute`, `ValidReleasedYearAttribute`) for model validation.
 - **Session Usage:**
