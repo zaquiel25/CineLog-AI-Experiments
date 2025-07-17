@@ -1,3 +1,11 @@
+#
+# Model Comment Standards (2025-07-18)
+#
+# - Todos los modelos (`Models/`) han sido limpiados de comentarios de desarrollo, temporales y anotaciones vagas.
+# - Solo se mantienen comentarios técnicos, explicaciones de validación y documentación relevante para producción.
+# - No se permiten comentarios tipo "ADD THIS", "NUEVAS", ni notas de importancia sin justificación técnica.
+# - Los atributos de validación y la lógica funcional permanecen intactos.
+# - Los futuros cambios en modelos deben seguir este estándar de documentación.
 ## Movie Preview Card (Add/Edit Movie) - Notas de Estilo y Mantenimiento (2025-07-15)
 
 - Se utiliza un selector ultra específico en el CSS de la tarjeta de movie preview para garantizar que los estilos personalizados prevalezcan sobre Bootstrap y el tema Cyborg.

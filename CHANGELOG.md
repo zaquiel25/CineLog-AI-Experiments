@@ -1,3 +1,9 @@
+# 2025-07-18
+### Final Model Comments Cleanup
+- Eliminados todos los comentarios de desarrollo, temporales y anotaciones vagas en los modelos (`Models/`).
+- Mejoradas las descripciones de propiedades y comentarios de validación para mayor claridad y profesionalismo.
+- Se mantuvieron todos los atributos de validación y lógica funcional intactos.
+- Los modelos ahora cumplen con los estándares de documentación para producción: solo comentarios técnicos, sin artefactos de desarrollo.
 # 2025-07-17
 ### Codebase Quality Improvements
 - Comprehensive code comment refactor in `Controllers/MoviesController.cs`:
