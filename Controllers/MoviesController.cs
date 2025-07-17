@@ -1606,9 +1606,6 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-
-        // THIS IS THE NEW, SIMPLIFIED HELPER METHOD
-
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName, string userId)
         {
             var directorId = await _tmdbService.GetPersonIdAsync(directorName);
@@ -1750,9 +1747,6 @@ namespace Ezequiel_Movies.Controllers
             return suggestions;
         }
 
-        // In MoviesController.cs, add this new helper method
-
-
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForDecade(int decade, string userId)
         {
             // Use a unique session key to remember the page for this specific decade
@@ -1803,10 +1797,6 @@ namespace Ezequiel_Movies.Controllers
             }
             return suggestions;
         }
-
-
-
-        ///
 
         [HttpGet]
         public async Task<IActionResult> GetTmdbMovieDetailsJson(int id) // 'id' here is the TMDB movie ID
@@ -1906,8 +1896,7 @@ namespace Ezequiel_Movies.Controllers
                 // We'll improve this with an [Authorize] tag later.
                 return Unauthorized();
             }
-            // ^^^^ END OF NEW LOGIC ^^^^
-
+         
 
             var movie = new Ezequiel_Movies1.Models.Entities.Movies
             {
@@ -2300,6 +2289,6 @@ namespace Ezequiel_Movies.Controllers
             }
         }
     }
-// ...existing code...
+
 #endregion
 }
