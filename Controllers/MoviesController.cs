@@ -1,25 +1,3 @@
-        /// <summary>
-        /// ShowSuggestions - Director recommendation system with bulletproof fallback
-        /// 
-        /// CRITICAL FIXES IMPLEMENTED:
-        /// - Bulletproof fallback: NEVER shows "No available director suggestions"
-        /// - Smart skip deduplication: Avoids showing same director consecutively  
-        /// - Fresh start reset: Resets sequence on page refresh
-        /// - Anti-repetition in random: Avoids repeating last shown director
-        /// 
-        /// SEQUENCE LOGIC:
-        /// 1. Recent director (most recently watched)
-        /// 2. Frequent director (most watched overall)  
-        /// 3. Rated director (highest average rating)
-        /// 4. Random director (infinite, with anti-repetition)
-        /// 
-        /// EDGE CASES HANDLED:
-        /// - Single director scenario: System works with minimal data
-        /// - Missing dates/ratings: Directors still appear in random pool
-        /// - Empty suggestions: Bulletproof fallback always shows something
-        /// 
-        /// DEBUGGING: Enable logging to see sequence flow and director selection
-        /// </summary>
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -318,7 +296,6 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction(nameof(Blacklist));
         }
 
-        // In MoviesController.cs
 
     // Removed duplicate Wishlist() method. Only the version with searchString and sortOrder remains.
     [HttpGet]
@@ -409,7 +386,6 @@ namespace Ezequiel_Movies.Controllers
         return View(wishlistWithDetails);
         }
 
-        // In MoviesController.cs
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -534,7 +510,6 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction("Wishlist");
         }
 
-        // In MoviesController.cs
 
         [HttpGet]
         public async Task<IActionResult> Preview(int tmdbId)
@@ -1009,7 +984,6 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
-        // In MoviesController.cs - PASTE THIS ENTIRE BLOCK OF CODE
 
         #region Suggestion Actions & Helpers
 
@@ -1018,41 +992,14 @@ namespace Ezequiel_Movies.Controllers
         // === FRESH START RESET ===
         // Resets director sequence when user refreshes page (query is null/empty)
         // Ensures page refresh always starts with recent director, not random
-                    // === SMART SKIP DEDUPLICATION ===  
-                    // Prevents showing same director consecutively in sequence
-                    // Works by deduplicating topDirectorQueue before director selection
-                    // Handles edge case where recent = frequent = rated director
-    // === ANTI-REPETITION LOGIC ===
-    // Avoids repeating last shown director in random mode
-    // Fallback allows repetition if only one director available
-                // === BULLETPROOF FALLBACK (CRITICAL) ===
-                // This section ensures we NEVER show "No available director suggestions"
-                // If any director selection fails, force random selection as last resort
-                // DO NOT REMOVE - prevents app crashes and user frustration
-        /*
-         * HISTORICAL CONTEXT - WHY THESE FIXES WERE NEEDED:
-         * 
-         * PROBLEM 1: "No available director suggestions" error
-         * - Occurred when director selection logic failed silently
-         * - Solution: Bulletproof fallback that always shows something
-         * 
-         * PROBLEM 2: Same director showing repeatedly in sequence
-         * - Occurred when recent = frequent = rated director  
-         * - Solution: Smart deduplication of topDirectorQueue
-         * 
-         * PROBLEM 3: Page refresh continuing random sequence instead of starting fresh
-         * - Occurred because session state persisted across page loads
-         * - Solution: Fresh start detection and sequence reset
-         * 
-         * LESSONS LEARNED:
-         * - Always have bulletproof fallbacks for user-facing features
-         * - Edge cases matter: single director, missing data, etc.
-         * - Session state management is tricky across page refreshes
-         * - Incremental changes safer than large refactors
-         * 
-         * WARNING: This code has been problematic in the past. 
-         * Test thoroughly before making changes.
-         */
+                    // Suggestion system with session-based sequences to ensure variety
+                    // Supports: directors, genres, cast, decades, trending, and surprise suggestions
+                    // Director suggestion sequence: recent → frequent → rated → random
+                    // Uses session state to avoid repetition and ensure variety
+                    // Anti-repetition: track last shown director to avoid consecutive duplicates
+                    // Fallback allows repetition if only one director available
+                    // Fallback: if no director suggestions found, force random selection
+                    // Ensures users always get suggestions, even in edge cases
         {
             _logger.LogInformation("ShowSuggestions invoked with type: {Type}, query: {Query}, page: {Page}", suggestionType, query, page);
 
@@ -1068,6 +1015,29 @@ namespace Ezequiel_Movies.Controllers
                 return RedirectToAction("Login", "Account");
             }
             switch (suggestionType?.ToLower())
+
+        /// <summary>
+        /// ShowSuggestions - Director recommendation system with bulletproof fallback
+        /// 
+        /// CRITICAL FIXES IMPLEMENTED:
+        /// - Bulletproof fallback: NEVER shows "No available director suggestions"
+        /// - Smart skip deduplication: Avoids showing same director consecutively  
+        /// - Fresh start reset: Resets sequence on page refresh
+        /// - Anti-repetition in random: Avoids repeating last shown director
+        /// 
+        /// SEQUENCE LOGIC:
+        /// 1. Recent director (most recently watched)
+        /// 2. Frequent director (most watched overall)  
+        /// 3. Rated director (highest average rating)
+        /// 4. Random director (infinite, with anti-repetition)
+        /// 
+        /// EDGE CASES HANDLED:
+        /// - Single director scenario: System works with minimal data
+        /// - Missing dates/ratings: Directors still appear in random pool
+        /// - Empty suggestions: Bulletproof fallback always shows something
+        /// 
+        /// DEBUGGING: Enable logging to see sequence flow and director selection
+        /// </summary>
             {
                 case "trending":
                     suggestionTitle = "Trending Movies Today";
