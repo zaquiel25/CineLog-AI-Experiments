@@ -15,7 +15,7 @@
     <div class="col-md-8 col-lg-7">
         <form asp-action="Add" asp-controller="Movies" method="post">
 
-            @* --- 1. DEDICATED TMDB SEARCH INPUT SECTION (Always Visible) --- *@
+            @* TMDB Search Section *@
             <fieldset class="mb-4 p-3 border rounded mx-auto" style="max-width: 600px;">
                 <div class="mb-2" style="position: relative;">
                     <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
@@ -27,10 +27,10 @@
                 </div>
             </fieldset>
 
-            @* --- VVVV CONTAINER FOR SECTIONS THAT APPEAR AFTER TMDB SELECTION (Initially Hidden) VVVV --- *@
+            @* Movie details container (shown after TMDB selection) *@
             <div id="movieDetailsAndUserInputsSection" style="display: none;">
 
-                @* --- 2. SELECTED TMDB MOVIE PREVIEW AREA --- *@
+                @* Movie preview card *@
                 <div id="tmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white" style="max-width: 600px; margin-left:auto; margin-right:auto;">
                     <div class="row">
                         <div class="col-md-4 text-center text-md-start mb-3 mb-md-0" id="posterImageContainer">
@@ -53,7 +53,7 @@
                 <input type="hidden" asp-for="Overview" id="movieFormOverviewHidden" />
                 <input type="hidden" asp-for="TmdbId" id="movieFormTmdbIdHidden" />
 
-                @* --- 3. VISIBLE USER INPUT FIELDS FOR WATCH DETAILS --- *@
+                @* User input fields *@
                 <div class="pt-3 border-top mb-5" style="max-width: 600px; margin-left:auto; margin-right:auto;">
 
                     <div class="mb-3">
@@ -118,7 +118,7 @@
                         <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
                     </div>
                 </div>
-            </div> @* --- END OF movieDetailsAndUserInputsSection --- *@
+            </div>
         </form>
     </div>
 </div>

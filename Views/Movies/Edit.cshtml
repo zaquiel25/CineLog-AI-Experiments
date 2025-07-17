@@ -32,7 +32,7 @@ else
                     </div>
                 </div>
 
-                @* --- SELECTED TMDB MOVIE PREVIEW AREA --- *@
+                @* Movie preview card *@
                 <div id="editTmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white" style="max-width: 600px; margin-left:auto; margin-right:auto; display: none;">
                     <div class="row">
                         <div class="col-md-4 text-center text-md-start mb-3 mb-md-0" id="editPosterImageContainer">
@@ -55,7 +55,7 @@ else
                 <input type="hidden" asp-for="Overview" id="editMovieFormOverviewHidden" />
                 <input type="hidden" asp-for="TmdbId" id="editMovieFormTmdbIdHidden" />
 
-                @* --- VISIBLE USER INPUT FIELDS FOR WATCH DETAILS --- *@
+                @* User input fields *@
                 <div class="mt-4 pt-3 border-top" style="max-width: 600px; margin-left:auto; margin-right:auto;">
 
                     <div class="mb-3">
@@ -93,7 +93,7 @@ else
                         <span asp-validation-for="WatchedLocation" class="text-danger"></span>
                     </div>
 
-                    @* VVVV ADD THIS SECTION FOR THE REWATCH CHECKBOX VVVV *@
+                    @* Rewatch checkbox section *@
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="editIsRewatchCheck" />
@@ -104,7 +104,7 @@ else
                     </div>
                     @* ^^^^ END OF REWATCH CHECKBOX SECTION ^^^^ *@
 
-                    @* --- VVVV STAR RATING SECTION VVVV --- *@
+                    @* Star rating section *@
                     <div class="mb-3">
                         <label class="form-label">Your Rating:</label>
                         <div id="editStarRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
