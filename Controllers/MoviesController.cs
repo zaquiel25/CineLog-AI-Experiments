@@ -977,29 +977,17 @@ namespace Ezequiel_Movies.Controllers
         [HttpGet]
         public IActionResult Suggest()
         {
-            // This action is for displaying the initial suggestion page.
-            // It doesn't need to fetch any data yet, it just shows the view with the criteria buttons.
-            // When it returns View(), it will look for Views/Movies/Suggest.cshtml.
+            // Display initial suggestion page with criteria buttons
             return View();
         }
-
-
 
         #region Suggestion Actions & Helpers
 
         [HttpGet]
         public async Task<IActionResult> ShowSuggestions(string suggestionType, string? query = null, int page = 1)
-        // === FRESH START RESET ===
-        // Resets director sequence when user refreshes page (query is null/empty)
-        // Ensures page refresh always starts with recent director, not random
-                    // Suggestion system with session-based sequences to ensure variety
-                    // Supports: directors, genres, cast, decades, trending, and surprise suggestions
-                    // Director suggestion sequence: recent → frequent → rated → random
-                    // Uses session state to avoid repetition and ensure variety
-                    // Anti-repetition: track last shown director to avoid consecutive duplicates
-                    // Fallback allows repetition if only one director available
-                    // Fallback: if no director suggestions found, force random selection
-                    // Ensures users always get suggestions, even in edge cases
+        // Suggestion system with session-based sequences: directors, genres, cast, decades, trending
+        // Director sequence: recent → frequent → rated → random with anti-repetition
+        // Fresh start reset: page refresh starts with recent director
         {
             _logger.LogInformation("ShowSuggestions invoked with type: {Type}, query: {Query}, page: {Page}", suggestionType, query, page);
 
@@ -1008,36 +996,13 @@ namespace Ezequiel_Movies.Controllers
             string nextSuggestionType = suggestionType;
             string? nextQuery = query;
 
-
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
             {
                 return RedirectToAction("Login", "Account");
             }
+            
             switch (suggestionType?.ToLower())
-
-        /// <summary>
-        /// ShowSuggestions - Director recommendation system with bulletproof fallback
-        /// 
-        /// CRITICAL FIXES IMPLEMENTED:
-        /// - Bulletproof fallback: NEVER shows "No available director suggestions"
-        /// - Smart skip deduplication: Avoids showing same director consecutively  
-        /// - Fresh start reset: Resets sequence on page refresh
-        /// - Anti-repetition in random: Avoids repeating last shown director
-        /// 
-        /// SEQUENCE LOGIC:
-        /// 1. Recent director (most recently watched)
-        /// 2. Frequent director (most watched overall)  
-        /// 3. Rated director (highest average rating)
-        /// 4. Random director (infinite, with anti-repetition)
-        /// 
-        /// EDGE CASES HANDLED:
-        /// - Single director scenario: System works with minimal data
-        /// - Missing dates/ratings: Directors still appear in random pool
-        /// - Empty suggestions: Bulletproof fallback always shows something
-        /// 
-        /// DEBUGGING: Enable logging to see sequence flow and director selection
-        /// </summary>
             {
                 case "trending":
                     suggestionTitle = "Trending Movies Today";
@@ -1050,61 +1015,52 @@ namespace Ezequiel_Movies.Controllers
                 case "director_rated":
                 case "director_random":
                 {
-                    // --- Secuencia de sugerencias por director: recent → frequent → rated → random ---
-    string directorTypeKey = $"DirectorTypeSequence_{userId}";
-    bool isFreshStart = string.IsNullOrWhiteSpace(query);
-    int directorTypeCount;
-    if (isFreshStart)
-    {
-        HttpContext.Session.SetInt32(directorTypeKey, 0);
-        directorTypeCount = 0;
-        _logger.LogInformation("[SEQUENCE RESET] Fresh start detected, resetting director sequence to 0 (recent)");
-    }
-    else
-    {
-        directorTypeCount = HttpContext.Session.GetInt32(directorTypeKey) ?? 0;
-    }
-    // Secuencia: reciente, frecuente, mejor valorado, luego random infinito
-    string[] directorTypes = new[] { "director_recent", "director_frequent", "director_rated" };
-    int maxDirectorTypeIndex = directorTypes.Length - 1;
-    string currentDirectorType = directorTypeCount <= maxDirectorTypeIndex
-        ? directorTypes[directorTypeCount]
-        : "director_random";
-    string nextDirectorType = directorTypeCount < maxDirectorTypeIndex
-        ? directorTypes[directorTypeCount + 1]
-        : "director_random";
-    // Avanzar la secuencia: después de los tres primeros, quedarse en random para siempre
-    if (directorTypeCount <= maxDirectorTypeIndex)
-    {
-        HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
-    }
-    else
-    {
-        // Ya en random infinito, mantener el contador en ese valor
-        HttpContext.Session.SetInt32(directorTypeKey, maxDirectorTypeIndex + 1);
-    }
-    _logger.LogInformation("=== DIRECTOR SEQUENCE DEBUG ===");
-    _logger.LogInformation("Session key: {Key}", directorTypeKey);
-    _logger.LogInformation("Session value: {Value}", directorTypeCount);
-    _logger.LogInformation("Current director type: {Type}", currentDirectorType);
-    _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
-    _logger.LogInformation("Director suggestion type: {DirectorType} for user {UserId}", currentDirectorType, userId);
+                    // Director sequence: recent → frequent → rated → random
+                    string directorTypeKey = $"DirectorTypeSequence_{userId}";
+                    bool isFreshStart = string.IsNullOrWhiteSpace(query);
+                    int directorTypeCount;
+                    if (isFreshStart)
+                    {
+                        HttpContext.Session.SetInt32(directorTypeKey, 0);
+                        directorTypeCount = 0;
+                        _logger.LogInformation("[SEQUENCE RESET] Fresh start detected, resetting director sequence to 0 (recent)");
+                    }
+                    else
+                    {
+                        directorTypeCount = HttpContext.Session.GetInt32(directorTypeKey) ?? 0;
+                    }
+                    
+                    // Set current and next director types
+                    string[] directorTypes = new[] { "director_recent", "director_frequent", "director_rated" };
+                    int maxDirectorTypeIndex = directorTypes.Length - 1;
+                    string currentDirectorType = directorTypeCount <= maxDirectorTypeIndex
+                        ? directorTypes[directorTypeCount]
+                        : "director_random";
+                    string nextDirectorType = directorTypeCount < maxDirectorTypeIndex
+                        ? directorTypes[directorTypeCount + 1]
+                        : "director_random";
+                    
+                    // Advance sequence counter
+                    if (directorTypeCount <= maxDirectorTypeIndex)
+                    {
+                        HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
+                    }
+                    else
+                    {
+                        HttpContext.Session.SetInt32(directorTypeKey, maxDirectorTypeIndex + 1);
+                    }
+                    
+                    _logger.LogInformation("Director sequence debug");
+                    _logger.LogInformation("Session key: {Key}", directorTypeKey);
+                    _logger.LogInformation("Session value: {Value}", directorTypeCount);
+                    _logger.LogInformation("Current director type: {Type}", currentDirectorType);
+                    _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
+                    _logger.LogInformation("Director suggestion type: {DirectorType} for user {UserId}", currentDirectorType, userId);
 
-                    // Forzar el tipo de sugerencia según la secuencia
-                    //
-                    // <summary>
-                    // Estrategia de optimización de directores: limitar a los últimos 20 si hay más de 25 únicos.
-                    // </summary>
-                    // <remarks>
-                    // - Se prioriza DateWatched (fecha real de visionado) y se usa DateCreated como fallback para robustez.
-                    // - Decisión: Limitar solo en usuarios avanzados para evitar degradación de performance.
-                    // - Trade-off: Directores viejos pueden quedar fuera hasta que el usuario vuelva a loguear películas de ellos.
-                    // - TODO: Medir cuántos usuarios superan el umbral y ajustar el límite si es necesario.
-                    // - Warnings: Cambiar este límite puede afectar la variedad de sugerencias y la experiencia de power users.
-                    // </remarks>
+                    // Get user movies for director analysis - limit to last 20 directors if more than 25 unique
                     var allUserMovies = await _dbContext.Movies
                         .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue)
-                        .OrderByDescending(m => m.DateWatched ?? m.DateCreated) // Estrategia híbrida: prioriza DateWatched, fallback DateCreated
+                        .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
                         .ToListAsync();
                     if (!allUserMovies.Any())
                     {
@@ -1113,18 +1069,7 @@ namespace Ezequiel_Movies.Controllers
                         break;
                     }
 
-                    // Limitar a los últimos 20 directores si hay más de 25 únicos
-                    //
-                    // <summary>
-                    // Limitación condicional de directores únicos para optimizar performance.
-                    // </summary>
-                    // <remarks>
-                    // - Si el usuario tiene más de 25 directores únicos, solo se consideran los 20 más recientes (por DateWatched/DateCreated).
-                    // - Decisión: Esto previene degradación de performance en usuarios avanzados sin afectar la mayoría.
-                    // - Trade-off: Directores “viejos” pueden quedar fuera de sugerencias hasta que el usuario vuelva a loguear películas de ellos.
-                    // - TODO: Medir cuántos usuarios superan el umbral y ajustar el límite si es necesario.
-                    // - Warnings: Cambiar este límite puede afectar la variedad de sugerencias y la experiencia de power users.
-                    // </remarks>
+                    // Limit to recent directors for performance optimization
                     var uniqueDirectorsOrdered = allUserMovies
                         .Select(m => m.Director!)
                         .Distinct()
@@ -1135,166 +1080,151 @@ namespace Ezequiel_Movies.Controllers
                     else
                         limitedDirectors = uniqueDirectorsOrdered;
 
-                    // Filtrar películas solo de los directores seleccionados
+                    // Filter movies to selected directors only
                     var loggedDirectorMovies = allUserMovies
                         .Where(m => limitedDirectors.Contains(m.Director!))
                         .ToList();
 
-
-    var topDirectorQueue = new List<string>();
-    var recentDirector = loggedDirectorMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director;
-    var frequentDirector = loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-    //
-    // <summary>
-    // Obtener lista ordenada de directores por promedio de rating (mínimo 2 películas calificadas)
-    // </summary>
-    // <remarks>
-    // - DateWatched tiene prioridad sobre DateCreated para reflejar la experiencia real del usuario.
-    // - Solo se consideran directores con al menos 2 películas calificadas para evitar sesgos.
-    // - Trade-off: Directores con pocas películas pueden quedar fuera del modo rated.
-    // TODO: Analizar si conviene ajustar el umbral de cantidad mínima según uso real.
-    // </remarks>
-    var ratedDirectors = loggedDirectorMovies
-        .Where(m => m.UserRating.HasValue)
-        .GroupBy(m => m.Director!)
-        .Where(g => g.Count() >= 2)
-        .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) })
-        .OrderByDescending(d => d.Avg)
-        .Select(d => d.Name)
-        .ToList();
-    if (recentDirector is string rd) topDirectorQueue.Add(rd);
-    if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
-    if (ratedDirectors.Any() && !topDirectorQueue.Contains(ratedDirectors[0])) topDirectorQueue.Add(ratedDirectors[0]);
-    // Debug: Log original and deduplicated director queues
-    /// <summary>
-    /// Logs críticos para monitorear la secuencia y calidad de sugerencias.
-    /// </summary>
-    /// <remarks>
-    /// Importante monitorear:
-    /// - El contenido de topDirectorQueue y dedupedDirectorQueue
-    /// - El director sugerido en cada modo (recent, frequent, rated, random)
-    /// - El conteo de directores únicos y si se aplica la limitación
-    /// TODO: Agregar métricas de engagement (clicks, skips, reshuffles) para mejorar la lógica.
-    /// Warnings: Si los logs muestran siempre los mismos directores o pocos cambios, revisar la lógica de limitación.
-    /// </remarks>
-    _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
-    var dedupedDirectorQueue = topDirectorQueue.Distinct().ToList();
-    _logger.LogInformation("Deduplicated queue: {Queue}", string.Join(", ", dedupedDirectorQueue));
-    _logger.LogInformation("Deduped queue count: {Count}", dedupedDirectorQueue.Count);
-    _logger.LogInformation("=== TOP DIRECTOR QUEUE DEBUG ===");
-    _logger.LogInformation("Recent director: {Recent}", recentDirector);
-    _logger.LogInformation("Frequent director: {Frequent}", frequentDirector);
-    _logger.LogInformation("Rated director: {Rated}", ratedDirectors.FirstOrDefault());
+                    // Build director queue: recent, frequent, rated
+                    var topDirectorQueue = new List<string>();
+                    var recentDirector = loggedDirectorMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.Director;
+                    var frequentDirector = loggedDirectorMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+                    
+                    // Get rated directors (minimum 2 rated movies)
+                    var ratedDirectors = loggedDirectorMovies
+                        .Where(m => m.UserRating.HasValue)
+                        .GroupBy(m => m.Director!)
+                        .Where(g => g.Count() >= 2)
+                        .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value) })
+                        .OrderByDescending(d => d.Avg)
+                        .Select(d => d.Name)
+                        .ToList();
+                    
+                    if (recentDirector is string rd) topDirectorQueue.Add(rd);
+                    if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
+                    if (ratedDirectors.Any() && !topDirectorQueue.Contains(ratedDirectors[0])) topDirectorQueue.Add(ratedDirectors[0]);
+                    
+                    // Debug logging for director queue
+                    _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
+                    var dedupedDirectorQueue = topDirectorQueue.Distinct().ToList();
+                    _logger.LogInformation("Deduplicated queue: {Queue}", string.Join(", ", dedupedDirectorQueue));
+                    _logger.LogInformation("Deduped queue count: {Count}", dedupedDirectorQueue.Count);
+                    _logger.LogInformation("Top director queue debug");
+                    _logger.LogInformation("Recent director: {Recent}", recentDirector);
+                    _logger.LogInformation("Frequent director: {Frequent}", frequentDirector);
+                    _logger.LogInformation("Rated director: {Rated}", ratedDirectors.FirstOrDefault());
 
                     string? directorToSuggest = null;
                     List<TmdbMovieBrief> directorSuggestions = new();
 
-    if (currentDirectorType == "director_recent" && dedupedDirectorQueue.Count > 0)
-    {
-        _logger.LogInformation("EXECUTING: director_recent block");
-        _logger.LogInformation("Using director from index {Index}: {Director}", 0, dedupedDirectorQueue[0]);
-        var d = dedupedDirectorQueue[0];
-        var movies = await GetSuggestionsForDirector(d, userId);
-        if (movies.Any())
-        {
-            directorToSuggest = d;
-            directorSuggestions = movies;
-        }
-    }
-    else if (currentDirectorType == "director_frequent" && dedupedDirectorQueue.Count > 1)
-    {
-        _logger.LogInformation("EXECUTING: director_frequent block");
-        _logger.LogInformation("Using director from index {Index}: {Director}", 1, dedupedDirectorQueue[1]);
-        var d = dedupedDirectorQueue[1];
-        var movies = await GetSuggestionsForDirector(d, userId);
-        if (movies.Any())
-        {
-            directorToSuggest = d;
-            directorSuggestions = movies;
-        }
-    }
-    else if (currentDirectorType == "director_rated" && dedupedDirectorQueue.Count > 2)
-    {
-        _logger.LogInformation("EXECUTING: director_rated block");
-        foreach (var d in ratedDirectors)
-        {
-            if (dedupedDirectorQueue.Contains(d)) // Solo sugerir si está en la queue deduplicada
-            {
-                var movies = await GetSuggestionsForDirector(d, userId);
-                if (movies.Any())
-                {
-                    _logger.LogInformation("Using rated director: {Director}", d);
-                    directorToSuggest = d;
-                    directorSuggestions = movies;
-                    break;
-                }
-            }
-        }
-    }
-    // True random director selection y anti-repetición de películas SOLO para director_random
-    var allDirectors = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
-                if (currentDirectorType == "director_random")
-    {
-        _logger.LogInformation("EXECUTING: director_random block");
-        if (!allDirectors.Any())
-        {
-            suggestionTitle = "No available director suggestions. Try reshuffling or logging more movies.";
-            break;
-        }
-        // Evitar repetir el último director random sugerido (si hay más de uno)
-        string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
-        string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
-        var availableDirectors = allDirectors;
-        if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
-        {
-            var filtered = allDirectors.Where(d => d != lastRandomDirector).ToList();
-            // Si al filtrar queda vacío, volvemos a permitir el último
-            if (filtered.Count > 0)
-                availableDirectors = filtered;
-        }
-        var random = Random.Shared;
-        var randomIndex = random.Next(0, availableDirectors.Count);
-        _logger.LogInformation("All directors pool: {Directors}", string.Join(", ", allDirectors));
-        _logger.LogInformation("Available directors (no repeat): {Directors}", string.Join(", ", availableDirectors));
-        _logger.LogInformation("Random index selected: {Index}", randomIndex);
-        var selectedDirector = availableDirectors[randomIndex];
-        _logger.LogInformation("Selected director (before checking movies): {Director}", selectedDirector);
-        var movies = await GetSuggestionsForDirector(selectedDirector, userId);
-        directorToSuggest = selectedDirector;
-        directorSuggestions = movies.Take(Math.Min(3, movies.Count)).ToList();
-        nextSuggestionType = "director_random";
-        // Guardar el último director random sugerido
-        HttpContext.Session.SetString(lastRandomDirectorKey, selectedDirector);
-    }
-                // Bulletproof fallback: if no director suggestions found, force random selection
-                if (directorSuggestions.Count == 0)
-                {
-                    _logger.LogWarning("No director suggestions found for {Type}, forcing random fallback", currentDirectorType);
-                    // Force random selection as ultimate fallback
-                    var allDirectorsFallback = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
-                    if (allDirectorsFallback.Any())
+                    // Execute director selection based on current type
+                    if (currentDirectorType == "director_recent" && dedupedDirectorQueue.Count > 0)
                     {
+                        _logger.LogInformation("EXECUTING: director_recent block");
+                        _logger.LogInformation("Using director from index {Index}: {Director}", 0, dedupedDirectorQueue[0]);
+                        var d = dedupedDirectorQueue[0];
+                        var movies = await GetSuggestionsForDirector(d, userId);
+                        if (movies.Any())
+                        {
+                            directorToSuggest = d;
+                            directorSuggestions = movies;
+                        }
+                    }
+                    else if (currentDirectorType == "director_frequent" && dedupedDirectorQueue.Count > 1)
+                    {
+                        _logger.LogInformation("EXECUTING: director_frequent block");
+                        _logger.LogInformation("Using director from index {Index}: {Director}", 1, dedupedDirectorQueue[1]);
+                        var d = dedupedDirectorQueue[1];
+                        var movies = await GetSuggestionsForDirector(d, userId);
+                        if (movies.Any())
+                        {
+                            directorToSuggest = d;
+                            directorSuggestions = movies;
+                        }
+                    }
+                    else if (currentDirectorType == "director_rated" && dedupedDirectorQueue.Count > 2)
+                    {
+                        _logger.LogInformation("EXECUTING: director_rated block");
+                        foreach (var d in ratedDirectors)
+                        {
+                            if (dedupedDirectorQueue.Contains(d))
+                            {
+                                var movies = await GetSuggestionsForDirector(d, userId);
+                                if (movies.Any())
+                                {
+                                    _logger.LogInformation("Using rated director: {Director}", d);
+                                    directorToSuggest = d;
+                                    directorSuggestions = movies;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Random director selection with anti-repetition
+                    var allDirectors = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
+                    if (currentDirectorType == "director_random")
+                    {
+                        _logger.LogInformation("EXECUTING: director_random block");
+                        if (!allDirectors.Any())
+                        {
+                            suggestionTitle = "No available director suggestions. Try reshuffling or logging more movies.";
+                            break;
+                        }
+                        
+                        // Anti-repetition: avoid last random director
+                        string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
+                        string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
+                        var availableDirectors = allDirectors;
+                        if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
+                        {
+                            var filtered = allDirectors.Where(d => d != lastRandomDirector).ToList();
+                            if (filtered.Count > 0)
+                                availableDirectors = filtered;
+                        }
+                        
                         var random = Random.Shared;
-                        var fallbackDirector = allDirectorsFallback[random.Next(allDirectorsFallback.Count)];
-                        var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
-                        directorToSuggest = fallbackDirector;
-                        directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
-                        suggestionTitle = $"Because you like {fallbackDirector}... (Random)";
-                        _logger.LogInformation("Fallback director selected: {Director}", fallbackDirector);
+                        var randomIndex = random.Next(0, availableDirectors.Count);
+                        _logger.LogInformation("All directors pool: {Directors}", string.Join(", ", allDirectors));
+                        _logger.LogInformation("Available directors (no repeat): {Directors}", string.Join(", ", availableDirectors));
+                        _logger.LogInformation("Random index selected: {Index}", randomIndex);
+                        var selectedDirector = availableDirectors[randomIndex];
+                        _logger.LogInformation("Selected director (before checking movies): {Director}", selectedDirector);
+                        var movies = await GetSuggestionsForDirector(selectedDirector, userId);
+                        directorToSuggest = selectedDirector;
+                        directorSuggestions = movies.Take(Math.Min(3, movies.Count)).ToList();
+                        nextSuggestionType = "director_random";
+                        HttpContext.Session.SetString(lastRandomDirectorKey, selectedDirector);
                     }
-                    else
+                    
+                    // Bulletproof fallback: force random selection if no suggestions found
+                    if (directorSuggestions.Count == 0)
                     {
-                        // Absolute last resort (should never happen)
-                        suggestionTitle = "Log some movies to get director suggestions!";
-                        ViewData["ShowAddMovieButton"] = true;
-                        break;
+                        _logger.LogWarning("No director suggestions found for {Type}, forcing random fallback", currentDirectorType);
+                        var allDirectorsFallback = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
+                        if (allDirectorsFallback.Any())
+                        {
+                            var random = Random.Shared;
+                            var fallbackDirector = allDirectorsFallback[random.Next(allDirectorsFallback.Count)];
+                            var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
+                            directorToSuggest = fallbackDirector;
+                            directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
+                            suggestionTitle = $"Because you like {fallbackDirector}... (Random)";
+                            _logger.LogInformation("Fallback director selected: {Director}", fallbackDirector);
+                        }
+                        else
+                        {
+                            suggestionTitle = "Log some movies to get director suggestions!";
+                            ViewData["ShowAddMovieButton"] = true;
+                            break;
+                        }
                     }
-                }
-    suggestedMovies = directorSuggestions;
-    suggestionTitle = $"Because you like {directorToSuggest}...";
-    nextSuggestionType = nextDirectorType;
-    nextQuery = directorToSuggest;
-    break;
+                    
+                    suggestedMovies = directorSuggestions;
+                    suggestionTitle = $"Because you like {directorToSuggest}...";
+                    nextSuggestionType = nextDirectorType;
+                    nextQuery = directorToSuggest;
+                    break;
                 }
 
                 case "genre_recent":
