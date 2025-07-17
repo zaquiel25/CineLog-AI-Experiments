@@ -62,12 +62,9 @@
             </dl>
 
             <h5 class="mt-4">Overview</h5>
-            <!-- Original overview paragraph for rollback:
-            <p>@Model.Overview</p>
-            -->
             <p class="movie-overview">@Model.Overview</p>
 
-            @* VVVV ADD THIS NEW SECTION FOR THE CAST VVVV *@
+            @* Cast information section *@
             @{
                 var cast = ViewData["Cast"] as List<Ezequiel_Movies.Models.TmdbApi.TmdbCastPerson>;
             }
@@ -92,7 +89,6 @@
                     }
                 </div>
             }
-            @* ^^^^ END OF NEW SECTION ^^^^ *@
 
             @{
                 var watchProviders = ViewData["WatchProviders"] as Dictionary<string, List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>>;
@@ -205,7 +201,6 @@
                 </div>
             }
         </div>
-@* ^^^^ END OF NEW SECTION ^^^^ *@
     </div>
 </div>
 

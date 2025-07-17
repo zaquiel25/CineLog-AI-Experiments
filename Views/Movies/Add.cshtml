@@ -236,7 +236,7 @@
             showDetailsAndInputsOnLoad(); // Check for validation postback
             const initialUserRating = userRatingHiddenInput.value ? parseFloat(userRatingHiddenInput.value) : 0;
             setStarRating(initialUserRating); // Initialize stars
-            // Note: We no longer set the date here. The server does it. The check below handles the reset.
+            // Note: Date initialization is handled server-side. The date radio toggle logic below manages field resets.
 
             // --- Event Listeners and Main Logic ---
             locationRadios.forEach(radio => {
@@ -316,7 +316,7 @@
                                                 // Update preview card
                                                 updatePreviewCard(movieDetailsFromApi);
 
-                                                // --- VVVV CORRECTED RESET LOGIC VVVV ---
+                                                // Reset user-specific fields when new movie is selected
                                                 console.log("Resetting user-specific log fields for new movie selection.");
                                                 if (dateWatchedField) {
                                                     const today = new Date();
@@ -329,7 +329,6 @@
                                                 if (isRewatchCheckbox) isRewatchCheckbox.checked = false;
                                                 setStarRating(0); // Reset star rating
                                                 if (locationRadios) locationRadios.forEach(radio => radio.checked = false);
-                                                // --- ^^^^ END OF CORRECTED RESET LOGIC ^^^^
 
                                                 if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'block';
                                                 tmdbResultsDisplayDiv.innerHTML = '';

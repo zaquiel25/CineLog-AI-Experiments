@@ -127,11 +127,6 @@
         </div>
     </div>
 </div>
-<!-- Original centered button for rollback:
-<p>
-    <a asp-controller="Movies" asp-action="Add" class="btn btn-success mb-3">Add New Movie</a>
-</p>
--->
 <div class="text-start mb-3">
     <a asp-controller="Movies" asp-action="Add" class="btn btn-success">Add New Movie</a>
 </div>
@@ -262,7 +257,7 @@ else
 
     @* ... (Your working Pagination control block goes here) ... *@
 }
-@* --- VVVV CORRECTED AND SIMPLIFIED PAGINATION CONTROL BLOCK VVVV --- *@
+@* Pagination control block *@
 <div class="d-flex justify-content-center mt-4">
     <nav aria-label="Movie list navigation">
         <ul class="pagination">
@@ -303,7 +298,6 @@ else
         </ul>
     </nav>
 </div>
-@* --- ^^^^ END OF PAGINATION CONTROL BLOCK ^^^^ --- *@
 
 
 @* Optional "Add New Movie" button at the bottom *@
