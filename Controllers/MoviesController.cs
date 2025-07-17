@@ -1313,42 +1313,11 @@ namespace Ezequiel_Movies.Controllers
                 case "cast_frequent":
                 case "cast_rated":
                 case "cast_random":
-                    /*
-                     * =================== CAST SUGGESTION SYSTEM DOCUMENTATION ===================
-                     *
-                     * 1. Estrategia general:
-                     *    - Se toma un pool de las últimas 5 películas logueadas por el usuario (ordenadas por DateWatched DESC).
-                     *    - De cada película se extraen hasta 3 actores principales (top 3 cast TMDB), generando típicamente ~15 actores únicos.
-                     *    - Se utiliza un caché local por request para detalles de TMDB (ver TmdbService), y TMDBService implementa un caché de 6 horas para evitar llamadas redundantes y mejorar performance.
-                     *    - Se implementa un sistema anti-duplicado: nunca se muestra el mismo actor dos veces seguidas en ningún reshuffle (se guarda el último actor sugerido en sesión por usuario).
-                     *
-                     * 2. Lógica de cada tipo de sugerencia:
-                     *    - cast_recent: Sugiere 1 actor random del top 5 cast de la película más reciente.
-                     *    - cast_frequent: Sugiere 1 actor random de los actores que aparecen en 2+ películas del usuario (si es igual al anterior, salta al siguiente distinto; si no hay, fallback a rated).
-                     *    - cast_rated: Sugiere 1 actor random del top 5 cast de la película mejor puntuada por el usuario (si es igual al anterior, salta al siguiente distinto; si no hay, fallback a random).
-                     *    - cast_random: Sugiere 1 actor random del pool completo de actores únicos (anti-repetición usando sesión).
-                     *
-                     * 3. Optimizaciones implementadas:
-                     *    - Se usan solo 5 películas recientes para balancear performance y variedad: menos llamadas a TMDB, pero suficiente diversidad para la mayoría de los usuarios.
-                     *    - El caché TMDB (6h) y el pool local por request minimizan latencia y evitan sobrecargar la API.
-                     *    - Si un reshuffle no encuentra actor válido (por anti-duplicado o falta de datos), se hace fallback automático al siguiente tipo (frequent → rated → random).
-                     *
-                     * 4. Decisiones de diseño:
-                     *    - No se tocan los filtros existentes (por usuario, blacklists, etc.) para mantener seguridad y privacidad.
-                     *    - Se mantiene el uso de ViewData y Session para compatibilidad con el resto del sistema y la UI.
-                     *    - El anti-duplicado es simple (solo evita repeticiones consecutivas) porque es suficiente para la experiencia y fácil de mantener/extender.
-                     *
-                     * 5. Futuras mejoras posibles:
-                     *    - Permitir expandir el pool a más de 5 películas si usuarios avanzados piden más variedad.
-                     *    - Mejorar el anti-duplicado para evitar repeticiones "salteadas" (A, B, A) si hay feedback negativo.
-                     *    - Considerar otros criterios de frecuencia (por ejemplo, actores con más películas vistas, o ponderar por rating).
-                     *
-                     * 6. Objetivo:
-                     *    - Que cualquier desarrollador (o nosotros en el futuro) pueda entender exactamente cómo y por qué funciona el sistema de sugerencias de cast, y qué se puede ajustar según necesidades o feedback.
-                     * ===============================================================================
-                     */
-                    // === CAST SUGGESTION LOGIC WITH BULLETPROOF FIXES ===
-                    // PHASE 1: Session-based sequence management (like directors)
+                    // Cast suggestion system: recent → frequent → rated → random with anti-repetition
+                    // Uses last 5 movies, top 3 cast per movie, local TMDB cache for performance
+                    // Anti-repetition prevents same actor in consecutive suggestions
+                    
+                    // Cast sequence management (like directors)
                     string castTypeKey = $"CastTypeSequence_{userId}";
                     bool isFreshStartCast = string.IsNullOrWhiteSpace(query);
                     int castTypeCount;
@@ -1374,15 +1343,14 @@ namespace Ezequiel_Movies.Controllers
                     {
                         HttpContext.Session.SetInt32(castTypeKey, maxCastTypeIndex + 1);
                     }
-                    _logger.LogInformation("=== CAST SEQUENCE DEBUG ===");
+                    _logger.LogInformation("Cast sequence debug");
                     _logger.LogInformation("Session key: {Key}", castTypeKey);
                     _logger.LogInformation("Session value: {Value}", castTypeCount);
                     _logger.LogInformation("Current cast type: {Type}", currentCastType);
                     _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
                     _logger.LogInformation("Cast suggestion type: {CastType} for user {UserId}", currentCastType, userId);
 
-                    // PHASE 2: Build and deduplicate actor queue (with local TMDB details pool scoped to this block only)
-                    // Local per-request TMDB details pool (scoped strictly to cast logic)
+                    // Local TMDB details pool for performance optimization
                     var tmdbDetailsPool = new Dictionary<int, TmdbMovieDetails?>();
                     async Task<TmdbMovieDetails?> GetMovieDetailsWithPoolAsync(int tmdbId)
                     {
@@ -1400,6 +1368,8 @@ namespace Ezequiel_Movies.Controllers
                         ViewData["ShowAddMovieButton"] = true;
                         break;
                     }
+                    
+                    // Build actor pool from last 5 movies (top 3 cast each)
                     var allTopActors = new List<TmdbCastPerson>();
                     foreach (var movie in loggedCastMovies.Take(5))
                     {
@@ -1409,52 +1379,11 @@ namespace Ezequiel_Movies.Controllers
                     }
                     if (!allTopActors.Any()) { suggestionTitle = "Could not find cast info in your recent logs."; break; }
 
-                    // ...existing code for cast suggestion logic...
-                    // (No changes to the rest of the cast suggestion logic)
-
-                    /*
-                     * === CAST VARIETY IMPLEMENTATION ===
-                     * 
-                     * PROBLEM SOLVED: Cast suggestions were too predictable
-                     * - Recent: Always showed lead actor from last movie
-                     * - Frequent: Complex but repetitive selection
-                     * - Rated: Always most popular actor
-                     * 
-                     * SOLUTION IMPLEMENTED:
-                     * - Recent: Random selection from top 5 cast of most recent movie
-                     * - Frequent: Random selection from top 3 most frequent actors in user's log
-                     * - Rated: Random selection from top 5 cast of highest rated movie
-                     * 
-                     * BENEFITS:
-                     * - Much more variety and less predictability
-                     * - Still maintains logical meaning of each suggestion type
-                     * - Performance conscious (only 2 additional API calls)
-                     * - Preserves all session management and bulletproof fallback
-                     * 
-                     * SAFETY FEATURES:
-                     * - Null-safe with pattern matching
-                     * - Automatic deduplication prevents same actor in multiple categories
-                     * - Handles edge cases: no ratings, no cast data, empty results
-                     * - Detailed logging for debugging
-                     * 
-                     * WARNING: This logic has been carefully tuned for variety vs performance.
-                     * Test thoroughly before making changes.
-                     */
-
-                    // === INTEGRATION WITH EXISTING SYSTEMS ===
-                    // - Works seamlessly with session-based sequence management
-                    // - Compatible with smart skip deduplication 
-                    // - Preserves bulletproof fallback behavior
-                    // - Maintains anti-repetition in random mode
-                    // - Supports fresh start reset functionality
-
-                    // --- New topActorQueue Building Logic with Variety and Safety ---
+                    // Build cast queue with variety: random selection from each category
                     var topActorQueue = new List<TmdbCastPerson>();
                     var randomCast = Random.Shared;
 
-                    // === RECENT CAST VARIETY ===
-                    // Selects random actor from top 5 cast of most recently watched movie
-                    // Provides variety while maintaining "recent" meaning
+                    // Recent cast: random actor from top 5 cast of most recent movie
                     var mostRecentMovie = loggedCastMovies.FirstOrDefault();
                     if (mostRecentMovie?.TmdbId is int recentTmdbId)
                     {
@@ -1468,9 +1397,7 @@ namespace Ezequiel_Movies.Controllers
                         }
                     }
 
-                    // === FREQUENT CAST VARIETY ===  
-                    // Selects random actor from top 3 most frequent actors in user's log
-                    // Balances predictability with variety
+                    // Frequent cast: random actor from top 3 most frequent actors
                     var allActorsById = allTopActors.GroupBy(a => a.Id)
                         .Select(g => new { Actor = g.First(), Count = g.Count() })
                         .OrderByDescending(x => x.Count)
@@ -1478,7 +1405,6 @@ namespace Ezequiel_Movies.Controllers
 
                     if (allActorsById.Any())
                     {
-                        // Take top 3 frequent actors for variety
                         var topFrequentActors = allActorsById.Take(3).Select(x => x.Actor).ToList();
                         var frequentActor = topFrequentActors[randomCast.Next(topFrequentActors.Count)];
                         // Avoid duplicate if already added as recent
@@ -1489,9 +1415,7 @@ namespace Ezequiel_Movies.Controllers
                         }
                     }
 
-                    // === RATED CAST VARIETY ===
-                    // Selects random actor from top 5 cast of highest rated movie
-                    // Connects suggestions to user's favorite films
+                    // Rated cast: random actor from top 5 cast of highest rated movie
                     var highestRatedMovie = loggedCastMovies
                         .Where(m => m.UserRating.HasValue)
                         .OrderByDescending(m => m.UserRating)
@@ -1512,50 +1436,28 @@ namespace Ezequiel_Movies.Controllers
                         }
                     }
 
-                    // --- End of new topActorQueue logic ---
-                    // Deduplicate as before:
+                    // Deduplicate actor queue
                     var dedupedActorQueue = topActorQueue.DistinctBy(a => a.Id).ToList();
                     _logger.LogInformation("Original topActorQueue count: {Count}", topActorQueue.Count);
                     _logger.LogInformation("Deduplicated queue count: {Count}", dedupedActorQueue.Count);
 
-                    /*
-                     * HISTORICAL CONTEXT - WHY THIS VARIETY WAS ADDED:
-                     * 
-                     * ORIGINAL PROBLEM:
-                     * - User complained: "Why does the first cast suggestion always show 
-                     *   the same actor from the last movie?"
-                     * - Cast suggestions were too predictable and boring
-                     * - Always showed lead actors, never supporting cast
-                     * 
-                     * LESSONS LEARNED FROM DIRECTOR FIXES:
-                     * - Ask for Copilot's approach before implementing
-                     * - Preserve existing robustness (session, bulletproof fallback)
-                     * - Make minimal, targeted changes
-                     * - Add comprehensive logging for debugging
-                     * 
-                     * IMPLEMENTATION NOTES:
-                     * - Top 5 cast limit balances variety with relevance
-                     * - Top 3 frequent actors prevents too much randomness
-                     * - Deduplication ensures no repeated actors in same suggestion
-                     * - Performance optimized (only necessary API calls)
-                     */
-
                     TmdbCastPerson? actorToSuggest = null;
                     List<TmdbMovieBrief> actorSuggestions = new();
-                    // PHASE 3: Sequence logic using deduped queue, avoiding consecutive repeats across all reshuffles
+                    
+                    // Sequence logic: avoid consecutive repeats across reshuffles
                     int castStep = -1;
                     if (currentCastType == "cast_recent") castStep = 0;
                     else if (currentCastType == "cast_frequent") castStep = 1;
                     else if (currentCastType == "cast_rated") castStep = 2;
 
-                    // Get last actor ID from session (cross-reshuffle)
+                    // Get last actor ID from session for anti-repetition
                     string lastActorSessionKey = $"LastCastActorId_{userId}";
                     int? lastActorId = null;
                     var lastActorIdStr = HttpContext.Session.GetString(lastActorSessionKey);
                     if (int.TryParse(lastActorIdStr, out var parsedId))
                         lastActorId = parsedId;
 
-                    // Find the first actor in the queue for this step that is not the same as the previous one
+                    // Find first actor in queue that isn't the same as previous
                     if (castStep >= 0 && dedupedActorQueue.Count > castStep)
                     {
                         var candidate = dedupedActorQueue.Skip(castStep).FirstOrDefault(a => a.Id != lastActorId) ?? dedupedActorQueue[castStep];
@@ -1564,11 +1466,11 @@ namespace Ezequiel_Movies.Controllers
                         {
                             actorToSuggest = candidate;
                             actorSuggestions = movies;
-                            // Store this actor as last shown for next reshuffle
                             HttpContext.Session.SetString(lastActorSessionKey, candidate.Id.ToString());
                         }
                     }
-                    // PHASE 4: Anti-repetition in random
+                    
+                    // Random cast selection with anti-repetition
                     var allActors = allTopActors.DistinctBy(p => p.Id).ToList();
                     if (currentCastType == "cast_random")
                     {
@@ -1594,7 +1496,8 @@ namespace Ezequiel_Movies.Controllers
                             HttpContext.Session.SetString(lastRandomActorKey, selectedActor.Name);
                         }
                     }
-                    // PHASE 5: Bulletproof fallback
+                    
+                    // Bulletproof fallback: force random selection if no suggestions found
                     if (actorSuggestions.Count == 0)
                     {
                         _logger.LogWarning("No cast suggestions found, forcing random fallback");
@@ -1616,13 +1519,13 @@ namespace Ezequiel_Movies.Controllers
                             break;
                         }
                     }
+                    
                     var actorDetails = actorToSuggest != null ? await _tmdbService.GetPersonDetailsAsync(actorToSuggest.Id) : null;
                     suggestedMovies = actorSuggestions;
                     suggestionTitle = $"Because you like movies with {actorToSuggest?.Name}";
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
                     nextQuery = actorToSuggest?.Name;
                     break;
-
                 case "year_recent":
                 case "year_frequent":
                 case "year_rated":
