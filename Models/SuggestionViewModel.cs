@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Ezequiel_Movies.Models.TmdbApi; // This using is important
+using Ezequiel_Movies.Models.TmdbApi;
 
 namespace Ezequiel_Movies.Models
 {

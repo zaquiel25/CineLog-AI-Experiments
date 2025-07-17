@@ -31,7 +31,7 @@ namespace Ezequiel_Movies1.Models.Entities
         // Poster path from TMDB (optional, for display)
         public string? PosterUrl { get; set; }
 
-        // NUEVAS PROPIEDADES: Director y Año (nullable, seguro para datos existentes)
+        // Optional movie metadata for enhanced display (nullable for backward compatibility)
         public string? Director { get; set; }
         public int? ReleasedYear { get; set; }
     }
