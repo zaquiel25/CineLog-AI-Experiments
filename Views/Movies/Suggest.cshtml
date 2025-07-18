@@ -71,11 +71,9 @@
             </div>
         </div>
 
-        @* This section displays the suggestion results OR the message with the button *@
-        @* VVVV THIS IS THE CORRECTED, SINGLE BLOCK FOR DISPLAYING ALL RESULTS VVVV *@
         @{
             var genreList = ViewData["GenreSuggestions"] as List<TmdbGenre>;
-            var actorList = ViewData["CastSuggestions"] as List<TmdbCastPerson>; // We'll use this later
+            var actorList = ViewData["CastSuggestions"] as List<TmdbCastPerson>;
         }
 
         @if (Model != null)
@@ -83,7 +81,6 @@
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
-
                     <div class="d-flex justify-content-center align-items-center">
                         @if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
                         {
@@ -92,48 +89,48 @@
                         }
                         <h4 class="text-info mb-0">@ViewData["SuggestionTitle"]</h4>
                     </div>
-                    @if (Model.Any())
-                    {
-                        @* VVVV THIS IS THE NEW, SMARTER RESHUFFLE LOGIC VVVV *@
-                        @if (Model.Any())
-                        {
-                            var nextAction = (ViewData["NextSuggestionType"] as string) == "surprise_me"
-                                ? "GetSurpriseSuggestion"
-                                : "ShowSuggestions";
+                    
 
-                            <a asp-action="@nextAction"
-                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-                               asp-route-query="@ViewData["NextQuery"]"
-                               asp-route-page="@ViewData["NextPage"]"
-                               class="btn btn-sm btn-outline-secondary mt-3">
-                                <i class="bi bi-arrow-repeat"></i>
-                                @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle")
-                            </a>
-                        }
-                        else
-                        {
-                            // Otherwise, use the normal reshuffle logic for Director, Genre, Trending etc.
-                            <a asp-action="ShowSuggestions"
-                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-                               asp-route-query="@ViewData["NextQuery"]"
-                               asp-route-page="@ViewData["NextPage"]"
-                               class="btn btn-sm btn-outline-secondary mt-3">
-                                <i class="bi bi-arrow-repeat"></i> Reshuffle
-                            </a>
-                        }
-                        @* ^^^^ END OF NEW LOGIC ^^^^ *@
-                    }
+@if (Model.Any())
+{
+    var nextSuggestionType = ViewData["NextSuggestionType"] as string;
+    
+    @* ---
+        Lógica de botones de reshuffle:
+        - Si el tipo de sugerencia es "trending", se muestra un botón que dispara un reshuffle AJAX (sin recargar la página).
+        - Para otros tipos de sugerencia, se usan enlaces normales que navegan a la acción correspondiente (flujo tradicional).
+        - Esto permite un patrón híbrido: AJAX para trending (por performance y experiencia de usuario), navegación normal para el resto.
+        - El botón trending usa data-suggestion-type para que el JS pueda distinguir el tipo y disparar el fetch AJAX solo en ese caso.
+    *@
+    @if (nextSuggestionType == "trending")
+    {
+        <!-- BOTÓN AJAX SOLO PARA TRENDING -->
+        <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="trending">
+            <i class="bi bi-shuffle"></i> Reshuffle
+        </button>
+    }
+    else
+    {
+        <!-- BOTONES NORMALES PARA OTROS TIPOS -->
+        var nextAction = nextSuggestionType == "surprise_me" ? "GetSurpriseSuggestion" : "ShowSuggestions";
+        <a asp-action="@nextAction"
+           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+           asp-route-query="@ViewData["NextQuery"]"
+           asp-route-page="@ViewData["NextPage"]"
+           class="btn btn-sm btn-outline-secondary mt-3">
+            <i class="bi bi-arrow-repeat"></i>
+            @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle")
+        </a>
+    }
+}
                     else if ((bool?)ViewData["ShowAddMovieButton"] == true)
                     {
                         <a asp-controller="Movies" asp-action="Add" class="btn btn-lg btn-success mt-3">
                             <i class="bi bi-plus-circle me-2"></i> Log a Movie
                         </a>
                     }
-                    @* Handle edge case: suggestion title exists but movie list is empty 
-                       (occurs when all movies from selected director/genre/etc are blacklisted) *@
-                    else if (!Model.Any() && !string.IsNullOrEmpty(ViewData["SuggestionTitle"] as string))
+                    else
                     {
-                        // Show reshuffle button if we have a suggestion title but no movies and not in the add-movie case
                         <a asp-action="ShowSuggestions"
                            asp-route-suggestionType="@ViewData["NextSuggestionType"]"
                            asp-route-query="@ViewData["NextQuery"]"
@@ -143,20 +140,18 @@
                         </a>
                     }
                 </div>
+            </div>
+            @if (Model.Any())
+            {
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+                    @foreach (var movie in Model)
+                    {
+                        <partial name="_MovieSuggestionCard" model="movie" />
+                    }
                 </div>
-
-                @if (Model.Any())
-                {
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
-                        @foreach (var movie in Model)
-                        {
-                            <partial name="_MovieSuggestionCard" model="movie" />
-                        }
-                    </div>
-                }
-            
+            }
         }
-        else if (genreList != null && genreList.Any()) // Logic to show Genre buttons
+        else if (genreList != null && genreList.Any())
         {
             <div id="suggestion-results-area">
                 <hr class="my-5">
@@ -176,108 +171,154 @@
                 </div>
             </div>
         }
-        @* We will add a similar block for the Cast suggestions later *@
 
     </div>
 </div>
 
+}
+
 @section Scripts {
-    <script>
+<script>
+    /*
+     * Patrón híbrido de sugerencias:
+     * - Para "Trending", el reshuffle es 100% AJAX: el botón dispara un fetch al endpoint TrendingReshuffle, que devuelve HTML listo para insertar.
+     * - Para otros tipos, se usa navegación tradicional (enlaces).
+     *
+     * ¿Por qué AJAX + HTML y no JSON?:
+     * - El renderizado server-side asegura que los posters y paths de imágenes funcionen igual que en el render inicial.
+     * - Permite mantener la lógica DRY y la visual consistente usando partial views.
+     *
+     * Integración AJAX + partial views:
+     * - El JS detecta el botón trending por data-suggestion-type.
+     * - Hace fetch, reemplaza el grid y re-adjunta event listeners (para que los formularios AJAX sigan funcionando tras el reshuffle).
+     * - El resto de botones usan navegación normal.
+     *
+     * Notas:
+     * - Siempre re-adjuntar event listeners tras reemplazar HTML dinámico.
+     * - Este patrón es extensible a otros tipos de sugerencia si se desea AJAXizar más adelante.
+     */
     document.addEventListener('DOMContentLoaded', function () {
-        // Scroll to results area if present
         const resultsContainer = document.getElementById('suggestion-results-area');
         if (resultsContainer) {
             resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+        attachEventListeners();
+    });
 
-        // AJAX Blacklist functionality for suggestion cards
-// AJAX handler for blacklist buttons - removes card with fade animation on success
-document.querySelectorAll('.blacklist-form').forEach(function(form) {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                var btn = form.querySelector('.blacklist-btn');
-                btn.disabled = true;
-                var card = form.closest('.movie-suggestion-card');
-                var formData = new FormData(form);
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'reshuffle-btn') {
+            e.preventDefault();
+            const suggestionType = e.target.getAttribute('data-suggestion-type');
+            if (suggestionType === 'trending') {
+                const originalHTML = e.target.innerHTML;
+                e.target.disabled = true;
+                e.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reshuffling...';
 
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin'
+                fetch('/Movies/TrendingReshuffle', {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    timeout: 10000 // 10 seconds timeout
                 })
-                .then(function (response) {
-                    if (response.ok) {
-                        // Animate: fade out + slide up
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.html) {
+                        const container = document.querySelector('.row.row-cols-1.row-cols-sm-2.row-cols-md-3.g-4.justify-content-center');
+                        if (container) {
+                            container.innerHTML = data.html;
+                            attachEventListeners(); // Importante: re-adjuntar listeners tras reemplazo
+                        } else {
+                            throw new Error('Container not found');
+                        }
+                    } else {
+                        throw new Error(data.error || 'Invalid response');
+                    }
+                    e.target.disabled = false;
+                    e.target.innerHTML = originalHTML;
+                })
+                .catch(error => {
+                    console.error('Reshuffle error:', error);
+                    alert('Failed to reshuffle: ' + error.message);
+                    e.target.disabled = false;
+                    e.target.innerHTML = originalHTML;
+                });
+            }
+        }
+    });
+
+    function attachEventListeners() {
+        document.querySelectorAll('.blacklist-form, .wishlist-form').forEach(form => {
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+            if (newForm.classList.contains('blacklist-form')) {
+                newForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const btn = newForm.querySelector('.blacklist-btn');
+                    btn.disabled = true;
+                    const card = newForm.closest('.movie-suggestion-card');
+                    fetch(newForm.action, {
+                        method: 'POST',
+                        body: new FormData(newForm),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Blacklist failed');
                         card.style.transition = 'opacity 0.4s, transform 0.4s';
                         card.style.opacity = '0';
                         card.style.transform = 'scale(0.95) translateY(-20px)';
-                        setTimeout(function () {
-                            card.remove();
-                        }, 400);
-                    } else {
-                        throw new Error('Failed to add to blacklist.');
-                    }
-                })
-                .catch(function () {
-                    btn.disabled = false;
-                    alert('Could not add to blacklist. Please try again.');
+                        setTimeout(() => card.remove(), 400);
+                    })
+                    .catch(() => {
+                        btn.disabled = false;
+                        alert('Could not add to blacklist. Please try again.');
+                    });
                 });
-            });
-        });
-        // AJAX Wishlist functionality for suggestion cards
-// AJAX handler for wishlist buttons - updates button state on success  
-document.querySelectorAll('.wishlist-form').forEach(function(form) {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                var btn = form.querySelector('.wishlist-btn');
-                btn.disabled = true;
-                btn.textContent = 'Adding...';
-                var formData = new FormData(form);
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin'
-                })
-                .then(function (response) {
-                    if (response.ok) {
+            } else if (newForm.classList.contains('wishlist-form')) {
+                newForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const btn = newForm.querySelector('.wishlist-btn');
+                    btn.disabled = true;
+                    btn.textContent = 'Adding...';
+                    fetch(newForm.action, {
+                        method: 'POST',
+                        body: new FormData(newForm),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Wishlist failed');
                         btn.textContent = 'Added ✓';
                         btn.classList.remove('btn-soft-primary');
                         btn.classList.add('btn-success');
                         btn.disabled = true;
-                        // Mutual exclusion: hide or disable blacklist button in the same card
-                        var card = form.closest('.movie-suggestion-card');
+                        const card = newForm.closest('.movie-suggestion-card');
                         if (card) {
-                            var blacklistBtn = card.querySelector('.blacklist-btn');
+                            const blacklistBtn = card.querySelector('.blacklist-btn');
                             if (blacklistBtn) {
                                 blacklistBtn.disabled = true;
                                 blacklistBtn.classList.remove('btn-soft-danger');
                                 blacklistBtn.classList.add('btn-secondary');
                                 blacklistBtn.textContent = 'Unavailable';
                             }
-                            var blacklistForm = card.querySelector('.blacklist-form');
+                            const blacklistForm = card.querySelector('.blacklist-form');
                             if (blacklistForm) {
                                 blacklistForm.style.pointerEvents = 'none';
                                 blacklistForm.style.opacity = '0.5';
                             }
                         }
-                    } else {
-                        throw new Error('Failed to add to wishlist.');
-                    }
-                })
-                .catch(function () {
-                    btn.disabled = false;
-                    btn.textContent = 'Add to Wishlist';
-                    alert('Could not add to wishlist. Please try again.');
+                    })
+                    .catch(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Add to Wishlist';
+                        alert('Could not add to wishlist. Please try again.');
+                    });
                 });
-            });
+            }
         });
-    });
-    </script>
+    }
+</script>
 }

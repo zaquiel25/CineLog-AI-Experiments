@@ -1,3 +1,10 @@
+## 🚀 Hybrid AJAX+HTML Suggestion System (2025-07-18)
+
+- **Trending Reshuffle AJAX:** El reshuffle de sugerencias trending ahora se realiza vía AJAX y el endpoint devuelve HTML renderizado del servidor (partial views), no JSON puro.
+- **Justificación técnica:** El renderizado server-side asegura que los posters y paths de imágenes funcionen correctamente, evitando problemas de rutas y CORS.
+- **Patrón extensible:** El resto de tipos de sugerencia siguen usando navegación tradicional, pero el patrón es extensible a más tipos si se desea AJAXizar.
+- **Mantenimiento:** El botón trending usa data-suggestion-type y event delegation en JS para disparar el fetch AJAX. Tras reemplazar el grid, siempre se re-adjuntan los event listeners para mantener la funcionalidad AJAX de los formularios internos.
+- **Documentación:** Los comentarios en C# y JS explican el propósito, el porqué del enfoque y las mejores prácticas de mantenimiento. Ver ejemplos en `MoviesController.cs` y `Views/Movies/Suggest.cshtml`.
 ### 🔄 Intelligent List Management
 - **Mutual Exclusion Logic**: Movies cannot exist in both wishlist and blacklist
 - **Preventive UI**: Visual states prevent conflicting actions before they occur

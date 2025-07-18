@@ -1,4 +1,13 @@
 ## [Version X.X.X] - 2025-07-18
+### Hybrid AJAX+HTML Suggestion System
+- **Nuevo patrón híbrido en sugerencias:**
+  - El reshuffle de tipo "Trending" ahora usa AJAX y devuelve HTML renderizado del servidor (partial views), no JSON puro.
+  - Justificación: El renderizado server-side asegura que los posters y paths de imágenes funcionen correctamente, evitando problemas de rutas y CORS.
+  - El resto de tipos de sugerencia siguen usando navegación tradicional, pero el patrón es extensible a más tipos si se desea AJAXizar.
+  - El botón de reshuffle trending usa data-suggestion-type y event delegation en JS para disparar el fetch AJAX.
+  - Tras reemplazar el grid de sugerencias, siempre se re-adjuntan los event listeners para mantener la funcionalidad AJAX de los formularios internos.
+  - Comentarios en C# y JS documentan el propósito, el porqué del enfoque y las mejores prácticas de mantenimiento.
+  - Ver ejemplos y convenciones en `MoviesController.cs` y `Views/Movies/Suggest.cshtml`.
 ### Suggestion Engine, AJAX, and Caching Overhaul
 - Robust session-vs-client logic: Session sequencing is only used on the initial suggestion click; all reshuffles trust client parameters.
 - Generalized AJAX "Reshuffle" button: Now works for all suggestion types using event delegation, always maintaining context.

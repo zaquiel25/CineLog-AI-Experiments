@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies.Data;
@@ -14,6 +15,9 @@ using Ezequiel_Movies.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Ezequiel_Movies1.Models.Entities;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Ezequiel_Movies.Controllers
 {
@@ -901,50 +905,130 @@ namespace Ezequiel_Movies.Controllers
             return View("Suggest", suggestedMoviesList);
         }
 
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> TrendingReshuffle()
+/// <summary>
+/// Endpoint AJAX para reshuffle de sugerencias "Trending".
+/// Devuelve HTML renderizado del servidor (partial views) en vez de JSON puro.
+/// Esto garantiza que los posters y paths de imágenes funcionen correctamente en todos los navegadores,
+/// ya que el renderizado del lado servidor respeta la lógica de rutas, helpers y paths de ASP.NET MVC.
+///
+/// ¿Por qué HTML y no JSON?:
+/// - El renderizado server-side asegura que los paths de imágenes, helpers y lógica de vistas parciales sean consistentes.
+/// - Evita problemas de rutas relativas/absolutas y de CORS con posters de TMDB.
+/// - Permite reutilizar la misma partial view que en el render inicial, manteniendo DRY y consistencia visual.
+///
+/// El flujo es:
+/// 1. El cliente hace fetch AJAX a este endpoint.
+/// 2. El servidor selecciona nuevas películas, renderiza cada una con la partial view y devuelve el HTML listo para insertar.
+/// 3. El cliente reemplaza el grid de sugerencias sin recargar la página.
+/// </summary>
+[HttpGet]
+[Authorize]
+public async Task<IActionResult> TrendingReshuffle()
+{
+    try
+    {
+        _logger.LogInformation("🚀 TrendingReshuffle AJAX endpoint called.");
+        
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
         {
-            _logger.LogInformation("TrendingReshuffle AJAX endpoint called.");
-            
-            var userId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-            
-            // Reutiliza la lógica de trending existente del ShowSuggestions
-            var blacklistIds = await _dbContext.BlacklistedMovies
-                .Where(b => b.UserId == userId)
-                .Select(b => b.TmdbId)
-                .ToListAsync();
-                
-            var recentIds = await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
-                .OrderByDescending(m => m.DateWatched)
-                .Take(5)
-                .Select(m => m.TmdbId ?? 0)
-                .ToListAsync();
-                
-            var moviePool = new List<TmdbMovieBrief>();
-            int pageNum = 1;
-            while (moviePool.Count < 30 && pageNum <= 5)
-            {
-                var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
-                var validMovies = pageMovies
-                    .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
-                    .ToList();
-                moviePool.AddRange(validMovies);
-                pageNum++;
-            }
-            
-            var suggestedMovies = moviePool
-                .OrderBy(x => Random.Shared.Next())
-                .Take(3)
-                .ToList();
-            
-            return Json(suggestedMovies);
+            return Unauthorized();
         }
+
+        // Filtrar películas ya vistas y en blacklist del usuario
+        var blacklistIds = await _dbContext.BlacklistedMovies
+            .Where(b => b.UserId == userId)
+            .Select(b => b.TmdbId)
+            .ToListAsync();
+
+        var recentIds = await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+            .OrderByDescending(m => m.DateWatched)
+            .Take(5)
+            .Select(m => m.TmdbId ?? 0)
+            .ToListAsync();
+
+        var moviePool = new List<TmdbMovieBrief>();
+        int pageNum = 1;
+        // Buscar hasta 30 películas válidas (no repetidas, no blacklist, no recientes)
+        while (moviePool.Count < 30 && pageNum <= 5)
+        {
+            var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
+            var validMovies = pageMovies
+                .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
+                .ToList();
+            moviePool.AddRange(validMovies);
+            pageNum++;
+        }
+
+        // Seleccionar 3 sugerencias aleatorias
+        var suggestedMovies = moviePool
+            .OrderBy(x => Random.Shared.Next())
+            .Take(3)
+            .ToList();
+
+        _logger.LogInformation("🎬 Returning {Count} movies for reshuffle", suggestedMovies.Count);
+
+        // Renderizar HTML usando partial view para asegurar paths y helpers correctos
+        var htmlBuilder = new StringBuilder();
+        foreach (var movie in suggestedMovies)
+        {
+            // Renderiza cada película con la partial view reutilizada
+            var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+        }
+
+        return Json(new { 
+            success = true, 
+            html = htmlBuilder.ToString(),
+            count = suggestedMovies.Count 
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "💥 ERROR in TrendingReshuffle: {Message}", ex.Message);
+        return Json(new { 
+            success = false, 
+            error = ex.Message 
+        });
+    }
+}
+
+/// <summary>
+/// Helper para renderizar una partial view a string.
+/// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
+///
+/// Se usa en TrendingReshuffle para garantizar que los posters, helpers y paths de imágenes funcionen igual que en el render inicial.
+/// </summary>
+private async Task<string> RenderPartialViewToStringAsync(string viewName, object model)
+{
+    // Obtiene el motor de vistas configurado en ASP.NET Core
+    if (ControllerContext.HttpContext.RequestServices.GetService(typeof(ICompositeViewEngine)) is not ICompositeViewEngine viewEngine)
+    {
+        throw new InvalidOperationException("ViewEngine not found");
+    }
+
+    var viewResult = viewEngine.FindView(ControllerContext, viewName, false);
+
+    if (viewResult.View == null)
+    {
+        throw new FileNotFoundException($"View '{viewName}' not found");
+    }
+
+    using var writer = new StringWriter();
+    // Crea un contexto de vista con el modelo y helpers necesarios
+    var viewContext = new ViewContext(
+        ControllerContext,
+        viewResult.View,
+        new ViewDataDictionary(ViewData) { Model = model },
+        TempData,
+        writer,
+        new HtmlHelperOptions()
+    );
+
+    await viewResult.View.RenderAsync(viewContext);
+    return writer.ToString();
+}
 
         [HttpGet]
         public async Task<IActionResult> SelectGenre()

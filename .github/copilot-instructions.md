@@ -128,6 +128,23 @@
 - The "Reshuffle" button is implemented via event delegation and always maintains the correct context for all suggestion types.
 - IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing.
 
+
+## AJAX & Hybrid Suggestion Implementation (2025-07-18)
+
+- El sistema de sugerencias ahora implementa un patrón híbrido:
+  - Para el tipo "Trending", el reshuffle se realiza vía AJAX y el endpoint devuelve HTML renderizado del servidor (partial views), no JSON puro.
+  - Esto garantiza que los posters y paths de imágenes funcionen correctamente, ya que el renderizado server-side respeta la lógica de rutas y helpers de ASP.NET MVC.
+  - El resto de tipos de sugerencia siguen usando navegación tradicional, pero el patrón es extensible a más tipos si se desea AJAXizar.
+- Justificación técnica:
+  - El renderizado HTML server-side evita problemas de rutas relativas/absolutas y CORS con imágenes de TMDB.
+  - Permite reutilizar la misma partial view que en el render inicial, manteniendo DRY y consistencia visual.
+  - Facilita el mantenimiento y la extensión futura del sistema de sugerencias.
+- Notas de implementación:
+  - El botón de reshuffle para trending usa data-suggestion-type y event delegation en JS para disparar el fetch AJAX.
+  - Tras reemplazar el grid de sugerencias, siempre se re-adjuntan los event listeners para mantener la funcionalidad AJAX de los formularios internos.
+  - Los comentarios en C# y JS deben documentar el propósito, el porqué del enfoque y las mejores prácticas de mantenimiento.
+  - Ver ejemplos y convenciones en `MoviesController.cs` y `Views/Movies/Suggest.cshtml`.
+
 ## AJAX Implementation Notes
 
 ### Anti-Forgery Protection
