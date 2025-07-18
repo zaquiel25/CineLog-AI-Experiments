@@ -252,10 +252,22 @@ document.querySelectorAll('.wishlist-form').forEach(function(form) {
                         btn.classList.remove('btn-soft-primary');
                         btn.classList.add('btn-success');
                         btn.disabled = true;
-                        // Optionally, replace form with a disabled button for accessibility
-                        // (not strictly necessary, but improves semantics)
-                        // var newBtn = btn.cloneNode(true);
-                        // form.parentNode.replaceChild(newBtn, form);
+                        // Mutual exclusion: hide or disable blacklist button in the same card
+                        var card = form.closest('.movie-suggestion-card');
+                        if (card) {
+                            var blacklistBtn = card.querySelector('.blacklist-btn');
+                            if (blacklistBtn) {
+                                blacklistBtn.disabled = true;
+                                blacklistBtn.classList.remove('btn-soft-danger');
+                                blacklistBtn.classList.add('btn-secondary');
+                                blacklistBtn.textContent = 'Unavailable';
+                            }
+                            var blacklistForm = card.querySelector('.blacklist-form');
+                            if (blacklistForm) {
+                                blacklistForm.style.pointerEvents = 'none';
+                                blacklistForm.style.opacity = '0.5';
+                            }
+                        }
                     } else {
                         throw new Error('Failed to add to wishlist.');
                     }
