@@ -902,6 +902,51 @@ namespace Ezequiel_Movies.Controllers
         }
 
         [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> TrendingReshuffle()
+        {
+            _logger.LogInformation("TrendingReshuffle AJAX endpoint called.");
+            
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+            
+            // Reutiliza la lógica de trending existente del ShowSuggestions
+            var blacklistIds = await _dbContext.BlacklistedMovies
+                .Where(b => b.UserId == userId)
+                .Select(b => b.TmdbId)
+                .ToListAsync();
+                
+            var recentIds = await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+                .OrderByDescending(m => m.DateWatched)
+                .Take(5)
+                .Select(m => m.TmdbId ?? 0)
+                .ToListAsync();
+                
+            var moviePool = new List<TmdbMovieBrief>();
+            int pageNum = 1;
+            while (moviePool.Count < 30 && pageNum <= 5)
+            {
+                var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
+                var validMovies = pageMovies
+                    .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
+                    .ToList();
+                moviePool.AddRange(validMovies);
+                pageNum++;
+            }
+            
+            var suggestedMovies = moviePool
+                .OrderBy(x => Random.Shared.Next())
+                .Take(3)
+                .ToList();
+            
+            return Json(suggestedMovies);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> SelectGenre()
         {
             _logger.LogInformation("SelectGenre action invoked.");

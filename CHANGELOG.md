@@ -1,4 +1,9 @@
 ## [Version X.X.X] - 2025-07-18
+### Trending Suggestions & Caching Improvements
+- **Trending Movies**: Now uses backend cache (90 min per page) for all trending API calls
+- **User Filtering**: Trending suggestions exclude blacklisted movies and your last 5 watched
+- **Pool Generation**: Up to 30 valid trending movies are pooled from 5 TMDB pages, then randomized for variety
+- **Consistent UX**: Trending suggestions now always reflect user preferences and avoid repetition
 ### 🎯 Enhanced User Experience
 - **Preventive Mutual Exclusion**: Implemented visual state management for wishlist/blacklist
 - **Eliminated Error Banners**: Replaced reactive error messages with preventive UI states

@@ -25,6 +25,10 @@
 - **Personalized Recommendations**: Based on your directors, genres, cast, and decades
 - **Robust Fallback System**: Always provides suggestions, even when edge cases occur
 - **Trending Movies**: Discover what's popular right now
+    -  Now uses backend caching (90 min per page) for performance
+    - Suggestions are filtered to exclude your blacklist and last 5 watched
+    - Pool of 30 trending movies is built from up to 5 TMDB pages, then randomized
+    - Always provides 3 unique, user-relevant trending suggestions
 - **Surprise Me**: Get random suggestions based on your taste profile
 
 ### 🔄 Seamless Experience
