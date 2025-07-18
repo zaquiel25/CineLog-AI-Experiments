@@ -123,8 +123,10 @@
 
 ### Suggestion System Behavior
 - Implement bulletproof fallbacks for edge cases
-- Track session state to avoid repetitive suggestions
+- Track session state to avoid repetitive suggestions (Session sequencing is only used on the initial suggestion click; all reshuffles use client parameters.)
 - Handle empty result sets gracefully with actionable next steps
+- The "Reshuffle" button is implemented via event delegation and always maintains the correct context for all suggestion types.
+- IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing.
 
 ## AJAX Implementation Notes
 
@@ -141,6 +143,15 @@
 - AJAX operations include comprehensive error handling
 - Failed operations provide user feedback and restore UI state
 - Network errors are handled gracefully with retry options
+
+---
+
+For new features, always:
+- Use session sequencing only on the initial suggestion click; trust client parameters for all reshuffles.
+- Implement AJAX-powered UI actions using event delegation for all dynamic elements.
+- Use IMemoryCache for API data and Session State for user-specific anti-repetition and sequencing.
+- Follow the established patterns in `MoviesController.cs` and use `TmdbService` for all TMDB interactions.
+- Filter all user data queries by user ID for privacy and correctness.
 
 ---
 

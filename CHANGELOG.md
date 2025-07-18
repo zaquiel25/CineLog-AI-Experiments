@@ -1,4 +1,12 @@
 ## [Version X.X.X] - 2025-07-18
+### Suggestion Engine, AJAX, and Caching Overhaul
+- Robust session-vs-client logic: Session sequencing is only used on the initial suggestion click; all reshuffles trust client parameters.
+- Generalized AJAX "Reshuffle" button: Now works for all suggestion types using event delegation, always maintaining context.
+- Trending suggestions: Now use backend IMemoryCache (90 min per page), exclude blacklisted and recently watched movies, and always provide 3 unique, user-relevant cards.
+- Dual caching: IMemoryCache for API data, Session State for user-specific anti-repetition and sequencing.
+- UI/UX: All suggestion cards and reshuffle actions are visually and behaviorally consistent, with instant feedback and no page reloads.
+- Codebase: All controller and model comments are professional, business-logic-focused, and DRY. No development artifacts remain.
+## [Version X.X.X] - 2025-07-18
 ### Trending Suggestions & Caching Improvements
 - **Trending Movies**: Now uses backend cache (90 min per page) for all trending API calls
 - **User Filtering**: Trending suggestions exclude blacklisted movies and your last 5 watched

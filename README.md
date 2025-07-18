@@ -25,13 +25,16 @@
 - **Personalized Recommendations**: Based on your directors, genres, cast, and decades
 - **Robust Fallback System**: Always provides suggestions, even when edge cases occur
 - **Trending Movies**: Discover what's popular right now
-    -  Now uses backend caching (90 min per page) for performance
+    - Now uses backend IMemoryCache (90 min per page) for all trending API calls
     - Suggestions are filtered to exclude your blacklist and last 5 watched
     - Pool of 30 trending movies is built from up to 5 TMDB pages, then randomized
     - Always provides 3 unique, user-relevant trending suggestions
 - **Surprise Me**: Get random suggestions based on your taste profile
+- **Generalized AJAX Reshuffle**: The "Reshuffle" button now works for all suggestion types using event delegation, always maintaining context and providing instant feedback.
+- **Dual Caching**: IMemoryCache is used for API data, and Session State is used for user-specific anti-repetition and sequencing.
 
 ### 🔄 Seamless Experience
 - **No Page Reloads**: AJAX-powered interactions for smooth user experience
 - **Instant Feedback**: Visual confirmation of all actions
+- **Consistent UI/UX**: All suggestion cards and reshuffle actions are visually and behaviorally consistent across categories.
 - **Mobile Responsive**: Works perfectly on all devices
