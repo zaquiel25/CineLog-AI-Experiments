@@ -122,6 +122,9 @@ namespace Ezequiel_Movies.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToBlacklist(int tmdbId, string returnUrl = "/")
+            // Mutual exclusion enforced preventively via UI state management
+            // Error messaging removed - users cannot access conflicting actions
+            // See Details.cshtml and Preview.cshtml for visual implementation
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -135,7 +138,6 @@ namespace Ezequiel_Movies.Controllers
             // Enforces mutual exclusion: a movie cannot be in both wishlist and blacklist for the same user
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
-                TempData["ErrorMessage"] = "Cannot add to blacklist: Movie is in your wishlist. Remove from wishlist first.";
                 return LocalRedirect(returnUrl);
             }
             try
@@ -387,6 +389,9 @@ namespace Ezequiel_Movies.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToWishlist(int tmdbId, string returnUrl = "/")
+            // Mutual exclusion enforced preventively via UI state management
+            // Error messaging removed - users cannot access conflicting actions
+            // See Details.cshtml and Preview.cshtml for visual implementation
         {
             var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId) || tmdbId == 0)
@@ -402,7 +407,6 @@ namespace Ezequiel_Movies.Controllers
             // Enforces mutual exclusion: cannot add to wishlist if movie is in blacklist
             if (await MovieExistsInBlacklistAsync(userId, tmdbId))
             {
-                TempData["ErrorMessage"] = "Cannot add to wishlist: Movie is in your blacklist. Remove from blacklist first.";
                 return LocalRedirect(returnUrl);
             }
 
@@ -584,6 +588,18 @@ namespace Ezequiel_Movies.Controllers
                 isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == 0);
             }
             ViewData["IsInWishlist"] = isInWishlist;
+
+            // Determine if the movie is in the user's blacklist (copied from Preview)
+            bool isInBlacklist = false;
+            if (movie.TmdbId.HasValue)
+            {
+                isInBlacklist = await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == movie.TmdbId.Value);
+            }
+            else
+            {
+                isInBlacklist = await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == 0);
+            }
+            ViewData["IsInBlacklist"] = isInBlacklist;
 
             if (movie.TmdbId.HasValue)
             {

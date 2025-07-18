@@ -1,3 +1,7 @@
+## UI/UX Patterns
+- Mutual exclusion implemented preventively via conditional rendering
+- Error states avoided through visual state management
+- Consistent behavior across Details and Preview pages
 #
 # Model Comment Standards (2025-07-18)
 #

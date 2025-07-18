@@ -195,6 +195,8 @@
 
 @* --- Action Buttons Section --- *@
 <div class="mt-3">
+    @* Mutual exclusion logic: prevent conflicting user actions via conditional rendering *@
+    @* See also: Details.cshtml for identical pattern *@
     @if (!isInWishlist && !isInBlacklist)
     {
         <form asp-action="AddToWishlist" method="post" style="display: inline;">

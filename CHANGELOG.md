@@ -1,3 +1,8 @@
+## [Version X.X.X] - 2025-07-18
+### 🎯 Enhanced User Experience
+- **Preventive Mutual Exclusion**: Implemented visual state management for wishlist/blacklist
+- **Eliminated Error Banners**: Replaced reactive error messages with preventive UI states
+- **Consistent UX**: Unified mutual exclusion behavior across Details and Preview pages
 # 2025-07-18
 ### Mutual Exclusion UI en Suggestion Cards
 - Ahora, al agregar una película a wishlist vía AJAX en la página de sugerencias, el botón "Add to Blacklist" de la misma tarjeta se desactiva/oculta automáticamente en el frontend.

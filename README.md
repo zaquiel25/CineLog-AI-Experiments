@@ -1,3 +1,7 @@
+### 🔄 Intelligent List Management
+- **Mutual Exclusion Logic**: Movies cannot exist in both wishlist and blacklist
+- **Preventive UI**: Visual states prevent conflicting actions before they occur
+- **Seamless Experience**: No error messages - clear visual indicators instead
 ## 📝 Code Quality & Documentation
 
 - All controller comments (especially in `MoviesController.cs`) follow a professional, business-logic-focused style.
