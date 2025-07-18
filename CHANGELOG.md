@@ -1,4 +1,8 @@
 # 2025-07-18
+### Mutual Exclusion UI en Suggestion Cards
+- Ahora, al agregar una película a wishlist vía AJAX en la página de sugerencias, el botón "Add to Blacklist" de la misma tarjeta se desactiva/oculta automáticamente en el frontend.
+- No se modificó la lógica backend ni la estructura HTML; el cambio es solo JavaScript para mejorar la experiencia y consistencia visual.
+# 2025-07-18
 ### Final Model Comments Cleanup
 - Eliminados todos los comentarios de desarrollo, temporales y anotaciones vagas en los modelos (`Models/`).
 - Mejoradas las descripciones de propiedades y comentarios de validación para mayor claridad y profesionalismo.
