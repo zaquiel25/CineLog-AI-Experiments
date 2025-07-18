@@ -1016,10 +1016,42 @@ namespace Ezequiel_Movies.Controllers
             
             switch (suggestionType?.ToLower())
             {
+                // Trending suggestions: build a user-personalized pool of trending movies, avoiding repetition and respecting user preferences.
+                // Exclude all TMDB IDs blacklisted by the current user (prevents unwanted suggestions).
+                // Exclude the last 5 movies watched by the user (prevents immediate repeats in trending suggestions).
+                // Pool generation: up to 30 valid trending movies, paging up to 5 TMDB pages if needed (ensures variety and fallback if user has many exclusions).
+                // Randomize pool and select 3 movies for suggestion (ensures variety and avoids bias from TMDB order)
                 case "trending":
                     suggestionTitle = "Trending Movies Today";
-                    suggestedMovies = (await _tmdbService.GetTrendingMoviesAsync(page)).Take(3).ToList();
-                    ViewData["NextPage"] = page + 1;
+                    // Get blacklisted movie IDs (with null safety)
+                    var blacklistIds = await _dbContext.BlacklistedMovies
+                        .Where(b => b.UserId == userId)
+                        .Select(b => b.TmdbId)
+                        .ToListAsync();
+                    // Get recent movie IDs (with null safety)
+                    var recentIds = await _dbContext.Movies
+                        .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+                        .OrderByDescending(m => m.DateWatched)
+                        .Take(5)
+                        .Select(m => m.TmdbId ?? 0)
+                        .ToListAsync();
+                    // Build pool of valid movies
+                    var moviePool = new List<TmdbMovieBrief>();
+                    int pageNum = 1;
+                    while (moviePool.Count < 30 && pageNum <= 5)
+                    {
+                        var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
+                        var validMovies = pageMovies
+                            .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
+                            .ToList();
+                        moviePool.AddRange(validMovies);
+                        pageNum++;
+                    }
+                    // Randomize and take 3
+                    suggestedMovies = moviePool
+                        .OrderBy(x => Random.Shared.Next())
+                        .Take(3)
+                        .ToList();
                     break;
 
                 case "director_recent":

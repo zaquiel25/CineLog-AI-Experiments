@@ -1,4 +1,5 @@
-﻿
+﻿using Microsoft.Extensions.Caching.Memory;
+
 using Ezequiel_Movies.Models.TmdbApi;
 
 namespace Ezequiel_Movies
@@ -224,10 +225,13 @@ namespace Ezequiel_Movies
             }
         }
 
-        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger)
+        private readonly IMemoryCache _cache;
+
+        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache cache)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _cache = cache;
         }
 
         // Gets the watch providers for a given movie from TMDB
@@ -407,11 +411,24 @@ namespace Ezequiel_Movies
 
         public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
         {
-            _logger.LogInformation("Requesting TMDB API for trending movies (day).");
+            // Caches trending movies from TMDB for 90 minutes per page to minimize API calls and improve user-perceived performance.
+            // Cache key pattern: "trending_movies_day_page_{page}" (ensures unique cache per TMDB page).
+            // On cache hit: returns cached results instantly. On miss: fetches from TMDB, stores in cache, and returns.
+            var cacheKey = $"trending_movies_day_page_{page}";
+            if (_cache.TryGetValue(cacheKey, out var obj) && obj is List<TmdbMovieBrief> cached && cached != null)
+            {
+                _logger.LogInformation("Returning cached trending movies for page {Page}", page);
+                return cached;
+            }
+            _logger.LogInformation("Requesting TMDB API for trending movies (day), page {Page}", page);
             try
             {
                 var searchResponse = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"trending/movie/day?language=en-US&page={page}");
-                return searchResponse?.Results ?? new List<TmdbMovieBrief>();
+                var results = searchResponse?.Results ?? new List<TmdbMovieBrief>();
+                // Cache por 90 minutos
+                _cache.Set(cacheKey, results, TimeSpan.FromMinutes(90));
+                _logger.LogInformation("Cached trending movies for page {Page}", page);
+                return results;
             }
             catch (Exception ex)
             {
