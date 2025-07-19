@@ -1005,41 +1005,136 @@ public async Task<IActionResult> TrendingReshuffle()
     }
 }
 
-/// <summary>
-/// Helper para renderizar una partial view a string.
-/// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
-///
-/// Se usa en TrendingReshuffle para garantizar que los posters, helpers y paths de imágenes funcionen igual que en el render inicial.
-/// </summary>
-private async Task<string> RenderPartialViewToStringAsync(string viewName, object model)
+[HttpGet]
+[Authorize]
+public async Task<IActionResult> CastReshuffle()
 {
-    // Obtiene el motor de vistas configurado en ASP.NET Core
-    if (ControllerContext.HttpContext.RequestServices.GetService(typeof(ICompositeViewEngine)) is not ICompositeViewEngine viewEngine)
+    try
     {
-        throw new InvalidOperationException("ViewEngine not found");
+        _logger.LogInformation("🚀 CastReshuffle AJAX endpoint called.");
+
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        // --- INICIO DE LA LÓGICA DE REPARTO ---
+
+        // 1. Obtener las películas del usuario para construir el pool de actores.
+        var loggedCastMovies = await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+            .OrderByDescending(m => m.DateWatched)
+            .ToListAsync();
+
+        if (!loggedCastMovies.Any())
+        {
+            // Caso borde: El usuario no tiene películas registradas.
+            var emptyHtml = @"<div class='alert alert-info text-center my-5'>Log some movies to get cast-based suggestions!</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // 2. Construir el "pool" de actores a partir de las 5 películas más recientes.
+        //    (Gracias a nuestro caché, estas llamadas a GetMovieDetailsAsync serán súper rápidas).
+        var allTopActors = new List<TmdbCastPerson>();
+        foreach (var movie in loggedCastMovies.Take(5))
+        {
+            if (!movie.TmdbId.HasValue) continue;
+            var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+            if (details?.Credits?.Cast != null)
+            {
+                allTopActors.AddRange(details.Credits.Cast.Take(3));
+            }
+        }
+
+        if (!allTopActors.Any())
+        {
+            // Caso borde: No se encontró información del reparto en las películas recientes.
+            var emptyHtml = @"<div class='alert alert-warning text-center my-5'>Could not find cast information in your recent movies to generate a suggestion.</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+        
+        // 3. Seleccionar un actor al azar del pool.
+        var distinctActors = allTopActors.DistinctBy(a => a.Id).ToList();
+        var selectedActor = distinctActors[Random.Shared.Next(distinctActors.Count)];
+
+        // 4. Obtener las sugerencias finales para ese actor usando el helper.
+        var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
+
+        // --- FIN DE LA LÓGICA DE REPARTO ---
+
+        _logger.LogInformation("🎬 Returning {Count} movies for cast reshuffle based on actor {ActorName}", suggestedMovies.Count, selectedActor.Name);
+
+        // Si no hay sugerencias posibles, mostrar mensaje amigable (estructura copiada de Trending)
+        if (!suggestedMovies.Any())
+        {
+            var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {selectedActor.Name}. Try another suggestion type!</div>";
+            return Json(new {
+                success = true,
+                html = emptyHtml,
+                count = 0
+            });
+        }
+
+        // Renderizar HTML usando partial view (estructura copiada de Trending)
+        var htmlBuilder = new StringBuilder();
+        foreach (var movie in suggestedMovies)
+        {
+            var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+        }
+
+        return Json(new { 
+            success = true, 
+            html = htmlBuilder.ToString(),
+            count = suggestedMovies.Count 
+        });
     }
-
-    var viewResult = viewEngine.FindView(ControllerContext, viewName, false);
-
-    if (viewResult.View == null)
+    catch (Exception ex)
     {
-        throw new FileNotFoundException($"View '{viewName}' not found");
+        _logger.LogError(ex, "💥 ERROR in CastReshuffle: {Message}", ex.Message);
+        return Json(new { 
+            success = false, 
+            error = ex.Message 
+        });
     }
-
-    using var writer = new StringWriter();
-    // Crea un contexto de vista con el modelo y helpers necesarios
-    var viewContext = new ViewContext(
-        ControllerContext,
-        viewResult.View,
-        new ViewDataDictionary(ViewData) { Model = model },
-        TempData,
-        writer,
-        new HtmlHelperOptions()
-    );
-
-    await viewResult.View.RenderAsync(viewContext);
-    return writer.ToString();
 }
+
+        /// <summary>
+        /// Helper para renderizar una partial view a string.
+        /// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
+        ///
+        /// Se usa en TrendingReshuffle para garantizar que los posters, helpers y paths de imágenes funcionen igual que en el render inicial.
+        /// </summary>
+        private async Task<string> RenderPartialViewToStringAsync(string viewName, object model)
+        {
+            // Obtiene el motor de vistas configurado en ASP.NET Core
+            if (ControllerContext.HttpContext.RequestServices.GetService(typeof(ICompositeViewEngine)) is not ICompositeViewEngine viewEngine)
+            {
+                throw new InvalidOperationException("ViewEngine not found");
+            }
+
+            var viewResult = viewEngine.FindView(ControllerContext, viewName, false);
+
+            if (viewResult.View == null)
+            {
+                throw new FileNotFoundException($"View '{viewName}' not found");
+            }
+
+            using var writer = new StringWriter();
+            // Crea un contexto de vista con el modelo y helpers necesarios
+            var viewContext = new ViewContext(
+                ControllerContext,
+                viewResult.View,
+                new ViewDataDictionary(ViewData) { Model = model },
+                TempData,
+                writer,
+                new HtmlHelperOptions()
+            );
+
+            await viewResult.View.RenderAsync(viewContext);
+            return writer.ToString();
+        }
 
         [HttpGet]
         public async Task<IActionResult> SelectGenre()
@@ -1097,6 +1192,8 @@ private async Task<string> RenderPartialViewToStringAsync(string viewName, objec
 
             return View("Suggest");
         }
+
+        
 
         [HttpGet]
         public async Task<IActionResult> SearchTmdbApi(string query)
