@@ -140,7 +140,7 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction(nameof(Blacklist));
             }
-            // Skip if movie is already in wishlist (mutual exclusion)
+            
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
                 return LocalRedirect(returnUrl);
@@ -212,13 +212,13 @@ namespace Ezequiel_Movies.Controllers
                 .Where(b => b.UserId == userId)
                 .AsQueryable();
 
-            // Case-insensitive search by title
+            
             if (!string.IsNullOrEmpty(searchString))
             {
                 blacklistQuery = blacklistQuery.Where(b => b.Title.ToLower().Contains(searchString.ToLower()));
             }
 
-            // Sorting
+            
             ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
@@ -295,8 +295,7 @@ namespace Ezequiel_Movies.Controllers
         /// </summary>
         /// <param name="id">The database ID of the blacklisted movie entry.</param>
         /// <remarks>
-        /// - Only allows removal if the movie belongs to the current user.
-        /// - Uses anti-forgery token for security.
+        /// Only allows removal if the movie belongs to the current user to ensure data integrity.
         /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -434,7 +433,7 @@ namespace Ezequiel_Movies.Controllers
             var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId) || tmdbId == 0)
             {
-                return BadRequest(); // Invalid request
+                return BadRequest(); 
             }
 
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
