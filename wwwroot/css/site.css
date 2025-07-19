@@ -695,3 +695,6 @@ html {
             height: auto;
             margin-top: 0.5rem;
         }
+
+.navbar.bg-primary{border-bottom:1px solid var(--cinelog-gold) !important}
+.navbar.bg-dark{background-color:#060606!important;border-bottom:1px solid var(--cinelog-gold) !important}

@@ -1,3 +1,11 @@
+## [Version X.X.X] - 2025-07-19
+### Cinema Gold Branding & UI Polish
+- **Navbar:** Ahora el borde inferior del navbar es dorado (Cinema Gold) y se fuerza con `!important` para máxima consistencia visual.
+- **Títulos de sección:** Los títulos de sección de sugerencias usan Cinema Gold y mantienen el tamaño y peso visual original.
+- **Tarjetas de sugerencias:** El texto descriptivo dentro de cada tarjeta es un punto más grande para mejor legibilidad.
+- **Consistencia visual:** Todos los cambios de color y jerarquía tipográfica están alineados con la identidad visual de CineLog y documentados en `site.css`.
+- **No se alteraron clases Bootstrap ni tamaños base, solo color y detalles visuales clave.
+
 ## [Version X.X.X] - 2025-07-18
 ### Hybrid AJAX+HTML Suggestion System
 - **Nuevo patrón híbrido en sugerencias:**
@@ -71,7 +79,3 @@
 - Implemented AJAX handlers for seamless movie list management
 - Enhanced suggestion sequence logic with robust error handling
 - Added strategic comments for complex business rules and UI interactions
-
----
-
-Para cambios anteriores, revisar el historial de commits en GitHub.
