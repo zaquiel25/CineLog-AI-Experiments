@@ -1,4 +1,12 @@
-﻿/* Ultra-specific: Edit page TMDB preview card label color (matches Add page blue) */
+﻿/* ===== CINELOG BRAND COLORS ===== */
+:root {
+  --cinelog-gold: #f4d03f;
+  --cinelog-gold-light: #f7dc6f;
+  --cinelog-gold-dark: #d4ac0d;
+  --cinelog-gold-hover: #f1c40f;
+  --cinelog-gold-rgb: 244, 208, 63;
+}
+/* Ultra-specific: Edit page TMDB preview card label color (matches Add page blue) */
 html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
     color: #4a90e2 !important;
     font-weight: 600 !important;
@@ -29,7 +37,7 @@ html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #e
 /* Ultra-specific: Edit page TMDB preview card blue border/glow (matches Add page) */
 html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
     background-color: #1e2124 !important;
-    border: 2px solid #4a90e2 !important;
+    border: 2px solid var(--cinelog-gold) !important;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
     transition: all 0.3s ease !important;
 }
@@ -132,7 +140,7 @@ html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
 /* TEST DEFINITIVO - REMOVER DESPUÉS */
 html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
     background-color: #1e2124 !important;
-    border: 2px solid #4a90e2 !important;
+    border: 2px solid var(--cinelog-gold) !important;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
     transition: all 0.3s ease !important;
 }
@@ -187,10 +195,10 @@ div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
 }
 
 .suggestion-card:hover {
-    background: white !important;
-    color: black !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.2);
+    background-color: #2487b6;
+    border-color: var(--cinelog-gold);
     text-decoration: none !important;
 }
 
@@ -410,30 +418,46 @@ h5.card-title {
     text-align: left;
 }
 /* Both buttons identical styling */
-.btn-custom {
-  background: #000;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 1.08rem;
+/* ===== HERO BUTTONS CON CINEMA GOLD ===== */
+.hero-btn {
+  display: inline-block;
+  min-width: 180px;
+  padding: 0.85rem 2.2rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  margin: 0 0.5rem 0.7rem 0.5rem;
-  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+  margin: 0 0.5rem 1rem 0.5rem;
   outline: none;
-}
-.btn-custom:hover, .btn-custom:focus {
-  background: #fff;
-  color: #1a1a1a;
-  border-color: #fff;
+  text-decoration: none;
 }
 
-@media (max-width: 600px) {
-  .btn-custom {
-    display: block;
-    width: 100%;
-    margin: 0 0 1rem 0;
-  }
+.hero-btn-gold {
+  background: var(--cinelog-gold);
+  color: #1a1a1a;
+  box-shadow: 0 4px 24px rgba(var(--cinelog-gold-rgb), 0.25);
+}
+
+.hero-btn-gold:hover, .hero-btn-gold:focus {
+  background: var(--cinelog-gold-hover);
+  color: #000;
+  box-shadow: 0 6px 32px rgba(var(--cinelog-gold-rgb), 0.4);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.hero-btn-secondary {
+  background: rgba(44, 62, 80, 0.85);
+  color: #fff;
+  border: 1.5px solid var(--cinelog-gold);
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(44, 62, 80, 1);
+  border-color: var(--cinelog-gold-light);
+  box-shadow: 0 6px 32px rgba(var(--cinelog-gold-rgb), 0.2);
+  transform: translateY(-2px) scale(1.03);
 }
 /* --- HERO LANDING PAGE TRANSFORMATION (Apple-esque) --- */
 
@@ -604,7 +628,7 @@ html {
     .star-rating-container .star.filled,
     .star-rating-container i.bi-star-fill,
     .star-rating-container i.bi-star-half {
-        color: #ffc107; /* Gold/Yellow */
+        color: var(--cinelog-gold);
     }
 
     .star-rating-container .star.hover {
@@ -655,9 +679,10 @@ html {
     /* --- Hover Effects for Suggestion Cards --- */
     .suggestion-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.3);
-        background-color: #2487b6; /* A slightly darker shade of primary */
-        border-color: #2487b6;
+        box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.2);
+        background-color: #2487b6;
+        border-color: var(--cinelog-gold);
+        text-decoration: none !important;
     }
 
         .suggestion-card:hover .card-title,

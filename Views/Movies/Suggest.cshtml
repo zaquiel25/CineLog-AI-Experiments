@@ -19,8 +19,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">Trending Movies</h5>
-                        <p class="suggestion-description small mt-2">See what's popular right now.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">Trending Movies</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">See what's popular right now.</p>
                     </div>
                 </a>
             </div>
@@ -28,8 +28,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="director_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-person-video3 display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Director</h5>
-                        <p class="suggestion-description small mt-2">From your recently watched, most frequent, or top-rated directors.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Director</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">From your recently watched, most frequent, or top-rated directors.</p>
                     </div>
                 </a>
             </div>
@@ -37,8 +37,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="genre_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-tags display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Genre</h5>
-                        <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Genre</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Get suggestions based on genres you've enjoyed.</p>
                     </div>
                 </a>
             </div>
@@ -46,8 +46,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="cast_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-people display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Cast</h5>
-                        <p class="suggestion-description small mt-2">Find movies featuring actors from your logged films.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Cast</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Find movies featuring actors from your logged films.</p>
                     </div>
                 </a>
             </div>
@@ -55,8 +55,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="year_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-calendar3 display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Decade</h5>
-                        <p class="suggestion-description small mt-2">Explore movies from your favorite eras.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Decade</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Explore movies from your favorite eras.</p>
                     </div>
                 </a>
             </div>
@@ -64,8 +64,8 @@
                 <a asp-action="GetSurpriseSuggestion" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">Surprise Me!</h5>
-                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
+                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">Surprise Me!</h6>
+                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Get a random suggestion based on your taste.</p>
                     </div>
                 </a>
             </div>
@@ -87,7 +87,7 @@
                             var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
                             <img src="@(tmdbImageBaseUrl + ViewData["ActorProfilePath"])" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile picture" />
                         }
-                        <h4 class="text-info mb-0">@ViewData["SuggestionTitle"]</h4>
+                        <h4 class="mb-0" style="color: var(--cinelog-gold); font-weight: 600;">@ViewData["SuggestionTitle"]</h4>
                     </div>
                     
 
@@ -156,7 +156,7 @@
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
-                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
+                    <h4 style="color: var(--cinelog-gold); font-weight: 600;">@ViewData["SuggestionTitle"]</h4>
                     <p class="text-muted small">Based on genres from your logged movies</p>
                 </div>
                 <div class="row row-cols-2 row-cols-sm-3 g-3 justify-content-center mb-5">
