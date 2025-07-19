@@ -102,16 +102,16 @@
         - Esto permite un patrón híbrido: AJAX para trending (por performance y experiencia de usuario), navegación normal para el resto.
         - El botón trending usa data-suggestion-type para que el JS pueda distinguir el tipo y disparar el fetch AJAX solo en ese caso.
     *@
-    @if (nextSuggestionType == "trending")
+    @if (nextSuggestionType == "trending" || (nextSuggestionType != null && nextSuggestionType.StartsWith("cast_")))
     {
-        <!-- BOTÓN AJAX SOLO PARA TRENDING -->
-        <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="trending">
+        // BOTÓN AJAX PARA TRENDING Y CAST
+        <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="@(nextSuggestionType.StartsWith("cast_") ? "cast" : "trending")">
             <i class="bi bi-shuffle"></i> Reshuffle
         </button>
     }
     else
     {
-        <!-- BOTONES NORMALES PARA OTROS TIPOS -->
+        // BOTONES NORMALES PARA OTROS TIPOS
         var nextAction = nextSuggestionType == "surprise_me" ? "GetSurpriseSuggestion" : "ShowSuggestions";
         <a asp-action="@nextAction"
            asp-route-suggestionType="@ViewData["NextSuggestionType"]"
@@ -208,12 +208,18 @@
         if (e.target && e.target.id === 'reshuffle-btn') {
             e.preventDefault();
             const suggestionType = e.target.getAttribute('data-suggestion-type');
+            let endpointUrl = '';
             if (suggestionType === 'trending') {
+                endpointUrl = '/Movies/TrendingReshuffle';
+            } else if (suggestionType === 'cast') {
+                endpointUrl = '/Movies/CastReshuffle';
+            }
+            if (endpointUrl) {
                 const originalHTML = e.target.innerHTML;
                 e.target.disabled = true;
                 e.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reshuffling...';
 
-                fetch('/Movies/TrendingReshuffle', {
+                fetch(endpointUrl, {
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     credentials: 'same-origin',
