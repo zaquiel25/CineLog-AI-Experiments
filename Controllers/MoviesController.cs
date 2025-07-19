@@ -1094,23 +1094,20 @@ public async Task<IActionResult> TrendingReshuffle()
         /// - Filters out blacklisted and recently watched movies for the current user.
         /// - Client fetches new suggestions via AJAX, receives HTML, and replaces the grid without a full page reload.
         /// </remarks>
-        [HttpGet]
+       [HttpGet]
         [Authorize]
         public async Task<IActionResult> CastReshuffle()
-{
-    try
-    {
-        _logger.LogInformation("🚀 CastReshuffle AJAX endpoint called.");
-
-        var userId = _userManager.GetUserId(User);
-        if (string.IsNullOrEmpty(userId))
         {
-            return Unauthorized();
-        }
+            try
+            {
+                _logger.LogInformation("🚀 CastReshuffle AJAX endpoint called.");
 
-        // --- INICIO DE LA LÓGICA DE REPARTO ---
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                {
+                return Unauthorized();
+            }
 
-        // 1. Obtener las películas del usuario para construir el pool de actores.
         var loggedCastMovies = await _dbContext.Movies
             .Where(m => m.UserId == userId && m.TmdbId.HasValue)
             .OrderByDescending(m => m.DateWatched)
@@ -1118,15 +1115,12 @@ public async Task<IActionResult> TrendingReshuffle()
 
         if (!loggedCastMovies.Any())
         {
-            // Caso borde: El usuario no tiene películas registradas.
             var emptyHtml = @"<div class='alert alert-info text-center my-5'>Log some movies to get cast-based suggestions!</div>";
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        // 2. Construir el "pool" de actores a partir de las 5 películas más recientes.
-        //    (Gracias a nuestro caché, estas llamadas a GetMovieDetailsAsync serán súper rápidas).
         var allTopActors = new List<TmdbCastPerson>();
-        foreach (var movie in loggedCastMovies.Take(5))
+        foreach (var movie in loggedCastMovies.Take(15))
         {
             if (!movie.TmdbId.HasValue) continue;
             var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
@@ -1138,23 +1132,21 @@ public async Task<IActionResult> TrendingReshuffle()
 
         if (!allTopActors.Any())
         {
-            // Caso borde: No se encontró información del reparto en las películas recientes.
             var emptyHtml = @"<div class='alert alert-warning text-center my-5'>Could not find cast information in your recent movies to generate a suggestion.</div>";
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
         
-        // 3. Seleccionar un actor al azar del pool.
         var distinctActors = allTopActors.DistinctBy(a => a.Id).ToList();
         var selectedActor = distinctActors[Random.Shared.Next(distinctActors.Count)];
 
-        // 4. Obtener las sugerencias finales para ese actor usando el helper.
-        var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
+        // <<< NUEVA LÍNEA 1 de 2 >>>
+        // Obtenemos los detalles completos del actor para poder usar su foto.
+        var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
 
-        // --- FIN DE LA LÓGICA DE REPARTO ---
+        var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
 
         _logger.LogInformation("🎬 Returning {Count} movies for cast reshuffle based on actor {ActorName}", suggestedMovies.Count, selectedActor.Name);
 
-        // Si no hay sugerencias posibles, mostrar mensaje amigable (estructura copiada de Trending)
         if (!suggestedMovies.Any())
         {
             var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {selectedActor.Name}. Try another suggestion type!</div>";
@@ -1165,7 +1157,6 @@ public async Task<IActionResult> TrendingReshuffle()
             });
         }
 
-        // Renderizar HTML usando partial view (estructura copiada de Trending)
         var htmlBuilder = new StringBuilder();
         foreach (var movie in suggestedMovies)
         {
@@ -1173,10 +1164,18 @@ public async Task<IActionResult> TrendingReshuffle()
             htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
         }
 
+        // <<< NUEVA LÍNEA 2 de 2 >>>
+        // Creamos el título dinámico que enviaremos al frontend.
+        var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
+
+        // <<< BLOQUE MODIFICADO >>>
+        // Añadimos las dos nuevas propiedades al objeto JSON de respuesta.
         return Json(new { 
             success = true, 
             html = htmlBuilder.ToString(),
-            count = suggestedMovies.Count 
+            count = suggestedMovies.Count,
+            suggestionTitle = suggestionTitle,
+            actorProfileUrl = actorDetails?.ProfilePath
         });
     }
     catch (Exception ex)
