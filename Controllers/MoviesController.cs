@@ -25,7 +25,6 @@ namespace Ezequiel_Movies.Controllers
     [Authorize]
     public class MoviesController : Controller
     {
-        // Returns all TMDB IDs blacklisted by the specified user
         private async Task<HashSet<int>> GetUserBlacklistedTmdbIdsAsync(string userId)
         {
             return (await _dbContext.BlacklistedMovies
@@ -33,7 +32,6 @@ namespace Ezequiel_Movies.Controllers
                 .Select(b => b.TmdbId)
                 .ToListAsync()).ToHashSet();
         }
-        // Retrieves the current user's ID, logging a warning if unavailable
         private string? GetCurrentUserId()
         {
             var userId = _userManager.GetUserId(User);
@@ -44,7 +42,6 @@ namespace Ezequiel_Movies.Controllers
             return userId;
         }
 
-        // Checks if a movie exists in the user's wishlist
         private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
         {
             try
@@ -58,7 +55,6 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        // Checks if a movie exists in the user's blacklist
         private async Task<bool> MovieExistsInBlacklistAsync(string userId, int tmdbId)
         {
             try
@@ -72,7 +68,6 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        // Retrieves TMDB movie details, logging errors if any
         private async Task<TmdbMovieDetails?> GetMovieDetailsWithLoggingAsync(int tmdbId)
         {
             try
@@ -104,7 +99,6 @@ namespace Ezequiel_Movies.Controllers
         _userManager = userManager;
     }
 
-        // Returns the poster URL for a TMDB movie, using the API as a fallback if missing
         private async Task<string?> GetPosterUrlAsync(int tmdbId, string? existingPosterUrl)
         {
             if (!string.IsNullOrEmpty(existingPosterUrl))
@@ -125,10 +119,17 @@ namespace Ezequiel_Movies.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        /// <summary>
+        /// Adds a movie to the user's blacklist, enforcing mutual exclusion with the wishlist.
+        /// </summary>
+        /// <param name="tmdbId">TMDB movie ID to blacklist.</param>
+        /// <param name="returnUrl">Optional: URL to return to after action.</param>
+        /// <remarks>
+        /// - Mutual exclusion is enforced: a movie cannot exist in both wishlist and blacklist for the same user.
+        /// - UI state management prevents conflicting actions; error messaging is minimal as users cannot access both states.
+        /// - See Details.cshtml and Preview.cshtml for visual implementation of exclusion.
+        /// </remarks>
         public async Task<IActionResult> AddToBlacklist(int tmdbId, string returnUrl = "/")
-            // Mutual exclusion enforced preventively via UI state management
-            // Error messaging removed - users cannot access conflicting actions
-            // See Details.cshtml and Preview.cshtml for visual implementation
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -139,7 +140,7 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction(nameof(Blacklist));
             }
-            // Enforces mutual exclusion: a movie cannot be in both wishlist and blacklist for the same user
+            // Skip if movie is already in wishlist (mutual exclusion)
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
                 return LocalRedirect(returnUrl);
@@ -190,6 +191,15 @@ namespace Ezequiel_Movies.Controllers
             return RedirectToAction(nameof(Blacklist));
         }
 
+    /// <summary>
+    /// Displays the user's blacklist, with optional search and sort.
+    /// </summary>
+    /// <param name="searchString">Optional: filter blacklist by title or metadata.</param>
+    /// <param name="sortOrder">Optional: sort order for the blacklist view.</param>
+    /// <remarks>
+    /// - Only movies blacklisted by the current user are shown.
+    /// - UI/UX: Consistent with wishlist and movie list views.
+    /// </remarks>
     [HttpGet]
     public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null)
         {
@@ -280,6 +290,14 @@ namespace Ezequiel_Movies.Controllers
             return View(moviesWithPosters);
         }
 
+        /// <summary>
+        /// Removes a movie from the user's blacklist.
+        /// </summary>
+        /// <param name="id">The database ID of the blacklisted movie entry.</param>
+        /// <remarks>
+        /// - Only allows removal if the movie belongs to the current user.
+        /// - Uses anti-forgery token for security.
+        /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFromBlacklist(int id)
@@ -301,6 +319,15 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
+    /// <summary>
+    /// Displays the user's wishlist, with optional search and sort.
+    /// </summary>
+    /// <param name="searchString">Optional: filter wishlist by title.</param>
+    /// <param name="sortOrder">Optional: sort order for the wishlist view.</param>
+    /// <remarks>
+    /// - Only movies wishlisted by the current user are shown.
+    /// - UI/UX: Consistent with blacklist and movie list views.
+    /// </remarks>
     [HttpGet]
     public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null)
         {
@@ -390,12 +417,19 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
+        /// <summary>
+        /// Adds a movie to the user's wishlist, enforcing mutual exclusion with the blacklist.
+        /// </summary>
+        /// <param name="tmdbId">TMDB movie ID to add to wishlist.</param>
+        /// <param name="returnUrl">Optional: URL to return to after action.</param>
+        /// <remarks>
+        /// - Mutual exclusion is enforced: a movie cannot exist in both wishlist and blacklist for the same user.
+        /// - UI state management prevents conflicting actions; error messaging is minimal as users cannot access both states.
+        /// - See Details.cshtml and Preview.cshtml for visual implementation of exclusion.
+        /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToWishlist(int tmdbId, string returnUrl = "/")
-            // Mutual exclusion enforced preventively via UI state management
-            // Error messaging removed - users cannot access conflicting actions
-            // See Details.cshtml and Preview.cshtml for visual implementation
         {
             var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId) || tmdbId == 0)
@@ -408,7 +442,7 @@ namespace Ezequiel_Movies.Controllers
                 return LocalRedirect(returnUrl);
             }
 
-            // Enforces mutual exclusion: cannot add to wishlist if movie is in blacklist
+            // Skip if movie is already in blacklist (mutual exclusion)
             if (await MovieExistsInBlacklistAsync(userId, tmdbId))
             {
                 return LocalRedirect(returnUrl);
@@ -492,9 +526,16 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
+        /// <summary>
+        /// Removes a movie from the user's wishlist by TMDB ID.
+        /// </summary>
+        /// <param name="tmdbId">TMDB movie ID to remove from wishlist.</param>
+        /// <remarks>
+        /// - Only allows removal if the movie belongs to the current user.
+        /// - Uses anti-forgery token for security.
+        /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> RemoveFromWishlist(int tmdbId)
         {
             var userId = _userManager.GetUserId(User);
@@ -516,6 +557,15 @@ namespace Ezequiel_Movies.Controllers
         }
 
 
+        /// <summary>
+        /// Displays a preview of a movie using TMDB data, including details and streaming providers.
+        /// </summary>
+        /// <param name="tmdbId">TMDB movie ID to preview.</param>
+        /// <remarks>
+        /// - Fetches movie details and streaming provider info from TMDB.
+        /// - Used for add/edit flows and quick lookups.
+        /// - Returns BadRequest if ID is invalid, NotFound if movie is not found in TMDB.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> Preview(int tmdbId)
         {
@@ -570,6 +620,15 @@ namespace Ezequiel_Movies.Controllers
             return View(movieDetails);
         }
 
+        /// <summary>
+        /// Displays detailed information for a movie logged by the current user.
+        /// </summary>
+        /// <param name="id">The database GUID of the movie entry.</param>
+        /// <remarks>
+        /// - Only allows access to movies owned by the current user.
+        /// - Shows status in wishlist/blacklist and all logged metadata.
+        /// - Returns NotFound if the movie does not exist or is not owned by the user.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
@@ -643,6 +702,25 @@ namespace Ezequiel_Movies.Controllers
             return View(movie);
         }
 
+        /// <summary>
+        /// Returns a personalized "Surprise Me!" movie suggestion for the logged-in user.
+        /// 
+        /// The algorithm cycles through four levels of matching strictness (director+actor+genre, any 2/3, any 1/3, random popular)
+        /// to maximize variety and avoid repetition. It excludes recently watched, blacklisted, and session-recent suggestions.
+        /// 
+        /// Requirements:
+        /// - User must have logged at least 3 movies with director, genre, and release year info.
+        /// - Suggestion pools are built from user's own movie history (directors, genres, actors).
+        /// - Session state is used to avoid repeating suggestions and to cycle through match strictness.
+        /// </summary>
+        /// <remarks>
+        /// Business logic:
+        /// - Cyclically rotates through 4 suggestion strategies for variety.
+        /// - Uses TMDB API for movie/person/genre lookups and discovery.
+        /// - Ensures suggestions are not recently watched, not blacklisted, and not repeated in session.
+        /// - Fallback logic ensures a suggestion is always returned, even if only a popular movie can be found.
+        /// - Updates session state to track shown suggestions and cycle step.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> GetSurpriseSuggestion()
         {
@@ -654,7 +732,7 @@ namespace Ezequiel_Movies.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Get all logged movies for this user (for pools and for recent exclusion)
+            // Get all logged movies for this user (for ingredient pools and recent exclusion)
             var loggedMovies = await _dbContext.Movies
                 .Where(m => m.UserId == userId && m.TmdbId.HasValue && !string.IsNullOrEmpty(m.Director) && !string.IsNullOrEmpty(m.Genres) && m.ReleasedYear.HasValue)
                 .ToListAsync();
@@ -667,6 +745,7 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // --- 1. Create Ingredient Pools ---
+            // Build pools of directors, genres, and actors from user's logged movies
             var random = new Random();
             var directorPool = loggedMovies.Select(m => m.Director!).Distinct().ToList();
             var genrePool = loggedMovies.SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)).Distinct().ToList();
@@ -691,6 +770,7 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // --- 2. Get recent 15 movie IDs with specific WatchedDate to exclude ---
+            // Exclude recently watched movies from suggestions
             var recentMovieIds = await _dbContext.Movies
                 .Where(m => m.UserId == userId && m.DateWatched.HasValue)
                 .OrderByDescending(m => m.DateWatched)
@@ -700,12 +780,15 @@ namespace Ezequiel_Movies.Controllers
             var recentMovieIdSet = recentMovieIds.Where(id => id.HasValue).Select(id => id!.Value).ToHashSet();
 
             // --- 3. Get user blacklist for filtering ---
+            // Exclude user-blacklisted movies from suggestions
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
 
             // --- 4. Get session anti-repetition list ---
+            // Exclude movies already suggested in this session
             var shownSurpriseIds = HttpContext.Session.Get<List<int>>("ShownSurpriseIds") ?? new List<int>();
 
             // --- 5. Get or set cycle step ---
+            // Cycle through 4 suggestion strategies for variety (stored in session)
             string cycleKey = "SurpriseCycleStep";
             int? sessionCycleStep = HttpContext.Session.GetInt32(cycleKey);
             int cycleStep;
@@ -722,6 +805,7 @@ namespace Ezequiel_Movies.Controllers
             _logger.LogInformation($"DEBUG: Current Surprise Cycle Step: {cycleStep}");
 
             // --- 6. Build ingredient IDs ---
+            // Randomly select one director, actor, and genre from user pools
             var randDirector = directorPool[random.Next(directorPool.Count)];
             var randDirectorId = await _tmdbService.GetPersonIdAsync(randDirector);
             var randActor = actorPool[random.Next(actorPool.Count)];
@@ -731,6 +815,7 @@ namespace Ezequiel_Movies.Controllers
             var randGenreId = allGenres.FirstOrDefault(g => g.Name == randGenre)?.Id;
 
             // --- 7. Cyclic 4-step logic ---
+            // Main suggestion logic: try strictest match first, then relax constraints if needed
             List<TmdbMovieBrief> foundMovies = new();
             TmdbMovieBrief? suggestedMovie = null;
             string suggestionTitle = "Your Surprise Suggestion...";
@@ -882,6 +967,7 @@ namespace Ezequiel_Movies.Controllers
             // Always provide a suggestion; never show a failure message
 
             // Step 8: Update session anti-repetition memory
+            // Track suggested movie IDs in session to avoid repetition
             var suggestedMoviesList = new List<TmdbMovieBrief>();
             if (suggestedMovie != null)
             {
@@ -896,6 +982,7 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // Step 9: Advance the suggestion cycle step
+            // Advance the cycle step for next request
             int nextStep = (cycleStep % 4) + 1;
             _logger.LogInformation($"DEBUG: Setting next Surprise Cycle Step to: {nextStep}");
             HttpContext.Session.SetInt32(cycleKey, nextStep);
@@ -905,22 +992,16 @@ namespace Ezequiel_Movies.Controllers
             return View("Suggest", suggestedMoviesList);
         }
 
-/// <summary>
-/// Endpoint AJAX para reshuffle de sugerencias "Trending".
-/// Devuelve HTML renderizado del servidor (partial views) en vez de JSON puro.
-/// Esto garantiza que los posters y paths de imágenes funcionen correctamente en todos los navegadores,
-/// ya que el renderizado del lado servidor respeta la lógica de rutas, helpers y paths de ASP.NET MVC.
-///
-/// ¿Por qué HTML y no JSON?:
-/// - El renderizado server-side asegura que los paths de imágenes, helpers y lógica de vistas parciales sean consistentes.
-/// - Evita problemas de rutas relativas/absolutas y de CORS con posters de TMDB.
-/// - Permite reutilizar la misma partial view que en el render inicial, manteniendo DRY y consistencia visual.
-///
-/// El flujo es:
-/// 1. El cliente hace fetch AJAX a este endpoint.
-/// 2. El servidor selecciona nuevas películas, renderiza cada una con la partial view y devuelve el HTML listo para insertar.
-/// 3. El cliente reemplaza el grid de sugerencias sin recargar la página.
-/// </summary>
+        /// <summary>
+        /// AJAX endpoint for reshuffling "Trending" movie suggestions.
+        /// Returns server-rendered HTML (partial views) instead of raw JSON, ensuring image paths and helpers are always correct.
+        /// </summary>
+        /// <remarks>
+        /// - Uses server-side rendering to avoid CORS and path issues with TMDB images.
+        /// - Reuses the same partial view as initial render for DRYness and consistency.
+        /// - Client fetches new suggestions via AJAX, receives HTML, and replaces the grid without a full page reload.
+        /// - All user-specific filtering (blacklist, recently watched) is enforced server-side.
+        /// </remarks>
 [HttpGet]
 [Authorize]
 public async Task<IActionResult> TrendingReshuffle()
@@ -1005,9 +1086,18 @@ public async Task<IActionResult> TrendingReshuffle()
     }
 }
 
-[HttpGet]
-[Authorize]
-public async Task<IActionResult> CastReshuffle()
+        /// <summary>
+        /// AJAX endpoint for reshuffling "Cast"-based movie suggestions.
+        /// Returns server-rendered HTML (partial views) for consistent image paths and helpers.
+        /// </summary>
+        /// <remarks>
+        /// - Uses server-side rendering to avoid CORS and path issues with TMDB images.
+        /// - Filters out blacklisted and recently watched movies for the current user.
+        /// - Client fetches new suggestions via AJAX, receives HTML, and replaces the grid without a full page reload.
+        /// </remarks>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> CastReshuffle()
 {
     try
     {
@@ -1136,6 +1226,14 @@ public async Task<IActionResult> CastReshuffle()
             return writer.ToString();
         }
 
+        /// <summary>
+        /// Displays a genre selection view based on the user's logged movies.
+        /// </summary>
+        /// <remarks>
+        /// - Fetches all genres from TMDB and counts their occurrence in the user's movie history.
+        /// - Used for genre-based suggestion flows.
+        /// - Shows a prompt if the user has not logged any movies.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> SelectGenre()
         {
@@ -1232,9 +1330,23 @@ public async Task<IActionResult> CastReshuffle()
 
         #region Suggestion Actions & Helpers
 
+        /// <summary>
+        /// Returns a set of movie suggestions for the logged-in user, based on the specified suggestion type.
+        /// </summary>
+        /// <param name="suggestionType">The type of suggestion sequence to use (e.g., trending, director_recent, genre_frequent, etc.).</param>
+        /// <param name="query">Optional: Used for sequence state or to pass a specific director/genre/cast for the next suggestion.</param>
+        /// <param name="page">Optional: For paginated suggestion types (default 1).</param>
+        /// <remarks>
+        /// Suggestion system with session-based sequences: directors, genres, cast, decades, trending.
+        /// - Director sequence: recent → frequent → rated → random, with anti-repetition and session state.
+        /// - Genre and cast sequences follow similar logic, using user history and session to avoid repetition.
+        /// - Trending suggestions are personalized, exclude blacklisted and recently watched movies, and randomize pool.
+        /// - All suggestion types are designed to maximize variety, avoid repetition, and respect user preferences.
+        /// - Business logic is modular, with each case handling its own pool building, anti-repetition, and fallback.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> ShowSuggestions(string suggestionType, string? query = null, int page = 1)
-        // Suggestion system with session-based sequences: directors, genres, cast, decades, trending
+        // See XML doc for high-level overview. Below: business logic comments for each sequence.
         // Director sequence: recent → frequent → rated → random with anti-repetition
         // Fresh start reset: page refresh starts with recent director
         {
@@ -1324,19 +1436,12 @@ public async Task<IActionResult> CastReshuffle()
                     // Advance sequence counter
                     if (directorTypeCount <= maxDirectorTypeIndex)
                     {
-                        HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
-                    }
-                    else
-                    {
-                        HttpContext.Session.SetInt32(directorTypeKey, maxDirectorTypeIndex + 1);
-                    }
-                    
-                    _logger.LogInformation("Director sequence debug");
-                    _logger.LogInformation("Session key: {Key}", directorTypeKey);
-                    _logger.LogInformation("Session value: {Value}", directorTypeCount);
-                    _logger.LogInformation("Current director type: {Type}", currentDirectorType);
-                    _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
-                    _logger.LogInformation("Director suggestion type: {DirectorType} for user {UserId}", currentDirectorType, userId);
+                    HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
+                }
+                else
+                {
+                    HttpContext.Session.SetInt32(directorTypeKey, maxDirectorTypeIndex + 1);
+                }
 
                     // Get user movies for director analysis - limit to last 20 directors if more than 25 unique
                     var allUserMovies = await _dbContext.Movies
@@ -1616,18 +1721,12 @@ public async Task<IActionResult> CastReshuffle()
                     string nextCastType = castTypeCount < maxCastTypeIndex ? castTypes[castTypeCount + 1] : "cast_random";
                     if (castTypeCount <= maxCastTypeIndex)
                     {
-                        HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
-                    }
-                    else
-                    {
-                        HttpContext.Session.SetInt32(castTypeKey, maxCastTypeIndex + 1);
-                    }
-                    _logger.LogInformation("Cast sequence debug");
-                    _logger.LogInformation("Session key: {Key}", castTypeKey);
-                    _logger.LogInformation("Session value: {Value}", castTypeCount);
-                    _logger.LogInformation("Current cast type: {Type}", currentCastType);
-                    _logger.LogInformation("Expected sequence: recent(0) → frequent(1) → rated(2) → random(3)");
-                    _logger.LogInformation("Cast suggestion type: {CastType} for user {UserId}", currentCastType, userId);
+                    HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
+                }
+                else
+                {
+                    HttpContext.Session.SetInt32(castTypeKey, maxCastTypeIndex + 1);
+                }
 
                     // Local TMDB details pool for performance optimization
                     var tmdbDetailsPool = new Dictionary<int, TmdbMovieDetails?>();
@@ -2122,12 +2221,11 @@ public async Task<IActionResult> CastReshuffle()
 
             if (tmdbId.HasValue && tmdbId.Value > 0)
             {
-                // A TMDB ID was provided (e.g., from the Suggestion page), so pre-fill the ViewModel
-                Console.WriteLine($"Add GET - Pre-filling form for TMDB ID: {tmdbId.Value}");
+                // Pre-fill form for TMDB ID
+                _logger.LogInformation("Pre-filling form for TMDB ID: {TmdbId}", tmdbId.Value);
                 var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId.Value);
                 if (movieDetails != null)
                 {
-                    // Overwrite TMDB fields, but DateWatched remains as DateTime.Today
                     viewModel.Title = movieDetails.Title ?? string.Empty;
                     viewModel.Director = movieDetails.GetDirector() ?? "N/A";
                     viewModel.ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
@@ -2149,20 +2247,18 @@ public async Task<IActionResult> CastReshuffle()
         [HttpPost]
         public async Task<IActionResult> Add(AddMoviesViewModel viewModel)
         {
-            // Optional: Log received ViewModel values at the start for debugging
-            Console.WriteLine(""); // Blank line for readability
-            Console.WriteLine("--- Add POST Action Invoked ---");
-            Console.WriteLine($"ViewModel Title Received: [{viewModel.Title}]");
-            Console.WriteLine($"ViewModel Director Received: [{viewModel.Director}]");
-            Console.WriteLine($"ViewModel ReleasedYear Received: [{viewModel.ReleasedYear}]");
-            Console.WriteLine($"ViewModel PosterPath Received: [{viewModel.PosterPath}]");
-            Console.WriteLine($"ViewModel Overview Snippet: [{viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 50))}...]");
-            Console.WriteLine($"ViewModel DateWatched Received: {viewModel.DateWatched}");
-            Console.WriteLine($"ViewModel WatchedLocation Received: {viewModel.WatchedLocation}");
-            Console.WriteLine($"ViewModel IsRewatch Received: {viewModel.IsRewatch}"); // Log IsRewatch
-            Console.WriteLine($"ViewModel TmdbId Received: [{viewModel.TmdbId}]"); // <<< ENSURE THIS LINE IS PRESENT
-            Console.WriteLine($"ViewModel Subscribed Received: {viewModel.Subscribed}"); // Log Subscribed
-            Console.WriteLine("-----------------------------");
+            _logger.LogInformation("Add POST action invoked for user {UserId}", _userManager.GetUserId(User));
+            _logger.LogDebug("ViewModel received: Title={Title}, Director={Director}, ReleasedYear={ReleasedYear}, PosterPath={PosterPath}, OverviewSnippet={Overview}, DateWatched={DateWatched}, WatchedLocation={WatchedLocation}, IsRewatch={IsRewatch}, TmdbId={TmdbId}, Subscribed={Subscribed}",
+                viewModel.Title,
+                viewModel.Director,
+                viewModel.ReleasedYear,
+                viewModel.PosterPath,
+                viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 50)),
+                viewModel.DateWatched,
+                viewModel.WatchedLocation,
+                viewModel.IsRewatch,
+                viewModel.TmdbId,
+                viewModel.Subscribed);
 
             if (ModelState.IsValid)
             {
@@ -2206,12 +2302,11 @@ public async Task<IActionResult> CastReshuffle()
             }
             // ^^^^ END OF NEW LOGIC ^^^^
 
-            // Logging line for IsRewatch, after 'movie' object is created
-            Console.WriteLine($"Adding Movie '{movie.Title}', UserRating from ViewModel: {viewModel.UserRating}, Value being saved to entity: {movie.UserRating}");
+            _logger.LogDebug("Adding Movie '{Title}', UserRating from ViewModel: {UserRatingViewModel}, Value being saved to entity: {UserRatingEntity}", movie.Title, viewModel.UserRating, movie.UserRating);
 
             await _dbContext.Movies.AddAsync(movie);
 
-            // --- WISHLIST REMOVAL LOGIC (Atomic, User-Scoped) ---
+            // Remove from wishlist if present (mutual exclusion)
             if (movie.TmdbId.HasValue)
             {
                 var wishlistItem = await _dbContext.WishlistItems
@@ -2219,37 +2314,35 @@ public async Task<IActionResult> CastReshuffle()
                 if (wishlistItem != null)
                 {
                     _dbContext.WishlistItems.Remove(wishlistItem);
-                    Console.WriteLine($"WishlistItem with TmdbId {(movie.TmdbId.HasValue ? movie.TmdbId.Value.ToString() : "N/A")} removed for user {userId} during Add.");
+                    _logger.LogInformation("WishlistItem with TmdbId {TmdbId} removed for user {UserId} during Add.", movie.TmdbId.HasValue ? movie.TmdbId.Value.ToString() : "N/A", userId);
                 }
             }
             // --- END WISHLIST REMOVAL LOGIC ---
 
             await _dbContext.SaveChangesAsync();
-            Console.WriteLine($"Add POST - Movie Added Successfully: {movie.Title}");
+            _logger.LogInformation("Add POST - Movie Added Successfully: {Title}", movie.Title);
             return RedirectToAction("List");
             }
             else // ModelState is NOT valid
             {
-                Console.WriteLine("Add POST - ModelState IS INVALID. Movie not added.");
+                _logger.LogWarning("Add POST - ModelState IS INVALID. Movie not added.");
                 foreach (var modelStateKey in ModelState.Keys)
                 {
                     var value = ModelState[modelStateKey];
                     if (value != null && value.Errors != null && value.Errors.Any())
                     {
-                        Console.WriteLine($"-- Errors for '{modelStateKey}' --");
+                        _logger.LogWarning("-- Errors for '{ModelStateKey}' --", modelStateKey);
                         foreach (var error in value.Errors)
                         {
-                            Console.WriteLine($"  - Message: {error.ErrorMessage}");
+                            _logger.LogWarning("  - Message: {ErrorMessage}", error.ErrorMessage);
                             if (error.Exception != null)
                             {
-                                Console.WriteLine($"    Exception: {error.Exception.Message}");
+                                _logger.LogWarning("    Exception: {ExceptionMessage}", error.Exception.Message);
                             }
                         }
                     }
                 }
                 // Re-display the Add page with the submitted data and validation errors.
-                // The JavaScript's showPreviewCardFromModelOnLoad() should handle re-showing the TMDB preview.
-                Console.WriteLine("Add POST - Returning View(viewModel) due to invalid ModelState.");
                 return View(viewModel);
             }
         }
@@ -2271,7 +2364,7 @@ public async Task<IActionResult> CastReshuffle()
 
             _logger.LogInformation("Fetching movie list for User ID: {UserId}", userId);
 
-            Console.WriteLine($"--- List Action Invoked --- SortOrder: [{sortOrder}], SearchString: [{searchString}], PageNumber: [{pageNumber}]");
+            _logger.LogDebug("List action invoked with SortOrder: {SortOrder}, SearchString: {SearchString}, PageNumber: {PageNumber}", sortOrder, searchString, pageNumber);
 
             ViewData["CurrentFilter"] = searchString;
 
@@ -2352,15 +2445,8 @@ public async Task<IActionResult> CastReshuffle()
             }
 
             // Enhanced log after loading the entity from the database
-            Console.WriteLine($"Edit GET - Loaded Movie from DB (ID: {movieEntity.Id}): " +
-                              $"Title='{movieEntity.Title}', " +
-                              $"Director='{movieEntity.Director}', " +
-                              $"ReleasedYear='{movieEntity.ReleasedYear}', " +
-                              $"PosterPath='{movieEntity.PosterPath}', " +
-                              $"Overview (snippet)='{movieEntity.Overview?.Substring(0, Math.Min(movieEntity.Overview?.Length ?? 0, 30))}...', " +
-                              $"IsRewatch='{movieEntity.IsRewatch}', " +
-                              $"UserRating='{movieEntity.UserRating}', " +
-                              $"TmdbId='{movieEntity.TmdbId}'");
+            _logger.LogDebug("Edit GET - Loaded Movie from DB (ID: {Id}): Title='{Title}', Director='{Director}', ReleasedYear='{ReleasedYear}', IsRewatch='{IsRewatch}', UserRating='{UserRating}', TmdbId='{TmdbId}'",
+                movieEntity.Id, movieEntity.Title, movieEntity.Director, movieEntity.ReleasedYear, movieEntity.IsRewatch, movieEntity.UserRating, movieEntity.TmdbId);
 
 
             var viewModel = new AddMoviesViewModel
@@ -2380,16 +2466,16 @@ public async Task<IActionResult> CastReshuffle()
                 Genres = movieEntity.Genres
             };
 
-            // Enhanced log for the ViewModel being sent to the View
-            Console.WriteLine($"Edit GET - ViewModel being sent to View (ID: {viewModel.Id}): " +
-                              $"Title='{viewModel.Title}', " +
-                              $"Director='{viewModel.Director}', " +
-                              $"ReleasedYear='{viewModel.ReleasedYear}', " +
-                              $"PosterPath='{viewModel.PosterPath}', " +
-                              $"Overview (snippet)='{viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 30))}...', " +
-                              $"IsRewatch='{viewModel.IsRewatch}', " +
-                              $"UserRating='{viewModel.UserRating}', " +
-                              $"TmdbId='{viewModel.TmdbId}'");
+            _logger.LogDebug("Edit GET - ViewModel sent to View (ID: {Id}): Title='{Title}', Director='{Director}', ReleasedYear='{ReleasedYear}', PosterPath='{PosterPath}', OverviewSnippet='{Overview}', IsRewatch='{IsRewatch}', UserRating='{UserRating}', TmdbId='{TmdbId}'",
+                viewModel.Id,
+                viewModel.Title,
+                viewModel.Director,
+                viewModel.ReleasedYear,
+                viewModel.PosterPath,
+                viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 30)),
+                viewModel.IsRewatch,
+                viewModel.UserRating,
+                viewModel.TmdbId);
 
             return View(viewModel);
         }
@@ -2400,21 +2486,20 @@ public async Task<IActionResult> CastReshuffle()
         [HttpPost]
         public async Task<IActionResult> Edit(AddMoviesViewModel viewModel)
         {
-            Console.WriteLine(""); // Blank line for readability in logs
-            Console.WriteLine("--- Edit POST Action Invoked ---");
-            Console.WriteLine($"ViewModel ID Received: {viewModel.Id}");
-            Console.WriteLine($"ViewModel Title Received: [{viewModel.Title}]");
-            Console.WriteLine($"ViewModel Director Received: [{viewModel.Director}]");
-            Console.WriteLine($"ViewModel ReleasedYear Received FROM FORM: [{viewModel.ReleasedYear}]");
-            Console.WriteLine($"ViewModel PosterPath Received: [{viewModel.PosterPath}]");
-            Console.WriteLine($"ViewModel Overview Snippet: [{viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 50))}...]");
-            Console.WriteLine($"ViewModel DateWatched Received: {viewModel.DateWatched}");
-            Console.WriteLine($"ViewModel WatchedLocation Received: {viewModel.WatchedLocation}");
-            Console.WriteLine($"ViewModel IsRewatch Received: {viewModel.IsRewatch}");
-            Console.WriteLine($"ViewModel UserRating Received: [{viewModel.UserRating}]"); // Added brackets for consistency
-            Console.WriteLine($"ViewModel TmdbId Received: [{viewModel.TmdbId}]");     // <<< ENSURE THIS IS PRESENT AND LOGS VIEWMODEL TmdbId
-            Console.WriteLine($"ViewModel Subscribed Received: {viewModel.Subscribed}");
-            Console.WriteLine("-----------------------------");
+            _logger.LogInformation("Edit POST action invoked for user {UserId}", _userManager.GetUserId(User));
+            _logger.LogDebug("Edit POST ViewModel: Id={Id}, Title={Title}, Director={Director}, ReleasedYear={ReleasedYear}, PosterPath={PosterPath}, OverviewSnippet={Overview}, DateWatched={DateWatched}, WatchedLocation={WatchedLocation}, IsRewatch={IsRewatch}, UserRating={UserRating}, TmdbId={TmdbId}, Subscribed={Subscribed}",
+                viewModel.Id,
+                viewModel.Title,
+                viewModel.Director,
+                viewModel.ReleasedYear,
+                viewModel.PosterPath,
+                viewModel.Overview?.Substring(0, Math.Min(viewModel.Overview?.Length ?? 0, 50)),
+                viewModel.DateWatched,
+                viewModel.WatchedLocation,
+                viewModel.IsRewatch,
+                viewModel.UserRating,
+                viewModel.TmdbId,
+                viewModel.Subscribed);
 
             if (ModelState.IsValid)
             {
@@ -2427,8 +2512,14 @@ public async Task<IActionResult> CastReshuffle()
 
                 if (movieEntity != null)
                 {
-                    // Log original values from DB, including TmdbId
-                    Console.WriteLine($"Edit POST - Movie Found (ID: {movieEntity.Id}). Original DB Values - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: {movieEntity.ReleasedYear}, IsRewatch: {movieEntity.IsRewatch}, UserRating: {movieEntity.UserRating}, TmdbId: {movieEntity.TmdbId}");
+                    _logger.LogDebug("Edit POST - Movie Found (ID: {Id}). Original DB Values - Title: '{Title}', Director: '{Director}', Year: {Year}', IsRewatch: {IsRewatch}, UserRating: {UserRating}, TmdbId: {TmdbId}",
+                        movieEntity.Id,
+                        movieEntity.Title,
+                        movieEntity.Director,
+                        movieEntity.ReleasedYear,
+                        movieEntity.IsRewatch,
+                        movieEntity.UserRating,
+                        movieEntity.TmdbId);
 
                     // Assign values from ViewModel to the Entity
                     movieEntity.Title = viewModel.Title;
@@ -2456,23 +2547,29 @@ public async Task<IActionResult> CastReshuffle()
                     }
                     // ^^^^ END OF NEW LOGIC ^^^^
 
-                    // Log entity values just before saving, including TmdbId
-                    Console.WriteLine($"Edit POST - Entity values BEFORE SaveChangesAsync (ID: {movieEntity.Id}) - Title: '{movieEntity.Title}', Director: '{movieEntity.Director}', Year: '{movieEntity.ReleasedYear}', IsRewatch: {movieEntity.IsRewatch}, TmdbId: {movieEntity.TmdbId}, UserRating: {movieEntity.UserRating}");
+                    _logger.LogDebug("Edit POST - Entity values BEFORE SaveChangesAsync (ID: {Id}) - Title: '{Title}', Director: '{Director}', Year: '{Year}', IsRewatch: {IsRewatch}, TmdbId: {TmdbId}, UserRating: {UserRating}",
+                        movieEntity.Id,
+                        movieEntity.Title,
+                        movieEntity.Director,
+                        movieEntity.ReleasedYear,
+                        movieEntity.IsRewatch,
+                        movieEntity.TmdbId,
+                        movieEntity.UserRating);
 
                     try
                     {
                         await _dbContext.SaveChangesAsync();
-                        Console.WriteLine($"Edit POST - SaveChangesAsync completed successfully for Movie ID {movieEntity.Id}. Redirecting to List.");
+                        _logger.LogInformation("Edit POST - SaveChangesAsync completed successfully for Movie ID {Id}. Redirecting to List.", movieEntity.Id);
                         return RedirectToAction("List", "Movies");
                     }
                     catch (DbUpdateConcurrencyException ex)
                     {
-                        Console.WriteLine($"Edit POST - DbUpdateConcurrencyException for Movie ID {movieEntity.Id}: {ex.Message}");
+                        _logger.LogWarning(ex, "Edit POST - DbUpdateConcurrencyException for Movie ID {Id}", movieEntity.Id);
                         ModelState.AddModelError("", "The record you attempted to edit was modified by another user after you got the original value. The edit operation was canceled.");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Edit POST - Exception during SaveChangesAsync for Movie ID {movieEntity.Id}: {ex.Message}");
+                        _logger.LogError(ex, "Edit POST - Exception during SaveChangesAsync for Movie ID {Id}", movieEntity.Id);
                         if (ModelState != null)
                         {
                             ModelState.AddModelError("", "An error occurred while saving changes. Please try again.");
@@ -2481,39 +2578,39 @@ public async Task<IActionResult> CastReshuffle()
                 }
                 else
                 {
-                    Console.WriteLine($"Edit POST - ERROR: Movie entity with ID {viewModel.Id} not found in DB during save attempt.");
+                    _logger.LogError("Edit POST - Movie entity with ID {Id} not found in DB during save attempt", viewModel.Id);
                     return NotFound();
                 }
             }
             else // ModelState is NOT valid
             {
-                Console.WriteLine("Edit POST - ModelState IS INVALID. Changes will not be saved.");
+                _logger.LogWarning("Edit POST - ModelState IS INVALID. Changes will not be saved");
                 foreach (var modelStateKey in ModelState.Keys)
                 {
                     var value = ModelState[modelStateKey];
                     if (value != null && value.Errors != null && value.Errors.Any())
                     {
-                        Console.WriteLine($"-- Errors for '{modelStateKey}' --");
+                        _logger.LogWarning("-- Errors for '{ModelStateKey}' --", modelStateKey);
                         foreach (var error in value.Errors)
                         {
-                            Console.WriteLine($"  - Message: {error.ErrorMessage}");
+                            _logger.LogWarning("  - Message: {ErrorMessage}", error.ErrorMessage);
                             if (error.Exception != null)
                             {
-                                Console.WriteLine($"    Exception: {error.Exception.Message}");
+                                _logger.LogWarning("    Exception: {ExceptionMessage}", error.Exception.Message);
                             }
                         }
                     }
                 }
             }
             // If ModelState invalid or save failed, return to View with viewModel
-            Console.WriteLine("Edit POST - Returning View(viewModel) due to invalid ModelState or error for Movie ID: {viewModel.Id}.");
+            _logger.LogWarning("Edit POST - Returning View(viewModel) due to invalid ModelState or error for Movie ID: {Id}", viewModel.Id);
             return View(viewModel);
         }
         // POST: Movies/Delete/5
         [HttpPost]
         public async Task<IActionResult> Delete(Guid id)
         {
-            Console.WriteLine($"DEBUG: Delete action in MoviesController hit. ID received: {id}");
+            _logger.LogDebug("Delete action in MoviesController hit. ID received: {Id}", id);
             // First, find the movie only if the ID matches AND it belongs to the current user.
             var userId = _userManager.GetUserId(User);
             var movieToDelete = await _dbContext.Movies
@@ -2529,7 +2626,7 @@ public async Task<IActionResult> CastReshuffle()
             }
             else
             {
-                Console.WriteLine($"DEBUG: No movie found with ID: {id}. Nothing to delete.");
+                _logger.LogDebug("No movie found with ID: {Id}. Nothing to delete", id);
             }
             return RedirectToAction("List");
         }
@@ -2544,26 +2641,26 @@ public async Task<IActionResult> CastReshuffle()
                 query = "Inception"; // Default search query if none is provided in URL
             }
 
-            System.Diagnostics.Debug.WriteLine($"--- Attempting TMDB Search for query: '{query}' ---");
+            _logger.LogDebug("Attempting TMDB Search for query: '{Query}'", query);
             var searchResult = await _tmdbService.SearchMoviesAsync(query);
 
             if (searchResult != null && searchResult.Results != null && searchResult.Results.Any())
             {
-                System.Diagnostics.Debug.WriteLine($"SUCCESS: Found {searchResult.TotalResults} movies. Displaying up to the first 5:");
+            _logger.LogDebug("SUCCESS: Found {TotalResults} movies. Displaying up to the first 5", searchResult.TotalResults);
                 foreach (var movieItem in searchResult.Results.Take(5))
                 {
-                    System.Diagnostics.Debug.WriteLine($"  ID: {movieItem.Id}, Title: {movieItem.Title}, Release Date: {movieItem.ReleaseDate}, Overview: {movieItem.Overview?.Substring(0, Math.Min(movieItem.Overview.Length, 50))}...");
+                    _logger.LogDebug("ID: {Id}, Title: {Title}, Release Date: {ReleaseDate}, Overview: {Overview}", movieItem.Id, movieItem.Title, movieItem.ReleaseDate, movieItem.Overview?.Substring(0, Math.Min(movieItem.Overview.Length, 50)));
                 }
                 return Content($"Search for '{query}' successful. Found {searchResult.TotalResults} movies. Check 'Application Output' pad in Visual Studio for details.");
             }
             else if (searchResult != null)
             {
-                System.Diagnostics.Debug.WriteLine($"INFO: Search for '{query}' yielded 0 results.");
+                _logger.LogInformation("Search for '{Query}' yielded 0 results", query);
                 return Content($"Search for '{query}' yielded 0 results from TMDB.");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"ERROR: TMDB search for '{query}' failed or the service returned a null response. Check previous logs from TmdbService.");
+                _logger.LogError("TMDB search for '{Query}' failed or the service returned a null response", query);
                 return Content($"Search for '{query}' failed. Check 'Application Output' pad and logs from TmdbService.");
             }
         }
