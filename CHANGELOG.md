@@ -1,4 +1,12 @@
 ## [Version X.X.X] - 2025-07-19
+### Code Cleanup & Documentation (Prompt 1 & 2)
+- Removed all redundant and development-only comments from `MoviesController.cs`.
+- Replaced all `Console.WriteLine` and `System.Diagnostics.Debug.WriteLine` with structured `_logger` calls.
+- All logging now uses structured logging for clarity and maintainability.
+- Added professional XML documentation to all major public methods in `MoviesController.cs`.
+- Clarified and improved business logic comments for complex flows and suggestion logic.
+- Simplified mutual exclusion comments for wishlist/blacklist logic.
+- Prompt 1 cleanup is 100% complete; Prompt 2 documentation improvements are well underway.
 ### Cinema Gold Branding & UI Polish
 - **Navbar:** Ahora el borde inferior del navbar es dorado (Cinema Gold) y se fuerza con `!important` para máxima consistencia visual.
 - **Títulos de sección:** Los títulos de sección de sugerencias usan Cinema Gold y mantienen el tamaño y peso visual original.

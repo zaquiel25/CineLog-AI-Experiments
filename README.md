@@ -18,8 +18,11 @@
 - **Seamless Experience**: No error messages - clear visual indicators instead
 ## 📝 Code Quality & Documentation
 
-- All controller comments (especially in `MoviesController.cs`) follow a professional, business-logic-focused style.
-- Development artifacts and redundant comments have been removed for clarity and maintainability.
+- All controller comments (especially in `MoviesController.cs`) now follow a professional, business-logic-focused style.
+- All redundant, development-only, and shallow comments have been removed for clarity and maintainability.
+- All `Console.WriteLine` and `System.Diagnostics.Debug.WriteLine` statements have been replaced with structured `_logger` calls.
+- All major public methods in `MoviesController.cs` now have professional XML documentation and clarified business logic comments.
+- Mutual exclusion logic for wishlist/blacklist is now clearly documented and visually enforced.
 - Please maintain this standard for all future contributions.
 # CineLog-AI-Experiments
 
