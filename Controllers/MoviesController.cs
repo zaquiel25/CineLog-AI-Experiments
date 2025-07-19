@@ -969,6 +969,17 @@ public async Task<IActionResult> TrendingReshuffle()
 
         _logger.LogInformation("🎬 Returning {Count} movies for reshuffle", suggestedMovies.Count);
 
+        // Si no hay sugerencias posibles, mostrar mensaje amigable
+        if (!suggestedMovies.Any())
+        {
+            var emptyHtml = @"<div class='alert alert-info text-center my-5'>No more trending movies available right now. Please try another suggestion type or come back later for new trending picks!</div>";
+            return Json(new {
+                success = true,
+                html = emptyHtml,
+                count = 0
+            });
+        }
+
         // Renderizar HTML usando partial view para asegurar paths y helpers correctos
         var htmlBuilder = new StringBuilder();
         foreach (var movie in suggestedMovies)

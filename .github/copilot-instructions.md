@@ -1,3 +1,9 @@
+## Edge Case: Blacklisting Many Trending Movies
+
+- Si un usuario intenta blacklistear la mayoría o totalidad de las películas trending (por ejemplo, más de 20 en una sola sesión), puede encontrar que los últimos títulos no se pueden blacklistear por limitaciones de estado, caché o validación.
+- Este es un caso extremo y poco realista en el uso normal de la app. La mayoría de los usuarios nunca intentarán blacklistear tantas películas trending de una vez.
+- Se decidió no priorizar la solución de este edge case para optimizar el tiempo de desarrollo y enfocarse en flujos que impactan a la mayoría de los usuarios.
+- El sistema ya muestra un mensaje amigable cuando no hay más sugerencias trending disponibles, por lo que el usuario nunca queda "atrapado".
 ## UI/UX Patterns
 - Mutual exclusion implemented preventively via conditional rendering
 - Error states avoided through visual state management
