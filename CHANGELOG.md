@@ -1,5 +1,7 @@
 ## [Version X.X.X] - 2025-07-19
 ### Code Cleanup & Documentation (Prompt 1 & 2)
+- **Cast Reshuffle AJAX:** Ahora la función `CastReshuffle` permite obtener sugerencias de películas basadas en actores del historial del usuario vía AJAX, devolviendo HTML renderizado (partial views) para máxima consistencia visual y evitando problemas de paths/CORS.
+- El flujo está documentado y justificado en comentarios XML y de bloque, explicando edge cases y decisiones técnicas.
 - Removed all redundant and development-only comments from `MoviesController.cs`.
 - Replaced all `Console.WriteLine` and `System.Diagnostics.Debug.WriteLine` with structured `_logger` calls.
 - All logging now uses structured logging for clarity and maintainability.

@@ -5,6 +5,11 @@
 - **Consistencia visual:** Todos los cambios de color y jerarquía tipográfica están alineados con la identidad visual de CineLog y documentados en `site.css`.
 - **No se alteraron clases Bootstrap ni tamaños base, solo color y detalles visuales clave.
 
+
+## 🎭 Cast Reshuffle AJAX (2025-07-20)
+- **Cast Reshuffle AJAX:** Ahora puedes obtener sugerencias de películas basadas en actores de tus películas registradas, usando el botón "Reshuffle" en la sección "By Cast". El endpoint `/Movies/CastReshuffle` devuelve HTML renderizado (partial views) para máxima consistencia visual y evita problemas de paths/CORS.
+- El flujo está documentado y justificado en comentarios XML y de bloque en el controlador, explicando edge cases y decisiones técnicas.
+
 ## 🚀 Hybrid AJAX+HTML Suggestion System (2025-07-18)
 
 - **Trending Reshuffle AJAX:** El reshuffle de sugerencias trending ahora se realiza vía AJAX y el endpoint devuelve HTML renderizado del servidor (partial views), no JSON puro.
