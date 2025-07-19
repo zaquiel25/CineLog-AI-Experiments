@@ -176,10 +176,22 @@ namespace Ezequiel_Movies
         // This method gets the details for a single person, including their profile picture path.
         public async Task<TmdbPersonDetails?> GetPersonDetailsAsync(int personId)
         {
+            string cacheKey = $"person_details_{personId}";
+            if (_memoryCache.TryGetValue(cacheKey, out TmdbPersonDetails cachedDetails) && cachedDetails != null)
+            {
+                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
+                return cachedDetails;
+            }
+            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
             _logger.LogInformation("Requesting TMDB API for person details for ID: {PersonId}", personId);
             try
             {
-                return await _httpClient.GetFromJsonAsync<TmdbPersonDetails>($"person/{personId}?language=en-US");
+                var details = await _httpClient.GetFromJsonAsync<TmdbPersonDetails>($"person/{personId}?language=en-US");
+                if (details != null)
+                {
+                    _memoryCache.Set(cacheKey, details, TimeSpan.FromHours(24));
+                }
+                return details;
             }
             catch (Exception ex)
             {
@@ -192,15 +204,21 @@ namespace Ezequiel_Movies
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId, int page = 1)
         {
+            string cacheKey = $"actor_movies_{actorId}";
+            if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief> cachedMovies) && cachedMovies != null)
+            {
+                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
+                return cachedMovies;
+            }
+            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
             _logger.LogInformation("Requesting TMDB API for movies with actor ID: {ActorId}, page: {Page}", actorId, page);
             try
             {
-                // VVVV THIS IS THE ONLY CHANGE VVVV
-                // We've added "&vote_average.gte=1" to filter out movies with a 0 rating.
                 var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
                     $"discover/movie?with_cast={actorId}&sort_by=popularity.desc&vote_count.gte=50&vote_average.gte=1&language=en-US&page={page}");
-
-                return response?.Results ?? new List<TmdbMovieBrief>();
+                var results = response?.Results ?? new List<TmdbMovieBrief>();
+                _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(24));
+                return results;
             }
             catch (Exception ex)
             {
@@ -225,13 +243,13 @@ namespace Ezequiel_Movies
             }
         }
 
-        private readonly IMemoryCache _cache;
+        private readonly IMemoryCache _memoryCache;
 
-        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache cache)
+        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache memoryCache)
         {
             _httpClient = httpClient;
             _logger = logger;
-            _cache = cache;
+            _memoryCache = memoryCache;
         }
 
         // Gets the watch providers for a given movie from TMDB
@@ -305,12 +323,24 @@ namespace Ezequiel_Movies
         {
             if (tmdbMovieId <= 0) return null;
 
+            string cacheKey = $"movie_details_{tmdbMovieId}";
+            if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails cachedDetails) && cachedDetails != null)
+            {
+                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
+                return cachedDetails;
+            }
+            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
+
             var requestUri = $"movie/{tmdbMovieId}?append_to_response=credits";
             _logger.LogInformation("Requesting TMDB API for movie details: {RequestUri}", requestUri);
 
             try
             {
                 var movieDetails = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>(requestUri);
+                if (movieDetails != null)
+                {
+                    _memoryCache.Set(cacheKey, movieDetails, TimeSpan.FromHours(24));
+                }
                 _logger.LogInformation("Successfully fetched details for movie ID {MovieId}.", tmdbMovieId);
                 return movieDetails;
             }
@@ -349,6 +379,13 @@ namespace Ezequiel_Movies
         public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId)
         {
             _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}", directorId);
+            string cacheKey = $"director_filmography_{directorId}";
+            if (_memoryCache.TryGetValue(cacheKey, out var obj) && obj is List<TmdbMovieBrief> cached && cached != null)
+            {
+                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
+                return cached;
+            }
+            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
             try
             {
                 // 1. Call the accurate '/person/{id}/movie_credits' endpoint. This is correct.
@@ -377,6 +414,7 @@ namespace Ezequiel_Movies
                     .ThenByDescending(m => m.VoteCount)
                     .ToList();
 
+                _memoryCache.Set(cacheKey, sortedFilmography, TimeSpan.FromHours(24));
                 _logger.LogInformation("Successfully fetched and sorted {Count} directed movies for person ID {PersonId}", sortedFilmography.Count, directorId);
 
                 return sortedFilmography;
@@ -415,18 +453,18 @@ namespace Ezequiel_Movies
             // Cache key pattern: "trending_movies_day_page_{page}" (ensures unique cache per TMDB page).
             // On cache hit: returns cached results instantly. On miss: fetches from TMDB, stores in cache, and returns.
             var cacheKey = $"trending_movies_day_page_{page}";
-            if (_cache.TryGetValue(cacheKey, out var obj) && obj is List<TmdbMovieBrief> cached && cached != null)
+            if (_memoryCache.TryGetValue(cacheKey, out var obj) && obj is List<TmdbMovieBrief> cached && cached != null)
             {
-                _logger.LogInformation("Returning cached trending movies for page {Page}", page);
+                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cached;
             }
-            _logger.LogInformation("Requesting TMDB API for trending movies (day), page {Page}", page);
+            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
             try
             {
                 var searchResponse = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"trending/movie/day?language=en-US&page={page}");
                 var results = searchResponse?.Results ?? new List<TmdbMovieBrief>();
                 // Cache por 90 minutos
-                _cache.Set(cacheKey, results, TimeSpan.FromMinutes(90));
+                _memoryCache.Set(cacheKey, results, TimeSpan.FromMinutes(90));
                 _logger.LogInformation("Cached trending movies for page {Page}", page);
                 return results;
             }
