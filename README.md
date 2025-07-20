@@ -6,9 +6,14 @@
 - **No se alteraron clases Bootstrap ni tamaños base, solo color y detalles visuales clave.
 
 
-## 🎭 Cast Reshuffle AJAX (2025-07-20)
-- **Cast Reshuffle AJAX:** Ahora puedes obtener sugerencias de películas basadas en actores de tus películas registradas, usando el botón "Reshuffle" en la sección "By Cast". El endpoint `/Movies/CastReshuffle` devuelve HTML renderizado (partial views) para máxima consistencia visual y evita problemas de paths/CORS.
-- El flujo está documentado y justificado en comentarios XML y de bloque en el controlador, explicando edge cases y decisiones técnicas.
+
+## 🎭 Cast Reshuffle Secuencial (2025-07-20)
+- **Cast Reshuffle ahora rota entre estrategias:**
+  - Sugerencia por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio.
+  - El paso actual se guarda en Session y avanza en cada reshuffle, asegurando variedad y personalización.
+  - Si un paso no tiene actor válido, automáticamente salta al siguiente.
+  - El endpoint sigue devolviendo HTML renderizado (partial views) para máxima consistencia visual y de rutas.
+  - Documentación y comentarios XML actualizados para reflejar la nueva lógica y edge cases.
 
 ## 🚀 Hybrid AJAX+HTML Suggestion System (2025-07-18)
 

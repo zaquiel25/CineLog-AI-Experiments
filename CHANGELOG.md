@@ -1,4 +1,12 @@
-## [Version X.X.X] - 2025-07-19
+## [Version X.X.X] - 2025-07-20
+### Cast Reshuffle Secuencial Mejorado
+- **Cast Reshuffle ahora implementa una lógica secuencial robusta:**
+  - Rota entre sugerir por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio.
+  - El paso actual se almacena en Session por usuario, asegurando variedad y personalización en cada reshuffle.
+  - Si un paso no tiene actor válido, automáticamente salta al siguiente.
+  - El endpoint sigue devolviendo HTML renderizado para máxima consistencia visual y de rutas.
+  - Documentación y comentarios XML actualizados para reflejar la nueva lógica y sus edge cases.
+
 ### Code Cleanup & Documentation (Prompt 1 & 2)
 - **Cast Reshuffle AJAX:** Ahora la función `CastReshuffle` permite obtener sugerencias de películas basadas en actores del historial del usuario vía AJAX, devolviendo HTML renderizado (partial views) para máxima consistencia visual y evitando problemas de paths/CORS.
 - El flujo está documentado y justificado en comentarios XML y de bloque, explicando edge cases y decisiones técnicas.

@@ -19,8 +19,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">Trending Movies</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">See what's popular right now.</p>
+                        <h5 class="card-title mb-0">Trending Movies</h5>
+                        <p class="suggestion-description small mt-2">See what's popular right now.</p>
                     </div>
                 </a>
             </div>
@@ -28,8 +28,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="director_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-person-video3 display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Director</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">From your recently watched, most frequent, or top-rated directors.</p>
+                        <h5 class="card-title mb-0">By Director</h5>
+                        <p class="suggestion-description small mt-2">From your recently watched, most frequent, or top-rated directors.</p>
                     </div>
                 </a>
             </div>
@@ -37,8 +37,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="genre_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-tags display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Genre</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Get suggestions based on genres you've enjoyed.</p>
+                        <h5 class="card-title mb-0">By Genre</h5>
+                        <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
                     </div>
                 </a>
             </div>
@@ -46,8 +46,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="cast_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-people display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Cast</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Find movies featuring actors from your logged films.</p>
+                        <h5 class="card-title mb-0">By Cast</h5>
+                        <p class="suggestion-description small mt-2">Find movies featuring actors from your logged films.</p>
                     </div>
                 </a>
             </div>
@@ -55,8 +55,8 @@
                 <a asp-action="ShowSuggestions" asp-route-suggestionType="year_recent" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-calendar3 display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">By Decade</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Explore movies from your favorite eras.</p>
+                        <h5 class="card-title mb-0">By Decade</h5>
+                        <p class="suggestion-description small mt-2">Explore movies from your favorite eras.</p>
                     </div>
                 </a>
             </div>
@@ -64,8 +64,8 @@
                 <a asp-action="GetSurpriseSuggestion" class="suggestion-card card h-100 text-decoration-none">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
-                        <h6 class="card-title mb-0" style="font-weight: 400; font-size: 1.05rem;">Surprise Me!</h6>
-                        <p class="suggestion-description mt-2" style="font-size: 1.08rem;">Get a random suggestion based on your taste.</p>
+                        <h5 class="card-title mb-0">Surprise Me!</h5>
+                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
                     </div>
                 </a>
             </div>
@@ -81,48 +81,39 @@
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
-                    <div class="d-flex justify-content-center align-items-center">
+                   <div id="suggestion-header" class="d-flex justify-content-center align-items-center">
                         @if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
                         {
                             var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
-                            <img src="@(tmdbImageBaseUrl + ViewData["ActorProfilePath"])" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile picture" />
+                            <img id="actor-profile-image" src="@(tmdbImageBaseUrl + ViewData["ActorProfilePath"])" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile picture" />
                         }
-                        <h4 class="mb-0" style="color: var(--cinelog-gold); font-weight: 600;">@ViewData["SuggestionTitle"]</h4>
+                        <h4 id="suggestion-title" class="text-info mb-0">@ViewData["SuggestionTitle"]</h4>
                     </div>
                     
-
-@if (Model.Any())
-{
-    var nextSuggestionType = ViewData["NextSuggestionType"] as string;
-    
-    @* ---
-        Lógica de botones de reshuffle:
-        - Si el tipo de sugerencia es "trending", se muestra un botón que dispara un reshuffle AJAX (sin recargar la página).
-        - Para otros tipos de sugerencia, se usan enlaces normales que navegan a la acción correspondiente (flujo tradicional).
-        - Esto permite un patrón híbrido: AJAX para trending (por performance y experiencia de usuario), navegación normal para el resto.
-        - El botón trending usa data-suggestion-type para que el JS pueda distinguir el tipo y disparar el fetch AJAX solo en ese caso.
-    *@
-    @if (nextSuggestionType == "trending" || (nextSuggestionType != null && nextSuggestionType.StartsWith("cast_")))
-    {
-        // BOTÓN AJAX PARA TRENDING Y CAST
-        <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="@(nextSuggestionType.StartsWith("cast_") ? "cast" : "trending")">
-            <i class="bi bi-shuffle"></i> Reshuffle
-        </button>
-    }
-    else
-    {
-        // BOTONES NORMALES PARA OTROS TIPOS
-        var nextAction = nextSuggestionType == "surprise_me" ? "GetSurpriseSuggestion" : "ShowSuggestions";
-        <a asp-action="@nextAction"
-           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-           asp-route-query="@ViewData["NextQuery"]"
-           asp-route-page="@ViewData["NextPage"]"
-           class="btn btn-sm btn-outline-secondary mt-3">
-            <i class="bi bi-arrow-repeat"></i>
-            @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle")
-        </a>
-    }
-}
+                    @if (Model.Any())
+                    {
+                        var nextSuggestionType = ViewData["NextSuggestionType"] as string;
+                        
+                        @if (nextSuggestionType == "trending" || (nextSuggestionType != null && nextSuggestionType.StartsWith("cast_")))
+                        {
+                            var suggestionBaseType = nextSuggestionType.StartsWith("cast_") ? "cast" : "trending";
+                            <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="@suggestionBaseType">
+                                <i class="bi bi-shuffle"></i> Reshuffle
+                            </button>
+                        }
+                        else
+                        {
+                            var nextAction = nextSuggestionType == "surprise_me" ? "GetSurpriseSuggestion" : "ShowSuggestions";
+                            <a asp-action="@nextAction"
+                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
+                               asp-route-query="@ViewData["NextQuery"]"
+                               asp-route-page="@ViewData["NextPage"]"
+                               class="btn btn-sm btn-outline-secondary mt-3">
+                                <i class="bi bi-arrow-repeat"></i>
+                                @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle")
+                            </a>
+                        }
+                    }
                     else if ((bool?)ViewData["ShowAddMovieButton"] == true)
                     {
                         <a asp-controller="Movies" asp-action="Add" class="btn btn-lg btn-success mt-3">
@@ -156,7 +147,7 @@
             <div id="suggestion-results-area">
                 <hr class="my-5">
                 <div class="text-center mb-4">
-                    <h4 style="color: var(--cinelog-gold); font-weight: 600;">@ViewData["SuggestionTitle"]</h4>
+                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
                     <p class="text-muted small">Based on genres from your logged movies</p>
                 </div>
                 <div class="row row-cols-2 row-cols-sm-3 g-3 justify-content-center mb-5">
@@ -171,31 +162,11 @@
                 </div>
             </div>
         }
-
     </div>
 </div>
 
-
 @section Scripts {
 <script>
-    /*
-     * Patrón híbrido de sugerencias:
-     * - Para "Trending", el reshuffle es 100% AJAX: el botón dispara un fetch al endpoint TrendingReshuffle, que devuelve HTML listo para insertar.
-     * - Para otros tipos, se usa navegación tradicional (enlaces).
-     *
-     * ¿Por qué AJAX + HTML y no JSON?:
-     * - El renderizado server-side asegura que los posters y paths de imágenes funcionen igual que en el render inicial.
-     * - Permite mantener la lógica DRY y la visual consistente usando partial views.
-     *
-     * Integración AJAX + partial views:
-     * - El JS detecta el botón trending por data-suggestion-type.
-     * - Hace fetch, reemplaza el grid y re-adjunta event listeners (para que los formularios AJAX sigan funcionando tras el reshuffle).
-     * - El resto de botones usan navegación normal.
-     *
-     * Notas:
-     * - Siempre re-adjuntar event listeners tras reemplazar HTML dinámico.
-     * - Este patrón es extensible a otros tipos de sugerencia si se desea AJAXizar más adelante.
-     */
     document.addEventListener('DOMContentLoaded', function () {
         const resultsContainer = document.getElementById('suggestion-results-area');
         if (resultsContainer) {
@@ -205,25 +176,30 @@
     });
 
     document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'reshuffle-btn') {
+        // Busca el botón de reshuffle, incluso si el clic fue en el ícono <i> dentro de él.
+        const reshuffleButton = e.target.closest('#reshuffle-btn');
+
+        if (reshuffleButton) {
             e.preventDefault();
-            const suggestionType = e.target.getAttribute('data-suggestion-type');
+            
+            const suggestionType = reshuffleButton.getAttribute('data-suggestion-type');
             let endpointUrl = '';
+
             if (suggestionType === 'trending') {
                 endpointUrl = '/Movies/TrendingReshuffle';
             } else if (suggestionType === 'cast') {
                 endpointUrl = '/Movies/CastReshuffle';
             }
+
             if (endpointUrl) {
-                const originalHTML = e.target.innerHTML;
-                e.target.disabled = true;
-                e.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reshuffling...';
+                const originalHTML = reshuffleButton.innerHTML;
+                reshuffleButton.disabled = true;
+                reshuffleButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reshuffling...';
 
                 fetch(endpointUrl, {
                     method: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: { 'X-Requested-with': 'XMLHttpRequest' },
                     credentials: 'same-origin',
-                    timeout: 10000 // 10 seconds timeout
                 })
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -234,21 +210,35 @@
                         const container = document.querySelector('.row.row-cols-1.row-cols-sm-2.row-cols-md-3.g-4.justify-content-center');
                         if (container) {
                             container.innerHTML = data.html;
-                            attachEventListeners(); // Importante: re-adjuntar listeners tras reemplazo
-                        } else {
-                            throw new Error('Container not found');
+                            attachEventListeners();
+                        }
+
+                        const titleElement = document.getElementById('suggestion-title');
+                        if (titleElement && data.suggestionTitle) {
+                            titleElement.textContent = data.suggestionTitle;
+                        }
+
+                        const imgElement = document.getElementById('actor-profile-image');
+                        const headerElement = document.getElementById('suggestion-header');
+                        if (imgElement && headerElement) {
+                            if (data.actorProfileUrl) {
+                                imgElement.src = 'https://image.tmdb.org/t/p/w342' + data.actorProfileUrl;
+                                headerElement.style.display = 'flex';
+                            } else {
+                                headerElement.style.display = 'none';
+                            }
                         }
                     } else {
                         throw new Error(data.error || 'Invalid response');
                     }
-                    e.target.disabled = false;
-                    e.target.innerHTML = originalHTML;
                 })
                 .catch(error => {
                     console.error('Reshuffle error:', error);
                     alert('Failed to reshuffle: ' + error.message);
-                    e.target.disabled = false;
-                    e.target.innerHTML = originalHTML;
+                })
+                .finally(() => {
+                    reshuffleButton.disabled = false;
+                    reshuffleButton.innerHTML = originalHTML;
                 });
             }
         }
@@ -256,8 +246,10 @@
 
     function attachEventListeners() {
         document.querySelectorAll('.blacklist-form, .wishlist-form').forEach(form => {
+            // Clonar y reemplazar el nodo para limpiar event listeners viejos
             const newForm = form.cloneNode(true);
             form.parentNode.replaceChild(newForm, form);
+
             if (newForm.classList.contains('blacklist-form')) {
                 newForm.addEventListener('submit', function(e) {
                     e.preventDefault();

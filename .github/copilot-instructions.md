@@ -127,12 +127,14 @@
 - Maintain visual feedback for all user interactions
 - Preserve user's place in suggestion flow during list management
 
+
 ### Suggestion System Behavior
 - Implement bulletproof fallbacks for edge cases
-- Track session state to avoid repetitive suggestions (Session sequencing is only used on the initial suggestion click; all reshuffles use client parameters.)
+- **Cast Reshuffle ahora implementa una secuencia robusta:** rota entre sugerir por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio. El paso actual se almacena en Session y avanza en cada reshuffle.
+- Track session state to avoid repetitive suggestions (Session sequencing is only used on the initial suggestion click; all reshuffles use client parameters, excepto en Cast donde la secuencia es gestionada por Session).
 - Handle empty result sets gracefully with actionable next steps
 - The "Reshuffle" button is implemented via event delegation and always maintains the correct context for all suggestion types.
-- IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing.
+- IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing (y para la secuencia de Cast).
 
 
 ## AJAX & Hybrid Suggestion Implementation (2025-07-18)
