@@ -255,6 +255,7 @@
                     e.preventDefault();
                     const btn = newForm.querySelector('.blacklist-btn');
                     btn.disabled = true;
+                    btn.textContent = 'Adding...';
                     const card = newForm.closest('.movie-suggestion-card');
                     fetch(newForm.action, {
                         method: 'POST',
@@ -264,6 +265,10 @@
                     })
                     .then(response => {
                         if (!response.ok) throw new Error('Blacklist failed');
+                        btn.textContent = 'Added ✓';
+                        btn.classList.remove('btn-soft-danger');
+                        btn.classList.add('btn-success');
+                        btn.disabled = true;
                         card.style.transition = 'opacity 0.4s, transform 0.4s';
                         card.style.opacity = '0';
                         card.style.transform = 'scale(0.95) translateY(-20px)';
@@ -271,6 +276,7 @@
                     })
                     .catch(() => {
                         btn.disabled = false;
+                        btn.textContent = 'Add to Blacklist';
                         alert('Could not add to blacklist. Please try again.');
                     });
                 });
