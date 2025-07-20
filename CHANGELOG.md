@@ -1,11 +1,11 @@
 ## [Version X.X.X] - 2025-07-20
-### Cast Reshuffle Secuencial Mejorado
-- **Cast Reshuffle ahora implementa una lógica secuencial robusta:**
-  - Rota entre sugerir por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio.
-  - El paso actual se almacena en Session por usuario, asegurando variedad y personalización en cada reshuffle.
-  - Si un paso no tiene actor válido, automáticamente salta al siguiente.
-  - El endpoint sigue devolviendo HTML renderizado para máxima consistencia visual y de rutas.
-  - Documentación y comentarios XML actualizados para reflejar la nueva lógica y sus edge cases.
+### Improved Sequential Cast Reshuffle
+- **Cast Reshuffle now implements a robust sequential logic:**
+  - Rotates between suggesting by most recent actor, most frequent actor, top-rated movie actor, and, if exhausted, a random actor.
+  - The current step is stored in Session per user, ensuring variety and personalization in each reshuffle.
+  - If a step has no valid actor, it automatically skips to the next.
+  - The endpoint continues to return server-rendered HTML for maximum visual and routing consistency.
+  - Documentation and XML comments updated to reflect the new logic and its edge cases.
 
 ### Code Cleanup & Documentation (Prompt 1 & 2)
 - **Cast Reshuffle AJAX:** Ahora la función `CastReshuffle` permite obtener sugerencias de películas basadas en actores del historial del usuario vía AJAX, devolviendo HTML renderizado (partial views) para máxima consistencia visual y evitando problemas de paths/CORS.
@@ -19,20 +19,20 @@
 - Prompt 1 cleanup is 100% complete; Prompt 2 documentation improvements are well underway.
 ### Cinema Gold Branding & UI Polish
 ### Visual Consistency & Button Colors (2025-07-20)
-- **Footer:** Ahora el footer usa fondo Cinema Gold y color de texto oscuro, con selector ultra específico para máxima prioridad visual.
-- **Botón Add New Movie:** El botón verde ahora es Cinema Gold (`.btn-success`), tanto normal como hover.
-- **Botones Search y Clear Search:** Unificados en gris oscuro para máxima consistencia visual y accesibilidad.
+- **Footer:** The footer now uses a Cinema Gold background and dark text color, with an ultra-specific selector for maximum visual priority.
+- **Add New Movie Button:** The green button is now Cinema Gold (`.btn-success`), both normal and on hover.
+- **Search and Clear Search Buttons:** Unified in dark gray for maximum visual consistency and accessibility.
 
 ## [Version X.X.X] - 2025-07-18
 ### Hybrid AJAX+HTML Suggestion System
-- **Nuevo patrón híbrido en sugerencias:**
-  - El reshuffle de tipo "Trending" ahora usa AJAX y devuelve HTML renderizado del servidor (partial views), no JSON puro.
-  - Justificación: El renderizado server-side asegura que los posters y paths de imágenes funcionen correctamente, evitando problemas de rutas y CORS.
-  - El resto de tipos de sugerencia siguen usando navegación tradicional, pero el patrón es extensible a más tipos si se desea AJAXizar.
-  - El botón de reshuffle trending usa data-suggestion-type y event delegation en JS para disparar el fetch AJAX.
-  - Tras reemplazar el grid de sugerencias, siempre se re-adjuntan los event listeners para mantener la funcionalidad AJAX de los formularios internos.
-  - Comentarios en C# y JS documentan el propósito, el porqué del enfoque y las mejores prácticas de mantenimiento.
-  - Ver ejemplos y convenciones en `MoviesController.cs` y `Views/Movies/Suggest.cshtml`.
+- **New hybrid pattern for suggestions:**
+  - The "Trending" reshuffle now uses AJAX and returns server-rendered HTML (partial views), not raw JSON.
+  - Rationale: Server-side rendering ensures posters and image paths work correctly, avoiding routing and CORS issues.
+  - Other suggestion types still use traditional navigation, but the pattern is extensible to more types if AJAX is desired.
+  - The trending reshuffle button uses data-suggestion-type and event delegation in JS to trigger the AJAX fetch.
+  - After replacing the suggestion grid, event listeners are always reattached to maintain AJAX functionality for internal forms.
+  - C# and JS comments document the purpose, rationale, and best maintenance practices.
+  - See examples and conventions in `MoviesController.cs` and `Views/Movies/Suggest.cshtml`.
 ### Suggestion Engine, AJAX, and Caching Overhaul
 - Robust session-vs-client logic: Session sequencing is only used on the initial suggestion click; all reshuffles trust client parameters.
 - Generalized AJAX "Reshuffle" button: Now works for all suggestion types using event delegation, always maintaining context.
@@ -51,13 +51,13 @@
 - **Eliminated Error Banners**: Replaced reactive error messages with preventive UI states
 - **Consistent UX**: Unified mutual exclusion behavior across Details and Preview pages
 # 2025-07-18
-### Mutual Exclusion UI en Suggestion Cards
-- Ahora, al agregar una película a wishlist vía AJAX en la página de sugerencias, el botón "Add to Blacklist" de la misma tarjeta se desactiva/oculta automáticamente en el frontend.
-- No se modificó la lógica backend ni la estructura HTML; el cambio es solo JavaScript para mejorar la experiencia y consistencia visual.
+### Mutual Exclusion UI in Suggestion Cards
+- Now, when adding a movie to the wishlist via AJAX on the suggestions page, the "Add to Blacklist" button on the same card is automatically disabled/hidden on the frontend.
+- The backend logic and HTML structure were not changed; this is a JavaScript-only change to improve experience and visual consistency.
 # 2025-07-18
 ### Final Model Comments Cleanup
-- Eliminados todos los comentarios de desarrollo, temporales y anotaciones vagas en los modelos (`Models/`).
-- Mejoradas las descripciones de propiedades y comentarios de validación para mayor claridad y profesionalismo.
+- All development, temporary, and vague comments have been removed from the models (`Models/`).
+- Property descriptions and validation comments improved for greater clarity and professionalism.
 - Se mantuvieron todos los atributos de validación y lógica funcional intactos.
 - Los modelos ahora cumplen con los estándares de documentación para producción: solo comentarios técnicos, sin artefactos de desarrollo.
 # 2025-07-17

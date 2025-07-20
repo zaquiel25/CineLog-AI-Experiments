@@ -176,14 +176,15 @@ namespace Ezequiel_Movies
         // This method gets the details for a single person, including their profile picture path.
         public async Task<TmdbPersonDetails?> GetPersonDetailsAsync(int personId)
         {
+            /// <summary>
+            /// Fetches the details for a single person (director, actor, etc.) from TMDB.
+            /// Results are cached for 24 hours to minimize redundant API calls and improve performance.
+            /// </summary>
             string cacheKey = $"person_details_{personId}";
             if (_memoryCache.TryGetValue(cacheKey, out TmdbPersonDetails? cachedDetails) && cachedDetails != null)
             {
-                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cachedDetails;
             }
-            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
-            _logger.LogInformation("Requesting TMDB API for person details for ID: {PersonId}", personId);
             try
             {
                 var details = await _httpClient.GetFromJsonAsync<TmdbPersonDetails>($"person/{personId}?language=en-US");
@@ -204,14 +205,14 @@ namespace Ezequiel_Movies
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId, int page = 1)
         {
+            /// <summary>
+            /// Fetches a list of movies for a given actor from TMDB, with results cached for 24 hours.
+            /// </summary>
             string cacheKey = $"actor_movies_{actorId}";
             if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
             {
-                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cachedMovies;
             }
-            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
-            _logger.LogInformation("Requesting TMDB API for movies with actor ID: {ActorId}, page: {Page}", actorId, page);
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
@@ -351,6 +352,12 @@ namespace Ezequiel_Movies
             }
         }
 
+        /// <summary>
+        /// Retrieves the TMDB person ID for a given name (e.g., director or actor).
+        /// Results are cached for 24 hours to avoid redundant API calls and improve performance.
+        /// </summary>
+        /// <param name="personName">The name of the person to look up.</param>
+        /// <returns>The TMDB person ID if found, otherwise null.</returns>
         public async Task<int?> GetPersonIdAsync(string personName)
         {
             if (string.IsNullOrWhiteSpace(personName)) return null;
@@ -359,10 +366,8 @@ namespace Ezequiel_Movies
 
             if (_memoryCache.TryGetValue(cacheKey, out int? cachedPersonId))
             {
-                _logger.LogWarning("CACHE HIT: ID para la persona con clave '{CacheKey}' fue encontrado en memoria.", cacheKey);
                 return cachedPersonId;
             }
-            _logger.LogInformation("CACHE MISS: ID para la persona con clave '{CacheKey}' no fue encontrado. Realizando llamada a la API.", cacheKey);
 
             try
             {
@@ -370,11 +375,9 @@ namespace Ezequiel_Movies
                 var person = searchResponse?.Results?.OrderByDescending(p => p.Popularity).FirstOrDefault();
                 if (person != null)
                 {
-                    _logger.LogInformation("Found person ID {PersonId} for name {PersonName}", person.Id, personName);
                     _memoryCache.Set(cacheKey, person.Id, TimeSpan.FromHours(24));
                     return person.Id;
                 }
-                _logger.LogWarning("Could not find a person ID for name {PersonName}", personName);
                 _memoryCache.Set<int?>(cacheKey, null, TimeSpan.FromMinutes(5));
                 return null;
             }
@@ -388,16 +391,20 @@ namespace Ezequiel_Movies
 
         // In TmdbService.cs
 
+        /// <summary>
+        /// Retrieves a list of movies directed by the specified person (director) from TMDB.
+        /// Results are cached for 24 hours to minimize API usage and improve performance.
+        /// Only movies with more than 25 votes are included, sorted by vote average and count.
+        /// </summary>
+        /// <param name="directorId">The TMDB person ID of the director.</param>
+        /// <returns>A list of movies directed by the person, sorted by rating and popularity.</returns>
         public async Task<List<TmdbMovieBrief>> GetDirectorFilmographyAsync(int directorId)
         {
-            _logger.LogInformation("Requesting TMDB API for movie credits for person ID: {PersonId}", directorId);
             string cacheKey = $"director_filmography_{directorId}";
             if (_memoryCache.TryGetValue(cacheKey, out var obj) && obj is List<TmdbMovieBrief> cached && cached != null)
             {
-                _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cached;
             }
-            _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
             try
             {
                 // 1. Call the accurate '/person/{id}/movie_credits' endpoint. This is correct.
@@ -413,12 +420,10 @@ namespace Ezequiel_Movies
                     .Where(movie => movie.Job == "Director")
                     .ToList();
 
-                // VVVV THIS IS THE ONLY CHANGE: A NEW FILTER VVVV
                 // 3. From that accurate list, remove movies with too few votes to be considered "rated".
                 var ratedFilmography = filmography
-                    .Where(m => m.VoteCount > 25) // Only keeps movies with more than 25 votes
+                    .Where(m => m.VoteCount > 25)
                     .ToList();
-                // ^^^^ END OF THE ONLY CHANGE ^^^^
 
                 // 4. Sort this accurate, rated list by vote average, as you wanted.
                 var sortedFilmography = ratedFilmography
@@ -427,8 +432,6 @@ namespace Ezequiel_Movies
                     .ToList();
 
                 _memoryCache.Set(cacheKey, sortedFilmography, TimeSpan.FromHours(24));
-                _logger.LogInformation("Successfully fetched and sorted {Count} directed movies for person ID {PersonId}", sortedFilmography.Count, directorId);
-
                 return sortedFilmography;
             }
             catch (Exception ex)

@@ -1291,14 +1291,11 @@ var ratedDirector = allUserMovies
     .ThenByDescending(d => d.Count)
     .Select(d => d.Name)
     .FirstOrDefault();
-        _logger.LogInformation("[VERIFICACIÓN] Candidato para 'Mejor Valorado': {DirectorName}", ratedDirector);
         
         var priorityQueue = new List<string?> { recentDirector, frequentDirector, ratedDirector }
             .Where(d => !string.IsNullOrEmpty(d))
             .Distinct()
             .ToList();
-
-        _logger.LogInformation("[VERIFICACIÓN] Cola de directores prioritarios (Reciente, Frecuente, Valorado): {Queue}", string.Join(", ", priorityQueue));
 
         // 4. Seleccionar Director según la Secuencia
         string? directorToSuggest = null;
@@ -1311,7 +1308,16 @@ var ratedDirector = allUserMovies
             var allDirectors = allUserMovies.Select(m => m.Director!).Distinct().ToList();
             if (allDirectors.Any())
             {
-                directorToSuggest = allDirectors[Random.Shared.Next(allDirectors.Count)];
+                // Anti-repetición: evitar que se repita el último director random
+                string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
+                string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
+                var availableDirectors = allDirectors;
+                if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
+                {
+                    availableDirectors = allDirectors.Where(d => d != lastRandomDirector).ToList();
+                }
+                directorToSuggest = availableDirectors[Random.Shared.Next(availableDirectors.Count)];
+                HttpContext.Session.SetString(lastRandomDirectorKey, directorToSuggest);
             }
         }
 
@@ -1572,7 +1578,10 @@ var ratedDirector = allUserMovies
                 case "director_rated":
                 case "director_random":
                 {
-                    // Director sequence: recent → frequent → rated → random
+        // DIRECTOR SUGGESTIONS LOGIC (AJAX-enabled)
+        // This block now only handles the INITIAL director suggestion request (when clicking the main button).
+        // All subsequent reshuffles are handled via AJAX in the DirectorReshuffle() endpoint.
+        // The sequence is: recent → frequent → rated → random, with anti-repetition and session state.
                     string directorTypeKey = $"DirectorTypeSequence_{userId}";
                     bool isFreshStart = string.IsNullOrWhiteSpace(query);
                     int directorTypeCount;

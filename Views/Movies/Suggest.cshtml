@@ -93,6 +93,8 @@
                     @if (Model.Any())
                     {
                         var nextSuggestionType = ViewData["NextSuggestionType"] as string;
+                        @* The Reshuffle button below is AJAX-powered for Trending, Cast, and Director suggestions. *@
+                        @* It uses event delegation and a data-suggestion-type attribute to dynamically call the correct endpoint. *@
                         if (nextSuggestionType == "trending" || (nextSuggestionType != null && (nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_"))))
                         {
                             var suggestionBaseType = nextSuggestionType.Contains("_") ? nextSuggestionType.Split('_')[0] : nextSuggestionType;
@@ -175,7 +177,7 @@
     });
 
     document.addEventListener('click', function(e) {
-        // Busca el botón de reshuffle, incluso si el clic fue en el ícono <i> dentro de él.
+        // Find the reshuffle button, even if the click was on the <i> icon inside it.
         const reshuffleButton = e.target.closest('#reshuffle-btn');
 
         if (reshuffleButton) {
@@ -244,6 +246,8 @@
             }
         }
     });
+    // Event delegation for AJAX-powered Reshuffle button.
+    // Handles Trending, Cast, and Director suggestions by dynamically routing to the correct endpoint.
 
     function attachEventListeners() {
         document.querySelectorAll('.blacklist-form, .wishlist-form').forEach(form => {
