@@ -177,7 +177,7 @@ namespace Ezequiel_Movies
         public async Task<TmdbPersonDetails?> GetPersonDetailsAsync(int personId)
         {
             string cacheKey = $"person_details_{personId}";
-            if (_memoryCache.TryGetValue(cacheKey, out TmdbPersonDetails cachedDetails) && cachedDetails != null)
+            if (_memoryCache.TryGetValue(cacheKey, out TmdbPersonDetails? cachedDetails) && cachedDetails != null)
             {
                 _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cachedDetails;
@@ -205,7 +205,7 @@ namespace Ezequiel_Movies
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByActorAsync(int actorId, int page = 1)
         {
             string cacheKey = $"actor_movies_{actorId}";
-            if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief> cachedMovies) && cachedMovies != null)
+            if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
             {
                 _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cachedMovies;
@@ -324,7 +324,7 @@ namespace Ezequiel_Movies
             if (tmdbMovieId <= 0) return null;
 
             string cacheKey = $"movie_details_{tmdbMovieId}";
-            if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails cachedDetails) && cachedDetails != null)
+            if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails? cachedDetails) && cachedDetails != null)
             {
                 _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 return cachedDetails;
