@@ -353,7 +353,17 @@ namespace Ezequiel_Movies
 
         public async Task<int?> GetPersonIdAsync(string personName)
         {
-            _logger.LogInformation("Requesting TMDB API to find person ID for: {PersonName}", personName);
+            if (string.IsNullOrWhiteSpace(personName)) return null;
+
+            string cacheKey = $"person_id_{personName.ToLower().Replace(" ", "_")}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out int? cachedPersonId))
+            {
+                _logger.LogWarning("CACHE HIT: ID para la persona con clave '{CacheKey}' fue encontrado en memoria.", cacheKey);
+                return cachedPersonId;
+            }
+            _logger.LogInformation("CACHE MISS: ID para la persona con clave '{CacheKey}' no fue encontrado. Realizando llamada a la API.", cacheKey);
+
             try
             {
                 var searchResponse = await _httpClient.GetFromJsonAsync<TmdbPersonSearchResponse>($"search/person?query={Uri.EscapeDataString(personName)}");
@@ -361,9 +371,11 @@ namespace Ezequiel_Movies
                 if (person != null)
                 {
                     _logger.LogInformation("Found person ID {PersonId} for name {PersonName}", person.Id, personName);
+                    _memoryCache.Set(cacheKey, person.Id, TimeSpan.FromHours(24));
                     return person.Id;
                 }
                 _logger.LogWarning("Could not find a person ID for name {PersonName}", personName);
+                _memoryCache.Set<int?>(cacheKey, null, TimeSpan.FromMinutes(5));
                 return null;
             }
             catch (Exception ex)
