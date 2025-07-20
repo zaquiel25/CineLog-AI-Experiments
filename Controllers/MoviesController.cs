@@ -1109,13 +1109,145 @@ public async Task<IActionResult> TrendingReshuffle()
         /// </list>
         /// </para>
         /// </remarks>
-       [HttpGet]
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> CastReshuffle()
+        {
+            try
+            {
+                _logger.LogInformation("🚀 CastReshuffle AJAX endpoint called with CORRECTED logic.");
+
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized();
+                }
+
+                // --- Robust Cast Suggestion Sequence ---
+                // 1. SEQUENCE MANAGEMENT: Track the current step in Session to rotate between strategies (recent, frequent, rated, random).
+                string castTypeKey = $"CastTypeSequence_{userId}";
+                int castTypeCount = HttpContext.Session.GetInt32(castTypeKey) ?? 0;
+                HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
+                _logger.LogInformation("Cast Reshuffle Sequence: Attempting Step {Step}", castTypeCount);
+
+                // 2. ACTOR POOL CONSTRUCTION: Build a pool of top 3 actors from the user's last 15 logged movies.
+                var loggedCastMovies = await _dbContext.Movies
+                    .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+                    .OrderByDescending(m => m.DateWatched)
+                    .ToListAsync();
+
+                if (loggedCastMovies.Count < 3)
+                {
+                    var emptyHtml = @"<div class='alert alert-info text-center my-5'>Log at least 3 movies to get cast-based suggestions!</div>";
+                    return Json(new { success = true, html = emptyHtml, count = 0 });
+                }
+
+                var allTopActors = new List<TmdbCastPerson>();
+                foreach (var movie in loggedCastMovies.Take(15))
+                {
+                    if (!movie.TmdbId.HasValue) continue;
+                    var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                    if (details?.Credits?.Cast != null)
+                    {
+                        allTopActors.AddRange(details.Credits.Cast.Take(3));
+                    }
+                }
+
+                if (!allTopActors.Any())
+                {
+                    var emptyHtml = @"<div class='alert alert-warning text-center my-5'>Could not find cast info in your recent movies.</div>";
+                    return Json(new { success = true, html = emptyHtml, count = 0 });
+                }
+
+                // 3. SEQUENTIAL ACTOR SELECTION: Try each strategy in order; if the current step yields no actor, fall back to random.
+                TmdbCastPerson? selectedActor = null;
+
+                // Build the prioritized actor queue: recent, frequent, highest-rated.
+                var recentActor = allTopActors.FirstOrDefault();
+                var frequentActor = allTopActors.GroupBy(a => a.Id).OrderByDescending(g => g.Count()).Select(g => g.First()).FirstOrDefault();
+                var ratedActorMovie = loggedCastMovies.Where(m => m.UserRating.HasValue).OrderByDescending(m => m.UserRating).FirstOrDefault();
+                TmdbCastPerson? ratedActor = null;
+                if (ratedActorMovie?.TmdbId.HasValue ?? false)
+                {
+                    var ratedMovieDetails = await _tmdbService.GetMovieDetailsAsync(ratedActorMovie.TmdbId.Value);
+                    ratedActor = ratedMovieDetails?.Credits?.Cast?.FirstOrDefault();
+                }
+
+                var priorityQueue = new List<TmdbCastPerson?> { recentActor, frequentActor, ratedActor }
+                    .Where(a => a != null)
+                    .Cast<TmdbCastPerson>()
+                    .DistinctBy(a => a.Id)
+                    .ToList();
+
+                // Try to select an actor from the prioritized queue. If the current step is empty or exhausted, selectedActor remains null.
+                if (castTypeCount < priorityQueue.Count)
+                {
+                    selectedActor = priorityQueue[castTypeCount];
+                }
+
+                // If the sequence did not yield an actor (empty or finished), fall back to random selection from the pool.
+                if (selectedActor == null)
+                {
+                    _logger.LogInformation("Sequence step {Step} was empty or finished. Switching to random.", castTypeCount);
+                    var distinctActors = allTopActors.Where(a => a != null).DistinctBy(a => a.Id).ToList();
+                    if (distinctActors.Any())
+                    {
+                        selectedActor = distinctActors[Random.Shared.Next(distinctActors.Count)];
+                    }
+                }
+
+                // If no actor could be selected after all strategies, throw an unrecoverable error (should be extremely rare).
+                if (selectedActor == null)
+                {
+                    throw new InvalidOperationException("Could not select a valid actor to generate suggestions.");
+                }
+
+                // 4. SUGGESTION GENERATION & RESPONSE: Fetch movies for the selected actor and return server-rendered HTML or a friendly message if none found.
+                var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
+                var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
+
+                // CORRECCIÓN 1: Título simple y consistente.
+                var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
+
+                if (!suggestedMovies.Any())
+                {
+                    var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {selectedActor.Name}. Try another suggestion type!</div>";
+                    return Json(new { success = true, html = emptyHtml, count = 0 });
+                }
+
+                var htmlBuilder = new StringBuilder();
+                foreach (var movie in suggestedMovies)
+                {
+                    var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+                    htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    html = htmlBuilder.ToString(),
+                    count = suggestedMovies.Count,
+                    suggestionTitle = suggestionTitle,
+                    actorProfileUrl = actorDetails?.ProfilePath
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "💥 ERROR in CastReshuffle: {Message}", ex.Message);
+                return Json(new
+                {
+                    success = false,
+                    error = "Could not generate a new suggestion. Please try again."
+                });
+            }
+        }
+    [HttpGet]
 [Authorize]
-public async Task<IActionResult> CastReshuffle()
+public async Task<IActionResult> DirectorReshuffle()
 {
     try
     {
-        _logger.LogInformation("🚀 CastReshuffle AJAX endpoint called with CORRECTED logic.");
+        _logger.LogInformation("🚀 DirectorReshuffle AJAX endpoint called.");
 
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userId))
@@ -1123,94 +1255,78 @@ public async Task<IActionResult> CastReshuffle()
             return Unauthorized();
         }
 
-        // --- Robust Cast Suggestion Sequence ---
-        // 1. SEQUENCE MANAGEMENT: Track the current step in Session to rotate between strategies (recent, frequent, rated, random).
-        string castTypeKey = $"CastTypeSequence_{userId}";
-        int castTypeCount = HttpContext.Session.GetInt32(castTypeKey) ?? 0;
-        HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
-        _logger.LogInformation("Cast Reshuffle Sequence: Attempting Step {Step}", castTypeCount);
+        // --- LÓGICA DE SECUENCIA DE DIRECTOR (Copiada y adaptada de ShowSuggestions) ---
 
-        // 2. ACTOR POOL CONSTRUCTION: Build a pool of top 3 actors from the user's last 15 logged movies.
-        var loggedCastMovies = await _dbContext.Movies
-            .Where(m => m.UserId == userId && m.TmdbId.HasValue)
-            .OrderByDescending(m => m.DateWatched)
+        // 1. Gestión de la Secuencia usando la Sesión
+        string directorTypeKey = $"DirectorTypeSequence_{userId}";
+        int directorTypeCount = HttpContext.Session.GetInt32(directorTypeKey) ?? 0;
+        
+        string[] directorTypes = { "director_recent", "director_frequent", "director_rated" };
+        int maxDirectorTypeIndex = directorTypes.Length - 1;
+        string currentDirectorType = directorTypeCount <= maxDirectorTypeIndex ? directorTypes[directorTypeCount] : "director_random";
+
+        HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
+        _logger.LogInformation("Director Reshuffle Sequence: Step {Step}, Type: {Type}", directorTypeCount, currentDirectorType);
+
+        // 2. Obtener películas del usuario para análisis
+        var allUserMovies = await _dbContext.Movies
+            .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue)
+            .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
             .ToListAsync();
 
-        if (loggedCastMovies.Count < 3)
+        if (!allUserMovies.Any())
         {
-            var emptyHtml = @"<div class='alert alert-info text-center my-5'>Log at least 3 movies to get cast-based suggestions!</div>";
+            var emptyHtml = @"<div class='alert alert-info text-center my-5'>Log some movies to get director suggestions!</div>";
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        var allTopActors = new List<TmdbCastPerson>();
-        foreach (var movie in loggedCastMovies.Take(15))
-        {
-            if (!movie.TmdbId.HasValue) continue;
-            var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
-            if (details?.Credits?.Cast != null)
-            {
-                allTopActors.AddRange(details.Credits.Cast.Take(3));
-            }
-        }
-
-        if (!allTopActors.Any())
-        {
-            var emptyHtml = @"<div class='alert alert-warning text-center my-5'>Could not find cast info in your recent movies.</div>";
-            return Json(new { success = true, html = emptyHtml, count = 0 });
-        }
-
-        // 3. SEQUENTIAL ACTOR SELECTION: Try each strategy in order; if the current step yields no actor, fall back to random.
-        TmdbCastPerson? selectedActor = null;
-
-        // Build the prioritized actor queue: recent, frequent, highest-rated.
-        var recentActor = allTopActors.FirstOrDefault();
-        var frequentActor = allTopActors.GroupBy(a => a.Id).OrderByDescending(g => g.Count()).Select(g => g.First()).FirstOrDefault();
-        var ratedActorMovie = loggedCastMovies.Where(m => m.UserRating.HasValue).OrderByDescending(m => m.UserRating).FirstOrDefault();
-        TmdbCastPerson? ratedActor = null;
-        if(ratedActorMovie?.TmdbId.HasValue ?? false) {
-            var ratedMovieDetails = await _tmdbService.GetMovieDetailsAsync(ratedActorMovie.TmdbId.Value);
-            ratedActor = ratedMovieDetails?.Credits?.Cast?.FirstOrDefault();
-        }
+        // 3. Construir la Cola de Directores Prioritarios
+        var recentDirector = allUserMovies.FirstOrDefault()?.Director;
+        var frequentDirector = allUserMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+var ratedDirector = allUserMovies
+    .Where(m => m.UserRating.HasValue)
+    .GroupBy(m => m.Director!)
+    .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value), Count = g.Count() })
+    .OrderByDescending(d => d.Avg)
+    .ThenByDescending(d => d.Count)
+    .Select(d => d.Name)
+    .FirstOrDefault();
+        _logger.LogInformation("[VERIFICACIÓN] Candidato para 'Mejor Valorado': {DirectorName}", ratedDirector);
         
-        var priorityQueue = new List<TmdbCastPerson?> { recentActor, frequentActor, ratedActor }
-            .Where(a => a != null)
-            .Cast<TmdbCastPerson>()
-            .DistinctBy(a => a.Id)
+        var priorityQueue = new List<string?> { recentDirector, frequentDirector, ratedDirector }
+            .Where(d => !string.IsNullOrEmpty(d))
+            .Distinct()
             .ToList();
 
-        // Try to select an actor from the prioritized queue. If the current step is empty or exhausted, selectedActor remains null.
-        if (castTypeCount < priorityQueue.Count)
-        {
-            selectedActor = priorityQueue[castTypeCount];
-        }
+        _logger.LogInformation("[VERIFICACIÓN] Cola de directores prioritarios (Reciente, Frecuente, Valorado): {Queue}", string.Join(", ", priorityQueue));
 
-        // If the sequence did not yield an actor (empty or finished), fall back to random selection from the pool.
-        if (selectedActor == null)
+        // 4. Seleccionar Director según la Secuencia
+        string? directorToSuggest = null;
+        if (directorTypeCount < priorityQueue.Count)
         {
-            _logger.LogInformation("Sequence step {Step} was empty or finished. Switching to random.", castTypeCount);
-            var distinctActors = allTopActors.Where(a => a != null).DistinctBy(a => a.Id).ToList();
-            if(distinctActors.Any())
+            directorToSuggest = priorityQueue[directorTypeCount];
+        }
+        else // Fallback a aleatorio si la secuencia terminó o un paso estaba vacío
+        {
+            var allDirectors = allUserMovies.Select(m => m.Director!).Distinct().ToList();
+            if (allDirectors.Any())
             {
-                selectedActor = distinctActors[Random.Shared.Next(distinctActors.Count)];
+                directorToSuggest = allDirectors[Random.Shared.Next(allDirectors.Count)];
             }
         }
-        
-        // If no actor could be selected after all strategies, throw an unrecoverable error (should be extremely rare).
-        if (selectedActor == null)
+
+        if (string.IsNullOrEmpty(directorToSuggest))
         {
-            throw new InvalidOperationException("Could not select a valid actor to generate suggestions.");
+             throw new InvalidOperationException("Could not select a valid director to generate suggestions.");
         }
 
-        // 4. SUGGESTION GENERATION & RESPONSE: Fetch movies for the selected actor and return server-rendered HTML or a friendly message if none found.
-        var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
-        var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
-        
-        // CORRECCIÓN 1: Título simple y consistente.
-        var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
+        // 5. Obtener Sugerencias y Construir Respuesta
+        var suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId);
+        var suggestionTitle = $"Because you like {directorToSuggest}...";
 
         if (!suggestedMovies.Any())
         {
-            var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {selectedActor.Name}. Try another suggestion type!</div>";
+            var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {directorToSuggest}. Try another suggestion type!</div>";
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
@@ -1225,19 +1341,19 @@ public async Task<IActionResult> CastReshuffle()
             success = true, 
             html = htmlBuilder.ToString(),
             count = suggestedMovies.Count,
-            suggestionTitle = suggestionTitle,
-            actorProfileUrl = actorDetails?.ProfilePath
+            suggestionTitle = suggestionTitle
         });
     }
     catch (Exception ex)
     {
-        _logger.LogError(ex, "💥 ERROR in CastReshuffle: {Message}", ex.Message);
+        _logger.LogError(ex, "💥 ERROR in DirectorReshuffle: {Message}", ex.Message);
         return Json(new { 
             success = false, 
             error = "Could not generate a new suggestion. Please try again."
         });
     }
 }
+
         /// <summary>
         /// Helper para renderizar una partial view a string.
         /// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
