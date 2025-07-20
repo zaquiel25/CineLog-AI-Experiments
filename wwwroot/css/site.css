@@ -1,4 +1,36 @@
-﻿/* ===== CINELOG BRAND COLORS ===== */
+﻿/* Unificar colores de botones Search y Clear Search */
+.btn-primary,
+.btn-info,
+input[type="submit"].btn-primary,
+button.btn-primary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-info:hover,
+input[type="submit"].btn-primary:hover,
+button.btn-primary:hover {
+    background-color: #5a6268 !important;
+    border-color: #545b62 !important;
+    color: #fff !important;
+}
+/* Botón Add New Movie en Cinema Gold */
+.btn-success,
+a.btn-success {
+    background-color: var(--cinelog-gold) !important;
+    border-color: var(--cinelog-gold) !important;
+    color: #1a1a1a !important;
+}
+
+.btn-success:hover,
+a.btn-success:hover {
+    background-color: var(--cinelog-gold-hover) !important;
+    border-color: var(--cinelog-gold-hover) !important;
+    color: #000 !important;
+}
+/* ===== CINELOG BRAND COLORS ===== */
 :root {
   --cinelog-gold: #f4d03f;
   --cinelog-gold-light: #f7dc6f;
@@ -577,9 +609,23 @@ p {
 }
 /* --- FIN HERO LANDING PAGE --- */
 /* Ensure footer always appears above cards (stacking context fix) */
+/* Selector ultra específico para footer */
+html body footer,
+footer.bg-secondary,
+.footer,
 footer {
+    background-color: var(--cinelog-gold) !important;
+    color: #1a1a1a !important;
+    border-top: 1px solid var(--cinelog-gold) !important;
     z-index: 1000;
     position: relative;
+}
+
+/* También para cualquier texto dentro del footer */
+footer a,
+footer p,
+footer span {
+    color: #1a1a1a !important;
 }
 .card {
     z-index: 1;
