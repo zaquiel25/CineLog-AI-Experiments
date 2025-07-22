@@ -1,3 +1,24 @@
+## [Version X.X.X] - 2025-07-22
+### 🚀 Major DecadeReshuffle Performance & Logic Optimization
+- **Data Source Optimization**: DecadeReshuffle now uses only the last 25 movies instead of entire user history
+  - More relevant suggestions based on recent activity
+  - Faster query execution and reduced memory usage
+- **API Call Optimization**: Reduced maximum API calls from 25+ to 15 per request (40% improvement)
+  - Early exit logic stops evaluation after finding sufficient valid decades
+  - Reduced pages per decade from 5 to 3, pool threshold from 15 to 10 movies
+- **Enhanced Priority Logic**:
+  - **Latest**: Now correctly identifies decade from most recently added movie (not chronologically recent)
+  - **Frequent**: Most common decade with minimum 2 movies from last 25, with random tie-breaking
+  - **Rated**: Highest average rated decade with minimum 2 rated movies from last 25, with random tie-breaking
+- **Equitable Random Selection**: Any decade from the last 25 movies can appear in random suggestions
+- **Improved Anti-Repetition**: Session state now only prevents immediate repetition, allowing better decade variety
+- **Smart Caching**: Blacklist and last-5-watched filters calculated once per request instead of per decade
+- **Enhanced Logging**: Added API call metrics and performance tracking for monitoring and optimization
+
+### Technical Impact
+- **Performance**: 40% fewer API calls, faster response times
+- **User Experience**: More varied decade suggestions, better representation of less common decades
+- **Maintainability**: Cleaner code structure with optimized evaluation loops and better error handling
 ## [Version X.X.X] - 2025-07-20
 ### Improved Sequential Cast Reshuffle
 - **Cast Reshuffle now implements a robust sequential logic:**

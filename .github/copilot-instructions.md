@@ -1,3 +1,25 @@
+## DecadeReshuffle Optimization (2025-07-22)
+### Performance and Logic Improvements
+- **Data Scope**: DecadeReshuffle now operates on the user's last 25 movies only, not entire history
+  - Provides more relevant, recent-activity-based suggestions
+  - Improves query performance and reduces memory overhead
+- **API Optimization**: Maximum 15 TMDB API calls per request (5 decades × 3 pages each)
+  - Early exit logic when sufficient valid decades are found
+  - Reduced thresholds: 10 movies per pool (vs 15), 3 pages per decade (vs 5)
+- **Priority Calculation Logic**:
+  - **Latest**: Decade from the most recently added movie (by DateCreated/DateWatched)
+  - **Frequent**: Most frequent decade with ≥2 movies from last 25, random selection on ties
+  - **Rated**: Highest average rated decade with ≥2 rated movies from last 25, random selection on ties
+- **Random Phase**: Any decade from the last 25 movies can be selected, ensuring equitable representation
+- **Anti-Repetition**: Only prevents immediate repetition of the last shown decade via Session State
+- **Filter Caching**: Blacklist and recent movies calculated once per request, not per decade evaluation
+
+### Code Patterns for DecadeReshuffle
+- Always use `last25Movies` instead of `userMovies` for decade calculations
+- Maintain early exit logic with `MAX_DECADES_TO_EVALUATE = 5` for API optimization
+- Preserve Session State management for anti-repetition without blocking variety
+- Use random tie-breaking for both Frequent and Rated priority calculations
+- Cache expensive filter operations outside evaluation loops
 ## Edge Case: Blacklisting Many Trending Movies
 
 - Si un usuario intenta blacklistear la mayoría o totalidad de las películas trending (por ejemplo, más de 20 en una sola sesión), puede encontrar que los últimos títulos no se pueden blacklistear por limitaciones de estado, caché o validación.

@@ -54,6 +54,7 @@
 - **Advanced Filtering**: Search and sort by title, director, year, rating, and more
 
 
+
 ### 🎯 Intelligent Suggestions
 - **Personalized Recommendations**: Based on your directors, genres, cast, and decades
 - **By Director (AJAX-powered)**: Director suggestions now use the same fast, no-reload AJAX system as Trending and Cast. Reshuffles are instant, server-rendered, and always maintain context and UI consistency.
@@ -66,6 +67,17 @@
 - **Surprise Me**: Get random suggestions based on your taste profile
 - **Generalized AJAX Reshuffle**: The "Reshuffle" button now works for all suggestion types (Trending, Cast, Director) using event delegation, always maintaining context and providing instant feedback.
 - **Dual Caching**: IMemoryCache is used for API data, and Session State is used for user-specific anti-repetition and sequencing.
+
+### 🎯 By Decade (Optimized AJAX)
+- **Recent Activity Focus**: Based on your last 25 movies instead of entire history for more relevant suggestions
+- **Intelligent Prioritization**: 
+  - **Latest**: Decade from your most recently added movie
+  - **Frequent**: Most common decade (minimum 2 movies from last 25)
+  - **Rated**: Highest average rated decade (minimum 2 rated movies from last 25)
+- **Equitable Selection**: Any decade from your last 25 movies can appear in suggestions
+- **Performance Optimized**: Maximum 15 API calls per request (reduced from 25+)
+- **Smart Anti-Repetition**: Only avoids the immediately previous decade, ensuring variety
+- **Fallback System**: Automatically adjusts criteria if no decades meet the 3+ movie threshold
 
 ### 🔄 Seamless Experience
 - **No Page Reloads**: AJAX-powered interactions for smooth user experience
