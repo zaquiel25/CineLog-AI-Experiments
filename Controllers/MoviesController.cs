@@ -1360,6 +1360,169 @@ var ratedDirector = allUserMovies
     }
 }
 
+[HttpGet]
+[Authorize]
+public async Task<IActionResult> DecadeReshuffle()
+{
+    try
+    {
+        _logger.LogInformation("🚀 DecadeReshuffle AJAX endpoint called with FINAL logic.");
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        var userMovies = await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.ReleasedYear.HasValue)
+            .ToListAsync();
+
+        if (userMovies.Count < 3)
+        {
+            var emptyHtml = "<div class='alert alert-info text-center my-5'>Log at least 3 movies to get decade suggestions!</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // --- INICIO DE LA LÓGICA FINAL Y CORREGIDA ---
+        
+        var decadeGroups = userMovies.GroupBy(m => (m.ReleasedYear!.Value / 10) * 10).ToList();
+        var allDecades = decadeGroups.Select(g => g.Key).Distinct().ToList();
+
+        // 1. CÁLCULO DE CANDIDATOS CON REGLAS ESPECÍFICAS
+        // 'Reciente' no tiene regla de mínimos.
+        var mostRecentDecade = decadeGroups.OrderByDescending(g => g.Max(m => m.DateWatched ?? m.DateCreated)).Select(g => g.Key).FirstOrDefault();
+        
+        // 'Frecuente' SÍ requiere un mínimo de 2 películas.
+        var frequentGroups = decadeGroups.Where(g => g.Count() >= 2).ToList();
+        var maxFreq = frequentGroups.Any() ? frequentGroups.Max(g => g.Count()) : 0;
+        var freqCandidates = frequentGroups.Where(g => g.Count() == maxFreq).Select(g => g.Key).ToList();
+        var mostFrequentDecade = freqCandidates.Any() ? freqCandidates[Random.Shared.Next(freqCandidates.Count)] : 0;
+
+        // 'Mejor Valorada' SÍ requiere un mínimo de 2 películas.
+        var ratedGroups = userMovies.Where(m => m.UserRating.HasValue).GroupBy(m => (m.ReleasedYear!.Value / 10) * 10).Where(g => g.Count() >= 2).ToList();
+        var maxAvgRating = ratedGroups.Any() ? ratedGroups.Max(g => g.Average(m => m.UserRating!.Value)) : 0;
+        var ratedCandidates = ratedGroups.Where(g => Math.Abs(g.Average(m => m.UserRating!.Value) - maxAvgRating) < 0.01m).Select(g => g.Key).ToList();
+        var highestRatedDecade = ratedCandidates.Any() ? ratedCandidates[Random.Shared.Next(ratedCandidates.Count)] : 0;
+
+        // 2. CONSTRUCCIÓN DE LA RUTA DE VIAJE (DECADES TO TRY)
+        var priorityQueue = new List<int> { mostRecentDecade, mostFrequentDecade, highestRatedDecade }.Where(d => d > 0).Distinct().ToList();
+        var randomDecades = allDecades.Except(priorityQueue).OrderBy(d => Random.Shared.Next()).ToList();
+        var decadesToTry = priorityQueue.Concat(randomDecades).ToList();
+
+        _logger.LogInformation("[DECADE-LOGIC] Decades to try in order: {Decades}", string.Join(", ", decadesToTry));
+
+        // 3. BÚSQUEDA ROBUSTA CON FALLBACKS
+        List<(int Decade, List<TmdbMovieBrief> Pool)> validDecades = new List<(int, List<TmdbMovieBrief>)>();
+        string lastDecadeKey = $"LastDecadeShown_{userId}";
+        int? lastDecade = HttpContext.Session.GetInt32(lastDecadeKey);
+        const int TARGET_VALID_DECADES = 3;
+        int totalApiCalls = 0;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Cache filtros fuera del bucle
+        var blacklisted = await GetUserBlacklistedTmdbIdsAsync(userId);
+        var last5 = userMovies.OrderByDescending(m => m.DateWatched ?? m.DateCreated).Take(5).Select(m => m.TmdbId ?? 0).ToHashSet();
+
+        // Evaluación lazy: parar cuando hay suficientes décadas válidas
+        foreach (var decade in decadesToTry)
+        {
+            // Saltar si ya tenemos suficientes opciones Y esta década fue la última mostrada
+            if (validDecades.Count >= TARGET_VALID_DECADES && decade == lastDecade)
+            {
+                continue;
+            }
+            var currentPool = new List<TmdbMovieBrief>();
+            int page = 1;
+            const int maxPagesToTry = 5;
+            while (currentPool.Count < 15 && page <= maxPagesToTry)
+            {
+                totalApiCalls++;
+                var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page);
+                if (!results.Any()) break;
+                var valid = results.Where(m => !blacklisted.Contains(m.Id) && !last5.Contains(m.Id) && !userMovies.Any(um => um.TmdbId == m.Id)).ToList();
+                currentPool.AddRange(valid);
+                page++;
+            }
+            if (currentPool.Count >= 3)
+            {
+                validDecades.Add((decade, currentPool));
+                if (validDecades.Count >= TARGET_VALID_DECADES)
+                {
+                    _logger.LogInformation("✅ Found {Count} valid decades, stopping evaluation to save API calls", validDecades.Count);
+                    break;
+                }
+            }
+        }
+
+        // Si no hay ninguna década con 3+, buscar décadas con al menos 1 (fallback, sin early exit)
+        if (!validDecades.Any())
+        {
+            _logger.LogWarning("[DECADE-LOGIC] No decade found with 3+ valid movies. Starting fallback search for 1+.");
+            foreach (var decade in decadesToTry)
+            {
+                var currentPool = new List<TmdbMovieBrief>();
+                int page = 1;
+                const int maxPagesToTry = 5;
+                while (currentPool.Count < 15 && page <= maxPagesToTry)
+                {
+                    totalApiCalls++;
+                    var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page);
+                    if (!results.Any()) break;
+                    var valid = results.Where(m => !blacklisted.Contains(m.Id) && !last5.Contains(m.Id) && !userMovies.Any(um => um.TmdbId == m.Id)).ToList();
+                    currentPool.AddRange(valid);
+                    page++;
+                }
+                if (currentPool.Any())
+                {
+                    validDecades.Add((decade, currentPool));
+                }
+            }
+        }
+
+        stopwatch.Stop();
+        _logger.LogInformation("🎯 DecadeReshuffle completed: {ApiCalls} API calls in {Ms}ms", totalApiCalls, stopwatch.ElapsedMilliseconds);
+
+        if (!validDecades.Any())
+        {
+            var emptyHtml = "<div class='alert alert-info text-center my-5'>No new decade suggestions available right now.</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // Aplicar Session State SOLO al final para evitar repetir la última década
+        var candidateDecades = validDecades.Where(d => d.Decade != lastDecade).ToList();
+        if (!candidateDecades.Any())
+        {
+            candidateDecades = validDecades; // Si todas están bloqueadas, permitir repetir
+        }
+
+        var selected = candidateDecades[Random.Shared.Next(candidateDecades.Count)];
+        HttpContext.Session.SetInt32(lastDecadeKey, selected.Decade);
+
+        // RESPUESTA FINAL
+        var suggestedMovies = selected.Pool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
+        string suggestionTitle = $"Here are movies from the {selected.Decade}s";
+
+        var htmlBuilder = new System.Text.StringBuilder();
+        foreach (var movie in suggestedMovies)
+        {
+            var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+        }
+
+        return Json(new {
+            success = true,
+            html = htmlBuilder.ToString(),
+            count = suggestedMovies.Count,
+            suggestionTitle = suggestionTitle
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "💥 ERROR in DecadeReshuffle: {Message}", ex.Message);
+        return Json(new { success = false, error = "Could not generate a new suggestion." });
+    }
+}
+
         /// <summary>
         /// Helper para renderizar una partial view a string.
         /// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
