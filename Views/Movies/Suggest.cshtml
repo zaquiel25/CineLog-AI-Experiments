@@ -95,11 +95,13 @@
                         var nextSuggestionType = ViewData["NextSuggestionType"] as string;
                         @* The Reshuffle button below is AJAX-powered for Trending, Cast, and Director suggestions. *@
                         @* It uses event delegation and a data-suggestion-type attribute to dynamically call the correct endpoint. *@
-                        if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_")))
+                        if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") ||
+    nextSuggestionType == "surprise_me"))
                         {
                             var suggestionBaseType = nextSuggestionType.StartsWith("year_") ? "decade" :
-                                nextSuggestionType.StartsWith("genre_") ? "genre" :
-                                (nextSuggestionType.Contains("_") ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
+    nextSuggestionType.StartsWith("genre_") ? "genre" :
+    nextSuggestionType == "surprise_me" ? "surprise" :
+    (nextSuggestionType.Contains("_") ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
                         <button id="reshuffle-btn" type="button" class="btn btn-outline-light btn-sm mt-2" data-suggestion-type="@suggestionBaseType">
                             <i class="bi bi-shuffle"></i> Reshuffle
                         </button>
@@ -189,16 +191,18 @@
             let endpointUrl = '';
 
             if (suggestionType === 'trending') {
-                endpointUrl = '/Movies/TrendingReshuffle';
-            } else if (suggestionType === 'cast') {
-                endpointUrl = '/Movies/CastReshuffle';
-            } else if (suggestionType === 'director') {
-                endpointUrl = '/Movies/DirectorReshuffle';
-            } else if (suggestionType === 'decade') {
-                endpointUrl = '/Movies/DecadeReshuffle';
-            } else if (suggestionType === 'genre') {
-                endpointUrl = '/Movies/GenreReshuffle';
-            }
+    endpointUrl = '/Movies/TrendingReshuffle';
+} else if (suggestionType === 'cast') {
+    endpointUrl = '/Movies/CastReshuffle';
+} else if (suggestionType === 'director') {
+    endpointUrl = '/Movies/DirectorReshuffle';
+} else if (suggestionType === 'decade') {
+    endpointUrl = '/Movies/DecadeReshuffle';
+} else if (suggestionType === 'genre') {
+    endpointUrl = '/Movies/GenreReshuffle';
+} else if (suggestionType === 'surprise') {
+    endpointUrl = '/Movies/SurpriseMeReshuffle';
+}
 
             if (endpointUrl) {
                 const originalHTML = reshuffleButton.innerHTML;

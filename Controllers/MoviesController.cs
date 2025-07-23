@@ -1751,12 +1751,371 @@ public async Task<IActionResult> GenreReshuffle()
     }
 }
 
+[HttpGet]
+[Authorize]
+public async Task<IActionResult> SurpriseMeReshuffle()
+{
+    try
+    {
+        _logger.LogInformation("🚀 SurpriseMeReshuffle AJAX endpoint called.");
+        
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
 
-        /// <summary>
-        /// Helper para renderizar una partial view a string.
-        /// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
-        ///
-        /// Se usa en TrendingReshuffle para garantizar que los posters, helpers y paths de imágenes funcionen igual que en el render inicial.
+        // --- 1. Check cache for existing pool (2 hours) ---
+        string poolCacheKey = $"SurprisePool_{userId}";
+        var cachedPool = _memoryCache.Get<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2x3, List<TmdbMovieBrief> bucket1x3)>(poolCacheKey);
+        
+        List<TmdbMovieBrief> bucket3x3, bucket2x3, bucket1x3;
+        
+        if (cachedPool.bucket3x3 != null && cachedPool.bucket2x3 != null && cachedPool.bucket1x3 != null)
+        {
+            _logger.LogInformation("🎯 Using cached surprise pool for user {UserId}", userId);
+            bucket3x3 = cachedPool.bucket3x3;
+            bucket2x3 = cachedPool.bucket2x3;
+            bucket1x3 = cachedPool.bucket1x3;
+        }
+        else
+        {
+            _logger.LogInformation("🏗️ Building new surprise pool for user {UserId}", userId);
+            
+            // Build new pool (we'll create this helper next)
+            var poolResult = await BuildSurprisePoolAsync(userId);
+            bucket3x3 = poolResult.bucket3x3;
+            bucket2x3 = poolResult.bucket2x3;
+            bucket1x3 = poolResult.bucket1x3;
+            
+            // Cache for 2 hours
+            var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(2));
+            _memoryCache.Set(poolCacheKey, (bucket3x3, bucket2x3, bucket1x3), cacheOptions);
+            
+            _logger.LogInformation("✅ Pool cached: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
+                bucket3x3.Count, bucket2x3.Count, bucket1x3.Count, bucket3x3.Count + bucket2x3.Count + bucket1x3.Count);
+        }
+
+        // --- 2. Apply user filters to all buckets ---
+        var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+        var recentMovieIds = await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+            .OrderByDescending(m => m.DateWatched)
+            .Take(10)
+            .Select(m => m.TmdbId!.Value)
+            .ToListAsync();
+        var recentMovieIdSet = recentMovieIds.ToHashSet();
+
+        // Filter all buckets
+        var filtered3x3 = bucket3x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
+        var filtered2x3 = bucket2x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
+        var filtered1x3 = bucket1x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
+
+        _logger.LogInformation("🔍 After filtering: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
+            filtered3x3.Count, filtered2x3.Count, filtered1x3.Count, filtered3x3.Count + filtered2x3.Count + filtered1x3.Count);
+
+        // --- 3. Get session anti-repetition state ---
+        var shownSurpriseIds = HttpContext.Session.Get<List<int>>("ShownSurpriseIds") ?? new List<int>();
+
+        // Remove already shown movies from all buckets
+        filtered3x3 = filtered3x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
+        filtered2x3 = filtered2x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
+        filtered1x3 = filtered1x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
+
+        // --- 4. Cyclic bucket selection: A→B→C→A→B→C... ---
+        string cycleKey = "SurpriseBucketCycle";
+        int currentCycle = HttpContext.Session.GetInt32(cycleKey) ?? 0; // 0=A(3x3), 1=B(2x3), 2=C(1x3)
+        
+        TmdbMovieBrief? selectedMovie = null;
+        string suggestionTitle = "Your Surprise Suggestion...";
+        List<TmdbMovieBrief> currentBucket;
+        string bucketType;
+
+        if (currentCycle == 0 && filtered3x3.Any())
+        {
+            currentBucket = filtered3x3;
+            bucketType = "3/3 match";
+        }
+        else if (currentCycle == 1 && filtered2x3.Any())
+        {
+            currentBucket = filtered2x3;
+            bucketType = "2/3 match";
+        }
+        else if (currentCycle == 2 && filtered1x3.Any())
+        {
+            currentBucket = filtered1x3;
+            bucketType = "1/3 match";
+        }
+        else
+        {
+            // Fallback: use any available bucket
+            currentBucket = filtered3x3.Concat(filtered2x3).Concat(filtered1x3).ToList();
+            bucketType = "mixed match";
+        }
+
+        if (currentBucket.Any())
+        {
+            selectedMovie = currentBucket[Random.Shared.Next(currentBucket.Count)];
+            suggestionTitle = $"Surprise! ({bucketType})";
+            
+            // Update anti-repetition tracking
+            shownSurpriseIds.Add(selectedMovie.Id);
+            if (shownSurpriseIds.Count > 30) shownSurpriseIds.RemoveAt(0); // Keep last 30
+            HttpContext.Session.Set("ShownSurpriseIds", shownSurpriseIds);
+        }
+
+        // Advance cycle for next reshuffle: 0→1→2→0→1→2...
+        int nextCycle = (currentCycle + 1) % 3;
+        HttpContext.Session.SetInt32(cycleKey, nextCycle);
+        _logger.LogInformation("🔄 Cycle: {Current} → {Next}", currentCycle, nextCycle);
+
+        // --- 5. Handle no suggestion case ---
+        if (selectedMovie == null)
+        {
+            var emptyHtml = @"<div class='alert alert-info text-center my-5'>No surprise suggestions available right now. Try again in a moment!</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // --- 6. Render response using partial view ---
+        var htmlBuilder = new StringBuilder();
+        var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", selectedMovie);
+        htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+
+        return Json(new { 
+            success = true, 
+            html = htmlBuilder.ToString(),
+            count = 1,
+            suggestionTitle = suggestionTitle
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "💥 ERROR in SurpriseMeReshuffle: {Message}", ex.Message);
+        return Json(new { 
+            success = false, 
+            error = "Could not generate a surprise suggestion. Please try again."
+        });
+    }
+}
+
+/// <summary>
+/// Builds a mixed pool of movies with strict deduplication and cascading fallback.
+/// Returns buckets organized by match specificity for cyclic reshuffling.
+/// </summary>
+/// <returns>Tuple containing (bucket3x3, bucket2x3, bucket1x3) with unique movies</returns>
+private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2x3, List<TmdbMovieBrief> bucket1x3)> 
+    BuildSurprisePoolAsync(string userId)
+{
+    _logger.LogInformation("🏗️ Building surprise pool for user {UserId}", userId);
+    
+    // --- 1. Get user ingredients ---
+    var loggedMovies = await _dbContext.Movies
+        .Where(m => m.UserId == userId && m.TmdbId.HasValue && !string.IsNullOrEmpty(m.Director) && !string.IsNullOrEmpty(m.Genres) && m.ReleasedYear.HasValue)
+        .ToListAsync();
+
+    if (loggedMovies.Count < 3)
+    {
+        return (new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>());
+    }
+
+    var random = new Random();
+    var directorPool = loggedMovies.Select(m => m.Director!).Distinct().ToList();
+    var genrePool = loggedMovies.SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)).Distinct().ToList();
+    
+    // Build actor pool (cached for performance)
+    var actorPool = new List<TmdbCastPerson>();
+    var movieDetailsCache = new Dictionary<int, TmdbMovieDetails?>();
+    
+    foreach (var movie in loggedMovies.OrderByDescending(m => m.DateWatched).Take(15))
+    {
+        if (!movie.TmdbId.HasValue) continue;
+        var tmdbIdValue = movie.TmdbId.Value;
+        
+        TmdbMovieDetails? details;
+        if (movieDetailsCache.ContainsKey(tmdbIdValue))
+        {
+            details = movieDetailsCache[tmdbIdValue];
+        }
+        else
+        {
+            details = await _tmdbService.GetMovieDetailsAsync(tmdbIdValue);
+            movieDetailsCache[tmdbIdValue] = details;
+        }
+        
+        if (details?.Credits?.Cast != null)
+        {
+            actorPool.AddRange(details.Credits.Cast.Take(3));
+        }
+    }
+    actorPool = actorPool.DistinctBy(p => p.Id).ToList();
+
+    if (!actorPool.Any())
+    {
+        _logger.LogWarning("No actors found in user's recent movies");
+        return (new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>());
+    }
+
+    // Get all genres for mapping
+    var allGenres = await _tmdbService.GetAllGenresAsync();
+    var genreDict = allGenres.ToDictionary(g => g.Name!, g => g.Id, StringComparer.OrdinalIgnoreCase);
+
+    // --- 2. Build buckets with deduplication ---
+    var allMoviesFound = new HashSet<int>(); // Global deduplication tracker
+    var bucket3x3 = new List<TmdbMovieBrief>();
+    var bucket2x3 = new List<TmdbMovieBrief>();
+    var bucket1x3 = new List<TmdbMovieBrief>();
+
+    // --- BUCKET A: 3/3 MATCHES (Target: 20) ---
+    _logger.LogInformation("🎯 Building 3/3 matches bucket...");
+    var attempts3x3 = 0;
+    while (bucket3x3.Count < 20 && attempts3x3 < 10) // Max 10 combinations to avoid infinite loop
+    {
+        var randDirector = directorPool[random.Next(directorPool.Count)];
+        var randActor = actorPool[random.Next(actorPool.Count)];
+        var randGenre = genrePool[random.Next(genrePool.Count)];
+        
+        var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
+        var actorId = randActor.Id;
+        var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
+        
+        if (directorId.HasValue && genreId.HasValue)
+        {
+            var movies = await _tmdbService.DiscoverMoviesAsync(directorId, actorId, genreId, null);
+            var validMovies = movies
+                .Where(m => m.VoteAverage >= 4.5)
+                .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+                .ToList();
+            
+            foreach (var movie in validMovies.Take(20 - bucket3x3.Count))
+            {
+                bucket3x3.Add(movie);
+                allMoviesFound.Add(movie.Id);
+            }
+        }
+        attempts3x3++;
+    }
+    
+    _logger.LogInformation("✅ 3/3 bucket built: {Count} movies", bucket3x3.Count);
+
+    // --- BUCKET B: 2/3 MATCHES (Target: 60, complete missing from 3/3) ---
+    _logger.LogInformation("🎯 Building 2/3 matches bucket...");
+    var needed2x3 = 60 + Math.Max(0, 20 - bucket3x3.Count); // Cascade: complete missing 3/3
+    var attempts2x3 = 0;
+    
+    // Three 2/3 combinations
+    var combos2x3 = new[]
+    {
+        "director_actor", // Director + Actor
+        "director_genre", // Director + Genre  
+        "actor_genre"     // Actor + Genre
+    };
+    
+    while (bucket2x3.Count < needed2x3 && attempts2x3 < 15) // Max 15 combinations
+    {
+        var combo = combos2x3[attempts2x3 % 3];
+        var randDirector = directorPool[random.Next(directorPool.Count)];
+        var randActor = actorPool[random.Next(actorPool.Count)];
+        var randGenre = genrePool[random.Next(genrePool.Count)];
+        
+        var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
+        var actorId = randActor.Id;
+        var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
+        
+        List<TmdbMovieBrief> movies = new();
+        
+        switch (combo)
+        {
+            case "director_actor":
+                if (directorId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(directorId, actorId, null, null);
+                break;
+            case "director_genre":
+                if (directorId.HasValue && genreId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, genreId, null);
+                break;
+            case "actor_genre":
+                if (genreId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, genreId, null);
+                break;
+        }
+        
+        var validMovies = movies
+            .Where(m => m.VoteAverage >= 4.5)
+            .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+            .ToList();
+        
+        foreach (var movie in validMovies.Take(needed2x3 - bucket2x3.Count))
+        {
+            bucket2x3.Add(movie);
+            allMoviesFound.Add(movie.Id);
+        }
+        
+        attempts2x3++;
+    }
+    
+    _logger.LogInformation("✅ 2/3 bucket built: {Count} movies (needed: {Needed})", bucket2x3.Count, needed2x3);
+
+    // --- BUCKET C: 1/3 MATCHES (Target: 20, complete missing from 2/3) ---
+    _logger.LogInformation("🎯 Building 1/3 matches bucket...");
+    var needed1x3 = 20 + Math.Max(0, needed2x3 - bucket2x3.Count); // Cascade: complete missing 2/3
+    var attempts1x3 = 0;
+    
+    var singles1x3 = new[] { "director", "actor", "genre" };
+    
+    while (bucket1x3.Count < needed1x3 && attempts1x3 < 10)
+    {
+        var single = singles1x3[attempts1x3 % 3];
+        var randDirector = directorPool[random.Next(directorPool.Count)];
+        var randActor = actorPool[random.Next(actorPool.Count)];
+        var randGenre = genrePool[random.Next(genrePool.Count)];
+        
+        List<TmdbMovieBrief> movies = new();
+        
+        switch (single)
+        {
+            case "director":
+                var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
+                if (directorId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, null, null);
+                break;
+            case "actor":
+                var actorId = randActor.Id;
+                movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, null, null);
+                break;
+            case "genre":
+                var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
+                if (genreId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(null, null, genreId, null);
+                break;
+        }
+        
+        var validMovies = movies
+            .Where(m => m.VoteAverage >= 4.5)
+            .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+            .ToList();
+        
+        foreach (var movie in validMovies.Take(needed1x3 - bucket1x3.Count))
+        {
+            bucket1x3.Add(movie);
+            allMoviesFound.Add(movie.Id);
+        }
+        
+        attempts1x3++;
+    }
+    
+    _logger.LogInformation("✅ 1/3 bucket built: {Count} movies (needed: {Needed})", bucket1x3.Count, needed1x3);
+    
+    var totalFound = bucket3x3.Count + bucket2x3.Count + bucket1x3.Count;
+    _logger.LogInformation("🎁 Pool building complete: {Total} unique movies across all buckets", totalFound);
+    
+    return (bucket3x3, bucket2x3, bucket1x3);
+}
+
+/// <summary>
+/// Helper para renderizar una partial view a string.
+/// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
+///
+/// Se usa en TrendingReshuffle para garantizar que los posters, helpers y paths de imágenes funcionen igual que en el render inicial.
         /// </summary>
         private async Task<string> RenderPartialViewToStringAsync(string viewName, object model)
         {
