@@ -1206,7 +1206,7 @@ public async Task<IActionResult> TrendingReshuffle()
                 var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
                 var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
 
-                // CORRECCIÓN 1: Título simple y consistente.
+                // FIX 1: Simple and consistent title.
                 var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
 
                 if (!suggestedMovies.Any())
@@ -1373,7 +1373,19 @@ public async Task<IActionResult> DecadeReshuffle()
             return Unauthorized();
         }
 
-        // 1. OBTENER SOLO LAS ÚLTIMAS 25 PELÍCULAS (no todo el historial)
+    /// <summary>
+    /// Returns a set of movie suggestions based on the user's most recent decades of activity.
+    /// 
+    /// Business logic:
+    /// - Prioritizes decades using the user's last 25 logged movies for relevance and performance.
+    /// - Decade selection follows a strict priority: most recent, most frequent, highest rated, then random.
+    /// - Implements early exit optimization to minimize TMDB API calls and improve responsiveness.
+    /// - Caches blacklist and recent movie filters to avoid redundant database queries.
+    /// - Session state is used to prevent immediate repetition of the last suggested decade.
+    /// - Ensures a high-quality, variety-driven user experience even in edge cases.
+    /// </summary>
+    // Retrieve the user's last 25 logged movies, ordered by most recent activity
+    // This scope ensures suggestions are relevant to current user interests and reduces query overhead
         var last25Movies = await _dbContext.Movies
             .Where(m => m.UserId == userId && m.ReleasedYear.HasValue)
             .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
@@ -1386,18 +1398,19 @@ public async Task<IActionResult> DecadeReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        // 2. EXTRAER DÉCADAS ÚNICAS DE LAS ÚLTIMAS 25
+    // Calculate the set of unique decades represented in the user's recent activity
+    // Decades are derived from the release year of each movie for accurate grouping
         var availableDecades = last25Movies
             .Select(m => (m.ReleasedYear!.Value / 10) * 10)
             .Distinct()
             .ToList();
 
-        // 3. CALCULAR PRIORIDADES (solo de las últimas 25)
-        
-        // LATEST: Década de la película MÁS RECIENTEMENTE agregada
+    // Calculate decade priorities based on user's recent movie activity
+    // Priority order: latest → frequent → rated → random exploration
+    // LATEST: Decade from the most recently added movie (by DateCreated/DateWatched)
         var latestDecade = (last25Movies.First().ReleasedYear!.Value / 10) * 10;
 
-        // FREQUENT: Década más frecuente (mínimo 2 películas en las 25)
+    // FREQUENT: Most frequent decade with ≥2 movies from last 25, random selection on ties
         var frequentGroups = last25Movies.GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
             .Where(g => g.Count() >= 2).ToList();
         var mostFrequentDecade = 0;
@@ -1408,7 +1421,7 @@ public async Task<IActionResult> DecadeReshuffle()
             mostFrequentDecade = freqCandidates[Random.Shared.Next(freqCandidates.Count)];
         }
 
-        // RATED: Década mejor valorada (mínimo 2 películas valoradas en las 25)
+    // RATED: Highest average rated decade with ≥2 rated movies from last 25, random selection on ties
         var ratedGroups = last25Movies.Where(m => m.UserRating.HasValue)
             .GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
             .Where(g => g.Count() >= 2).ToList();
@@ -1422,17 +1435,20 @@ public async Task<IActionResult> DecadeReshuffle()
             highestRatedDecade = ratedCandidates[Random.Shared.Next(ratedCandidates.Count)];
         }
 
-        // 4. CONSTRUIR SECUENCIA DE EVALUACIÓN
+    // Build the priority queue for decade evaluation
+    // Early exit optimization: stop at the first decade with valid suggestions
+    // This user-driven approach minimizes API calls while ensuring variety
         var priorityQueue = new List<int> { latestDecade, mostFrequentDecade, highestRatedDecade }
             .Where(d => d > 0).Distinct().ToList();
         
-        // Random: TODAS las décadas de las 25 (puede incluir las de prioridad)
+    // RANDOM: Any decade from the last 25 movies can be selected, ensuring equitable representation
         var randomDecades = availableDecades.OrderBy(_ => Random.Shared.Next()).ToList();
         var decadesToTry = priorityQueue.Concat(randomDecades).ToList();
 
         _logger.LogInformation("[DECADE-LOGIC] Decades to try in order: {Decades}", string.Join(", ", decadesToTry));
 
-        // 5. EVALUACIÓN OPTIMIZADA CON EARLY EXIT
+    // Optimized evaluation loop with early exit
+    // Only a maximum of 5 decades are evaluated per request to reduce API usage
         List<(int Decade, List<TmdbMovieBrief> Pool)> validDecades = new();
         string lastDecadeKey = $"LastDecadeShown_{userId}";
         int? lastDecade = HttpContext.Session.GetInt32(lastDecadeKey);
@@ -1443,27 +1459,29 @@ public async Task<IActionResult> DecadeReshuffle()
         int totalApiCalls = 0;
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        // Cache filtros una sola vez (basado en las últimas 25)
+    // Cache expensive filter operations to avoid redundant queries
+    // Blacklisted movies and recent user activity are computed once per request
         var blacklisted = await GetUserBlacklistedTmdbIdsAsync(userId);
         var last5 = last25Movies.Take(5).Select(m => m.TmdbId ?? 0).ToHashSet();
 
-        // Bucle principal con early exit inteligente
+    // Main evaluation loop with early exit logic
+    // Skips the immediately previously shown decade (anti-repetition)
         foreach (var decade in decadesToTry)
         {
-            // Skip la década mostrada inmediatamente antes
+            // Skip the decade shown immediately before (anti-repetition)
             if (decade == lastDecade) continue;
             
-            // Early exit si ya evaluamos suficientes décadas y tenemos opciones
+            // Early exit: if enough decades have been evaluated and valid options found, stop
             if (evaluatedCount >= MAX_DECADES_TO_EVALUATE && validDecades.Count >= 2) break;
             
             evaluatedCount++;
             
-            // Construir pool para esta década (optimizado)
+            // Build the suggestion pool for this decade (API optimized)
             var currentPool = new List<TmdbMovieBrief>();
             int page = 1;
-            const int maxPagesToTry = 3; // Reducido de 5 a 3
+            const int maxPagesToTry = 3; // Reduced from 5 to 3 for performance
             
-            while (currentPool.Count < 10 && page <= maxPagesToTry) // Reducido de 15 a 10
+            while (currentPool.Count < 10 && page <= maxPagesToTry) // Reduced from 15 to 10 for efficiency
             {
                 totalApiCalls++;
                 var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page);
@@ -1481,11 +1499,13 @@ public async Task<IActionResult> DecadeReshuffle()
             
             if (currentPool.Count >= 3)
             {
+                // Early exit: valid suggestions found for a prioritized decade
                 validDecades.Add((decade, currentPool));
             }
         }
 
-        // 6. FALLBACK: Si no hay décadas con 3+, buscar con 1+
+    // Fallback: If no decades have at least 3 valid movies, search for decades with at least 1
+    // Ensures the user always receives a suggestion, even in edge cases
         if (!validDecades.Any())
         {
             _logger.LogWarning("[DECADE-LOGIC] No decade found with 3+ valid movies. Starting fallback search for 1+.");
@@ -1530,11 +1550,13 @@ public async Task<IActionResult> DecadeReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        // 7. SELECCIÓN ALEATORIA ENTRE TODAS LAS DÉCADAS VÁLIDAS
+    // Random selection among all valid decades found
+    // Session state is updated to prevent immediate repetition in future requests
         var selected = validDecades[Random.Shared.Next(validDecades.Count)];
         HttpContext.Session.SetInt32(lastDecadeKey, selected.Decade);
 
-        // 8. RESPUESTA FINAL
+    // Final response: render up to 3 suggestions for display
+    // Ensures variety and freshness in the user experience
         var suggestedMovies = selected.Pool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
         string suggestionTitle = $"Here are movies from the {selected.Decade}s";
 
