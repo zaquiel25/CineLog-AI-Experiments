@@ -1,4 +1,21 @@
 # Genre Suggestion Priority Queue and AJAX Reshuffle (2025-07-23)
+### Surprise Me (Optimized Pool-Based Approach)
+
+- The "Surprise Me" feature now uses a static, deduplicated pool of 80 movies, built with aggressive cascading from prioritized buckets (trending, genre, director, etc.).
+
+
+- The pool is cached for 2 hours (IMemoryCache), ensuring instant reshuffles and consistent suggestions.
+- Infinite cyclic rotation: each reshuffle advances the pointer, wrapping around as needed.
+- Blacklist and recent filters are applied during pool build, not per reshuffle.
+- Deduplication by TMDB ID is enforced during pool construction.
+- Performance: Only ~5 TMDB API calls are made during initial pool build; all reshuffles are API-free.
+
+#### Performance Comparison
+| Suggestion Type      | API Calls (Initial) | API Calls (Reshuffle) | Latency (Reshuffle) |
+|----------------------|--------------------|----------------------|---------------------|
+| Surprise Me (Pool)   | ~5                 | 0                    | Instant             |
+| Director/Genre/etc.  | 1-2                | 1-2                  | 1-2s                |
+
 
 ## Genre Priority Queue
 - The backend now provides a prioritized queue of genres for each user, based on their logged movies.

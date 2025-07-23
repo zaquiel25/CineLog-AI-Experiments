@@ -1,3 +1,14 @@
+# 2025-07-24 Surprise Me Optimization
+
+- Major optimization of the "Surprise Me" suggestion system:
+  - Now uses a static, deduplicated pool of 80 movies, built with aggressive cascading from prioritized buckets (trending, genre, director, etc.).
+  - The pool is cached for 2 hours (IMemoryCache), ensuring instant reshuffles and consistent suggestions.
+  - Infinite cyclic rotation: each reshuffle advances the pointer, wrapping around as needed.
+  - Blacklist and recent filters are applied during pool build, not per reshuffle.
+  - Deduplication by TMDB ID is enforced during pool construction.
+  - Performance: Only ~5 TMDB API calls are made during initial pool build; all reshuffles are API-free.
+  - All outdated references to the previous 4-cycle logic and per-reshuffle discovery calls have been removed from documentation and code comments.
+
 # 2025-07-23
 - Added prioritized genre queue logic for user suggestions (recent, frequent, highest-rated genre).
 - Implemented per-user caching for genre priority queue (1 hour expiration).

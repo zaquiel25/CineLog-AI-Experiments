@@ -795,24 +795,29 @@ private void InvalidateUserCaches(string userId)
         }
 
         /// <summary>
-        /// Returns a personalized "Surprise Me!" movie suggestion for the logged-in user.
-        /// 
-        /// The algorithm cycles through four levels of matching strictness (director+actor+genre, any 2/3, any 1/3, random popular)
-        /// to maximize variety and avoid repetition. It excludes recently watched, blacklisted, and session-recent suggestions.
-        /// 
-        /// Requirements:
-        /// - User must have logged at least 3 movies with director, genre, and release year info.
-        /// - Suggestion pools are built from user's own movie history (directors, genres, actors).
-        /// - Session state is used to avoid repeating suggestions and to cycle through match strictness.
-        /// </summary>
-        /// <remarks>
-        /// Business logic:
-        /// - Cyclically rotates through 4 suggestion strategies for variety.
-        /// - Uses TMDB API for movie/person/genre lookups and discovery.
-        /// - Ensures suggestions are not recently watched, not blacklisted, and not repeated in session.
-        /// - Fallback logic ensures a suggestion is always returned, even if only a popular movie can be found.
-        /// - Updates session state to track shown suggestions and cycle step.
-        /// </remarks>
+    /// <summary>
+    /// Returns a personalized "Surprise Me!" movie suggestion for the logged-in user using an optimized static pool approach.
+    ///
+    /// <para>
+    /// <b>Pool Construction:</b> Builds a static, deduplicated pool of 80 movies using aggressive cascading from multiple sources (e.g., trending, genre, director).
+    /// Blacklisted and recently suggested movies are filtered out during pool build. Deduplication is enforced by TMDB ID.
+    /// </para>
+    /// <para>
+    /// <b>Caching:</b> The pool is cached in IMemoryCache for 2 hours. During this period, all reshuffles use the same pool, resulting in zero TMDB API calls per reshuffle.
+    /// </para>
+    /// <para>
+    /// <b>Rotation:</b> The pool is shuffled and supports infinite cyclic rotation. Each reshuffle advances the pointer, wrapping to the start as needed. Session state tracks the current position.
+    /// </para>
+    /// <para>
+    /// <b>Performance:</b> Only ~5 TMDB API calls are made during initial pool build; subsequent reshuffles are instant and API-free.
+    /// </para>
+    /// <para>
+    /// Requirements:
+    /// - User must have logged at least 3 movies with director, genre, and release year info.
+    /// - Suggestion pools are built from user's own movie history (directors, genres, actors).
+    /// - Session state is used to track pool index and shuffled order for anti-repetition and infinite cycling.
+    /// </para>
+    /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetSurpriseSuggestion()
         {
@@ -1885,8 +1890,21 @@ if (selectedMovie == null)
 }
 
 /// <summary>
-/// Builds a mixed pool of movies with strict deduplication and cascading fallback.
-/// Returns buckets organized by match specificity for cyclic reshuffling.
+/// <summary>
+/// Builds the static pool of 80 deduplicated movies for Surprise Me suggestions.
+///
+/// <para>
+/// <b>Pool Guarantee:</b> Always attempts to fill 80 slots using aggressive cascading across prioritized buckets (e.g., trending, genre, director, actor).
+/// </para>
+/// <para>
+/// <b>Bucket System:</b> Uses a 3x3/2x3/1x3 bucket system for flexible distribution, ensuring variety and fallback if a bucket is exhausted.
+/// </para>
+/// <para>
+/// <b>Deduplication & Filtering:</b> Deduplication by TMDB ID and filtering for blacklist/recent movies are performed during build, not per reshuffle.
+/// </para>
+/// <para>
+/// <b>Performance:</b> Typically requires ~5 TMDB API calls for initial build; zero calls for subsequent reshuffles within the cache window.
+/// </para>
 /// </summary>
 /// <returns>Tuple containing (bucket3x3, bucket2x3, bucket1x3) with unique movies</returns>
 private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2x3, List<TmdbMovieBrief> bucket1x3)> 
