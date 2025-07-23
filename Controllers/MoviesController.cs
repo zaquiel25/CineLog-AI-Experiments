@@ -1856,8 +1856,7 @@ public async Task<IActionResult> SurpriseMeReshuffle()
         if (currentBucket.Any())
         {
             selectedMovie = currentBucket[Random.Shared.Next(currentBucket.Count)];
-            suggestionTitle = $"Surprise! ({bucketType})";
-            
+            suggestionTitle = "Surprise!";
             // Update anti-repetition tracking
             shownSurpriseIds.Add(selectedMovie.Id);
             if (shownSurpriseIds.Count > 30) shownSurpriseIds.RemoveAt(0); // Keep last 30
