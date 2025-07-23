@@ -109,6 +109,24 @@ namespace Ezequiel_Movies.Controllers
             _memoryCache = memoryCache; // <- ASIGNACIÓN AÑADIDA
         }
 
+    /// <summary>
+    /// Returns a prioritized queue of genres for the current user, based on their logged movies.
+    /// 
+    /// The queue is ordered by:
+    /// 1. Most recent genre (from the latest logged movie)
+    /// 2. Most frequent genre (across all logged movies)
+    /// 3. Highest-rated genre (from movies rated 4.0 or higher)
+    /// 
+    /// The result is cached per user for 1 hour to optimize performance and avoid redundant calculations.
+    /// 
+    /// Business rationale:
+    /// - Ensures genre-based suggestions are relevant to recent and frequent user activity.
+    /// - Caching reduces database and memory overhead for repeated suggestion requests.
+    /// - The queue is used for AJAX-powered genre reshuffles and anti-repetition logic.
+    /// </summary>
+    /// <param name="userId">Current user's ID (for cache key and filtering)</param>
+    /// <param name="loggedMovies">List of movies logged by the user (should be pre-filtered by userId)</param>
+    /// <returns>List of genre names in priority order (recent, frequent, highest-rated)</returns>
     private List<string> GetGenrePriorityQueueCached(string userId, List<Ezequiel_Movies1.Models.Entities.Movies> loggedMovies)
     {
         string queueCacheKey = $"GenrePriorityQueue_{userId}";
@@ -118,18 +136,36 @@ namespace Ezequiel_Movies.Controllers
             return cachedQueue;
         }
 
-        var allUserGenres = loggedMovies.SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()).ToList();
-        var recentGenre = loggedMovies.OrderByDescending(m => m.DateWatched ?? m.DateCreated).FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault();
-        var frequentGenre = allUserGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-        var ratedGenres = loggedMovies.Where(m => m.UserRating.HasValue && m.UserRating.Value >= 4.0m).SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.None) ?? Array.Empty<string>()).ToList();
-        var highestRatedGenre = ratedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+        // Build genre pools from user's logged movies
+        var allUserGenres = loggedMovies
+            .SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
+            .ToList();
+        var recentGenre = loggedMovies
+            .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
+            .FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault();
+        var frequentGenre = allUserGenres
+            .GroupBy(g => g)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault();
+        var ratedGenres = loggedMovies
+            .Where(m => m.UserRating.HasValue && m.UserRating.Value >= 4.0m)
+            .SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.None) ?? Array.Empty<string>())
+            .ToList();
+        var highestRatedGenre = ratedGenres
+            .GroupBy(g => g)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault();
 
+        // Compose the priority queue, removing null/empty and duplicates
         var priorityQueue = new List<string?> { recentGenre, frequentGenre, highestRatedGenre }
             .Where(g => !string.IsNullOrEmpty(g))
             .Distinct()
             .Select(g => g!)
             .ToList();
 
+        // Cache the result for 1 hour for efficiency
         var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1));
         _memoryCache.Set(queueCacheKey, priorityQueue, cacheOptions);
         _logger.LogInformation("✅ Priority Queue calculated and cached for user {UserId}", userId);

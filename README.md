@@ -1,3 +1,19 @@
+# Genre Suggestion Priority Queue and AJAX Reshuffle (2025-07-23)
+
+## Genre Priority Queue
+- The backend now provides a prioritized queue of genres for each user, based on their logged movies.
+- The queue is ordered by:
+  1. Most recent genre (from the latest logged movie)
+  2. Most frequent genre (across all logged movies)
+  3. Highest-rated genre (from movies rated 4.0 or higher)
+- The queue is cached per user for 1 hour to optimize performance and reduce redundant calculations.
+- This queue is used for AJAX-powered genre reshuffles and anti-repetition logic in the UI.
+
+## AJAX Genre Reshuffle
+- The "By Genre" suggestion type now supports AJAX reshuffling, returning server-rendered HTML for seamless UI updates.
+- All user-specific filtering and anti-repetition logic is enforced server-side.
+
+See `MoviesController.cs` for implementation details and business logic comments.
 # ✨ Cinema Gold Branding & UI Polish (2025-07-19)
 - **Navbar:** The bottom border of the navbar is now gold (Cinema Gold) and enforced with `!important` for maximum visual consistency.
 - **Section Titles:** Suggestion section titles use Cinema Gold and retain their original size and visual weight.

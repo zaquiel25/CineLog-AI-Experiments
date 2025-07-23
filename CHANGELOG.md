@@ -1,3 +1,8 @@
+# 2025-07-23
+- Added prioritized genre queue logic for user suggestions (recent, frequent, highest-rated genre).
+- Implemented per-user caching for genre priority queue (1 hour expiration).
+- Enabled AJAX-powered reshuffle for "By Genre" suggestions, with server-rendered HTML and anti-repetition logic.
+- Updated controller and documentation comments to match business logic and maintainability standards.
 ## [Version X.X.X] - 2025-07-22
 ### 🚀 Major DecadeReshuffle Performance & Logic Optimization
 - **Data Source Optimization**: DecadeReshuffle now uses only the last 25 movies instead of entire user history
