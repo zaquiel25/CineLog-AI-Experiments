@@ -1,3 +1,8 @@
+# Cast Suggestions (Actor)
+
+- Suggests movies based on actors from your recent movie history, rotating between most recent, most frequent, highest-rated, and random.
+- Anti-repetition: the same actor will never be suggested twice in a row (immediate repetition is prevented).
+
 # Genre Suggestion Priority Queue and AJAX Reshuffle (2025-07-23)
 ### Surprise Me (Optimized Pool-Based Approach)
 

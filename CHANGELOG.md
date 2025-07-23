@@ -1,3 +1,9 @@
+# 2025-07-24 Cast Suggestion Anti-Repetition
+
+- Added logic to prevent immediate repetition of the same actor in cast-based suggestions (CastReshuffle).
+- Now, the same actor will never be suggested twice in a row, improving perceived variety and user experience.
+- No impact on performance or existing priorities; only the last actor is tracked in Session.
+
 # 2025-07-24 Surprise Me Optimization
 
 - Major optimization of the "Surprise Me" suggestion system:

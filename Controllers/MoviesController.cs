@@ -1187,16 +1187,17 @@ public async Task<IActionResult> TrendingReshuffle()
         /// AJAX endpoint for reshuffling movie suggestions based on cast (actors) from the user's recent movie history.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// Implements a robust, session-sequenced strategy for cast-based suggestions:
-        /// <list type="number">
-        /// <item>Step 1: Suggests using the most recent actor from the user's last 15 logged movies.</item>
-        /// <item>Step 2: Suggests using the most frequent actor among those movies.</item>
-        /// <item>Step 3: Suggests using the top-billed actor from the user's highest-rated movie.</item>
-        /// <item>Step 4+: If all above are exhausted or unavailable, selects a random actor from the pool.</item>
-        /// </list>
-        /// The current step is tracked in Session per user and advances with each reshuffle, ensuring variety and personalization.
-        /// </para>
+    /// <para>
+    /// Implements a robust, session-sequenced strategy for cast-based suggestions:
+    /// <list type="number">
+    /// <item>Step 1: Suggests using the most recent actor from the user's last 15 logged movies.</item>
+    /// <item>Step 2: Suggests using the most frequent actor among those movies.</item>
+    /// <item>Step 3: Suggests using the top-billed actor from the user's highest-rated movie.</item>
+    /// <item>Step 4+: If all above are exhausted or unavailable, selects a random actor from the pool.</item>
+    /// </list>
+    /// <b>Anti-repetition:</b> The same actor will never be suggested twice in a row (immediate repetition is prevented via Session state).
+    /// The current step is tracked in Session per user and advances with each reshuffle, ensuring variety and personalization.
+    /// </para>
         /// <para>
         /// Business rules:
         /// <list type="bullet">
@@ -1277,28 +1278,47 @@ public async Task<IActionResult> TrendingReshuffle()
                     .DistinctBy(a => a.Id)
                     .ToList();
 
-                // Try to select an actor from the prioritized queue. If the current step is empty or exhausted, selectedActor remains null.
+
+                // --- ANTI-REPETICIÓN INMEDIATA DE ACTOR ---
+                string lastActorKey = $"LastActorId_{userId}";
+                int? lastActorId = HttpContext.Session.GetInt32(lastActorKey);
+
+                // 1. Intentar seleccionar actor de la cola priorizada evitando el último actor si es posible
                 if (castTypeCount < priorityQueue.Count)
                 {
-                    selectedActor = priorityQueue[castTypeCount];
+                    var candidate = priorityQueue[castTypeCount];
+                    if (lastActorId.HasValue && candidate != null && candidate.Id == lastActorId.Value && priorityQueue.Count > 1)
+                    {
+                        // Buscar otro actor distinto si hay más opciones
+                        candidate = priorityQueue.FirstOrDefault(a => a.Id != lastActorId.Value);
+                    }
+                    selectedActor = candidate;
                 }
 
-                // If the sequence did not yield an actor (empty or finished), fall back to random selection from the pool.
+                // 2. Si no se pudo seleccionar, fallback a random evitando el último actor si es posible
                 if (selectedActor == null)
                 {
                     _logger.LogInformation("Sequence step {Step} was empty or finished. Switching to random.", castTypeCount);
                     var distinctActors = allTopActors.Where(a => a != null).DistinctBy(a => a.Id).ToList();
                     if (distinctActors.Any())
                     {
-                        selectedActor = distinctActors[Random.Shared.Next(distinctActors.Count)];
+                        var pool = distinctActors;
+                        if (lastActorId.HasValue && pool.Count > 1)
+                        {
+                            pool = pool.Where(a => a.Id != lastActorId.Value).ToList();
+                        }
+                        selectedActor = pool[Random.Shared.Next(pool.Count)];
                     }
                 }
 
-                // If no actor could be selected after all strategies, throw an unrecoverable error (should be extremely rare).
+                // 3. Si no hay actor posible, lanzar error (caso extremo)
                 if (selectedActor == null)
                 {
                     throw new InvalidOperationException("Could not select a valid actor to generate suggestions.");
                 }
+
+                // Guardar el actor sugerido en Session para la próxima vez
+                HttpContext.Session.SetInt32(lastActorKey, selectedActor.Id);
 
                 // 4. SUGGESTION GENERATION & RESPONSE: Fetch movies for the selected actor and return server-rendered HTML or a friendly message if none found.
                 var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
