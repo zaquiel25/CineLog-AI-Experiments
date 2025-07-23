@@ -1796,81 +1796,87 @@ public async Task<IActionResult> SurpriseMeReshuffle()
                 bucket3x3.Count, bucket2x3.Count, bucket1x3.Count, bucket3x3.Count + bucket2x3.Count + bucket1x3.Count);
         }
 
-        // --- 2. Apply user filters to all buckets ---
-        var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
-        var recentMovieIds = await _dbContext.Movies
-            .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
-            .OrderByDescending(m => m.DateWatched)
-            .Take(10)
-            .Select(m => m.TmdbId!.Value)
-            .ToListAsync();
-        var recentMovieIdSet = recentMovieIds.ToHashSet();
+        // --- 2. Filters already applied during build, use buckets directly ---
+var filtered3x3 = bucket3x3;
+var filtered2x3 = bucket2x3;
+var filtered1x3 = bucket1x3;
 
-        // Filter all buckets
-        var filtered3x3 = bucket3x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
-        var filtered2x3 = bucket2x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
-        var filtered1x3 = bucket1x3.Where(m => !userBlacklistedIds.Contains(m.Id) && !recentMovieIdSet.Contains(m.Id)).ToList();
+var totalPoolSize = filtered3x3.Count + filtered2x3.Count + filtered1x3.Count;
+_logger.LogInformation("🎁 Using pre-filtered pool: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
+    filtered3x3.Count, filtered2x3.Count, filtered1x3.Count, totalPoolSize);
 
-        _logger.LogInformation("🔍 After filtering: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
-            filtered3x3.Count, filtered2x3.Count, filtered1x3.Count, filtered3x3.Count + filtered2x3.Count + filtered1x3.Count);
+// Edge case: if pool too small, show friendly message
+if (totalPoolSize < 10)
+{
+    var emptyHtml = @"<div class='alert alert-info text-center my-5'>Come back in a bit for more surprises! 🎬</div>";
+    return Json(new { success = true, html = emptyHtml, count = 0 });
+}
 
-        // --- 3. Get session anti-repetition state ---
-        var shownSurpriseIds = HttpContext.Session.Get<List<int>>("ShownSurpriseIds") ?? new List<int>();
+       // --- 3. Infinite cyclic rotation with pool index tracking ---
+string poolIndexKey = "SurprisePoolIndex";
+string bucketCycleKey = "SurpriseBucketCycle";
 
-        // Remove already shown movies from all buckets
-        filtered3x3 = filtered3x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
-        filtered2x3 = filtered2x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
-        filtered1x3 = filtered1x3.Where(m => !shownSurpriseIds.Contains(m.Id)).ToList();
+int poolIndex = HttpContext.Session.GetInt32(poolIndexKey) ?? 0;
+int bucketCycle = HttpContext.Session.GetInt32(bucketCycleKey) ?? 0; // 0=A(3x3), 1=B(2x3), 2=C(1x3)
 
-        // --- 4. Cyclic bucket selection: A→B→C→A→B→C... ---
-        string cycleKey = "SurpriseBucketCycle";
-        int currentCycle = HttpContext.Session.GetInt32(cycleKey) ?? 0; // 0=A(3x3), 1=B(2x3), 2=C(1x3)
-        
-    TmdbMovieBrief? selectedMovie = null;
-    string suggestionTitle = "Your Surprise Suggestion...";
-    List<TmdbMovieBrief> currentBucket;
+// Create flat movie list for rotation: A + B + C
+var allMovies = filtered3x3.Concat(filtered2x3).Concat(filtered1x3).ToList();
+var totalMovies = allMovies.Count;
 
-        if (currentCycle == 0 && filtered3x3.Any())
-        {
-            currentBucket = filtered3x3;
-        }
-        else if (currentCycle == 1 && filtered2x3.Any())
-        {
-            currentBucket = filtered2x3;
-        }
-        else if (currentCycle == 2 && filtered1x3.Any())
-        {
-            currentBucket = filtered1x3;
-        }
-        else
-        {
-            // Fallback: use any available bucket
-            currentBucket = filtered3x3.Concat(filtered2x3).Concat(filtered1x3).ToList();
-        }
+// If we've gone through all movies, restart from beginning
+if (poolIndex >= totalMovies)
+{
+    poolIndex = 0;
+    HttpContext.Session.SetInt32(poolIndexKey, poolIndex);
+    _logger.LogInformation("🔄 Pool rotation complete, restarting from movie #0");
+}
 
-        if (currentBucket.Any())
-        {
-            selectedMovie = currentBucket[Random.Shared.Next(currentBucket.Count)];
-            suggestionTitle = "Surprise!";
-            // Update anti-repetition tracking
-            shownSurpriseIds.Add(selectedMovie.Id);
-            if (shownSurpriseIds.Count > 30) shownSurpriseIds.RemoveAt(0); // Keep last 30
-            HttpContext.Session.Set("ShownSurpriseIds", shownSurpriseIds);
-        }
+// Select movie based on current bucket cycle and pool position
+TmdbMovieBrief? selectedMovie = null;
+string suggestionTitle = "Your Surprise Suggestion...";
+string bucketType = "";
 
-        // Advance cycle for next reshuffle: 0→1→2→0→1→2...
-        int nextCycle = (currentCycle + 1) % 3;
-        HttpContext.Session.SetInt32(cycleKey, nextCycle);
-        _logger.LogInformation("🔄 Cycle: {Current} → {Next}", currentCycle, nextCycle);
+if (bucketCycle == 0 && filtered3x3.Any()) // A: 3x3 bucket
+{
+    var bucketIndex = poolIndex % filtered3x3.Count;
+    selectedMovie = filtered3x3[bucketIndex];
+    bucketType = "perfect match";
+}
+else if (bucketCycle == 1 && filtered2x3.Any()) // B: 2x3 bucket  
+{
+    var bucketIndex = poolIndex % filtered2x3.Count;
+    selectedMovie = filtered2x3[bucketIndex];
+    bucketType = "great match";
+}
+else if (bucketCycle == 2 && filtered1x3.Any()) // C: 1x3 bucket
+{
+    var bucketIndex = poolIndex % filtered1x3.Count;
+    selectedMovie = filtered1x3[bucketIndex];
+    bucketType = "good match";
+}
 
-        // --- 5. Handle no suggestion case ---
-        if (selectedMovie == null)
-        {
-            var emptyHtml = @"<div class='alert alert-info text-center my-5'>No surprise suggestions available right now. Try again in a moment!</div>";
-            return Json(new { success = true, html = emptyHtml, count = 0 });
-        }
+if (selectedMovie != null)
+{
+    suggestionTitle = $"Surprise! ({bucketType})";
+    
+    // Advance pool index for next movie
+    poolIndex++;
+    HttpContext.Session.SetInt32(poolIndexKey, poolIndex);
+}
 
-        // --- 6. Render response using partial view ---
+// Advance bucket cycle: A→B→C→A→B→C...
+int nextBucketCycle = (bucketCycle + 1) % 3;
+HttpContext.Session.SetInt32(bucketCycleKey, nextBucketCycle);
+_logger.LogInformation("🎯 Movie #{Index}, Bucket: {Current} → {Next}", poolIndex - 1, bucketCycle, nextBucketCycle);
+
+        // --- 4. Handle no suggestion case ---
+if (selectedMovie == null)
+{
+    var emptyHtml = @"<div class='alert alert-info text-center my-5'>Come back in a bit for more surprises! 🎬</div>";
+    return Json(new { success = true, html = emptyHtml, count = 0 });
+}
+
+        // --- 5. Render response using partial view ---
         var htmlBuilder = new StringBuilder();
         var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", selectedMovie);
         htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
@@ -1906,11 +1912,23 @@ private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2
     var loggedMovies = await _dbContext.Movies
         .Where(m => m.UserId == userId && m.TmdbId.HasValue && !string.IsNullOrEmpty(m.Director) && !string.IsNullOrEmpty(m.Genres) && m.ReleasedYear.HasValue)
         .ToListAsync();
+        
+        // Get user filters to apply during build (not after)
+var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+var recentMovieIds = await _dbContext.Movies
+    .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+    .OrderByDescending(m => m.DateWatched)
+    .Take(10)
+    .Select(m => m.TmdbId!.Value)
+    .ToListAsync();
+var recentMovieIdSet = recentMovieIds.ToHashSet();
+_logger.LogInformation("🔍 Filters loaded: {BlacklistCount} blacklisted, {RecentCount} recent", 
+    userBlacklistedIds.Count, recentMovieIdSet.Count);
 
     if (loggedMovies.Count < 3)
-    {
-        return (new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>());
-    }
+            {
+                return (new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>(), new List<TmdbMovieBrief>());
+            }
 
     var random = new Random();
     var directorPool = loggedMovies.Select(m => m.Director!).Distinct().ToList();
@@ -1976,9 +1994,11 @@ private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2
         {
             var movies = await _tmdbService.DiscoverMoviesAsync(directorId, actorId, genreId, null);
             var validMovies = movies
-                .Where(m => m.VoteAverage >= 4.5)
-                .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
-                .ToList();
+    .Where(m => m.VoteAverage >= 4.5)
+    .Where(m => !userBlacklistedIds.Contains(m.Id)) // Apply blacklist filter
+    .Where(m => !recentMovieIdSet.Contains(m.Id)) // Apply recent filter
+    .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+    .ToList();
             
             foreach (var movie in validMovies.Take(20 - bucket3x3.Count))
             {
@@ -2034,9 +2054,11 @@ private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2
         }
         
         var validMovies = movies
-            .Where(m => m.VoteAverage >= 4.5)
-            .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
-            .ToList();
+    .Where(m => m.VoteAverage >= 4.5)
+    .Where(m => !userBlacklistedIds.Contains(m.Id)) // Apply blacklist filter
+    .Where(m => !recentMovieIdSet.Contains(m.Id)) // Apply recent filter
+    .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+    .ToList();
         
         foreach (var movie in validMovies.Take(needed2x3 - bucket2x3.Count))
         {
@@ -2083,10 +2105,12 @@ private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2
                 break;
         }
         
-        var validMovies = movies
-            .Where(m => m.VoteAverage >= 4.5)
-            .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
-            .ToList();
+       var validMovies = movies
+    .Where(m => m.VoteAverage >= 4.5)
+    .Where(m => !userBlacklistedIds.Contains(m.Id)) // Apply blacklist filter
+    .Where(m => !recentMovieIdSet.Contains(m.Id)) // Apply recent filter
+    .Where(m => !allMoviesFound.Contains(m.Id)) // Deduplication
+    .ToList();
         
         foreach (var movie in validMovies.Take(needed1x3 - bucket1x3.Count))
         {
@@ -2100,8 +2124,65 @@ private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2
     _logger.LogInformation("✅ 1/3 bucket built: {Count} movies (needed: {Needed})", bucket1x3.Count, needed1x3);
     
     var totalFound = bucket3x3.Count + bucket2x3.Count + bucket1x3.Count;
-    _logger.LogInformation("🎁 Pool building complete: {Total} unique movies across all buckets", totalFound);
+_logger.LogInformation("🎁 Pool building complete: {Total} unique movies across all buckets", totalFound);
+
+// GUARANTEE exactly 80 movies - aggressive cascading if needed
+if (totalFound < 80)
+{
+    _logger.LogWarning("⚠️ Pool has only {Total} movies, need 80. Starting aggressive cascading...", totalFound);
     
+    // Try more 1x3 combinations until we reach 80
+    var additionalNeeded = 80 - totalFound;
+    var extraAttempts = 0;
+    var extraSingles = new[] { "director", "actor", "genre" };
+    
+    while (totalFound < 80 && extraAttempts < 20) // Max 20 additional attempts
+    {
+        var single = extraSingles[extraAttempts % 3];
+        var randDirector = directorPool[random.Next(directorPool.Count)];
+        var randActor = actorPool[random.Next(actorPool.Count)];
+        var randGenre = genrePool[random.Next(genrePool.Count)];
+        
+        List<TmdbMovieBrief> movies = new();
+        
+        switch (single)
+        {
+            case "director":
+                var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
+                if (directorId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, null, null);
+                break;
+            case "actor":
+                var actorId = randActor.Id;
+                movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, null, null);
+                break;
+            case "genre":
+                var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
+                if (genreId.HasValue)
+                    movies = await _tmdbService.DiscoverMoviesAsync(null, null, genreId, null);
+                break;
+        }
+        
+        var validMovies = movies
+            .Where(m => m.VoteAverage >= 4.0) // Lower threshold for guarantee
+            .Where(m => !userBlacklistedIds.Contains(m.Id))
+            .Where(m => !recentMovieIdSet.Contains(m.Id))
+            .Where(m => !allMoviesFound.Contains(m.Id))
+            .ToList();
+        
+        foreach (var movie in validMovies.Take(80 - totalFound))
+        {
+            bucket1x3.Add(movie);
+            allMoviesFound.Add(movie.Id);
+            totalFound++;
+        }
+        
+        extraAttempts++;
+    }
+    
+    _logger.LogInformation("✅ Aggressive cascading complete: {Total} movies guaranteed", totalFound);
+}
+
     return (bucket3x3, bucket2x3, bucket1x3);
 }
 
