@@ -18,13 +18,16 @@ using Ezequiel_Movies1.Models.Entities;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+// using Microsoft.Extensions.Caching.Memory; // Already present, remove duplicate
 
+using Microsoft.Extensions.Caching.Memory;
 namespace Ezequiel_Movies.Controllers
 {
 
     [Authorize]
     public class MoviesController : Controller
     {
+
         private async Task<HashSet<int>> GetUserBlacklistedTmdbIdsAsync(string userId)
         {
             return (await _dbContext.BlacklistedMovies
@@ -85,19 +88,73 @@ namespace Ezequiel_Movies.Controllers
                 throw;
             }
         }
-        private readonly ApplicationDbContext _dbContext;
-        private readonly TmdbService _tmdbService;
-        private readonly ILogger<MoviesController> _logger;
-        private readonly UserManager<IdentityUser> _userManager;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly TmdbService _tmdbService;
+    private readonly ILogger<MoviesController> _logger;
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly IMemoryCache _memoryCache;
 
 
-    public MoviesController(ApplicationDbContext dbContext, TmdbService tmdbService, ILogger<MoviesController> logger, UserManager<IdentityUser> userManager)
+        public MoviesController(
+            ApplicationDbContext dbContext,
+            TmdbService tmdbService,
+            ILogger<MoviesController> logger,
+            UserManager<IdentityUser> userManager,
+            IMemoryCache memoryCache) // <- PARÁMETRO AÑADIDO
+        {
+            _dbContext = dbContext;
+            _tmdbService = tmdbService;
+            _logger = logger;
+            _userManager = userManager;
+            _memoryCache = memoryCache; // <- ASIGNACIÓN AÑADIDA
+        }
+
+    private List<string> GetGenrePriorityQueueCached(string userId, List<Ezequiel_Movies1.Models.Entities.Movies> loggedMovies)
     {
-        _dbContext = dbContext;
-        _tmdbService = tmdbService;
-        _logger = logger;
-        _userManager = userManager;
+        string queueCacheKey = $"GenrePriorityQueue_{userId}";
+        if (_memoryCache.TryGetValue(queueCacheKey, out List<string>? cachedQueue) && cachedQueue != null)
+        {
+            _logger.LogInformation("🎯 Priority Queue CACHE HIT for user {UserId}", userId);
+            return cachedQueue;
+        }
+
+        var allUserGenres = loggedMovies.SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()).ToList();
+        var recentGenre = loggedMovies.OrderByDescending(m => m.DateWatched ?? m.DateCreated).FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault();
+        var frequentGenre = allUserGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+        var ratedGenres = loggedMovies.Where(m => m.UserRating.HasValue && m.UserRating.Value >= 4.0m).SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.None) ?? Array.Empty<string>()).ToList();
+        var highestRatedGenre = ratedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+
+        var priorityQueue = new List<string?> { recentGenre, frequentGenre, highestRatedGenre }
+            .Where(g => !string.IsNullOrEmpty(g))
+            .Distinct()
+            .Select(g => g!)
+            .ToList();
+
+        var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1));
+        _memoryCache.Set(queueCacheKey, priorityQueue, cacheOptions);
+        _logger.LogInformation("✅ Priority Queue calculated and cached for user {UserId}", userId);
+        return priorityQueue;
     }
+
+private string? GetRandomGenreWithAntiRepetition(string userId, List<Ezequiel_Movies1.Models.Entities.Movies> loggedMovies)
+{
+    var allGenres = loggedMovies.SelectMany(m => m.Genres?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>()).Distinct().ToList();
+    if (!allGenres.Any()) return null;
+
+    string lastRandomGenreKey = $"LastRandomGenre_{userId}";
+    string? lastRandomGenre = HttpContext.Session.GetString(lastRandomGenreKey);
+    var availableGenres = allGenres.Where(g => g != lastRandomGenre).ToList();
+    if (!availableGenres.Any()) availableGenres = allGenres;
+    var selectedGenre = availableGenres[Random.Shared.Next(availableGenres.Count)];
+    HttpContext.Session.SetString(lastRandomGenreKey, selectedGenre);
+    return selectedGenre;
+}
+
+private void InvalidateUserCaches(string userId)
+{
+    _logger.LogInformation("🧹 Invalidating user-specific caches for {UserId}", userId);
+    _memoryCache.Remove($"GenrePriorityQueue_{userId}");
+}
 
         private async Task<string?> GetPosterUrlAsync(int tmdbId, string? existingPosterUrl)
         {
@@ -1580,6 +1637,84 @@ public async Task<IActionResult> DecadeReshuffle()
         return Json(new { success = false, error = "Could not generate a new suggestion." });
     }
 }
+
+[HttpGet]
+[Authorize]
+public async Task<IActionResult> GenreReshuffle()
+{
+    try
+    {
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var loggedMovies = await _dbContext.Movies
+            .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue)
+            .ToListAsync();
+
+        if (!loggedMovies.Any())
+        {
+            var emptyHtml = "<div class='alert alert-info text-center my-5'>Log movies with genres to get suggestions!</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+    // 1. Llama al nuevo helper para obtener la cola de prioridades (que usa caché)
+    var priorityQueue = GetGenrePriorityQueueCached(userId, loggedMovies);
+
+        // 2. Gestiona la secuencia para decidir qué tipo de género mostrar
+        string genreTypeKey = $"GenreTypeSequence_{userId}";
+        int genreTypeCount = HttpContext.Session.GetInt32(genreTypeKey) ?? 0;
+        HttpContext.Session.SetInt32(genreTypeKey, genreTypeCount + 1);
+
+
+        string? genreToSuggest = null;
+        if (genreTypeCount < priorityQueue.Count)
+        {
+            genreToSuggest = priorityQueue[genreTypeCount];
+        }
+        else
+        {
+            // 3. Llama al nuevo helper para la selección aleatoria con anti-repetición
+            genreToSuggest = GetRandomGenreWithAntiRepetition(userId, loggedMovies);
+        }
+
+        if (string.IsNullOrEmpty(genreToSuggest))
+        {
+            var emptyHtml = "<div class='alert alert-warning text-center my-5'>Could not find a valid genre to suggest.</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // 4. Obtiene las películas para el género seleccionado
+        var suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId);
+        
+        if (!suggestedMovies.Any())
+        {
+            var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No new suggestions available for {genreToSuggest}.</div>";
+            return Json(new { success = true, html = emptyHtml, count = 0 });
+        }
+
+        // 5. Construye y devuelve la respuesta JSON
+        var suggestionTitle = $"Popular {genreToSuggest} Movies";
+        var htmlBuilder = new StringBuilder();
+        foreach (var movie in suggestedMovies)
+        {
+            var partialViewResult = await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+        }
+
+        return Json(new { 
+            success = true, 
+            html = htmlBuilder.ToString(),
+            count = suggestedMovies.Count,
+            suggestionTitle = suggestionTitle
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "💥 ERROR in GenreReshuffle: {Message}", ex.Message);
+        return Json(new { success = false, error = "Could not generate a new suggestion." });
+    }
+}
+
 
         /// <summary>
         /// Helper para renderizar una partial view a string.
