@@ -1826,31 +1826,26 @@ public async Task<IActionResult> SurpriseMeReshuffle()
         string cycleKey = "SurpriseBucketCycle";
         int currentCycle = HttpContext.Session.GetInt32(cycleKey) ?? 0; // 0=A(3x3), 1=B(2x3), 2=C(1x3)
         
-        TmdbMovieBrief? selectedMovie = null;
-        string suggestionTitle = "Your Surprise Suggestion...";
-        List<TmdbMovieBrief> currentBucket;
-        string bucketType;
+    TmdbMovieBrief? selectedMovie = null;
+    string suggestionTitle = "Your Surprise Suggestion...";
+    List<TmdbMovieBrief> currentBucket;
 
         if (currentCycle == 0 && filtered3x3.Any())
         {
             currentBucket = filtered3x3;
-            bucketType = "3/3 match";
         }
         else if (currentCycle == 1 && filtered2x3.Any())
         {
             currentBucket = filtered2x3;
-            bucketType = "2/3 match";
         }
         else if (currentCycle == 2 && filtered1x3.Any())
         {
             currentBucket = filtered1x3;
-            bucketType = "1/3 match";
         }
         else
         {
             // Fallback: use any available bucket
             currentBucket = filtered3x3.Concat(filtered2x3).Concat(filtered1x3).ToList();
-            bucketType = "mixed match";
         }
 
         if (currentBucket.Any())
