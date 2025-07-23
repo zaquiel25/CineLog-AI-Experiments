@@ -1813,62 +1813,48 @@ if (totalPoolSize < 10)
 }
 
        // --- 3. Infinite cyclic rotation with pool index tracking ---
+// --- 3. Infinite cyclic rotation with shuffled pool ---
 string poolIndexKey = "SurprisePoolIndex";
-string bucketCycleKey = "SurpriseBucketCycle";
+string shuffledPoolKey = "SurprisePoolShuffled";
 
 int poolIndex = HttpContext.Session.GetInt32(poolIndexKey) ?? 0;
-int bucketCycle = HttpContext.Session.GetInt32(bucketCycleKey) ?? 0; // 0=A(3x3), 1=B(2x3), 2=C(1x3)
 
-// Create flat movie list for rotation: A + B + C
+// Get or create shuffled pool
+var shuffledPool = HttpContext.Session.Get<List<TmdbMovieBrief>>(shuffledPoolKey);
 var allMovies = filtered3x3.Concat(filtered2x3).Concat(filtered1x3).ToList();
-var totalMovies = allMovies.Count;
 
-// If we've gone through all movies, restart from beginning
-if (poolIndex >= totalMovies)
+// Create shuffled pool if it doesn't exist or if we're starting fresh
+if (shuffledPool == null || shuffledPool.Count != allMovies.Count)
 {
+    shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
+    HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
+    poolIndex = 0; // Reset index when creating new shuffle
+    _logger.LogInformation("🔀 Created new shuffled pool with {Count} movies", shuffledPool.Count);
+}
+
+// If we've gone through all movies, re-shuffle and restart
+if (poolIndex >= shuffledPool.Count)
+{
+    shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
+    HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
     poolIndex = 0;
-    HttpContext.Session.SetInt32(poolIndexKey, poolIndex);
-    _logger.LogInformation("🔄 Pool rotation complete, restarting from movie #0");
+    _logger.LogInformation("🔄 Pool completed, re-shuffled and restarting from movie #0");
 }
 
-// Select movie based on current bucket cycle and pool position
+// Select movie from shuffled pool
 TmdbMovieBrief? selectedMovie = null;
-string suggestionTitle = "Your Surprise Suggestion...";
-string bucketType = "";
+string suggestionTitle = "Surprise!";
 
-if (bucketCycle == 0 && filtered3x3.Any()) // A: 3x3 bucket
+if (shuffledPool.Any() && poolIndex < shuffledPool.Count)
 {
-    var bucketIndex = poolIndex % filtered3x3.Count;
-    selectedMovie = filtered3x3[bucketIndex];
-    bucketType = "perfect match";
-}
-else if (bucketCycle == 1 && filtered2x3.Any()) // B: 2x3 bucket  
-{
-    var bucketIndex = poolIndex % filtered2x3.Count;
-    selectedMovie = filtered2x3[bucketIndex];
-    bucketType = "great match";
-}
-else if (bucketCycle == 2 && filtered1x3.Any()) // C: 1x3 bucket
-{
-    var bucketIndex = poolIndex % filtered1x3.Count;
-    selectedMovie = filtered1x3[bucketIndex];
-    bucketType = "good match";
-}
-
-if (selectedMovie != null)
-{
-    suggestionTitle = $"Surprise! ({bucketType})";
+    selectedMovie = shuffledPool[poolIndex];
     
     // Advance pool index for next movie
     poolIndex++;
     HttpContext.Session.SetInt32(poolIndexKey, poolIndex);
+    
+    _logger.LogInformation("🎯 Selected movie #{Index} from shuffled pool: {Title}", poolIndex - 1, selectedMovie.Title);
 }
-
-// Advance bucket cycle: A→B→C→A→B→C...
-int nextBucketCycle = (bucketCycle + 1) % 3;
-HttpContext.Session.SetInt32(bucketCycleKey, nextBucketCycle);
-_logger.LogInformation("🎯 Movie #{Index}, Bucket: {Current} → {Next}", poolIndex - 1, bucketCycle, nextBucketCycle);
-
         // --- 4. Handle no suggestion case ---
 if (selectedMovie == null)
 {
