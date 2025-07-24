@@ -129,38 +129,36 @@ namespace Ezequiel_Movies
             }
         }
 
-        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDecadeAsync(int decade, int page = 1)
-        {
-            _logger.LogInformation("Requesting TMDB API for movies from decade: {Decade}, page: {Page}", decade, page);
-            string cacheKey = $"decade_movies_{decade}_{page}";
-            if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
-            {
-                _logger.LogWarning("CACHE HIT: Resultados para la clave '{CacheKey}' encontrados en memoria.", cacheKey);
-                return cachedMovies;
-            }
-            try
-            {
-                _logger.LogInformation("CACHE MISS: Resultados para la clave '{CacheKey}' no encontrados. Realizando llamada a la API.", cacheKey);
-                // Define the start and end dates for the decade
-                string startDate = $"{decade}-01-01";
-                string endDate = $"{decade + 9}-12-31";
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDecadeAsync(int decade, int page = 1, string sortBy = "vote_average.desc")
+{
+    _logger.LogInformation("Requesting TMDB API for movies from decade: {Decade}, page: {Page}, sort: {Sort}", decade, page, sortBy);
+    string cacheKey = $"decade_movies_{decade}_{page}_{sortBy}";
+    if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
+    {
+        _logger.LogWarning("CACHE HIT: Resultados para la clave '{CacheKey}' encontrados en memoria.", cacheKey);
+        return cachedMovies;
+    }
+    try
+    {
+        _logger.LogInformation("CACHE MISS: Resultados para la clave '{CacheKey}' no encontrados. Realizando llamada a la API.", cacheKey);
+        // Define the start and end dates for the decade
+        string startDate = $"{decade}-01-01";
+        string endDate = $"{decade + 9}-12-31";
 
-                // Ask for movies within the date range, sorted by rating, with a minimum number of votes.
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
-                    $"discover/movie?primary_release_date.gte={startDate}&primary_release_date.lte={endDate}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
+        // Ask for movies within the date range, with dynamic sorting and minimum vote count
+        var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
+            $"discover/movie?primary_release_date.gte={startDate}&primary_release_date.lte={endDate}&sort_by={sortBy}&vote_count.gte=500&language=en-US&page={page}");
 
-                var results = response?.Results ?? new List<TmdbMovieBrief>();
-                _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(24));
-                return results;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to discover movies by decade {Decade}", decade);
-                return new List<TmdbMovieBrief>();
-            }
-        }
-
-        // In TmdbService.cs
+        var results = response?.Results ?? new List<TmdbMovieBrief>();
+        _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(24));
+        return results;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to discover movies by decade {Decade}", decade);
+        return new List<TmdbMovieBrief>();
+    }
+}
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByYearAsync(int year, int page = 1)
         {

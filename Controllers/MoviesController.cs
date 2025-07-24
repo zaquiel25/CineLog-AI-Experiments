@@ -1514,26 +1514,14 @@ public async Task<IActionResult> DecadeReshuffle()
 {
     try
     {
-        _logger.LogInformation("🚀 DecadeReshuffle AJAX endpoint called with optimized logic based on last 25 movies.");
+        _logger.LogInformation("🚀 DecadeReshuffle AJAX endpoint called with optimized logic and variety system.");
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized();
         }
 
-    /// <summary>
-    /// Returns a set of movie suggestions based on the user's most recent decades of activity.
-    /// 
-    /// Business logic:
-    /// - Prioritizes decades using the user's last 25 logged movies for relevance and performance.
-    /// - Decade selection follows a strict priority: most recent, most frequent, highest rated, then random.
-    /// - Implements early exit optimization to minimize TMDB API calls and improve responsiveness.
-    /// - Caches blacklist and recent movie filters to avoid redundant database queries.
-    /// - Session state is used to prevent immediate repetition of the last suggested decade.
-    /// - Ensures a high-quality, variety-driven user experience even in edge cases.
-    /// </summary>
-    // Retrieve the user's last 25 logged movies, ordered by most recent activity
-    // This scope ensures suggestions are relevant to current user interests and reduces query overhead
+        // Retrieve the user's last 25 logged movies, ordered by most recent activity
         var last25Movies = await _dbContext.Movies
             .Where(m => m.UserId == userId && m.ReleasedYear.HasValue)
             .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
@@ -1546,19 +1534,14 @@ public async Task<IActionResult> DecadeReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-    // Calculate the set of unique decades represented in the user's recent activity
-    // Decades are derived from the release year of each movie for accurate grouping
+        // Calculate decade priorities based on last 25 movies
         var availableDecades = last25Movies
             .Select(m => (m.ReleasedYear!.Value / 10) * 10)
             .Distinct()
             .ToList();
 
-    // Calculate decade priorities based on user's recent movie activity
-    // Priority order: latest → frequent → rated → random exploration
-    // LATEST: Decade from the most recently added movie (by DateCreated/DateWatched)
         var latestDecade = (last25Movies.First().ReleasedYear!.Value / 10) * 10;
 
-    // FREQUENT: Most frequent decade with ≥2 movies from last 25, random selection on ties
         var frequentGroups = last25Movies.GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
             .Where(g => g.Count() >= 2).ToList();
         var mostFrequentDecade = 0;
@@ -1569,7 +1552,6 @@ public async Task<IActionResult> DecadeReshuffle()
             mostFrequentDecade = freqCandidates[Random.Shared.Next(freqCandidates.Count)];
         }
 
-    // RATED: Highest average rated decade with ≥2 rated movies from last 25, random selection on ties
         var ratedGroups = last25Movies.Where(m => m.UserRating.HasValue)
             .GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
             .Where(g => g.Count() >= 2).ToList();
@@ -1583,114 +1565,57 @@ public async Task<IActionResult> DecadeReshuffle()
             highestRatedDecade = ratedCandidates[Random.Shared.Next(ratedCandidates.Count)];
         }
 
-    // Build the priority queue for decade evaluation
-    // Early exit optimization: stop at the first decade with valid suggestions
-    // This user-driven approach minimizes API calls while ensuring variety
+        // Build the priority queue for decade evaluation
         var priorityQueue = new List<int> { latestDecade, mostFrequentDecade, highestRatedDecade }
             .Where(d => d > 0).Distinct().ToList();
-        
-    // RANDOM: Any decade from the last 25 movies can be selected, ensuring equitable representation
         var randomDecades = availableDecades.OrderBy(_ => Random.Shared.Next()).ToList();
         var decadesToTry = priorityQueue.Concat(randomDecades).ToList();
 
         _logger.LogInformation("[DECADE-LOGIC] Decades to try in order: {Decades}", string.Join(", ", decadesToTry));
 
-    // Optimized evaluation loop with early exit
-    // Only a maximum of 5 decades are evaluated per request to reduce API usage
-        List<(int Decade, List<TmdbMovieBrief> Pool)> validDecades = new();
+        // Anti-repetition logic
         string lastDecadeKey = $"LastDecadeShown_{userId}";
         int? lastDecade = HttpContext.Session.GetInt32(lastDecadeKey);
-        
-        // Optimizaciones para reducir API calls
-        const int MAX_DECADES_TO_EVALUATE = 5;
-        int evaluatedCount = 0;
-        int totalApiCalls = 0;
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-    // Cache expensive filter operations to avoid redundant queries
-    // Blacklisted movies and recent user activity are computed once per request
-        var blacklisted = await GetUserBlacklistedTmdbIdsAsync(userId);
+        // Cache expensive filters
         var last5 = last25Movies.Take(5).Select(m => m.TmdbId ?? 0).ToHashSet();
 
-    // Main evaluation loop with early exit logic
-    // Skips the immediately previously shown decade (anti-repetition)
-        foreach (var decade in decadesToTry)
+        // Find valid decades with triple fallback system
+        List<(int Decade, List<TmdbMovieBrief> Pool)> validDecades = new();
+
+        foreach (var decadeToTry in decadesToTry.Take(5))
         {
             // Skip the decade shown immediately before (anti-repetition)
-            if (decade == lastDecade) continue;
-            
-            // Early exit: if enough decades have been evaluated and valid options found, stop
-            if (evaluatedCount >= MAX_DECADES_TO_EVALUATE && validDecades.Count >= 2) break;
-            
-            evaluatedCount++;
-            
-            // Build the suggestion pool for this decade (API optimized)
-            var currentPool = new List<TmdbMovieBrief>();
-            int page = 1;
-            const int maxPagesToTry = 3; // Reduced from 5 to 3 for performance
-            
-            while (currentPool.Count < 10 && page <= maxPagesToTry) // Reduced from 15 to 10 for efficiency
+            if (decadeToTry == lastDecade) continue;
+
+            // Triple fallback system for this decade
+            var decadePool = await TryGetDecadeMovies(decadeToTry, "vote_average.desc", Random.Shared.Next(1, 4), userId);
+
+            // Fallback 1: Same sort, page 1
+            if (decadePool.Count < 3)
             {
-                totalApiCalls++;
-                var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page);
-                if (!results.Any()) break;
-                
-                var valid = results.Where(m => 
-                    !blacklisted.Contains(m.Id) && 
-                    !last5.Contains(m.Id) && 
-                    !last25Movies.Any(um => um.TmdbId == m.Id)
-                ).ToList();
-                
-                currentPool.AddRange(valid);
-                page++;
+                _logger.LogInformation("⚠️ Fallback 1: {Decade}s insufficient, trying vote_average page 1", decadeToTry);
+                decadePool = await TryGetDecadeMovies(decadeToTry, "vote_average.desc", 1, userId);
             }
-            
-            if (currentPool.Count >= 3)
+
+            // Fallback 2: Popular, page 1
+            if (decadePool.Count < 3)
             {
-                // Early exit: valid suggestions found for a prioritized decade
-                validDecades.Add((decade, currentPool));
+                _logger.LogInformation("⚠️ Fallback 2: {Decade}s insufficient, trying popular page 1", decadeToTry);
+                decadePool = await TryGetDecadeMovies(decadeToTry, "popularity.desc", 1, userId);
+            }
+
+            // Apply additional filtering for last5 and recent movies
+            var finalPool = decadePool.Where(m => 
+                !last5.Contains(m.Id) && 
+                !last25Movies.Any(um => um.TmdbId == m.Id)
+            ).ToList();
+
+            if (finalPool.Count >= 3)
+            {
+                validDecades.Add((decadeToTry, finalPool));
             }
         }
-
-    // Fallback: If no decades have at least 3 valid movies, search for decades with at least 1
-    // Ensures the user always receives a suggestion, even in edge cases
-        if (!validDecades.Any())
-        {
-            _logger.LogWarning("[DECADE-LOGIC] No decade found with 3+ valid movies. Starting fallback search for 1+.");
-            
-            foreach (var decade in decadesToTry)
-            {
-                if (decade == lastDecade) continue;
-                
-                var currentPool = new List<TmdbMovieBrief>();
-                int page = 1;
-                const int maxPagesToTry = 3;
-                
-                while (currentPool.Count < 10 && page <= maxPagesToTry)
-                {
-                    totalApiCalls++;
-                    var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page);
-                    if (!results.Any()) break;
-                    
-                    var valid = results.Where(m => 
-                        !blacklisted.Contains(m.Id) && 
-                        !last5.Contains(m.Id) && 
-                        !last25Movies.Any(um => um.TmdbId == m.Id)
-                    ).ToList();
-                    
-                    currentPool.AddRange(valid);
-                    page++;
-                }
-                
-                if (currentPool.Any())
-                {
-                    validDecades.Add((decade, currentPool));
-                }
-            }
-        }
-
-        stopwatch.Stop();
-        _logger.LogInformation("🎯 DecadeReshuffle completed: {ApiCalls} API calls in {Ms}ms", totalApiCalls, stopwatch.ElapsedMilliseconds);
 
         if (!validDecades.Any())
         {
@@ -1698,13 +1623,11 @@ public async Task<IActionResult> DecadeReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-    // Random selection among all valid decades found
-    // Session state is updated to prevent immediate repetition in future requests
+        // Random selection among all valid decades found
         var selected = validDecades[Random.Shared.Next(validDecades.Count)];
         HttpContext.Session.SetInt32(lastDecadeKey, selected.Decade);
 
-    // Final response: render up to 3 suggestions for display
-    // Ensures variety and freshness in the user experience
+        // Final response: render up to 3 suggestions for display
         var suggestedMovies = selected.Pool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
         string suggestionTitle = $"Here are movies from the {selected.Decade}s";
 
@@ -2955,7 +2878,7 @@ case "year_recent":
 case "year_frequent":
 case "year_rated":
 case "year_random":
-    // Decade suggestion logic using optimized approach (matches AJAX behavior)
+    // Decade suggestion logic using triple fallback system (matches AJAX behavior)
     var last25Movies = await _dbContext.Movies
         .Where(m => m.UserId == userId && m.ReleasedYear.HasValue)
         .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
@@ -2969,7 +2892,7 @@ case "year_random":
         break;
     }
 
-    // Calculate decade priorities based on last 25 movies (same as AJAX)
+    // Calculate decade priorities (same as AJAX)
     var availableDecades = last25Movies
         .Select(m => (m.ReleasedYear!.Value / 10) * 10)
         .Distinct()
@@ -3000,45 +2923,37 @@ case "year_random":
         highestRatedDecade = ratedCandidates[Random.Shared.Next(ratedCandidates.Count)];
     }
 
-    // Decade priority queue with anti-repetition
+    // Priority queue with random selection
     var decadePriorityQueue = new List<int> { latestDecade, mostFrequentDecade, highestRatedDecade }
         .Where(d => d > 0).Distinct().ToList();
     var randomDecades = availableDecades.OrderBy(_ => Random.Shared.Next()).ToList();
     var decadesToTry = decadePriorityQueue.Concat(randomDecades).ToList();
 
-    // Cache expensive filters (same as AJAX)
-    var blacklisted = await GetUserBlacklistedTmdbIdsAsync(userId);
-    var last5 = last25Movies.Take(5).Select(m => m.TmdbId ?? 0).ToHashSet();
-
-    // Find first valid decade with movies
+    // Find first valid decade with triple fallback
     List<TmdbMovieBrief> decadeSuggestions = new();
     int? selectedDecade = null;
 
-    foreach (var decade in decadesToTry.Take(5)) // Same limit as AJAX
+    foreach (var decadeToTry in decadesToTry.Take(5))
     {
-        var currentPool = new List<TmdbMovieBrief>();
-        int decadePage = 1;
-        const int maxPagesToTry = 3;
+        // Triple fallback system for variety
+        var decadePool = await TryGetDecadeMovies(decadeToTry, "vote_average.desc", Random.Shared.Next(1, 4), userId);
 
-        while (currentPool.Count < 10 && decadePage <= maxPagesToTry)
+        // Fallback 1: Same sort, page 1
+        if (decadePool.Count < 3)
         {
-            var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, decadePage);
-            if (!results.Any()) break;
-
-            var valid = results.Where(m =>
-                !blacklisted.Contains(m.Id) &&
-                !last5.Contains(m.Id) &&
-                !last25Movies.Any(um => um.TmdbId == m.Id)
-            ).ToList();
-
-            currentPool.AddRange(valid);
-            decadePage++;
+            decadePool = await TryGetDecadeMovies(decadeToTry, "vote_average.desc", 1, userId);
         }
 
-        if (currentPool.Count >= 3)
+        // Fallback 2: Popular, page 1
+        if (decadePool.Count < 3)
         {
-            selectedDecade = decade;
-            decadeSuggestions = currentPool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
+            decadePool = await TryGetDecadeMovies(decadeToTry, "popularity.desc", 1, userId);
+        }
+
+        if (decadePool.Count >= 3)
+        {
+            selectedDecade = decadeToTry;
+            decadeSuggestions = decadePool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
             break;
         }
     }
@@ -3053,7 +2968,6 @@ case "year_random":
     suggestionTitle = $"Here are movies from the {selectedDecade}s";
     nextQuery = selectedDecade?.ToString();
     break;
-
                 default: return RedirectToAction("Suggest");
             }
 
@@ -3165,20 +3079,55 @@ case "year_random":
     return suggestions;
 }
 
+        /// <summary>
+        /// Helper method to try getting movies for a specific genre, sort, and page combination
+        /// </summary>
+        private async Task<List<TmdbMovieBrief>> TryGetGenreMovies(int genreId, string sortBy, int page, string genreName)
+        {
+            try
+            {
+                var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genreId, page, sortBy);
+                _logger.LogInformation("✅ {Genre}: Got {Count} movies with {Sort} page {Page}", genreName, movies.Count, sortBy, page);
+                return movies;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "❌ Failed to get {Genre} movies with {Sort} page {Page}", genreName, sortBy, page);
+                return new List<TmdbMovieBrief>();
+            }
+        }
+
 /// <summary>
-/// Helper method to try getting movies for a specific genre, sort, and page combination
+/// Helper method to try getting movies for a specific decade, sort, and page combination with fallback logic
 /// </summary>
-private async Task<List<TmdbMovieBrief>> TryGetGenreMovies(int genreId, string sortBy, int page, string genreName)
+private async Task<List<TmdbMovieBrief>> TryGetDecadeMovies(int decade, string sortBy, int page, string userId)
 {
     try
     {
-        var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genreId, page, sortBy);
-        _logger.LogInformation("✅ {Genre}: Got {Count} movies with {Sort} page {Page}", genreName, movies.Count, sortBy, page);
-        return movies;
+        var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, page, sortBy);
+        
+        // Apply user filtering
+        var userLoggedTmdbIds = (await _dbContext.Movies
+            .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+            .Select(m => m.TmdbId)
+            .ToListAsync())
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .ToHashSet();
+
+        var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+        // Filter out movies already logged or blacklisted
+        var filteredMovies = movies
+            .Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id))
+            .ToList();
+
+        _logger.LogInformation("✅ {Decade}s: Got {Count} valid movies with {Sort} page {Page}", decade, filteredMovies.Count, sortBy, page);
+        return filteredMovies;
     }
     catch (Exception ex)
     {
-        _logger.LogWarning(ex, "❌ Failed to get {Genre} movies with {Sort} page {Page}", genreName, sortBy, page);
+        _logger.LogWarning(ex, "❌ Failed to get {Decade}s movies with {Sort} page {Page}", decade, sortBy, page);
         return new List<TmdbMovieBrief>();
     }
 }
@@ -3234,7 +3183,14 @@ private async Task<List<TmdbMovieBrief>> TryGetGenreMovies(int genreId, string s
 
             _logger.LogInformation("HELPER: Finding movies for decade {Decade}, starting at page {Page}", decade, pageToFetch);
 
-            var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, pageToFetch);
+            // Generate random sort + page parameters for variety
+var sortTypes = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" };
+var randomSort = sortTypes[Random.Shared.Next(sortTypes.Length)];
+var randomPageToUse = Random.Shared.Next(1, 4);
+
+_logger.LogInformation("🎲 Helper decade variety: {Decade}, Sort={Sort}, Page={Page}", decade, randomSort, randomPageToUse);
+
+var movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, randomPageToUse, randomSort);
 
             // Get user state sets
             var userLoggedTmdbIds = (await _dbContext.Movies
@@ -3263,7 +3219,7 @@ private async Task<List<TmdbMovieBrief>> TryGetGenreMovies(int genreId, string s
                 // If we ran out of pages, reset the page counter and fetch page 1 again as a fallback.
                 _logger.LogWarning("No movies found on page {Page} for {Decade}. Resetting to page 1.", pageToFetch, decade);
                 HttpContext.Session.SetInt32(sessionKey, 1);
-                movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, 1);
+                movies = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, 1, "popularity.desc");                
                 movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
             }
 
