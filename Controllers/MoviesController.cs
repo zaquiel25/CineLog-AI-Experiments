@@ -2307,20 +2307,29 @@ if (totalFound < 80)
 
         #region Suggestion Actions & Helpers
 
-        /// <summary>
-        /// Returns a set of movie suggestions for the logged-in user, based on the specified suggestion type.
-        /// </summary>
-        /// <param name="suggestionType">The type of suggestion sequence to use (e.g., trending, director_recent, genre_frequent, etc.).</param>
-        /// <param name="query">Optional: Used for sequence state or to pass a specific director/genre/cast for the next suggestion.</param>
-        /// <param name="page">Optional: For paginated suggestion types (default 1).</param>
-        /// <remarks>
-        /// Suggestion system with session-based sequences: directors, genres, cast, decades, trending.
-        /// - Director sequence: recent → frequent → rated → random, with anti-repetition and session state.
-        /// - Genre and cast sequences follow similar logic, using user history and session to avoid repetition.
-        /// - Trending suggestions are personalized, exclude blacklisted and recently watched movies, and randomize pool.
-        /// - All suggestion types are designed to maximize variety, avoid repetition, and respect user preferences.
-        /// - Business logic is modular, with each case handling its own pool building, anti-repetition, and fallback.
-        /// </remarks>
+    /// <summary>
+    /// Returns a set of movie suggestions for the logged-in user, based on the specified suggestion type.
+    /// </summary>
+    /// <param name="suggestionType">The type of suggestion sequence to use (e.g., trending, director_recent, genre_frequent, year_recent, etc.).</param>
+    /// <param name="query">Optional: Used for sequence state or to pass a specific director/genre/cast/decade for the next suggestion.</param>
+    /// <param name="page">Optional: For paginated suggestion types (default 1).</param>
+    /// <remarks>
+    /// Suggestion system with session-based sequences: directors, genres, cast, decades, trending.
+    /// - Director sequence: recent → frequent → rated → random, with anti-repetition and session state.
+    /// - Genre and cast sequences follow similar logic, using user history and session to avoid repetition.
+    /// - Decade suggestions now use a dynamic variety system identical to genres:
+    ///   - Each suggestion uses a random combination of sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3).
+    ///   - Triple fallback logic ensures suggestions are always available:
+    ///     - Primary: Random sort + random page
+    ///     - Fallback 1: Same sort, page 1
+    ///     - Fallback 2: Popular, page 1
+    ///   - User filtering (blacklist, watched movies) is always applied, and all expensive operations are cached per request.
+    ///   - Both initial load and AJAX reshuffles use the same dynamic logic for decades, matching genres.
+    ///   - User experience: Decade suggestions now provide varied, reliable content from the first click, with bulletproof fallback for edge cases.
+    /// - Trending suggestions are personalized, exclude blacklisted and recently watched movies, and randomize pool.
+    /// - All suggestion types are designed to maximize variety, avoid repetition, and respect user preferences.
+    /// - Business logic is modular, with each case handling its own pool building, anti-repetition, and fallback.
+    /// </remarks>
         [HttpGet]
         public async Task<IActionResult> ShowSuggestions(string suggestionType, string? query = null, int page = 1)
         // See XML doc for high-level overview. Below: business logic comments for each sequence.

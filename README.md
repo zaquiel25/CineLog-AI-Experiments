@@ -106,16 +106,18 @@ See `MoviesController.cs` for implementation details and business logic comments
 - **Generalized AJAX Reshuffle**: The "Reshuffle" button now works for all suggestion types (Trending, Cast, Director) using event delegation, always maintaining context and providing instant feedback.
 - **Dual Caching**: IMemoryCache is used for API data, and Session State is used for user-specific anti-repetition and sequencing.
 
-### 🎯 By Decade (Optimized AJAX)
-- **Recent Activity Focus**: Based on your last 25 movies instead of entire history for more relevant suggestions
-- **Intelligent Prioritization**: 
-  - **Latest**: Decade from your most recently added movie
-  - **Frequent**: Most common decade (minimum 2 movies from last 25)
-  - **Rated**: Highest average rated decade (minimum 2 rated movies from last 25)
-- **Equitable Selection**: Any decade from your last 25 movies can appear in suggestions
-- **Performance Optimized**: Maximum 15 API calls per request (reduced from 25+)
-- **Smart Anti-Repetition**: Only avoids the immediately previous decade, ensuring variety
-- **Fallback System**: Automatically adjusts criteria if no decades meet the 3+ movie threshold
+
+### 🎯 By Decade (Dynamic Variety System)
+- **Dynamic Variety**: Decade suggestions now use a dynamic variety system identical to genres, providing fresh, high-quality content from the very first click.
+- **Randomized Parameters**: Every suggestion (initial and reshuffle) uses a random combination of sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3).
+- **Triple Fallback Logic**: Ensures suggestions are always available:
+  - Primary: Random sort + random page
+  - Fallback 1: Same sort, page 1
+  - Fallback 2: Popular, page 1
+- **Unified Experience**: Both initial load and AJAX reshuffles use the same dynamic logic for decades, matching genres.
+- **User Filtering**: Blacklist and watched movies are always filtered out, with all expensive operations cached per request.
+- **Performance**: Maintains ~1-2 API calls per user interaction, with early exit optimization and 24-hour caching per sort+page+decade combo.
+- **Reliability**: Bulletproof fallback ensures suggestions are always available, even for edge cases or niche decades.
 
 ### 🎯 By Genre (Dynamic Variety System)
 - **Consistent Experience**: Genre suggestions now provide varied, high-quality content from the very first click—no more static or repetitive initial results

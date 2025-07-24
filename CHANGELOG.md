@@ -1,3 +1,18 @@
+## 2025-07-24
+### Decade Suggestion Dynamic Variety System
+- Decade-based movie suggestions now use a dynamic variety system identical to the genre system:
+  - Each suggestion uses randomized sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3).
+  - Triple fallback logic ensures suggestions are always available:
+    - Primary: Random sort + random page
+    - Fallback 1: Same sort, page 1
+    - Fallback 2: Popular, page 1
+- Added `sortBy` parameter to `DiscoverMoviesByDecadeAsync` in `TmdbService` for dynamic sorting.
+- Introduced `TryGetDecadeMovies` helper for robust error handling, user filtering, and fallback.
+- Both initial load and AJAX reshuffles now use the same dynamic logic for decades, matching genres.
+- Enhanced caching: 24-hour cache per sort+page+decade combo, with early exit optimization.
+- User filtering (blacklist, watched movies) is consistently applied and cached per request.
+- User experience: Decade suggestions now provide varied, reliable content from the first click, with bulletproof fallback for edge cases.
+- Consistency: Unified experience between decade and genre suggestions across all flows.
 # 2025-07-24 Genre Suggestion Dynamic Variety System
 
 - **Major Enhancement**: Implemented dynamic variety system for genre-based movie suggestions

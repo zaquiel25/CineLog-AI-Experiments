@@ -6,29 +6,30 @@
 - Session state tracks sequence position per user, advancing with each reshuffle
 - Random phase includes anti-repetition to avoid immediately repeating the last random selection
 - The deduplication approach is elegant: solve at data level (HashSet) rather than logic level (skip patterns)
-## DecadeReshuffle Optimization (2025-07-22)
-### Performance and Logic Improvements
-- **Data Scope**: DecadeReshuffle now operates on the user's last 25 movies only, not entire history
-  - Provides more relevant, recent-activity-based suggestions
-  - Improves query performance and reduces memory overhead
-- **API Optimization**: Maximum 15 TMDB API calls per request (5 decades × 3 pages each)
-  - Early exit logic when sufficient valid decades are found
-  - Reduced thresholds: 10 movies per pool (vs 15), 3 pages per decade (vs 5)
-- **Priority Calculation Logic**:
-  - **Latest**: Decade from the most recently added movie (by DateCreated/DateWatched)
-  - **Frequent**: Most frequent decade with ≥2 movies from last 25, random selection on ties
-  - **Rated**: Highest average rated decade with ≥2 rated movies from last 25, random selection on ties
-- **Random Phase**: Any decade from the last 25 movies can be selected, ensuring equitable representation
-- **Anti-Repetition**: Only prevents immediate repetition of the last shown decade via Session State
-- **Filter Caching**: Blacklist and recent movies calculated once per request, not per decade evaluation
+
+## DecadeReshuffle Dynamic Variety System (2025-07-24)
+### Dynamic Variety and Consistency Improvements
+- **Dynamic Variety System**: Decade suggestions now use randomized sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3) for every suggestion, matching the genre system.
+- **Triple Fallback Logic**: Robust fallback system for each decade:
+  - Primary: Random sort + random page combination
+  - Fallback 1: Same sort, page 1 (if original page insufficient)
+  - Fallback 2: Popular, page 1 (ultimate safety net)
+- **Helper Method**: `TryGetDecadeMovies` provides consistent error handling, user filtering, and fallback logic.
+- **Consistency**: Both initial load and AJAX reshuffles use identical dynamic variety logic, ensuring a unified user experience.
+- **Performance**: Maintains ~1-2 TMDB API calls per user interaction, with early exit optimization and 24-hour caching per sort+page+decade combo.
+- **User Filtering**: Blacklist and watched movies are filtered consistently, with all expensive operations cached outside evaluation loops.
+- **User Experience**: Decade suggestions now provide varied, reliable content from the very first click, with bulletproof fallback for edge cases.
 
 ### Code Patterns for DecadeReshuffle
-- Always use `last25Movies` instead of `userMovies` for decade calculations
-- Maintain early exit logic with `MAX_DECADES_TO_EVALUATE = 5` for API optimization
-- Preserve Session State management for anti-repetition without blocking variety
-- Use random tie-breaking for both Frequent and Rated priority calculations
-- Cache expensive filter operations outside evaluation loops
-## Edge Case: Blacklisting Many Trending Movies
+- Always use `last25Movies` for decade calculations.
+- Use dynamic sort and page parameters for every suggestion, both initial and reshuffle.
+- Apply triple fallback logic for reliability.
+- Use `TryGetDecadeMovies` for all decade movie retrievals.
+- Maintain session state for anti-repetition (immediate only).
+- Cache blacklist and recent movies once per request.
+
+### Consistency Achievement
+- Decade and genre suggestion systems now share a unified dynamic variety and fallback approach, providing a consistent and reliable user experience across all suggestion types.
 
 - Si un usuario intenta blacklistear la mayoría o totalidad de las películas trending (por ejemplo, más de 20 en una sola sesión), puede encontrar que los últimos títulos no se pueden blacklistear por limitaciones de estado, caché o validación.
 - Este es un caso extremo y poco realista en el uso normal de la app. La mayoría de los usuarios nunca intentarán blacklistear tantas películas trending de una vez.
