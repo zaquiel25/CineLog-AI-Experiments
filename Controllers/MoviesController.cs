@@ -44,6 +44,44 @@ namespace Ezequiel_Movies.Controllers
             }
             return userId;
         }
+        /// <summary>
+/// Unified trending movie logic used by both initial suggestions and AJAX reshuffles.
+/// Filters out blacklisted and recently watched movies, builds a pool from multiple pages.
+/// </summary>
+/// <param name="userId">Current user ID for filtering</param>
+/// <returns>List of filtered trending movies</returns>
+private async Task<List<TmdbMovieBrief>> GetTrendingMoviesWithFiltering(string userId)
+{
+    // Get user filters - identical logic to TrendingReshuffle
+    var blacklistIds = await _dbContext.BlacklistedMovies
+        .Where(b => b.UserId == userId)
+        .Select(b => b.TmdbId)
+        .ToListAsync();
+
+    var recentIds = await _dbContext.Movies
+        .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
+        .OrderByDescending(m => m.DateWatched)
+        .Take(5)
+        .Select(m => m.TmdbId ?? 0)
+        .ToListAsync();
+
+    // Build pool of valid movies - same logic as TrendingReshuffle
+    var moviePool = new List<TmdbMovieBrief>();
+    int pageNum = 1;
+    
+    while (moviePool.Count < 30 && pageNum <= 5)
+    {
+        var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
+        var validMovies = pageMovies
+            .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
+            .ToList();
+        moviePool.AddRange(validMovies);
+        pageNum++;
+    }
+
+    // Return shuffled pool for variety
+    return moviePool.OrderBy(x => Random.Shared.Next()).ToList();
+}
 
         private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
         {
@@ -1103,84 +1141,57 @@ private void InvalidateUserCaches(string userId)
 [Authorize]
 public async Task<IActionResult> TrendingReshuffle()
 {
-    try
+   try
+{
+    _logger.LogInformation("🚀 TrendingReshuffle AJAX endpoint called.");
+    
+    var userId = _userManager.GetUserId(User);
+    if (string.IsNullOrEmpty(userId))
     {
-        _logger.LogInformation("🚀 TrendingReshuffle AJAX endpoint called.");
-        
-        var userId = _userManager.GetUserId(User);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
+        return Unauthorized();
+    }
 
-        // Filtrar películas ya vistas y en blacklist del usuario
-        var blacklistIds = await _dbContext.BlacklistedMovies
-            .Where(b => b.UserId == userId)
-            .Select(b => b.TmdbId)
-            .ToListAsync();
+    // Usar el método unificado
+    var moviePool = await GetTrendingMoviesWithFiltering(userId);
+    
+    // Seleccionar 3 sugerencias aleatorias
+    var suggestedMovies = moviePool.Take(3).ToList();
 
-        var recentIds = await _dbContext.Movies
-            .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
-            .OrderByDescending(m => m.DateWatched)
-            .Take(5)
-            .Select(m => m.TmdbId ?? 0)
-            .ToListAsync();
+    _logger.LogInformation("🎬 Returning {Count} movies for reshuffle", suggestedMovies.Count);
 
-        var moviePool = new List<TmdbMovieBrief>();
-        int pageNum = 1;
-        // Buscar hasta 30 películas válidas (no repetidas, no blacklist, no recientes)
-        while (moviePool.Count < 30 && pageNum <= 5)
-        {
-            var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
-            var validMovies = pageMovies
-                .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
-                .ToList();
-            moviePool.AddRange(validMovies);
-            pageNum++;
-        }
-
-        // Seleccionar 3 sugerencias aleatorias
-        var suggestedMovies = moviePool
-            .OrderBy(x => Random.Shared.Next())
-            .Take(3)
-            .ToList();
-
-        _logger.LogInformation("🎬 Returning {Count} movies for reshuffle", suggestedMovies.Count);
-
-        // Si no hay sugerencias posibles, mostrar mensaje amigable
-        if (!suggestedMovies.Any())
-        {
-            var emptyHtml = @"<div class='alert alert-info text-center my-5'>No more trending movies available right now. Please try another suggestion type or come back later for new trending picks!</div>";
-            return Json(new {
-                success = true,
-                html = emptyHtml,
-                count = 0
-            });
-        }
-
-        // Renderizar HTML usando partial view para asegurar paths y helpers correctos
-        var htmlBuilder = new StringBuilder();
-        foreach (var movie in suggestedMovies)
-        {
-            // Renderiza cada película con la partial view reutilizada
-            var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
-            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
-        }
-
-        return Json(new { 
-            success = true, 
-            html = htmlBuilder.ToString(),
-            count = suggestedMovies.Count 
+    // Si no hay sugerencias posibles, mostrar mensaje amigable
+    if (!suggestedMovies.Any())
+    {
+        var emptyHtml = @"<div class='alert alert-info text-center my-5'>No more trending movies available right now. Please try another suggestion type or come back later for new trending picks!</div>";
+        return Json(new {
+            success = true,
+            html = emptyHtml,
+            count = 0
         });
     }
-    catch (Exception ex)
+
+    // Renderizar HTML usando partial view
+    var htmlBuilder = new StringBuilder();
+    foreach (var movie in suggestedMovies)
     {
-        _logger.LogError(ex, "💥 ERROR in TrendingReshuffle: {Message}", ex.Message);
-        return Json(new { 
-            success = false, 
-            error = ex.Message 
-        });
+        var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+        htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
     }
+
+    return Json(new { 
+        success = true, 
+        html = htmlBuilder.ToString(),
+        count = suggestedMovies.Count 
+    });
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "💥 ERROR in TrendingReshuffle: {Message}", ex.Message);
+    return Json(new { 
+        success = false, 
+        error = ex.Message 
+    });
+}
 }
 
         /// <summary>
@@ -2361,43 +2372,13 @@ if (totalFound < 80)
             
             switch (suggestionType?.ToLower())
             {
-                // Trending suggestions: build a user-personalized pool of trending movies, avoiding repetition and respecting user preferences.
-                // Exclude all TMDB IDs blacklisted by the current user (prevents unwanted suggestions).
-                // Exclude the last 5 movies watched by the user (prevents immediate repeats in trending suggestions).
-                // Pool generation: up to 30 valid trending movies, paging up to 5 TMDB pages if needed (ensures variety and fallback if user has many exclusions).
-                // Randomize pool and select 3 movies for suggestion (ensures variety and avoids bias from TMDB order)
                 case "trending":
-                    suggestionTitle = "Trending Movies Today";
-                    // Get blacklisted movie IDs (with null safety)
-                    var blacklistIds = await _dbContext.BlacklistedMovies
-                        .Where(b => b.UserId == userId)
-                        .Select(b => b.TmdbId)
-                        .ToListAsync();
-                    // Get recent movie IDs (with null safety)
-                    var recentIds = await _dbContext.Movies
-                        .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
-                        .OrderByDescending(m => m.DateWatched)
-                        .Take(5)
-                        .Select(m => m.TmdbId ?? 0)
-                        .ToListAsync();
-                    // Build pool of valid movies
-                    var moviePool = new List<TmdbMovieBrief>();
-                    int pageNum = 1;
-                    while (moviePool.Count < 30 && pageNum <= 5)
-                    {
-                        var pageMovies = await _tmdbService.GetTrendingMoviesAsync(pageNum);
-                        var validMovies = pageMovies
-                            .Where(m => !blacklistIds.Contains(m.Id) && !recentIds.Contains(m.Id))
-                            .ToList();
-                        moviePool.AddRange(validMovies);
-                        pageNum++;
-                    }
-                    // Randomize and take 3
-                    suggestedMovies = moviePool
-                        .OrderBy(x => Random.Shared.Next())
-                        .Take(3)
-                        .ToList();
-                    break;
+    suggestionTitle = "Trending Movies Today";
+    
+    // Usar la misma lógica que TrendingReshuffle para consistencia
+    var trendingResult = await GetTrendingMoviesWithFiltering(userId);
+    suggestedMovies = trendingResult.Take(3).ToList();
+    break;
 
                 case "director_recent":
                 case "director_frequent":
