@@ -459,6 +459,15 @@ namespace Ezequiel_Movies
 /// <param name="page">Page number (default: 1)</param>
 /// <param name="sortBy">Sort criteria (default: popularity.desc)</param>
 /// <returns>List of movies matching the criteria</returns>
+/// <summary>
+/// Discovers movies by genre with configurable sorting, pagination, and quality filtering.
+/// Includes 6.5+ rating filter to ensure high-quality suggestions for users.
+/// Used by the Genre suggestion system for dynamic content variety.
+/// </summary>
+/// <param name="genreId">The TMDB genre ID</param>
+/// <param name="page">Page number (1-3 recommended for quality)</param>
+/// <param name="sortBy">Sort criteria: popularity.desc, vote_average.desc, or release_date.desc</param>
+/// <returns>List of high-quality movies matching the criteria</returns>
 public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1, string sortBy = "popularity.desc")
 {
     try

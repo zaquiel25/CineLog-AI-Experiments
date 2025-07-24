@@ -157,8 +157,6 @@
 - Maintain visual feedback for all user interactions
 - Preserve user's place in suggestion flow during list management
 
-
-
 ### Suggestion System Behavior
 - Implement bulletproof fallbacks for edge cases
 - **Cast Reshuffle ahora implementa una secuencia robusta:** rota entre sugerir por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio. El paso actual se almacena en Session y avanza en cada reshuffle.
@@ -168,6 +166,17 @@
 - The "Reshuffle" button is implemented via event delegation and always maintains the correct context for all suggestion types.
 - IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing (y para la secuencia de Cast).
 
+### Genre Suggestion Variety System (2025-07-24)
+- GenreReshuffle implements dynamic content variety through randomized sort criteria and pagination
+- **Random Parameters**: Each reshuffle uses random combination of sort type (popular/top-rated/latest) and page (1-3)
+- **Quality Filtering**: All suggestions filtered to 6.5+ rating with minimum vote counts for reliability
+- **Triple Fallback System**: Primary sort+page → Same sort, page 1 → Popular, page 1 (never shows empty results)
+- **Genre Sequencing**: Maintains intelligent sequence (recent → frequent → rated → random) while varying content within each genre
+- **User Filtering**: Excludes user's watched movies, wishlist items, and blacklisted content
+- **Performance**: Same API usage as previous system but with significantly improved content variety
+- **User Experience**: Consistent "Because you watched [GENRE] movies" titles regardless of underlying sort criteria
+
+---
 
 ## AJAX & Hybrid Suggestion Implementation (2025-07-18)
 

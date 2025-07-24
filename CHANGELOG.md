@@ -1,3 +1,25 @@
+# 2025-07-24 Genre Suggestion Dynamic Variety System
+
+- **Major Enhancement**: Implemented dynamic variety system for genre-based movie suggestions
+- **Random Sort Selection**: Each reshuffle now uses randomized sort criteria (popularity, top-rated, latest) for content variety
+- **Quality Filtering**: Added 6.5+ rating filter to ensure only high-quality movie suggestions
+- **Triple Fallback System**: Robust fallback logic prevents empty results for any genre
+  - Primary: Requested sort + page combination
+  - Fallback 1: Same sort, page 1 (if original page insufficient)
+  - Fallback 2: Popular, page 1 (ultimate safety net)
+- **Consistent User Experience**: Unified "Because you watched [GENRE] movies" titles for all suggestions
+- **Performance Maintained**: Same API usage pattern as previous system while delivering significantly more variety
+- **Enhanced Logging**: Comprehensive logging for debugging sort/page combinations and fallback usage
+- **User Filtering Integration**: Maintains existing blacklist, wishlist, and watched movie filtering
+- **Page Quality Control**: Restricts pagination to pages 1-3 to ensure high-quality content discovery
+
+### Technical Implementation
+- Updated `GetSuggestionsForGenre` method to accept dynamic sort and page parameters
+- Enhanced `DiscoverMoviesByGenreAsync` in TmdbService with vote_average.gte=6.5 filter
+- Implemented `TryGetGenreMovies` helper for robust error handling and fallback logic
+- Random parameter generation moved before API calls to ensure proper variety
+- Comprehensive logging added for monitoring variety effectiveness and fallback frequency
+
 # 2025-07-24 Director Suggestion Deduplication Fix
 
 - Fixed DirectorReshuffle logic to prevent duplicate directors in suggestion sequence

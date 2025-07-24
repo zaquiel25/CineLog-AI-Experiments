@@ -117,6 +117,16 @@ See `MoviesController.cs` for implementation details and business logic comments
 - **Smart Anti-Repetition**: Only avoids the immediately previous decade, ensuring variety
 - **Fallback System**: Automatically adjusts criteria if no decades meet the 3+ movie threshold
 
+### 🎯 By Genre (Dynamic Variety System)
+- **Smart Genre Priority**: Rotates through your most recent, most frequent, and highest-rated movie genres
+- **Dynamic Content Variety**: Each reshuffle uses randomized sort criteria (popular, top-rated, latest) for fresh movies
+- **Quality Assurance**: Only shows movies with 6.5+ ratings and sufficient vote counts for reliability
+- **Robust Fallback System**: Triple-layered fallback ensures suggestions are always available, even for niche genres
+- **Session Tracking**: Remembers your position in the genre sequence across reshuffles
+- **Anti-Repetition**: Prevents showing the same movies repeatedly through intelligent pagination and filtering
+- **Personalized Filtering**: Automatically excludes your watched movies, wishlist items, and blacklisted content
+- **Performance Optimized**: Maintains fast response times while delivering maximum content variety
+
 ### 🔄 Seamless Experience
 - **No Page Reloads**: AJAX-powered interactions for smooth user experience
 - **Instant Feedback**: Visual confirmation of all actions

@@ -1788,13 +1788,7 @@ var suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId, curre
                 // 5. Construye y devuelve la respuesta JSON
                 // Dynamic title based on current sort type
                 // Random sort + page with quality weighting
-                var suggestionTitle = currentSort switch
-{
-    "popularity.desc" => $"Popular {genreToSuggest} Movies",
-    "vote_average.desc" => $"Top-Rated {genreToSuggest} Movies", 
-    "release_date.desc" => $"Latest {genreToSuggest} Movies",
-    _ => $"Popular {genreToSuggest} Movies"
-};
+               var suggestionTitle = $"Because you watched {genreToSuggest} movies";
         var htmlBuilder = new StringBuilder();
         foreach (var movie in suggestedMovies)
         {
