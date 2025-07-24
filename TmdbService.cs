@@ -463,9 +463,7 @@ public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, 
 {
     try
     {
-        var requestUri = $"discover/movie?with_genres={genreId}&page={page}&sort_by={sortBy}&language=en-US&include_adult=false";
-        
-        _logger.LogInformation("🔍 TMDB Genre Discovery: Genre={GenreId}, Page={Page}, Sort={Sort}", genreId, page, sortBy);
+        var requestUri = $"discover/movie?with_genres={genreId}&page={page}&sort_by={sortBy}&vote_average.gte=6.5&vote_count.gte=100&language=en-US&include_adult=false";
         
         var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
         
