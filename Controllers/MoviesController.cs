@@ -2685,13 +2685,13 @@ case "genre_random":
 
     // Use the same priority queue logic as AJAX endpoint
     var priorityQueue = GetGenrePriorityQueueCached(userId, loggedGenreMovies);
-    
-    // Generate random sort + page parameters (same as AJAX)
-    var sortTypes = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" };
-    var currentSort = sortTypes[Random.Shared.Next(sortTypes.Length)];
-    var currentPage = Random.Shared.Next(1, 4);
 
-    _logger.LogInformation("🎲 Initial genre suggestion: Sort={Sort}, Page={Page}", currentSort, currentPage);
+    // Generate random sort + page parameters (same as AJAX)
+    var genreSortTypes = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" };
+    var genreCurrentSort = genreSortTypes[Random.Shared.Next(genreSortTypes.Length)];
+    var genreCurrentPage = Random.Shared.Next(1, 4);
+
+    _logger.LogInformation("🎲 Initial genre suggestion: Sort={Sort}, Page={Page}", genreCurrentSort, genreCurrentPage);
 
     // Determine which genre to suggest based on sequence
     string genreTypeKey = $"GenreTypeSequence_{userId}";
@@ -2725,7 +2725,7 @@ case "genre_random":
     }
 
     // Get suggestions using the same method as AJAX (with dynamic parameters)
-    var genreSuggestions = await GetSuggestionsForGenre(genreToSuggest, userId, currentSort, currentPage);
+    var genreSuggestions = await GetSuggestionsForGenre(genreToSuggest, userId, genreCurrentSort, genreCurrentPage);
 
     if (!genreSuggestions.Any())
     {
@@ -2950,75 +2950,109 @@ case "genre_random":
                     ViewData["ActorProfilePath"] = actorDetails?.ProfilePath;
                     nextQuery = actorToSuggest?.Name;
                     break;
-                case "year_recent":
-                case "year_frequent":
-                case "year_rated":
-                case "year_random":
-                    // Decade suggestion logic, skipping all-blacklisted decades
-                    var loggedYearMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.ReleasedYear.HasValue).ToListAsync();
-                    if (!loggedYearMovies.Any())
-                    {
-                        suggestionTitle = "Log some movies to get year-based suggestions!";
-                        ViewData["ShowAddMovieButton"] = true;
-                        break;
-                    }
 
-                    var decades = loggedYearMovies.Select(m => (m.ReleasedYear!.Value / 10) * 10);
-                    var topYearQueue = new List<int>();
+case "year_recent":
+case "year_frequent":
+case "year_rated":
+case "year_random":
+    // Decade suggestion logic using optimized approach (matches AJAX behavior)
+    var last25Movies = await _dbContext.Movies
+        .Where(m => m.UserId == userId && m.ReleasedYear.HasValue)
+        .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
+        .Take(25)
+        .ToListAsync();
 
-                    if (loggedYearMovies.OrderByDescending(m => m.DateWatched).FirstOrDefault()?.ReleasedYear is int ry) topYearQueue.Add((ry / 10) * 10);
-                    if (decades.GroupBy(d => d).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() is int fy && fy > 0 && !topYearQueue.Contains(fy)) topYearQueue.Add(fy);
-                    var ratedDecade = loggedYearMovies.Where(m => m.UserRating.HasValue).GroupBy(m => (m.ReleasedYear!.Value / 10) * 10).Select(g => new { Decade = g.Key, Avg = g.Average(m => m.UserRating!.Value) }).OrderByDescending(d => d.Avg).Select(d => d.Decade).FirstOrDefault();
-                    if (ratedDecade > 0 && !topYearQueue.Contains(ratedDecade)) topYearQueue.Add(ratedDecade);
+    if (last25Movies.Count < 3)
+    {
+        suggestionTitle = "Log at least 3 movies to get decade suggestions!";
+        ViewData["ShowAddMovieButton"] = true;
+        break;
+    }
 
-                    int? decadeToSuggest = null;
-                    List<TmdbMovieBrief> decadeSuggestions = new();
-                    int decadeStartIdx = 0;
-                    if (suggestionType == "year_recent") decadeStartIdx = 0;
-                    else if (suggestionType == "year_frequent") decadeStartIdx = 1;
-                    else if (suggestionType == "year_rated") decadeStartIdx = 2;
-                    else decadeStartIdx = 0;
+    // Calculate decade priorities based on last 25 movies (same as AJAX)
+    var availableDecades = last25Movies
+        .Select(m => (m.ReleasedYear!.Value / 10) * 10)
+        .Distinct()
+        .ToList();
 
-                    for (int i = decadeStartIdx; i < topYearQueue.Count; i++)
-                    {
-                        var d = topYearQueue[i];
-                        var movies = await GetSuggestionsForDecade(d, userId);
-                        if (movies.Any())
-                        {
-                            decadeToSuggest = d;
-                            decadeSuggestions = movies;
-                            nextSuggestionType = i == 0 ? "year_frequent" : i == 1 ? "year_rated" : "year_random";
-                            break;
-                        }
-                    }
-                    // If none found, try random decade
-                    if (decadeSuggestions.Count == 0)
-                    {
-                        var allDecades = decades.Distinct().ToList();
-                        var potentialDecades = allDecades.Where(d => d.ToString() != query).ToList();
-                        if (!potentialDecades.Any()) potentialDecades = allDecades;
-                        foreach (var d in potentialDecades.OrderBy(_ => Guid.NewGuid()))
-                        {
-                            var movies = await GetSuggestionsForDecade(d, userId);
-                            if (movies.Any())
-                            {
-                                decadeToSuggest = d;
-                                decadeSuggestions = movies;
-                                nextSuggestionType = "year_random";
-                                break;
-                            }
-                        }
-                    }
-                    if (decadeSuggestions.Count == 0)
-                    {
-                        suggestionTitle = "No available decade suggestions. Try reshuffling or logging more movies.";
-                        break;
-                    }
-                    suggestedMovies = decadeSuggestions;
-                    suggestionTitle = $"Top-Rated movies from the {decadeToSuggest}s";
-                    nextQuery = decadeToSuggest?.ToString();
-                    break;
-                // End of decade suggestion logic
+    var latestDecade = (last25Movies.First().ReleasedYear!.Value / 10) * 10;
+
+    var frequentGroups = last25Movies.GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
+        .Where(g => g.Count() >= 2).ToList();
+    var mostFrequentDecade = 0;
+    if (frequentGroups.Any())
+    {
+        var maxFreq = frequentGroups.Max(g => g.Count());
+        var freqCandidates = frequentGroups.Where(g => g.Count() == maxFreq).Select(g => g.Key).ToList();
+        mostFrequentDecade = freqCandidates[Random.Shared.Next(freqCandidates.Count)];
+    }
+
+    var ratedGroups = last25Movies.Where(m => m.UserRating.HasValue)
+        .GroupBy(m => (m.ReleasedYear!.Value / 10) * 10)
+        .Where(g => g.Count() >= 2).ToList();
+    var highestRatedDecade = 0;
+    if (ratedGroups.Any())
+    {
+        var maxAvgRating = ratedGroups.Max(g => g.Average(m => m.UserRating!.Value));
+        var ratedCandidates = ratedGroups
+            .Where(g => Math.Abs(g.Average(m => m.UserRating!.Value) - maxAvgRating) < 0.01m)
+            .Select(g => g.Key).ToList();
+        highestRatedDecade = ratedCandidates[Random.Shared.Next(ratedCandidates.Count)];
+    }
+
+    // Decade priority queue with anti-repetition
+    var decadePriorityQueue = new List<int> { latestDecade, mostFrequentDecade, highestRatedDecade }
+        .Where(d => d > 0).Distinct().ToList();
+    var randomDecades = availableDecades.OrderBy(_ => Random.Shared.Next()).ToList();
+    var decadesToTry = decadePriorityQueue.Concat(randomDecades).ToList();
+
+    // Cache expensive filters (same as AJAX)
+    var blacklisted = await GetUserBlacklistedTmdbIdsAsync(userId);
+    var last5 = last25Movies.Take(5).Select(m => m.TmdbId ?? 0).ToHashSet();
+
+    // Find first valid decade with movies
+    List<TmdbMovieBrief> decadeSuggestions = new();
+    int? selectedDecade = null;
+
+    foreach (var decade in decadesToTry.Take(5)) // Same limit as AJAX
+    {
+        var currentPool = new List<TmdbMovieBrief>();
+        int decadePage = 1;
+        const int maxPagesToTry = 3;
+
+        while (currentPool.Count < 10 && decadePage <= maxPagesToTry)
+        {
+            var results = await _tmdbService.DiscoverMoviesByDecadeAsync(decade, decadePage);
+            if (!results.Any()) break;
+
+            var valid = results.Where(m =>
+                !blacklisted.Contains(m.Id) &&
+                !last5.Contains(m.Id) &&
+                !last25Movies.Any(um => um.TmdbId == m.Id)
+            ).ToList();
+
+            currentPool.AddRange(valid);
+            decadePage++;
+        }
+
+        if (currentPool.Count >= 3)
+        {
+            selectedDecade = decade;
+            decadeSuggestions = currentPool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
+            break;
+        }
+    }
+
+    if (!decadeSuggestions.Any())
+    {
+        suggestionTitle = "No new decade suggestions available right now.";
+        break;
+    }
+
+    suggestedMovies = decadeSuggestions;
+    suggestionTitle = $"Here are movies from the {selectedDecade}s";
+    nextQuery = selectedDecade?.ToString();
+    break;
 
                 default: return RedirectToAction("Suggest");
             }
