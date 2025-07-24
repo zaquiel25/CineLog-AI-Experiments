@@ -452,24 +452,42 @@ namespace Ezequiel_Movies
 
 
 
-        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1)
+       /// <summary>
+/// Discovers movies by genre with configurable sorting and pagination
+/// </summary>
+/// <param name="genreId">The TMDB genre ID</param>
+/// <param name="page">Page number (default: 1)</param>
+/// <param name="sortBy">Sort criteria (default: popularity.desc)</param>
+/// <returns>List of movies matching the criteria</returns>
+public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1, string sortBy = "popularity.desc")
+{
+    try
+    {
+        var requestUri = $"discover/movie?with_genres={genreId}&page={page}&sort_by={sortBy}&language=en-US&include_adult=false";
+        
+        _logger.LogInformation("🔍 TMDB Genre Discovery: Genre={GenreId}, Page={Page}, Sort={Sort}", genreId, page, sortBy);
+        
+        var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
+        
+        if (response?.Results == null)
         {
-            _logger.LogInformation("Requesting TMDB API for movies by genre ID: {GenreId}, page: {Page}", genreId, page);
-            try
-            {
-                // VVVV THIS IS THE ONLY LINE WE ARE CHANGING VVVV
-                // We changed sort_by=popularity.desc to sort_by=vote_average.desc
-                // and added vote_count.gte=500 to ensure quality.
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>($"discover/movie?with_genres={genreId}&sort_by=vote_average.desc&vote_count.gte=500&language=en-US&page={page}");
-
-                return response?.Results ?? new List<TmdbMovieBrief>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to discover movies by genre ID {GenreId}", genreId);
-                return new List<TmdbMovieBrief>();
-            }
+            _logger.LogWarning("⚠️ TMDB API returned null results for genre {GenreId}", genreId);
+            return new List<TmdbMovieBrief>();
         }
+
+        var movies = response.Results.ToList();
+
+        _logger.LogInformation("✅ TMDB Genre Discovery: Found {Count} movies for genre {GenreId} (page {Page}, sort {Sort})", 
+            movies.Count, genreId, page, sortBy);
+            
+        return movies;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to discover movies for genre {GenreId} with sort {Sort} page {Page}", genreId, sortBy, page);
+        return new List<TmdbMovieBrief>();
+    }
+}
 
         public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
         {

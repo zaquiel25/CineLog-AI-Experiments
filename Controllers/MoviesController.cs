@@ -1774,17 +1774,27 @@ public async Task<IActionResult> GenreReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        // 4. Obtiene las películas para el género seleccionado
-        var suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId);
-        
-        if (!suggestedMovies.Any())
-        {
-            var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No new suggestions available for {genreToSuggest}.</div>";
-            return Json(new { success = true, html = emptyHtml, count = 0 });
-        }
+       // 4. Generate random sort + page parameters
+var sortTypes = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" };
+var currentSort = sortTypes[Random.Shared.Next(sortTypes.Length)];
+var currentPage = Random.Shared.Next(1, 4);
 
-        // 5. Construye y devuelve la respuesta JSON
-        var suggestionTitle = $"Popular {genreToSuggest} Movies";
+_logger.LogInformation("🎲 Random selection: Genre={Genre}, Sort={Sort}, Page={Page}", genreToSuggest, currentSort, currentPage);
+
+// 5. Get movies using the random parameters
+var suggestedMovies = await GetSuggestionsForGenre(genreToSuggest, userId, currentSort, currentPage);
+
+
+                // 5. Construye y devuelve la respuesta JSON
+                // Dynamic title based on current sort type
+                // Random sort + page with quality weighting
+                var suggestionTitle = currentSort switch
+{
+    "popularity.desc" => $"Popular {genreToSuggest} Movies",
+    "vote_average.desc" => $"Top-Rated {genreToSuggest} Movies", 
+    "release_date.desc" => $"Latest {genreToSuggest} Movies",
+    _ => $"Popular {genreToSuggest} Movies"
+};
         var htmlBuilder = new StringBuilder();
         foreach (var movie in suggestedMovies)
         {
@@ -3083,57 +3093,78 @@ if (totalFound < 80)
         }
 
 
-        private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName, string userId)
-        {
-            var allGenres = await _tmdbService.GetAllGenresAsync();
-            var genre = allGenres.FirstOrDefault(g => g.Name != null && g.Name.Equals(genreName, StringComparison.OrdinalIgnoreCase));
-            if (genre == null) return new List<TmdbMovieBrief>();
+      private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName, string userId, string sortBy = "popularity.desc", int page = 1)
+{
+    var allGenres = await _tmdbService.GetAllGenresAsync();
+    var genre = allGenres.FirstOrDefault(g => g.Name != null && g.Name.Equals(genreName, StringComparison.OrdinalIgnoreCase));
+    if (genre == null) return new List<TmdbMovieBrief>();
 
-            string sessionKey = $"GenrePage_{genreName.Replace(" ", "")}";
-            int pageToFetch = HttpContext.Session.GetInt32(sessionKey) ?? 1;
-            _logger.LogInformation("HELPER: Finding movies for genre {Genre}, starting at page {Page}", genreName, pageToFetch);
+    _logger.LogInformation("🎬 Genre suggestion for {Genre}: Sort={Sort}, Page={Page}", genreName, sortBy, page);
 
-            var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, pageToFetch);
+    // Try primary sort + page combination
+    var movies = await TryGetGenreMovies(genre.Id, sortBy, page, genreName);
+    
+    // Fallback 1: Same sort, page 1 (if primary failed)
+    if (movies.Count < 3)
+    {
+        _logger.LogInformation("⚠️ Fallback 1: {Genre} {Sort} page {Page} insufficient, trying page 1", genreName, sortBy, page);
+        movies = await TryGetGenreMovies(genre.Id, sortBy, 1, genreName);
+    }
+    
+    // Fallback 2: Popular, page 1 (ultimate safety net)
+    if (movies.Count < 3 && sortBy != "popularity.desc")
+    {
+        _logger.LogInformation("⚠️ Fallback 2: {Genre} {Sort} insufficient, trying popular page 1", genreName, sortBy);
+        movies = await TryGetGenreMovies(genre.Id, "popularity.desc", 1, genreName);
+    }
 
-            // Get user state sets
-            var userLoggedTmdbIds = (await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
-                .Select(m => m.TmdbId)
-                .ToListAsync())
-                .Where(id => id.HasValue)
-                .Select(id => id!.Value)
-                .ToHashSet();
-            var userWishlistTmdbIds = (await _dbContext.WishlistItems
-                .Where(w => w.UserId == userId)
-                .Select(w => w.TmdbId)
-                .ToListAsync()).ToHashSet();
-            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+    // Apply user filtering
+    var userLoggedTmdbIds = (await _dbContext.Movies
+        .Where(m => m.UserId == userId && m.TmdbId.HasValue)
+        .Select(m => m.TmdbId)
+        .ToListAsync())
+        .Where(id => id.HasValue)
+        .Select(id => id!.Value)
+        .ToHashSet();
 
-            // Filter out movies already logged or blacklisted
-            movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
+    var userWishlistTmdbIds = (await _dbContext.WishlistItems
+        .Where(w => w.UserId == userId)
+        .Select(w => w.TmdbId)
+        .ToListAsync()).ToHashSet();
 
-            if (movies.Any())
-            {
-                HttpContext.Session.SetInt32(sessionKey, pageToFetch + 1);
-            }
-            else
-            {
-                // If we ran out of pages, reset and fetch page 1 again as a fallback.
-                HttpContext.Session.SetInt32(sessionKey, 1);
-                movies = await _tmdbService.DiscoverMoviesByGenreAsync(genre.Id, 1);
-                movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
-            }
+    var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
 
-            var suggestions = movies.Take(3).ToList();
-            foreach (var movie in suggestions)
-            {
-                movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
-                movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
-                movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
-            }
-            return suggestions;
-        }
+    // Filter out movies already logged or blacklisted
+    movies = movies.Where(m => !userLoggedTmdbIds.Contains(m.Id) && !userBlacklistedIds.Contains(m.Id)).ToList();
 
+    var suggestions = movies.Take(3).ToList();
+    foreach (var movie in suggestions)
+    {
+        movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
+        movie.IsInWishlist = userWishlistTmdbIds.Contains(movie.Id);
+        movie.IsInBlacklist = userBlacklistedIds.Contains(movie.Id);
+    }
+
+    return suggestions;
+}
+
+/// <summary>
+/// Helper method to try getting movies for a specific genre, sort, and page combination
+/// </summary>
+private async Task<List<TmdbMovieBrief>> TryGetGenreMovies(int genreId, string sortBy, int page, string genreName)
+{
+    try
+    {
+        var movies = await _tmdbService.DiscoverMoviesByGenreAsync(genreId, page, sortBy);
+        _logger.LogInformation("✅ {Genre}: Got {Count} movies with {Sort} page {Page}", genreName, movies.Count, sortBy, page);
+        return movies;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogWarning(ex, "❌ Failed to get {Genre} movies with {Sort} page {Page}", genreName, sortBy, page);
+        return new List<TmdbMovieBrief>();
+    }
+}
       
 
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForActor(int actorId, string userId)
