@@ -1,4 +1,25 @@
-## 2025-07-24
+
+## 2025-07-25
+### 🔄 Trending Suggestion System Unification
+- **Unified Business Logic**: Both initial `ShowSuggestions` and AJAX `TrendingReshuffle` now use the same helper method `GetTrendingMoviesWithFiltering()`
+- **Consistent User Experience**: Identical filtering, pool building, and randomization across all trending movie interfaces
+- **Code Quality**: Eliminated code duplication and created single source of truth for trending movie logic
+- **Performance**: Consistent caching behavior using TMDB service's built-in 90-minute cache
+- **Maintainability**: Future changes to trending logic only need to be made in one place
+
+### Technical Implementation
+- Added `GetTrendingMoviesWithFiltering()` helper method that encapsulates all trending movie business logic
+- Updated `ShowSuggestions` trending case to use unified helper
+- Refactored `TrendingReshuffle` AJAX endpoint to use same helper method
+- Ensured identical user filtering (blacklist + recent movies) across both endpoints
+- Maintained same pool building strategy (30 movies from up to 5 TMDB pages)
+- Preserved consistent randomization algorithm for variety
+
+### Code Quality Improvements
+- Removed duplicate filtering logic between initial and AJAX endpoints
+- Centralized trending movie business rules in single, well-documented method
+- Added comprehensive XML documentation for the new helper method
+- Enhanced logging for better debugging and monitoring capabilities
 - Decade-based movie suggestions now use a dynamic variety system identical to the genre system:
   - Each suggestion uses randomized sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3).
   - Triple fallback logic ensures suggestions are always available:
