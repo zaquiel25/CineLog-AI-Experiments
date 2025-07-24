@@ -93,18 +93,38 @@ See `MoviesController.cs` for implementation details and business logic comments
 
 
 
-### 🎯 Intelligent Suggestions
-- **Personalized Recommendations**: Based on your directors, genres, cast, and decades
-- **By Director (AJAX-powered)**: Director suggestions now use the same fast, no-reload AJAX system as Trending and Cast. Reshuffles are instant, server-rendered, and always maintain context and UI consistency.
-- **Robust Fallback System**: Always provides suggestions, even when edge cases occur
-- **Trending Movies**: Discover what's popular right now
-    - Now uses backend IMemoryCache (90 min per page) for all trending API calls
-    - Suggestions are filtered to exclude your blacklist and last 5 watched
-    - Pool of 30 trending movies is built from up to 5 TMDB pages, then randomized
-    - Always provides 3 unique, user-relevant trending suggestions
-- **Surprise Me**: Get random suggestions based on your taste profile
-- **Generalized AJAX Reshuffle**: The "Reshuffle" button now works for all suggestion types (Trending, Cast, Director) using event delegation, always maintaining context and providing instant feedback.
-- **Dual Caching**: IMemoryCache is used for API data, and Session State is used for user-specific anti-repetition and sequencing.
+
+### � Trending Movies (Unified System)
+- **Unified Logic**: Both initial page load and AJAX reshuffles use identical filtering and selection algorithms
+- **Smart Filtering**: Automatically excludes your blacklisted movies and last 5 watched films  
+- **Large Pool**: Builds a pool of up to 30 trending movies from multiple TMDB pages for maximum variety
+- **Random Selection**: Each suggestion shows 3 randomly selected movies from the filtered pool
+- **Performance**: Leverages TMDB service's 90-minute caching for optimal response times
+- **Consistent Experience**: Same user filtering logic across initial and AJAX requests
+- **Fresh Content**: Pool refreshes every 90 minutes with new trending data
+- **Instant Reshuffles**: AJAX-powered reshuffles with no page reloads
+
+### 🔄 AJAX Suggestion System Architecture
+Our suggestion system follows a **hybrid architecture** that provides both traditional page navigation and modern AJAX experiences:
+
+**Core Components:**
+1. **Initial Suggestions**: Server-side rendered pages with full context
+2. **AJAX Reshuffles**: Client-side updates using server-rendered HTML fragments  
+3. **Shared Business Logic**: Unified helper methods ensure consistency
+
+**Supported AJAX Types:**
+- ✅ **Trending**: Unified filtering with 90-minute cache
+- ✅ **Director**: Sequential rotation with anti-repetition  
+- ✅ **Genre**: Dynamic variety with quality filtering
+- ✅ **Cast**: Smart actor selection with session tracking
+- ✅ **Decade**: Triple fallback system with random parameters
+- ✅ **Surprise Me**: Optimized pool-based approach with 2-hour cache
+
+**Technical Benefits:**
+- **Server-Side Rendering**: All HTML is rendered on the server for consistent styling and image paths
+- **Event Delegation**: Single JavaScript handler manages all reshuffle buttons dynamically
+- **Progressive Enhancement**: Works with JavaScript disabled (falls back to page navigation)
+- **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
 
 
 ### 🎯 By Decade (Dynamic Variety System)

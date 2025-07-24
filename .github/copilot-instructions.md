@@ -181,12 +181,90 @@
 ---
 
 ### 2025-07-24 Genre Suggestion Consistency Fix
-- Initial genre suggestions now use the same dynamic variety system as AJAX reshuffles
-- Both initial load and reshuffles generate random sort criteria (popularity.desc, vote_average.desc, release_date.desc) and page (1-3)
-- Unified title format: "Because you watched [GENRE] movies" for both initial and reshuffles
-- Session state is reset on fresh start to ensure correct sequence
-- User experience is now consistent and varied from the very first click
-- No impact on caching or performance optimizations
+
+### 2025-07-24 Genre Suggestion Consistency Fix
+
+Initial genre suggestions now use the same dynamic variety system as AJAX reshuffles
+Both initial load and reshuffles generate random sort criteria (popularity.desc, vote_average.desc, release_date.desc) and page (1-3)
+Unified title format: "Because you watched [GENRE] movies" for both initial and reshuffles
+Session state is reset on fresh start to ensure correct sequence
+User experience is now consistent and varied from the very first click
+No impact on caching or performance optimizations
+
+# 2025-07-25 Trending Suggestion Unification
+
+- **Unified Trending Logic**: Both initial `ShowSuggestions` and AJAX `TrendingReshuffle` now use the same helper method `GetTrendingMoviesWithFiltering()`
+- **Consistent Filtering**: Same blacklist and recent movie exclusion logic across both endpoints
+- **Consistent Pool Building**: Same 30-movie pool generation from up to 5 TMDB pages
+- **Consistent Randomization**: Same shuffling algorithm for variety in both flows
+- **Code Maintenance**: Single source of truth for trending movie logic, eliminating duplication
+- **Performance**: Consistent caching behavior using TMDB service's built-in 90-minute cache
+
+## Trending Suggestion Pattern
+When implementing trending suggestions, always use the unified helper method:
+```csharp
+// For both initial and AJAX suggestions
+var trendingResult = await GetTrendingMoviesWithFiltering(userId);
+var suggestedMovies = trendingResult.Take(3).ToList();
+```
+
+## Comment and Documentation Standards (Updated 2025-07-25)
+
+### Code Comments in English
+- All new code comments must be written in English for international collaboration
+- Use XML documentation (`///`) for public methods with clear business purpose explanations  
+- Inline comments should explain "why" not "what" - focus on business logic and decision rationale
+- Remove any Spanish comments and replace with English equivalents
+- Use structured logging with English messages: `_logger.LogInformation("English message here")`
+
+### Method Documentation Pattern
+```csharp
+/// <summary>
+/// [Brief description of what the method does]
+/// </summary>
+/// <param name="paramName">Description of parameter purpose</param>
+/// <returns>Description of return value and when it's used</returns>
+/// <remarks>
+/// Business rationale, performance notes, or usage patterns.
+/// </remarks>
+```
+
+## Unified Logic Pattern (2025-07-25)
+
+When creating suggestion endpoints that have both initial and AJAX variants:
+
+### 1. Create Shared Helper Method
+```csharp
+private async Task<List<TmdbMovieBrief>> Get[Type]MoviesWithFiltering(string userId)
+{
+  // Unified filtering and pool building logic
+  // Include user blacklist, recent movies, and other filters
+  // Return consistent, shuffled results
+}
+```
+
+### 2. Use Helper in Both Endpoints
+```csharp
+// In ShowSuggestions switch case:
+case "trending":
+  var result = await GetTrendingMoviesWithFiltering(userId);
+  suggestedMovies = result.Take(3).ToList();
+  break;
+
+// In AJAX endpoint:
+public async Task<IActionResult> TrendingReshuffle()
+{
+  var moviePool = await GetTrendingMoviesWithFiltering(userId);
+  var suggestedMovies = moviePool.Take(3).ToList();
+  // ... render and return JSON
+}
+```
+
+### 3. Benefits of This Pattern
+- **Single Source of Truth**: One method contains all business logic
+- **Consistency**: Same filtering, caching, and randomization across endpoints  
+- **Maintainability**: Changes only need to be made in one place
+- **Testing**: Easier to unit test the core logic separately
 
 # (Business Rules update)
 - Genre suggestion system always uses dynamic variety logic, regardless of initial load or reshuffle
