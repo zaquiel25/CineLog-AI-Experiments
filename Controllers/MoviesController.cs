@@ -1612,9 +1612,18 @@ public async Task<IActionResult> DecadeReshuffle()
             ).ToList();
 
             if (finalPool.Count >= 3)
-            {
-                validDecades.Add((decadeToTry, finalPool));
-            }
+{
+    // Check if we already have this decade to avoid duplicates
+    if (!validDecades.Any(v => v.Decade == decadeToTry))
+    {
+        validDecades.Add((decadeToTry, finalPool));
+        _logger.LogInformation("✅ Added decade {Decade}s with {Count} movies", decadeToTry, finalPool.Count);
+    }
+    else
+    {
+        _logger.LogInformation("⏭️ Skipping duplicate decade {Decade}s", decadeToTry);
+    }
+}
         }
 
         if (!validDecades.Any())
@@ -2323,6 +2332,7 @@ if (totalFound < 80)
     ///     - Primary: Random sort + random page
     ///     - Fallback 1: Same sort, page 1
     ///     - Fallback 2: Popular, page 1
+    ///   - Deduplication logic prevents duplicate decades in suggestion results.
     ///   - User filtering (blacklist, watched movies) is always applied, and all expensive operations are cached per request.
     ///   - Both initial load and AJAX reshuffles use the same dynamic logic for decades, matching genres.
     ///   - User experience: Decade suggestions now provide varied, reliable content from the first click, with bulletproof fallback for edge cases.
@@ -2960,11 +2970,12 @@ case "year_random":
         }
 
         if (decadePool.Count >= 3)
-        {
-            selectedDecade = decadeToTry;
-            decadeSuggestions = decadePool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
-            break;
-        }
+{
+    selectedDecade = decadeToTry;
+    decadeSuggestions = decadePool.OrderBy(_ => Random.Shared.Next()).Take(3).ToList();
+    _logger.LogInformation("✅ Selected decade {Decade}s with {Count} movies", decadeToTry, decadeSuggestions.Count);
+    break;
+}
     }
 
     if (!decadeSuggestions.Any())

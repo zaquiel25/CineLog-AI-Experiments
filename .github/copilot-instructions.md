@@ -7,7 +7,6 @@
 - Random phase includes anti-repetition to avoid immediately repeating the last random selection
 - The deduplication approach is elegant: solve at data level (HashSet) rather than logic level (skip patterns)
 
-## DecadeReshuffle Dynamic Variety System (2025-07-24)
 ### Dynamic Variety and Consistency Improvements
 - **Dynamic Variety System**: Decade suggestions now use randomized sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3) for every suggestion, matching the genre system.
 - **Triple Fallback Logic**: Robust fallback system for each decade:
@@ -19,6 +18,8 @@
 - **Performance**: Maintains ~1-2 TMDB API calls per user interaction, with early exit optimization and 24-hour caching per sort+page+decade combo.
 - **User Filtering**: Blacklist and watched movies are filtered consistently, with all expensive operations cached outside evaluation loops.
 - **User Experience**: Decade suggestions now provide varied, reliable content from the very first click, with bulletproof fallback for edge cases.
+
+- **Deduplication**: Prevents same decade appearing multiple times in results
 
 ### Code Patterns for DecadeReshuffle
 - Always use `last25Movies` for decade calculations.
