@@ -46,6 +46,15 @@
   - Performance: Only ~5 TMDB API calls are made during initial pool build; all reshuffles are API-free.
   - All outdated references to the previous 4-cycle logic and per-reshuffle discovery calls have been removed from documentation and code comments.
 
+# 2025-07-24 Genre Suggestion Consistency Fix
+
+- Initial genre suggestions now use the same dynamic variety system as AJAX reshuffles
+- Both initial load and reshuffles generate random sort criteria (popularity.desc, vote_average.desc, release_date.desc) and page (1-3)
+- Unified title format: "Because you watched [GENRE] movies" for both initial and reshuffles
+- Session state is reset on fresh start to ensure correct sequence
+- User experience is now consistent and varied from the very first click
+- No impact on caching or performance optimizations
+
 # 2025-07-23
 - Added prioritized genre queue logic for user suggestions (recent, frequent, highest-rated genre).
 - Implemented per-user caching for genre priority queue (1 hour expiration).

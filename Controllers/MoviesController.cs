@@ -2671,86 +2671,75 @@ if (totalFound < 80)
                 }
 
                 case "genre_recent":
-                case "genre_frequent":
-                case "genre_rated":
-                case "genre_random":
-                    // Genre suggestion logic, skipping all-blacklisted genres
-                    #region Genre Suggestion Logic
-                    var loggedGenreMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
-                    if (!loggedGenreMovies.Any())
-                    {
-                        suggestionTitle = "Log movies with genres to get suggestions!";
-                        ViewData["ShowAddMovieButton"] = true;
-                        break;
-                    }
+case "genre_frequent":
+case "genre_rated":
+case "genre_random":
+    // Genre suggestion logic with dynamic variety (matches AJAX behavior)
+    var loggedGenreMovies = await _dbContext.Movies.Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Genres) && m.TmdbId.HasValue).ToListAsync();
+    if (!loggedGenreMovies.Any())
+    {
+        suggestionTitle = "Log movies with genres to get suggestions!";
+        ViewData["ShowAddMovieButton"] = true;
+        break;
+    }
 
-                    // Only use genres from movies where Genres is not null
-                    var allUserGenres = loggedGenreMovies
-                        .Where(m => !string.IsNullOrEmpty(m.Genres))
-                        .SelectMany(m => (m.Genres ?? string.Empty).Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries))
-                        .ToList();
+    // Use the same priority queue logic as AJAX endpoint
+    var priorityQueue = GetGenrePriorityQueueCached(userId, loggedGenreMovies);
+    
+    // Generate random sort + page parameters (same as AJAX)
+    var sortTypes = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" };
+    var currentSort = sortTypes[Random.Shared.Next(sortTypes.Length)];
+    var currentPage = Random.Shared.Next(1, 4);
 
-                    var topGenreQueue = new List<string>();
-                    var firstGenre = loggedGenreMovies
-                        .OrderByDescending(m => m.DateWatched)
-                        .FirstOrDefault()?.Genres?.Split(new[] { ", " }, StringSplitOptions.None).FirstOrDefault();
-                    if (!string.IsNullOrEmpty(firstGenre)) topGenreQueue.Add(firstGenre.Trim());
-                    var mostFrequentGenre = allUserGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-                    if (!string.IsNullOrEmpty(mostFrequentGenre) && !topGenreQueue.Contains(mostFrequentGenre)) topGenreQueue.Add(mostFrequentGenre);
-                    var highestRatedGenres = loggedGenreMovies
-                        .Where(m => m.UserRating.HasValue && m.UserRating.Value >= 4.0m && !string.IsNullOrEmpty(m.Genres))
-                        .SelectMany(m => m.Genres!.Split(new[] { ", " }, StringSplitOptions.None))
-                        .ToList();
-                    var highestRatedGenre = highestRatedGenres.GroupBy(g => g).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-                    if (!string.IsNullOrEmpty(highestRatedGenre) && !topGenreQueue.Contains(highestRatedGenre)) topGenreQueue.Add(highestRatedGenre);
+    _logger.LogInformation("🎲 Initial genre suggestion: Sort={Sort}, Page={Page}", currentSort, currentPage);
 
-                    string? genreToSuggest = null;
-                    List<TmdbMovieBrief> genreSuggestions = new();
-                    int genreStartIdx = 0;
-                    if (suggestionType == "genre_recent") genreStartIdx = 0;
-                    else if (suggestionType == "genre_frequent") genreStartIdx = 1;
-                    else if (suggestionType == "genre_rated") genreStartIdx = 2;
-                    else genreStartIdx = 0;
+    // Determine which genre to suggest based on sequence
+    string genreTypeKey = $"GenreTypeSequence_{userId}";
+    bool isFreshStartGenre = string.IsNullOrWhiteSpace(query);
+    int genreTypeCount;
+    if (isFreshStartGenre)
+    {
+        HttpContext.Session.SetInt32(genreTypeKey, 0);
+        genreTypeCount = 0;
+        _logger.LogInformation("[SEQUENCE RESET] Fresh start detected, resetting genre sequence to 0");
+    }
+    else
+    {
+        genreTypeCount = HttpContext.Session.GetInt32(genreTypeKey) ?? 0;
+    }
 
-                    for (int i = genreStartIdx; i < topGenreQueue.Count; i++)
-                    {
-                        var g = topGenreQueue[i];
-                        var movies = await GetSuggestionsForGenre(g, userId);
-                        if (movies.Any())
-                        {
-                            genreToSuggest = g;
-                            genreSuggestions = movies;
-                            nextSuggestionType = i == 0 ? "genre_frequent" : i == 1 ? "genre_rated" : "genre_random";
-                            break;
-                        }
-                    }
-                    // If none found, try random
-                    if (genreSuggestions.Count == 0)
-                    {
-                        var potentialGenres = allUserGenres.Distinct().Where(g => g != query).ToList();
-                        if (!potentialGenres.Any()) potentialGenres = allUserGenres.Distinct().ToList();
-                        foreach (var g in potentialGenres.OrderBy(_ => Guid.NewGuid()))
-                        {
-                            var movies = await GetSuggestionsForGenre(g, userId);
-                            if (movies.Any())
-                            {
-                                genreToSuggest = g;
-                                genreSuggestions = movies;
-                                nextSuggestionType = "genre_random";
-                                break;
-                            }
-                        }
-                    }
-                    if (genreSuggestions.Count == 0)
-                    {
-                        suggestionTitle = "No available genre suggestions. Try reshuffling or logging more movies.";
-                        break;
-                    }
-                    suggestedMovies = genreSuggestions;
-                    suggestionTitle = $"Popular {genreToSuggest} Movies";
-                    nextQuery = genreToSuggest;
-                    #endregion
-                    break;
+    string? genreToSuggest = null;
+    if (genreTypeCount < priorityQueue.Count)
+    {
+        genreToSuggest = priorityQueue[genreTypeCount];
+    }
+    else
+    {
+        genreToSuggest = GetRandomGenreWithAntiRepetition(userId, loggedGenreMovies);
+    }
+
+    if (string.IsNullOrEmpty(genreToSuggest))
+    {
+        suggestionTitle = "Could not find a valid genre to suggest.";
+        break;
+    }
+
+    // Get suggestions using the same method as AJAX (with dynamic parameters)
+    var genreSuggestions = await GetSuggestionsForGenre(genreToSuggest, userId, currentSort, currentPage);
+
+    if (!genreSuggestions.Any())
+    {
+        suggestionTitle = "No available genre suggestions. Try reshuffling or logging more movies.";
+        break;
+    }
+
+    // Advance the sequence for next time
+    HttpContext.Session.SetInt32(genreTypeKey, genreTypeCount + 1);
+
+    suggestedMovies = genreSuggestions;
+    suggestionTitle = $"Because you watched {genreToSuggest} movies";
+    nextQuery = genreToSuggest;
+    break;
 
                 case "cast_recent":
                 case "cast_frequent":

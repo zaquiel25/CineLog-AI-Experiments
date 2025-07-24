@@ -178,6 +178,20 @@
 
 ---
 
+### 2025-07-24 Genre Suggestion Consistency Fix
+- Initial genre suggestions now use the same dynamic variety system as AJAX reshuffles
+- Both initial load and reshuffles generate random sort criteria (popularity.desc, vote_average.desc, release_date.desc) and page (1-3)
+- Unified title format: "Because you watched [GENRE] movies" for both initial and reshuffles
+- Session state is reset on fresh start to ensure correct sequence
+- User experience is now consistent and varied from the very first click
+- No impact on caching or performance optimizations
+
+# (Business Rules update)
+- Genre suggestion system always uses dynamic variety logic, regardless of initial load or reshuffle
+- Consistent user-facing behavior and titles for all genre suggestions
+
+---
+
 ## AJAX & Hybrid Suggestion Implementation (2025-07-18)
 
 - El sistema de sugerencias ahora implementa un patrón híbrido:

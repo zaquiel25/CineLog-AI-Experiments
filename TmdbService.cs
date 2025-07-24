@@ -452,13 +452,7 @@ namespace Ezequiel_Movies
 
 
 
-       /// <summary>
-/// Discovers movies by genre with configurable sorting and pagination
-/// </summary>
-/// <param name="genreId">The TMDB genre ID</param>
-/// <param name="page">Page number (default: 1)</param>
-/// <param name="sortBy">Sort criteria (default: popularity.desc)</param>
-/// <returns>List of movies matching the criteria</returns>
+
 /// <summary>
 /// Discovers movies by genre with configurable sorting, pagination, and quality filtering.
 /// Includes 6.5+ rating filter to ensure high-quality suggestions for users.

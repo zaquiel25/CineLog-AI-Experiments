@@ -118,8 +118,10 @@ See `MoviesController.cs` for implementation details and business logic comments
 - **Fallback System**: Automatically adjusts criteria if no decades meet the 3+ movie threshold
 
 ### 🎯 By Genre (Dynamic Variety System)
+- **Consistent Experience**: Genre suggestions now provide varied, high-quality content from the very first click—no more static or repetitive initial results
+- **Unified Title Format**: Both initial load and reshuffles use the "Because you watched [GENRE] movies" title
+- **Dynamic Content Variety**: Every suggestion (initial and reshuffle) uses randomized sort criteria (popular, top-rated, latest) and page (1-3)
 - **Smart Genre Priority**: Rotates through your most recent, most frequent, and highest-rated movie genres
-- **Dynamic Content Variety**: Each reshuffle uses randomized sort criteria (popular, top-rated, latest) for fresh movies
 - **Quality Assurance**: Only shows movies with 6.5+ ratings and sufficient vote counts for reliability
 - **Robust Fallback System**: Triple-layered fallback ensures suggestions are always available, even for niche genres
 - **Session Tracking**: Remembers your position in the genre sequence across reshuffles
