@@ -1,3 +1,12 @@
+# 2025-07-24 Director Suggestion Deduplication Fix
+
+- Fixed DirectorReshuffle logic to prevent duplicate directors in suggestion sequence
+- Implemented case-insensitive deduplication using HashSet with StringComparer.OrdinalIgnoreCase
+- Resolved issue where directors appearing in multiple categories (e.g., both "recent" and "frequent") would be suggested repeatedly
+- Simplified selection logic using index-based access to deduplicated priority queue
+- Enhanced logging to track director analysis, deduplication process, and final queue composition
+- Improved user experience by ensuring varied director suggestions without complex skip patterns
+- Technical approach: solve duplication at data level (early deduplication) rather than logic level (runtime skipping)
 # 2025-07-24 Cast Suggestion Anti-Repetition
 
 - Added logic to prevent immediate repetition of the same actor in cast-based suggestions (CastReshuffle).

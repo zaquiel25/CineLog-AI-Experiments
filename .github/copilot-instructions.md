@@ -1,3 +1,11 @@
+### Director Suggestion Sequencing (2025-07-24)
+- DirectorReshuffle implements intelligent sequencing with case-insensitive deduplication
+- Priority order: recent director → frequent director → top-rated director → random
+- Deduplication prevents the same director appearing twice when they qualify for multiple categories
+- Example: If Steven Spielberg is both "recent" and "frequent", he only appears once in the sequence
+- Session state tracks sequence position per user, advancing with each reshuffle
+- Random phase includes anti-repetition to avoid immediately repeating the last random selection
+- The deduplication approach is elegant: solve at data level (HashSet) rather than logic level (skip patterns)
 ## DecadeReshuffle Optimization (2025-07-22)
 ### Performance and Logic Improvements
 - **Data Scope**: DecadeReshuffle now operates on the user's last 25 movies only, not entire history
