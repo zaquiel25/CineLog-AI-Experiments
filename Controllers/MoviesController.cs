@@ -1373,20 +1373,24 @@ public async Task<IActionResult> DirectorReshuffle()
             return Unauthorized();
         }
 
-        // --- LÓGICA DE SECUENCIA DE DIRECTOR (Copiada y adaptada de ShowSuggestions) ---
 
-        // 1. Gestión de la Secuencia usando la Sesión
+        /// <summary>
+        /// AJAX endpoint for director-based movie suggestions with intelligent sequencing.
+        /// Rotates through recent, frequent, and top-rated directors with proper deduplication.
+        /// </summary>
+        /// <returns>JSON response with rendered HTML for suggestion cards</returns>
+
+        // 1. Session-based sequence management
+        // Tracks which step in the director priority sequence we're on
         string directorTypeKey = $"DirectorTypeSequence_{userId}";
         int directorTypeCount = HttpContext.Session.GetInt32(directorTypeKey) ?? 0;
-        
         string[] directorTypes = { "director_recent", "director_frequent", "director_rated" };
         int maxDirectorTypeIndex = directorTypes.Length - 1;
         string currentDirectorType = directorTypeCount <= maxDirectorTypeIndex ? directorTypes[directorTypeCount] : "director_random";
-
         HttpContext.Session.SetInt32(directorTypeKey, directorTypeCount + 1);
         _logger.LogInformation("Director Reshuffle Sequence: Step {Step}, Type: {Type}", directorTypeCount, currentDirectorType);
 
-        // 2. Obtener películas del usuario para análisis
+        // 2. Fetch user's movie data for director analysis
         var allUserMovies = await _dbContext.Movies
             .Where(m => m.UserId == userId && !string.IsNullOrEmpty(m.Director) && m.Director != "N/A" && m.TmdbId.HasValue)
             .OrderByDescending(m => m.DateWatched ?? m.DateCreated)
@@ -1398,51 +1402,77 @@ public async Task<IActionResult> DirectorReshuffle()
             return Json(new { success = true, html = emptyHtml, count = 0 });
         }
 
-        // 3. Construir la Cola de Directores Prioritarios
+        // 3. Build prioritized director queue with robust deduplication
+        // This handles cases where the same director appears in multiple categories
         var recentDirector = allUserMovies.FirstOrDefault()?.Director;
         var frequentDirector = allUserMovies.GroupBy(m => m.Director!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-var ratedDirector = allUserMovies
-    .Where(m => m.UserRating.HasValue)
-    .GroupBy(m => m.Director!)
-    .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value), Count = g.Count() })
-    .OrderByDescending(d => d.Avg)
-    .ThenByDescending(d => d.Count)
-    .Select(d => d.Name)
-    .FirstOrDefault();
-        
-        var priorityQueue = new List<string?> { recentDirector, frequentDirector, ratedDirector }
-            .Where(d => !string.IsNullOrEmpty(d))
-            .Distinct()
-            .ToList();
+        var ratedDirector = allUserMovies
+            .Where(m => m.UserRating.HasValue)
+            .GroupBy(m => m.Director!)
+            .Select(g => new { Name = g.Key, Avg = g.Average(m => m.UserRating!.Value), Count = g.Count() })
+            .OrderByDescending(d => d.Avg)
+            .ThenByDescending(d => d.Count)
+            .Select(d => d.Name)
+            .FirstOrDefault();
 
-        // 4. Seleccionar Director según la Secuencia
-        string? directorToSuggest = null;
-        if (directorTypeCount < priorityQueue.Count)
+        _logger.LogInformation("Director Analysis - Recent: '{Recent}', Frequent: '{Frequent}', Rated: '{Rated}'", 
+            recentDirector, frequentDirector, ratedDirector);
+
+        // Case-insensitive deduplication prevents the same director appearing twice
+        // Example: If Steven Spielberg is both "recent" and "frequent", he only appears once in the queue
+        var priorityQueue = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddDirector(string? director)
         {
-            directorToSuggest = priorityQueue[directorTypeCount];
-        }
-        else // Fallback a aleatorio si la secuencia terminó o un paso estaba vacío
-        {
-            var allDirectors = allUserMovies.Select(m => m.Director!).Distinct().ToList();
-            if (allDirectors.Any())
+            if (string.IsNullOrWhiteSpace(director)) return;
+            var trimmed = director.Trim();
+            if (seen.Add(trimmed)) // HashSet.Add returns true if item was newly added
             {
-                // Anti-repetición: evitar que se repita el último director random
-                string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
-                string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
-                var availableDirectors = allDirectors;
-                if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
-                {
-                    availableDirectors = allDirectors.Where(d => d != lastRandomDirector).ToList();
-                }
-                directorToSuggest = availableDirectors[Random.Shared.Next(availableDirectors.Count)];
-                HttpContext.Session.SetString(lastRandomDirectorKey, directorToSuggest);
+                priorityQueue.Add(trimmed);
+                _logger.LogInformation("Added director to queue: '{Director}'", trimmed);
+            }
+            else
+            {
+                _logger.LogInformation("Skipped duplicate director: '{Director}'", trimmed);
             }
         }
 
-        if (string.IsNullOrEmpty(directorToSuggest))
+        // Add directors in priority order: recent → frequent → rated
+        AddDirector(recentDirector);
+        AddDirector(frequentDirector);
+        AddDirector(ratedDirector);
+
+        _logger.LogInformation("Final priority queue: [{Directors}]", string.Join(", ", priorityQueue));
+
+        // 4. Seleccionar Director según la Secuencia
+string? directorToSuggest = null;
+if (directorTypeCount < priorityQueue.Count)
+{
+    directorToSuggest = priorityQueue[directorTypeCount];
+}
+else // Fallback a aleatorio si la secuencia terminó o un paso estaba vacío
+{
+    var allDirectors = allUserMovies.Select(m => m.Director!).Distinct().ToList();
+    if (allDirectors.Any())
+    {
+        // Anti-repetición: evitar que se repita el último director random
+        string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
+        string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
+        var availableDirectors = allDirectors;
+        if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
         {
-             throw new InvalidOperationException("Could not select a valid director to generate suggestions.");
+            availableDirectors = allDirectors.Where(d => d != lastRandomDirector).ToList();
         }
+        directorToSuggest = availableDirectors[Random.Shared.Next(availableDirectors.Count)];
+        HttpContext.Session.SetString(lastRandomDirectorKey, directorToSuggest);
+    }
+}
+
+if (string.IsNullOrEmpty(directorToSuggest))
+{
+     throw new InvalidOperationException("Could not select a valid director to generate suggestions.");
+}
 
         // 5. Obtener Sugerencias y Construir Respuesta
         var suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId);
