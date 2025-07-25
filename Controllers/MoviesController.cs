@@ -833,44 +833,33 @@ private void InvalidateUserCaches(string userId)
         }
 
         /// <summary>
-    /// <summary>
-    /// Returns a personalized "Surprise Me!" movie suggestion for the logged-in user using an optimized static pool approach.
-    ///
-    /// <para>
-    /// <b>Pool Construction:</b> Builds a static, deduplicated pool of 80 movies using aggressive cascading from multiple sources (e.g., trending, genre, director).
-    /// Blacklisted and recently suggested movies are filtered out during pool build. Deduplication is enforced by TMDB ID.
-    /// </para>
-    /// <para>
-    /// <b>Caching:</b> The pool is cached in IMemoryCache for 2 hours. During this period, all reshuffles use the same pool, resulting in zero TMDB API calls per reshuffle.
-    /// </para>
-    /// <para>
-    /// <b>Rotation:</b> The pool is shuffled and supports infinite cyclic rotation. Each reshuffle advances the pointer, wrapping to the start as needed. Session state tracks the current position.
-    /// </para>
-    /// <para>
-    /// <b>Performance:</b> Only ~5 TMDB API calls are made during initial pool build; subsequent reshuffles are instant and API-free.
-    /// </para>
-    /// <para>
-    /// Requirements:
-    /// - User must have logged at least 3 movies with director, genre, and release year info.
-    /// - Suggestion pools are built from user's own movie history (directors, genres, actors).
-    /// - Session state is used to track pool index and shuffled order for anti-repetition and infinite cycling.
-    /// </para>
-    /// </summary>
-        /// <summary>
 /// Returns a personalized "Surprise Me!" movie suggestion using the optimized static pool approach.
-/// 
-/// <para>
-/// <b>Unified Logic:</b> Both initial suggestions and reshuffles now use the same optimized pool system.
-/// Pool is built with 80 deduplicated movies from prioritized buckets (trending, genre, director, actor).
-/// </para>
-/// <para>
-/// <b>Performance:</b> Only ~5 TMDB API calls during initial pool build; zero calls for subsequent reshuffles.
-/// Pool is cached for 2 hours with infinite cyclic rotation.
-/// </para>
-/// <para>
-/// <b>User Experience:</b> Consistent, instant suggestions whether initial click or reshuffle.
-/// </para>
+/// Both initial suggestions and reshuffles use identical logic for consistent performance.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Pool Construction:</b> Builds a static, deduplicated pool of 80 movies using aggressive 
+/// cascading from multiple sources (trending, genre, director, actor). Blacklisted and recently 
+/// watched movies are filtered out during pool build. Deduplication is enforced by TMDB ID.
+/// </para>
+/// <para>
+/// <b>Caching Strategy:</b> Pool is cached in IMemoryCache for 2 hours. During this period, 
+/// all interactions use the same pool, resulting in zero TMDB API calls per suggestion.
+/// </para>
+/// <para>
+/// <b>Rotation Logic:</b> Pool supports infinite cyclic rotation with session-based position 
+/// tracking. Each suggestion advances the pointer, wrapping to start when pool is exhausted.
+/// </para>
+/// <para>
+/// <b>Performance:</b> Only ~5 TMDB API calls during initial pool construction; all subsequent 
+/// suggestions are instant and API-free.
+/// </para>
+/// <para>
+/// <b>Requirements:</b> User must have logged at least 3 movies with director, genre, and 
+/// release year information. Suggestions are personalized based on user's movie history.
+/// </para>
+/// </remarks>
+/// <returns>View with single movie suggestion or empty state with guidance message</returns>
 [HttpGet]
 public async Task<IActionResult> GetSurpriseSuggestion()
 {
@@ -903,14 +892,14 @@ public async Task<IActionResult> GetSurpriseSuggestion()
     
     if (cachedPool.bucket3x3 != null && cachedPool.bucket2x3 != null && cachedPool.bucket1x3 != null)
     {
-        _logger.LogInformation("🎯 Using cached surprise pool for user {UserId}", userId);
+    _logger.LogDebug("🎯 Using cached surprise pool for user {UserId}", userId);
         bucket3x3 = cachedPool.bucket3x3;
         bucket2x3 = cachedPool.bucket2x3;
         bucket1x3 = cachedPool.bucket1x3;
     }
     else
     {
-        _logger.LogInformation("🏗️ Building new surprise pool for user {UserId}", userId);
+    _logger.LogDebug("🏗️ Building new surprise pool for user {UserId}", userId);
         
         var poolResult = await BuildSurprisePoolAsync(userId);
         bucket3x3 = poolResult.bucket3x3;
@@ -921,7 +910,7 @@ public async Task<IActionResult> GetSurpriseSuggestion()
         var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(2));
         _memoryCache.Set(poolCacheKey, (bucket3x3, bucket2x3, bucket1x3), cacheOptions);
         
-        _logger.LogInformation("✅ Pool cached: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
+    _logger.LogDebug("✅ Pool cached: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
             bucket3x3.Count, bucket2x3.Count, bucket1x3.Count, bucket3x3.Count + bucket2x3.Count + bucket1x3.Count);
     }
 
@@ -931,7 +920,7 @@ public async Task<IActionResult> GetSurpriseSuggestion()
     var filtered1x3 = bucket1x3;
 
     var totalPoolSize = filtered3x3.Count + filtered2x3.Count + filtered1x3.Count;
-    _logger.LogInformation("🎁 Using pre-filtered pool: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
+    _logger.LogDebug("🎁 Using pre-filtered pool: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
         filtered3x3.Count, filtered2x3.Count, filtered1x3.Count, totalPoolSize);
 
     // Edge case: if pool too small, show friendly message
@@ -958,7 +947,7 @@ public async Task<IActionResult> GetSurpriseSuggestion()
         shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
         HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
         poolIndex = 0; // Reset index when creating new shuffle
-        _logger.LogInformation("🔀 Created new shuffled pool with {Count} movies", shuffledPool.Count);
+    _logger.LogDebug("🔀 Created new shuffled pool with {Count} movies", shuffledPool.Count);
     }
 
     // If we've gone through all movies, re-shuffle and restart
@@ -967,7 +956,7 @@ public async Task<IActionResult> GetSurpriseSuggestion()
         shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
         HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
         poolIndex = 0;
-        _logger.LogInformation("🔄 Pool completed, re-shuffled and restarting from movie #0");
+    _logger.LogDebug("🔄 Pool completed, re-shuffled and restarting from movie #0");
     }
 
     // Select movie from shuffled pool
@@ -1655,14 +1644,14 @@ public async Task<IActionResult> SurpriseMeReshuffle()
         
         if (cachedPool.bucket3x3 != null && cachedPool.bucket2x3 != null && cachedPool.bucket1x3 != null)
         {
-            _logger.LogInformation("🎯 Using cached surprise pool for user {UserId}", userId);
+            _logger.LogDebug("🎯 Using cached surprise pool for user {UserId}", userId);
             bucket3x3 = cachedPool.bucket3x3;
             bucket2x3 = cachedPool.bucket2x3;
             bucket1x3 = cachedPool.bucket1x3;
         }
         else
         {
-            _logger.LogInformation("🏗️ Building new surprise pool for user {UserId}", userId);
+            _logger.LogDebug("🏗️ Building new surprise pool for user {UserId}", userId);
             
             // Build new pool (we'll create this helper next)
             var poolResult = await BuildSurprisePoolAsync(userId);
@@ -1674,7 +1663,7 @@ public async Task<IActionResult> SurpriseMeReshuffle()
             var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(2));
             _memoryCache.Set(poolCacheKey, (bucket3x3, bucket2x3, bucket1x3), cacheOptions);
             
-            _logger.LogInformation("✅ Pool cached: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
+            _logger.LogDebug("✅ Pool cached: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
                 bucket3x3.Count, bucket2x3.Count, bucket1x3.Count, bucket3x3.Count + bucket2x3.Count + bucket1x3.Count);
         }
 
@@ -1684,7 +1673,7 @@ var filtered2x3 = bucket2x3;
 var filtered1x3 = bucket1x3;
 
 var totalPoolSize = filtered3x3.Count + filtered2x3.Count + filtered1x3.Count;
-_logger.LogInformation("🎁 Using pre-filtered pool: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
+    _logger.LogDebug("🎁 Using pre-filtered pool: {Count3x3} + {Count2x3} + {Count1x3} = {Total} valid movies",
     filtered3x3.Count, filtered2x3.Count, filtered1x3.Count, totalPoolSize);
 
 // Edge case: if pool too small, show friendly message
@@ -1711,7 +1700,7 @@ if (shuffledPool == null || shuffledPool.Count != allMovies.Count)
     shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
     HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
     poolIndex = 0; // Reset index when creating new shuffle
-    _logger.LogInformation("🔀 Created new shuffled pool with {Count} movies", shuffledPool.Count);
+    _logger.LogDebug("🔀 Created new shuffled pool with {Count} movies", shuffledPool.Count);
 }
 
 // If we've gone through all movies, re-shuffle and restart
@@ -1720,7 +1709,7 @@ if (poolIndex >= shuffledPool.Count)
     shuffledPool = allMovies.OrderBy(x => Random.Shared.Next()).ToList();
     HttpContext.Session.Set(shuffledPoolKey, shuffledPool);
     poolIndex = 0;
-    _logger.LogInformation("🔄 Pool completed, re-shuffled and restarting from movie #0");
+    _logger.LogDebug("🔄 Pool completed, re-shuffled and restarting from movie #0");
 }
 
 // Select movie from shuffled pool
