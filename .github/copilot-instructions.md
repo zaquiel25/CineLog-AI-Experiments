@@ -316,3 +316,12 @@ For new features, always:
 ---
 
 For new features, follow the established patterns in `MoviesController.cs` and use `TmdbService` for all TMDB interactions. Always filter data by user ID for privacy and correctness.
+
+### Surprise Me System (Unified Pool Approach - 2025-07-25)
+- Both GetSurpriseSuggestion() and SurpriseMeReshuffle() use identical optimized pool logic
+- Single source of truth: BuildSurprisePoolAsync() handles all pool construction
+- Pool consists of 80 deduplicated movies from trending/genre/director/actor buckets
+- 2-hour cache with infinite cyclic rotation and session-based anti-repetition
+- Zero API calls for all surprise interactions after initial pool build
+- Performance: ~5 API calls during pool construction, instant thereafter
+- All surprise-related changes should maintain this unified approach

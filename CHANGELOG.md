@@ -1,3 +1,17 @@
+## 2025-07-25
+### 🔄 Surprise Me System Unification
+- **Unified Performance**: Both initial "Surprise Me" suggestions and reshuffles now use the same optimized pool system
+- **Consistent User Experience**: Eliminated performance disparity between first suggestion (slow) and reshuffles (instant)
+- **Code Quality**: Removed duplicate business logic and created single source of truth for surprise suggestions
+- **Performance**: Consistent zero API calls for all surprise interactions after initial pool construction
+- **Maintainability**: Future changes to surprise logic only need to be made in one place (BuildSurprisePoolAsync)
+
+### Technical Implementation
+- Replaced legacy 4-cycle system in GetSurpriseSuggestion() with unified pool approach
+- Both initial and reshuffle endpoints now share identical business logic and performance characteristics
+- Maintained same pool building strategy (80 movies from trending/genre/director/actor buckets)
+- Preserved infinite cyclic rotation and session-based anti-repetition
+- Enhanced logging consistency and reduced verbosity for production environments
 
 ## 2025-07-25
 ### 🔄 Trending Suggestion System Unification
