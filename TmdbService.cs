@@ -592,7 +592,7 @@ public class TmdbService : IDisposable
             // Fetch missing movies in parallel with throttling
             if (missingIds.Any())
             {
-                var tasks = missingIds.Select(async id =>
+                    var tasks = missingIds.Select(async id => 
                 {
                     await _tmdbSemaphore.WaitAsync();
                     try
@@ -602,8 +602,9 @@ public class TmdbService : IDisposable
                         {
                             var cacheKey = $"movie_details_{id}";
                             _memoryCache.Set(cacheKey, details, TimeSpan.FromHours(24));
-                            return new { Id = id, Details = details };
+                            return new { Id = id, Details = (TmdbMovieDetails?)details };
                         }
+                        // Instead of returning null, skip adding to results in the next step
                         return new { Id = id, Details = (TmdbMovieDetails?)null };
                     }
                     catch (Exception ex)
@@ -618,9 +619,12 @@ public class TmdbService : IDisposable
                 });
 
                 var fetchedResults = await Task.WhenAll(tasks);
-                foreach (var result in fetchedResults.Where(r => r.Details != null))
+                foreach (var result in fetchedResults)
                 {
-                    results[result.Id] = result.Details!;
+                    if (result.Details != null)
+                    {
+                        results[result.Id] = result.Details;
+                    }
                 }
             }
 

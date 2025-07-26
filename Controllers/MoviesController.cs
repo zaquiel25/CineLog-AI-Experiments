@@ -392,7 +392,7 @@ namespace Ezequiel_Movies.Controllers
             {
                 string director = movie.Director ?? "Unknown (TMDB)";
                 int? releasedYear = movie.ReleasedYear;
-                string posterUrl = movie.PosterUrl;
+                string posterUrl = movie.PosterUrl ?? string.Empty;
 
                 // Use cached/batched data if available
                 if (tmdbDetailsBatch.TryGetValue(movie.TmdbId, out var details))
@@ -410,7 +410,7 @@ namespace Ezequiel_Movies.Controllers
                     
                     if (string.IsNullOrEmpty(movie.PosterUrl))
                     {
-                        posterUrl = details.PosterPath;
+                        posterUrl = details.PosterPath ?? string.Empty;
                     }
                 }
 
@@ -420,7 +420,7 @@ namespace Ezequiel_Movies.Controllers
                     Title = movie.Title,
                     TmdbId = movie.TmdbId,
                     BlacklistedDate = movie.BlacklistedDate,
-                    PosterUrl = posterUrl,
+                    PosterUrl = posterUrl ?? string.Empty,
                     Director = director,
                     ReleasedYear = releasedYear ?? 0
                 });
@@ -554,7 +554,7 @@ namespace Ezequiel_Movies.Controllers
                     Id = wishlistItem.Id,
                     TmdbId = wishlistItem.TmdbId,
                     Title = wishlistItem.Title,
-                    PosterPath = wishlistItem.PosterPath,
+                    PosterPath = wishlistItem.PosterPath ?? string.Empty,
                     ReleasedYear = wishlistItem.ReleasedYear ?? 0,
                     Director = director,
                     MovieTitle = movieTitle,

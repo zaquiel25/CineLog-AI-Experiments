@@ -25,9 +25,11 @@ namespace Ezequiel_Movies.Services
         /// </summary>
         public async Task<List<int>> GetUserBlacklistIdsAsync(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             var cacheKey = $"BlacklistIds_{userId}";
             
-            if (_memoryCache.TryGetValue(cacheKey, out List<int> cachedIds))
+            if (_memoryCache.TryGetValue(cacheKey, out List<int>? cachedIds) && cachedIds != null)
             {
                 return cachedIds;
             }
@@ -46,9 +48,11 @@ namespace Ezequiel_Movies.Services
         /// </summary>
         public async Task<List<int>> GetUserWishlistIdsAsync(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             var cacheKey = $"WishlistIds_{userId}";
             
-            if (_memoryCache.TryGetValue(cacheKey, out List<int> cachedIds))
+            if (_memoryCache.TryGetValue(cacheKey, out List<int>? cachedIds) && cachedIds != null)
             {
                 return cachedIds;
             }
@@ -67,6 +71,8 @@ namespace Ezequiel_Movies.Services
         /// </summary>
         public void InvalidateUserBlacklistCache(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             var cacheKey = $"BlacklistIds_{userId}";
             _memoryCache.Remove(cacheKey);
         }
@@ -76,6 +82,8 @@ namespace Ezequiel_Movies.Services
         /// </summary>
         public void InvalidateUserWishlistCache(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             var cacheKey = $"WishlistIds_{userId}";
             _memoryCache.Remove(cacheKey);
         }

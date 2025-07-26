@@ -5,12 +5,12 @@ namespace Ezequiel_Movies.Models
     /// </summary>
     public class BlacklistViewModel
     {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public int TmdbId { get; set; }
-        public DateTime BlacklistedDate { get; set; }
-        public string PosterUrl { get; set; }
-        public string Director { get; set; }
-        public int ReleasedYear { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public int TmdbId { get; set; }
+    public DateTime BlacklistedDate { get; set; }
+    public string PosterUrl { get; set; } = string.Empty;
+    public string Director { get; set; } = string.Empty;
+    public int ReleasedYear { get; set; }
     }
 }

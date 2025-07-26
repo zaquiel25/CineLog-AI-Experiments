@@ -60,10 +60,34 @@
 # Copilot Instructions for CineLog-AI-Experiments
 
 ## Project Overview
-- **CineLog-AI-Experiments** is an ASP.NET Core MVC web application for logging, suggesting, and managing movies, with deep integration to TMDB (The Movie Database) APIs.
-- The main business logic is in `Controllers/MoviesController.cs`, which handles user movie lists, suggestions, and TMDB interactions.
-- Data access is via Entity Framework Core, with models in `Models/` and database context in `Data/ApplicationDbContext.cs`.
-- TMDB API communication is abstracted in `TmdbService.cs`.
+
+## 2025-07-27+ Performance, Architecture, and UX Standards
+
+### Performance & Architecture
+- Always use batch API calls (e.g., `GetMultipleMovieDetailsAsync`) for Blacklist and Wishlist to avoid N+1 query problems. Never call TMDB for each movie individually.
+- Use the centralized `CacheService` for user-specific data (blacklist/wishlist IDs), with 15-minute expiration and automatic invalidation on add/remove.
+- Pagination for Blacklist and Wishlist must be 20 items per page, preserving search/sort across pages.
+- All expensive filtering (blacklist, watched, deduplication) must be cached per request or per pool build, not per reshuffle.
+- All TMDB movie details are cached for 24 hours in IMemoryCache.
+
+### Suggestion System
+- All suggestion types (Trending, Director, Genre, Cast, Decade, Surprise Me) must use unified helper methods for filtering, pool building, and randomization.
+- Both initial loads and AJAX reshuffles must use the same business logic and dynamic variety systems (random sort/page, triple fallback, deduplication).
+- Genre and Decade suggestions always use randomized sort criteria (`popularity.desc`, `vote_average.desc`, `release_date.desc`) and page (1-3), with triple fallback logic.
+- Director and Cast suggestions use deduplicated, session-tracked priority queues and anti-repetition logic.
+- "Surprise Me" uses a static, deduplicated pool (50–80 movies), built in parallel, cached for 2 hours, with cyclic rotation and anti-repetition.
+
+### UI/UX
+- All suggestion section titles use `.cinelog-gold-title` for Cinema Gold color.
+- Suggestion card titles and descriptions are 1pt larger for readability.
+- All AJAX-powered UI actions use event delegation and server-rendered HTML for consistency.
+- Pagination controls must be consistent across Blacklist and Wishlist.
+
+### Code Quality & Documentation
+- All controller and service comments must be in English, business-logic-focused, and use XML documentation for public methods.
+- All logging uses structured `_logger` calls.
+- All mutual exclusion logic (wishlist/blacklist) must be enforced both in backend and UI, with clear visual feedback.
+- Maintain the new commenting/documentation standards for all future contributions.
 
 ## Key Architectural Patterns
 - **Separation of Concerns:**
