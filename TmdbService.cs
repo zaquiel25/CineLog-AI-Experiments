@@ -4,8 +4,13 @@ using Ezequiel_Movies.Models.TmdbApi;
 
 namespace Ezequiel_Movies
 {
-    public class TmdbService
-    {
+
+
+
+public class TmdbService : IDisposable
+{
+    private readonly SemaphoreSlim _tmdbSemaphore;
+    // This semaphore limits concurrent TMDB API calls to 6, preventing rate limiting issues.
 
         // --- TMDB Watch URL Simplification ---
         private const string TMDB_BASE_URL = "https://www.themoviedb.org";
@@ -25,6 +30,8 @@ namespace Ezequiel_Movies
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
         private static readonly Random _random = new Random();
+
+
 
         // Whitelist of allowed provider domains (add more as needed)
         private static readonly HashSet<string> AllowedProviderDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -91,7 +98,7 @@ namespace Ezequiel_Movies
             try
             {
                 int randomPage = _random.Next(1, 21); // Use the static random instance
-                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>("movie/popular?language=en-US&page="+randomPage);
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>("movie/popular?language=en-US&page=" + randomPage);
                 var movies = response?.Results;
                 if (movies != null && movies.Any())
                 {
@@ -130,35 +137,35 @@ namespace Ezequiel_Movies
         }
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByDecadeAsync(int decade, int page = 1, string sortBy = "vote_average.desc")
-{
-    _logger.LogInformation("Requesting TMDB API for movies from decade: {Decade}, page: {Page}, sort: {Sort}", decade, page, sortBy);
-    string cacheKey = $"decade_movies_{decade}_{page}_{sortBy}";
-    if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
-    {
-        _logger.LogWarning("CACHE HIT: Resultados para la clave '{CacheKey}' encontrados en memoria.", cacheKey);
-        return cachedMovies;
-    }
-    try
-    {
-        _logger.LogInformation("CACHE MISS: Resultados para la clave '{CacheKey}' no encontrados. Realizando llamada a la API.", cacheKey);
-        // Define the start and end dates for the decade
-        string startDate = $"{decade}-01-01";
-        string endDate = $"{decade + 9}-12-31";
+        {
+            _logger.LogInformation("Requesting TMDB API for movies from decade: {Decade}, page: {Page}, sort: {Sort}", decade, page, sortBy);
+            string cacheKey = $"decade_movies_{decade}_{page}_{sortBy}";
+            if (_memoryCache.TryGetValue(cacheKey, out List<TmdbMovieBrief>? cachedMovies) && cachedMovies != null)
+            {
+                _logger.LogWarning("CACHE HIT: Resultados para la clave '{CacheKey}' encontrados en memoria.", cacheKey);
+                return cachedMovies;
+            }
+            try
+            {
+                _logger.LogInformation("CACHE MISS: Resultados para la clave '{CacheKey}' no encontrados. Realizando llamada a la API.", cacheKey);
+                // Define the start and end dates for the decade
+                string startDate = $"{decade}-01-01";
+                string endDate = $"{decade + 9}-12-31";
 
-        // Ask for movies within the date range, with dynamic sorting and minimum vote count
-        var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
-            $"discover/movie?primary_release_date.gte={startDate}&primary_release_date.lte={endDate}&sort_by={sortBy}&vote_count.gte=500&language=en-US&page={page}");
+                // Ask for movies within the date range, with dynamic sorting and minimum vote count
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(
+                    $"discover/movie?primary_release_date.gte={startDate}&primary_release_date.lte={endDate}&sort_by={sortBy}&vote_count.gte=500&language=en-US&page={page}");
 
-        var results = response?.Results ?? new List<TmdbMovieBrief>();
-        _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(24));
-        return results;
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Failed to discover movies by decade {Decade}", decade);
-        return new List<TmdbMovieBrief>();
-    }
-}
+                var results = response?.Results ?? new List<TmdbMovieBrief>();
+                _memoryCache.Set(cacheKey, results, TimeSpan.FromHours(24));
+                return results;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies by decade {Decade}", decade);
+                return new List<TmdbMovieBrief>();
+            }
+        }
 
         public async Task<List<TmdbMovieBrief>> DiscoverMoviesByYearAsync(int year, int page = 1)
         {
@@ -258,10 +265,49 @@ namespace Ezequiel_Movies
             _httpClient = httpClient;
             _logger = logger;
             _memoryCache = memoryCache;
+            _tmdbSemaphore = new SemaphoreSlim(6); // Limit concurrent TMDB API calls to 6
+            // This helps prevent rate limiting issues with TMDB's API.
+            _logger.LogInformation("TMDB Service initialized with a semaphore limit of 6 concurrent calls");
         }
 
+        public void Dispose()
+        {
+            _tmdbSemaphore?.Dispose();
+        }
+
+        /// <summary>
+        /// Execute TMDB API call with throttling to prevent rate limiting
+        /// </summary>
+        private async Task<T> ExecuteWithThrottlingAsync<T>(Func<Task<T>> apiCall)
+        {
+            await _tmdbSemaphore.WaitAsync();
+            try
+            {
+                return await apiCall();
+            }
+            finally
+            {
+                _tmdbSemaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// Execute multiple discovery calls in parallel with throttling
+        /// </summary>
+        public async Task<List<TmdbMovieBrief>> ExecuteParallelDiscoveryAsync(
+            List<(int? directorId, int? actorId, int? genreId, int? decade)> queries)
+        {
+            var tasks = queries.Select(query => 
+                ExecuteWithThrottlingAsync(() => DiscoverMoviesAsync(query.directorId, query.actorId, query.genreId, query.decade))
+            ).ToList();
+            
+            var results = await Task.WhenAll(tasks);
+            return results.SelectMany(list => list).ToList();
+        }
+
+
         // Gets the watch providers for a given movie from TMDB
-    public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbMovieId, string? region = "IE")
+        public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbMovieId, string? region = "IE")
         {
             if (tmdbMovieId <= 0) return null;
             var requestUri = $"movie/{tmdbMovieId}/watch/providers";
@@ -274,7 +320,7 @@ namespace Ezequiel_Movies
                 {
                     foreach (var country in response.Results.Values)
                     {
-                        string regionCode = country.Link?.Split("locale=").LastOrDefault()?.Substring(0,2) ?? region ?? "IE";
+                        string regionCode = country.Link?.Split("locale=").LastOrDefault()?.Substring(0, 2) ?? region ?? "IE";
                         string tmdbWatchUrl;
                         try
                         {
@@ -396,7 +442,7 @@ namespace Ezequiel_Movies
         }
 
 
-        // In TmdbService.cs
+
 
         /// <summary>
         /// Retrieves a list of movies directed by the specified person (director) from TMDB.
@@ -451,42 +497,42 @@ namespace Ezequiel_Movies
 
 
 
-/// <summary>
-/// Discovers movies by genre with configurable sorting, pagination, and quality filtering.
-/// Includes 6.5+ rating filter to ensure high-quality suggestions for users.
-/// Used by the Genre suggestion system for dynamic content variety.
-/// </summary>
-/// <param name="genreId">The TMDB genre ID</param>
-/// <param name="page">Page number (1-3 recommended for quality)</param>
-/// <param name="sortBy">Sort criteria: popularity.desc, vote_average.desc, or release_date.desc</param>
-/// <returns>List of high-quality movies matching the criteria</returns>
-public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1, string sortBy = "popularity.desc")
-{
-    try
-    {
-        var requestUri = $"discover/movie?with_genres={genreId}&page={page}&sort_by={sortBy}&vote_average.gte=6.5&vote_count.gte=100&language=en-US&include_adult=false";
-        
-        var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
-        
-        if (response?.Results == null)
+        /// <summary>
+        /// Discovers movies by genre with configurable sorting, pagination, and quality filtering.
+        /// Includes 6.5+ rating filter to ensure high-quality suggestions for users.
+        /// Used by the Genre suggestion system for dynamic content variety.
+        /// </summary>
+        /// <param name="genreId">The TMDB genre ID</param>
+        /// <param name="page">Page number (1-3 recommended for quality)</param>
+        /// <param name="sortBy">Sort criteria: popularity.desc, vote_average.desc, or release_date.desc</param>
+        /// <returns>List of high-quality movies matching the criteria</returns>
+        public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, int page = 1, string sortBy = "popularity.desc")
         {
-            _logger.LogWarning("⚠️ TMDB API returned null results for genre {GenreId}", genreId);
-            return new List<TmdbMovieBrief>();
+            try
+            {
+                var requestUri = $"discover/movie?with_genres={genreId}&page={page}&sort_by={sortBy}&vote_average.gte=6.5&vote_count.gte=100&language=en-US&include_adult=false";
+
+                var response = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
+
+                if (response?.Results == null)
+                {
+                    _logger.LogWarning("⚠️ TMDB API returned null results for genre {GenreId}", genreId);
+                    return new List<TmdbMovieBrief>();
+                }
+
+                var movies = response.Results.ToList();
+
+                _logger.LogInformation("✅ TMDB Genre Discovery: Found {Count} movies for genre {GenreId} (page {Page}, sort {Sort})",
+                    movies.Count, genreId, page, sortBy);
+
+                return movies;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to discover movies for genre {GenreId} with sort {Sort} page {Page}", genreId, sortBy, page);
+                return new List<TmdbMovieBrief>();
+            }
         }
-
-        var movies = response.Results.ToList();
-
-        _logger.LogInformation("✅ TMDB Genre Discovery: Found {Count} movies for genre {GenreId} (page {Page}, sort {Sort})", 
-            movies.Count, genreId, page, sortBy);
-            
-        return movies;
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Failed to discover movies for genre {GenreId} with sort {Sort} page {Page}", genreId, sortBy, page);
-        return new List<TmdbMovieBrief>();
-    }
-}
 
         public async Task<List<TmdbMovieBrief>> GetTrendingMoviesAsync(int page = 1)
         {
@@ -514,6 +560,10 @@ public async Task<List<TmdbMovieBrief>> DiscoverMoviesByGenreAsync(int genreId, 
                 _logger.LogError(ex, "Failed to fetch trending movies.");
                 return new List<TmdbMovieBrief>();
             }
+
+            
         }
+        
+        
     }
 }

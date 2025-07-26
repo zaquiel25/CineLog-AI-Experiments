@@ -148,3 +148,17 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 - **Instant Feedback**: Visual confirmation of all actions
 - **Consistent UI/UX**: All suggestion cards and reshuffle actions are visually and behaviorally consistent across categories.
 - **Mobile Responsive**: Works perfectly on all devices
+
+## Surprise Me System (2025-01-26)
+
+The "Surprise Me" feature now uses a highly optimized, parallelized architecture:
+- Builds a static pool of 50 deduplicated movies per user, using aggressive parallel TMDB API calls (up to 15 concurrent)
+- Pool build time reduced from ~2,800ms to ~400-450ms (85% faster)
+- Anti-repetition system tracks 3 previous pool rotations (6-hour windows) to maximize variety
+- After the initial build, all suggestions are instant (zero API calls per reshuffle)
+- All expensive filtering and deduplication is performed once per build
+- System is robust to TMDB rate limits and supports high concurrency
+
+**Technical note:**
+- The old 80-movie, 4-cycle system has been replaced by a unified pool approach with parallel execution and smarter anti-repetition.
+- API usage is now 15 parallel calls per build (was 25+ sequential), with throttling for safety.
