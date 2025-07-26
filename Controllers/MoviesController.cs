@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 // using Microsoft.Extensions.Caching.Memory; // Already present, remove duplicate
 
 using Microsoft.Extensions.Caching.Memory;
+using Ezequiel_Movies.Services;
 namespace Ezequiel_Movies.Controllers
 {
 
@@ -30,10 +31,8 @@ namespace Ezequiel_Movies.Controllers
 
         private async Task<HashSet<int>> GetUserBlacklistedTmdbIdsAsync(string userId)
         {
-            return (await _dbContext.BlacklistedMovies
-                .Where(b => b.UserId == userId)
-                .Select(b => b.TmdbId)
-                .ToListAsync()).ToHashSet();
+            var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+            return blacklistIds.ToHashSet();
         }
         private string? GetCurrentUserId()
         {
@@ -53,10 +52,7 @@ namespace Ezequiel_Movies.Controllers
         private async Task<List<TmdbMovieBrief>> GetTrendingMoviesWithFiltering(string userId)
         {
             // Get user filters - identical logic to TrendingReshuffle
-            var blacklistIds = await _dbContext.BlacklistedMovies
-                .Where(b => b.UserId == userId)
-                .Select(b => b.TmdbId)
-                .ToListAsync();
+            var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
 
             var recentIds = await _dbContext.Movies
                 .Where(m => m.UserId == userId && m.DateWatched.HasValue && m.TmdbId.HasValue)
@@ -131,6 +127,7 @@ namespace Ezequiel_Movies.Controllers
         private readonly ILogger<MoviesController> _logger;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IMemoryCache _memoryCache;
+        private readonly CacheService _cacheService;
 
 
         public MoviesController(
@@ -138,13 +135,15 @@ namespace Ezequiel_Movies.Controllers
             TmdbService tmdbService,
             ILogger<MoviesController> logger,
             UserManager<IdentityUser> userManager,
-            IMemoryCache memoryCache) // <- PARÁMETRO AÑADIDO
+            IMemoryCache memoryCache,
+            CacheService cacheService)
         {
             _dbContext = dbContext;
             _tmdbService = tmdbService;
             _logger = logger;
             _userManager = userManager;
-            _memoryCache = memoryCache; // <- ASIGNACIÓN AÑADIDA
+            _memoryCache = memoryCache;
+            _cacheService = cacheService;
         }
 
         /// <summary>
@@ -313,6 +312,9 @@ namespace Ezequiel_Movies.Controllers
                 _dbContext.BlacklistedMovies.Add(blacklistedMovie);
                 await _dbContext.SaveChangesAsync();
                 _logger.LogInformation("Movie {TmdbId} added to blacklist for user {UserId}", tmdbId, userId);
+                
+                // Invalidate cache to ensure fresh data
+                _cacheService.InvalidateUserBlacklistCache(userId);
             }
             catch (Exception ex)
             {
@@ -327,18 +329,23 @@ namespace Ezequiel_Movies.Controllers
         /// </summary>
         /// <param name="searchString">Optional: filter blacklist by title or metadata.</param>
         /// <param name="sortOrder">Optional: sort order for the blacklist view.</param>
+        /// <param name="pageNumber">Optional: page number for pagination.</param>
         /// <remarks>
         /// - Only movies blacklisted by the current user are shown.
         /// - UI/UX: Consistent with wishlist and movie list views.
+        /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null)
+        public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null, int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");
             }
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            _logger.LogInformation("Blacklist query started for user {UserId}", userId);
 
             var blacklistQuery = _dbContext.BlacklistedMovies
                 .Where(b => b.UserId == userId)
@@ -370,14 +377,18 @@ namespace Ezequiel_Movies.Controllers
                     break;
             }
 
-            var blacklistedMovies = await blacklistQuery.ToListAsync();
+            int pageSize = 20;
+            var paginatedBlacklist = await PaginatedList<Ezequiel_Movies1.Models.Entities.BlacklistedMovie>.CreateAsync(
+                blacklistQuery.AsNoTracking(),
+                pageNumber ?? 1,
+                pageSize);
 
             // OPTIMIZED: Use batch processing for TMDB details
-            var tmdbIds = blacklistedMovies.Select(b => b.TmdbId).Distinct().ToList();
+            var tmdbIds = paginatedBlacklist.Select(b => b.TmdbId).Distinct().ToList();
             var tmdbDetailsBatch = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
 
-            var moviesWithPosters = new List<dynamic>();
-            foreach (var movie in blacklistedMovies)
+            var blacklistViewModels = new List<BlacklistViewModel>();
+            foreach (var movie in paginatedBlacklist)
             {
                 string director = movie.Director ?? "Unknown (TMDB)";
                 int? releasedYear = movie.ReleasedYear;
@@ -403,7 +414,7 @@ namespace Ezequiel_Movies.Controllers
                     }
                 }
 
-                moviesWithPosters.Add(new
+                blacklistViewModels.Add(new BlacklistViewModel
                 {
                     Id = movie.Id,
                     Title = movie.Title,
@@ -411,10 +422,19 @@ namespace Ezequiel_Movies.Controllers
                     BlacklistedDate = movie.BlacklistedDate,
                     PosterUrl = posterUrl,
                     Director = director,
-                    ReleasedYear = releasedYear
+                    ReleasedYear = releasedYear ?? 0
                 });
             }
-            return View(moviesWithPosters);
+
+            stopwatch.Stop();
+            _logger.LogInformation("Blacklist query completed for user {UserId} in {ElapsedMs}ms. Found {Count} items.",
+                userId, stopwatch.ElapsedMilliseconds, blacklistViewModels.Count);
+
+            return View(new PaginatedList<BlacklistViewModel>(
+                blacklistViewModels,
+                blacklistViewModels.Count,
+                paginatedBlacklist.PageIndex,
+                pageSize));
         }
 
         /// <summary>
@@ -441,6 +461,10 @@ namespace Ezequiel_Movies.Controllers
             }
             _dbContext.BlacklistedMovies.Remove(blacklistedMovie);
             await _dbContext.SaveChangesAsync();
+            
+            // Invalidate cache to ensure fresh data
+            _cacheService.InvalidateUserBlacklistCache(userId);
+            
             return RedirectToAction(nameof(Blacklist));
         }
 
@@ -450,18 +474,23 @@ namespace Ezequiel_Movies.Controllers
         /// </summary>
         /// <param name="searchString">Optional: filter wishlist by title.</param>
         /// <param name="sortOrder">Optional: sort order for the wishlist view.</param>
+        /// <param name="pageNumber">Optional: page number for pagination.</param>
         /// <remarks>
         /// - Only movies wishlisted by the current user are shown.
         /// - UI/UX: Consistent with blacklist and movie list views.
+        /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null)
+        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null, int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");
             }
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            _logger.LogInformation("Wishlist query started for user {UserId}", userId);
 
             var wishlistQuery = _dbContext.WishlistItems
                 .Where(w => w.UserId == userId)
@@ -495,51 +524,53 @@ namespace Ezequiel_Movies.Controllers
                     break;
             }
 
-            var wishlistItems = await wishlistQuery.ToListAsync();
+            int pageSize = 20;
+            var paginatedWishlist = await PaginatedList<Ezequiel_Movies1.Models.Entities.WishlistItem>.CreateAsync(
+                wishlistQuery.AsNoTracking(),
+                pageNumber ?? 1,
+                pageSize);
 
-            // Get all user's logged movies (for join)
-            var userMovies = await _dbContext.Movies
-                .Where(m => m.UserId == userId && m.TmdbId.HasValue)
-                .ToListAsync();
+            // OPTIMIZED: Use batch processing for TMDB details
+            var tmdbIds = paginatedWishlist.Select(w => w.TmdbId).Distinct().ToList();
+            var tmdbDetailsBatch = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
 
-            var wishlistWithDetails = new List<dynamic>();
-
-            foreach (var w in wishlistItems)
+            var wishlistViewModels = new List<WishlistViewModel>();
+            foreach (var wishlistItem in paginatedWishlist)
             {
-                var movie = userMovies.FirstOrDefault(m => m.TmdbId == w.TmdbId);
-                string director = string.Empty;
-                if (movie != null)
+                string director = "Unknown (TMDB)";
+                string movieTitle = "N/A";
+                int? movieTmdbId = null;
+
+                // Use cached/batched data if available
+                if (tmdbDetailsBatch.TryGetValue(wishlistItem.TmdbId, out var details))
                 {
-                    director = string.IsNullOrEmpty(movie.Director) ? "No Director in DB" : movie.Director;
+                    director = details.GetDirector() ?? "Unknown (TMDB)";
+                    movieTitle = details.Title ?? "N/A";
+                    movieTmdbId = details.Id;
                 }
-                else
+
+                wishlistViewModels.Add(new WishlistViewModel
                 {
-                    // If not found in Movies table, fetch director from TMDB
-                    var tmdbDetails = await _tmdbService.GetMovieDetailsAsync(w.TmdbId);
-                    if (tmdbDetails?.Credits?.Crew != null)
-                    {
-                        var directorPerson = tmdbDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director");
-                        director = directorPerson?.Name ?? "Unknown (TMDB)";
-                    }
-                    else
-                    {
-                        director = "Unknown (TMDB)";
-                    }
-                }
-                wishlistWithDetails.Add(new
-                {
-                    w.Id,
-                    w.TmdbId,
-                    w.Title,
-                    w.PosterPath,
-                    w.ReleasedYear,
+                    Id = wishlistItem.Id,
+                    TmdbId = wishlistItem.TmdbId,
+                    Title = wishlistItem.Title,
+                    PosterPath = wishlistItem.PosterPath,
+                    ReleasedYear = wishlistItem.ReleasedYear ?? 0,
                     Director = director,
-                    MovieTitle = movie != null ? movie.Title : "N/A",
-                    MovieTmdbId = movie != null ? movie.TmdbId : (int?)null
+                    MovieTitle = movieTitle,
+                    MovieTmdbId = movieTmdbId ?? 0
                 });
             }
 
-            return View(wishlistWithDetails);
+            stopwatch.Stop();
+            _logger.LogInformation("Wishlist query completed for user {UserId} in {ElapsedMs}ms. Found {Count} items.",
+                userId, stopwatch.ElapsedMilliseconds, wishlistViewModels.Count);
+
+            return View(new PaginatedList<WishlistViewModel>(
+                wishlistViewModels,
+                wishlistViewModels.Count,
+                paginatedWishlist.PageIndex,
+                pageSize));
         }
 
 
@@ -596,6 +627,9 @@ namespace Ezequiel_Movies.Controllers
                     _dbContext.WishlistItems.Add(wishlistItem);
                     await _dbContext.SaveChangesAsync();
                     _logger.LogInformation("Movie {TmdbId} added to wishlist for user {UserId}", tmdbId, userId);
+                    
+                    // Invalidate cache to ensure fresh data
+                    _cacheService.InvalidateUserWishlistCache(userId);
                 }
                 else
                 {
@@ -677,6 +711,9 @@ namespace Ezequiel_Movies.Controllers
             {
                 _dbContext.WishlistItems.Remove(wishlistItem);
                 await _dbContext.SaveChangesAsync();
+                
+                // Invalidate cache to ensure fresh data
+                _cacheService.InvalidateUserWishlistCache(userId);
             }
 
             return RedirectToAction("Wishlist");

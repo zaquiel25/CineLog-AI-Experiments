@@ -1,9 +1,8 @@
-@model IEnumerable<dynamic>
+@model Ezequiel_Movies.Helpers.PaginatedList<Ezequiel_Movies.Models.BlacklistViewModel>
 @{
     ViewData["Title"] = "My Blacklist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
 }
-
 
 <div class="d-flex align-items-center mb-2">
     <h1 class="mb-0">My Blacklist</h1>
@@ -62,12 +61,12 @@ else
                                     @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
                                     {
                                         <text>Directed by @item.Director</text>
-                                        @if (item.ReleasedYear != null)
+                                        @if (item.ReleasedYear != 0)
                                         {
                                             <text> &bull; @item.ReleasedYear</text>
                                         }
                                     }
-                                    else if (item.ReleasedYear != null)
+                                    else if (item.ReleasedYear != 0)
                                     {
                                         <text>@item.ReleasedYear</text>
                                     }
@@ -93,4 +92,51 @@ else
             </div>
         }
     </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]">Previous</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]">@i</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]">Next</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            }
+        </ul>
+    </nav>
 }

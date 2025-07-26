@@ -3,6 +3,7 @@ using Ezequiel_Movies.Data;
 using System.Net.Http.Headers; // <<< ADD THIS IF YOUR IDE DOESN'T ADD IT AUTOMATICALLY
 using Ezequiel_Movies;
 using Microsoft.AspNetCore.Identity;
+using Ezequiel_Movies.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,9 @@ builder.Services.AddControllersWithViews();
 var conStringBuider = builder.Configuration.GetConnectionString("Ezequiel"); // This line isn't used, conString is hardcoded below
 var conString = "Server=localhost,1433 ;Database=Ezequiel_Movies;User Id=sa; Password=***REMOVED***; TrustServerCertificate=True";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(conString));
+
+// Register CacheService for performance optimization
+builder.Services.AddScoped<CacheService>();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<ApplicationDbContext>();
