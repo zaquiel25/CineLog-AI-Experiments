@@ -339,16 +339,15 @@ namespace Ezequiel_Movies.Controllers
             {
                 return RedirectToAction("Login", "Account");
             }
+
             var blacklistQuery = _dbContext.BlacklistedMovies
                 .Where(b => b.UserId == userId)
                 .AsQueryable();
-
 
             if (!string.IsNullOrEmpty(searchString))
             {
                 blacklistQuery = blacklistQuery.Where(b => b.Title.ToLower().Contains(searchString.ToLower()));
             }
-
 
             ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
@@ -373,39 +372,35 @@ namespace Ezequiel_Movies.Controllers
 
             var blacklistedMovies = await blacklistQuery.ToListAsync();
 
-            // Fetch TMDB details for each movie (mirrors Wishlist pattern)
+            // OPTIMIZED: Use batch processing for TMDB details
+            var tmdbIds = blacklistedMovies.Select(b => b.TmdbId).Distinct().ToList();
+            var tmdbDetailsBatch = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
+
             var moviesWithPosters = new List<dynamic>();
             foreach (var movie in blacklistedMovies)
             {
-                var posterUrl = await GetPosterUrlAsync(movie.TmdbId, movie.PosterUrl);
+                string director = movie.Director ?? "Unknown (TMDB)";
+                int? releasedYear = movie.ReleasedYear;
+                string posterUrl = movie.PosterUrl;
 
-                string director = "Unknown (TMDB)";
-                int? releasedYear = null;
-
-                try
+                // Use cached/batched data if available
+                if (tmdbDetailsBatch.TryGetValue(movie.TmdbId, out var details))
                 {
-                    var tmdbDetails = await GetMovieDetailsWithLoggingAsync(movie.TmdbId);
-                    if (tmdbDetails != null)
+                    if (string.IsNullOrEmpty(movie.Director))
                     {
-                        // Extraer director
-                        if (tmdbDetails.Credits?.Crew != null)
-                        {
-                            var directorPerson = tmdbDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director");
-                            if (!string.IsNullOrEmpty(directorPerson?.Name))
-                                director = directorPerson.Name;
-                        }
-                        // Extraer año
-                        if (!string.IsNullOrEmpty(tmdbDetails.ReleaseDate) && tmdbDetails.ReleaseDate.Length >= 4)
-                        {
-                            if (int.TryParse(tmdbDetails.ReleaseDate.Substring(0, 4), out var year))
-                                releasedYear = year;
-                        }
+                        director = details.GetDirector() ?? "Unknown (TMDB)";
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error fetching TMDB details for Blacklist movie {TmdbId}", movie.TmdbId);
-                    // director y releasedYear quedan con valores por defecto
+                    
+                    if (!movie.ReleasedYear.HasValue && !string.IsNullOrEmpty(details.ReleaseDate) && details.ReleaseDate.Length >= 4)
+                    {
+                        if (int.TryParse(details.ReleaseDate.Substring(0, 4), out var year))
+                            releasedYear = year;
+                    }
+                    
+                    if (string.IsNullOrEmpty(movie.PosterUrl))
+                    {
+                        posterUrl = details.PosterPath;
+                    }
                 }
 
                 moviesWithPosters.Add(new
@@ -3593,5 +3588,3 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
     
     }
-
-    

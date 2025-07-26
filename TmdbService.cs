@@ -560,8 +560,71 @@ public class TmdbService : IDisposable
                 _logger.LogError(ex, "Failed to fetch trending movies.");
                 return new List<TmdbMovieBrief>();
             }
+        }
 
-            
+        /// <summary>
+        /// Gets multiple movie details in a single batch operation to reduce API calls
+        /// </summary>
+        /// <param name="tmdbIds">List of TMDB IDs to fetch</param>
+        /// <returns>Dictionary mapping TMDB ID to movie details</returns>
+        public async Task<Dictionary<int, TmdbMovieDetails>> GetMultipleMovieDetailsAsync(IEnumerable<int> tmdbIds)
+        {
+            if (tmdbIds == null || !tmdbIds.Any())
+                return new Dictionary<int, TmdbMovieDetails>();
+
+            var results = new Dictionary<int, TmdbMovieDetails>();
+            var missingIds = new List<int>();
+
+            // Check cache first
+            foreach (var id in tmdbIds.Distinct())
+            {
+                var cacheKey = $"movie_details_{id}";
+                if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails? cached) && cached != null)
+                {
+                    results[id] = cached;
+                }
+                else
+                {
+                    missingIds.Add(id);
+                }
+            }
+
+            // Fetch missing movies in parallel with throttling
+            if (missingIds.Any())
+            {
+                var tasks = missingIds.Select(async id =>
+                {
+                    await _tmdbSemaphore.WaitAsync();
+                    try
+                    {
+                        var details = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>($"movie/{id}?append_to_response=credits");
+                        if (details != null)
+                        {
+                            var cacheKey = $"movie_details_{id}";
+                            _memoryCache.Set(cacheKey, details, TimeSpan.FromHours(24));
+                            return new { Id = id, Details = details };
+                        }
+                        return new { Id = id, Details = (TmdbMovieDetails?)null };
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to fetch movie details for TMDB ID: {TmdbId}", id);
+                        return new { Id = id, Details = (TmdbMovieDetails?)null };
+                    }
+                    finally
+                    {
+                        _tmdbSemaphore.Release();
+                    }
+                });
+
+                var fetchedResults = await Task.WhenAll(tasks);
+                foreach (var result in fetchedResults.Where(r => r.Details != null))
+                {
+                    results[result.Id] = result.Details!;
+                }
+            }
+
+            return results;
         }
         
         
