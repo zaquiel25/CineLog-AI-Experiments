@@ -1,3 +1,9 @@
+## 2025-07-26
+### ✨ UI Polish: Gold Titles & Larger Suggestion Cards
+- Suggestion section titles now use `.cinelog-gold-title` for Cinema Gold color, matching the home page branding.
+- Suggestion card titles (`.card-title`) and descriptions (`.suggestion-description`) are now 1pt larger for improved readability and visual hierarchy.
+- All changes are documented in `site.css` and reflected in the UI for consistency.
+
 ## 2025-07-25
 ### 🔄 Surprise Me System Unification
 - **Unified Performance**: Both initial "Surprise Me" suggestions and reshuffles now use the same optimized pool system
@@ -48,7 +54,7 @@
 - User experience: Decade suggestions now provide varied, reliable content from the first click, with bulletproof fallback for edge cases.
 - Consistency: Unified experience between decade and genre suggestions across all flows.
   - Enhanced with deduplication logic to prevent duplicate decades in results
-  
+
 # 2025-07-24 Genre Suggestion Dynamic Variety System
 
 - **Major Enhancement**: Implemented dynamic variety system for genre-based movie suggestions

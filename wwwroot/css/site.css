@@ -1,4 +1,20 @@
-﻿/* Unificar colores de botones Search y Clear Search */
+﻿/*
+2025-07-26: UI Polish
+- .cinelog-gold-title: Gold color for suggestion section titles (matches home page)
+- .suggestion-card .card-title and .suggestion-card .suggestion-description: Font size increased by 1pt for better readability
+*/
+/* Make suggestion card titles and descriptions larger */
+.suggestion-card .card-title {
+    font-size: 1.375rem !important; /* Bootstrap h5 is 1.25rem, so +1pt = 1.375rem */
+}
+.suggestion-card .suggestion-description {
+    font-size: 1.0625rem !important; /* Bootstrap small is 0.875rem, so +1pt = 1.0625rem */
+}
+/* Gold title for suggestion headers */
+.cinelog-gold-title {
+    color: var(--cinelog-gold) !important;
+}
+/* Unify colors for Search and Clear Search buttons */
 .btn-primary,
 .btn-info,
 input[type="submit"].btn-primary,
@@ -16,7 +32,7 @@ button.btn-primary:hover {
     border-color: #545b62 !important;
     color: #fff !important;
 }
-/* Botón Add New Movie en Cinema Gold */
+/* Add New Movie button in Cinema Gold */
 .btn-success,
 a.btn-success {
     background-color: var(--cinelog-gold) !important;
@@ -98,24 +114,24 @@ html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:ho
 }
 /*
 ============================================================
-  CineLog - Movie Preview Card (Ultra Específico)
-  Última actualización: 2025-07-15
+  CineLog - Movie Preview Card (Ultra Specific)
+  Last update: 2025-07-15
 
-  Mejoras implementadas:
-  1. Selector ultra específico para vencer la especificidad de Bootstrap/Cyborg.
-  2. Colores profesionales: fondo oscuro, borde azul, sombra pronunciada.
-  3. Efectos hover con elevación y transición suave.
-  4. Jerarquía tipográfica clara (título, labels, valores, overview).
-  5. Overview sin scrollbar, justificado y con tamaño reducido.
+  Improvements implemented:
+  1. Ultra-specific selector to overcome Bootstrap/Cyborg specificity.
+  2. Professional colors: dark background, blue border, pronounced shadow.
+  3. Hover effects with elevation and smooth transition.
+  4. Clear typographic hierarchy (title, labels, values, overview).
+  5. Overview without scrollbar, justified and with reduced size.
 
-  NOTAS DE MANTENIMIENTO:
-  - No reducir la especificidad del selector, o los estilos pueden ser sobrescritos por Bootstrap o temas futuros.
-  - Si se cambia la estructura HTML o clases Bootstrap de la tarjeta, revisar y actualizar estos selectores.
-  - Probar visualmente en todos los navegadores y dispositivos tras cualquier cambio.
-  - Para cambios mayores, documentar en CHANGELOG.md y en este bloque.
+  MAINTENANCE NOTES:
+  - Do not reduce the selector specificity, or styles may be overridden by Bootstrap or future themes.
+  - If the HTML structure or Bootstrap classes of the card are changed, review and update these selectors.
+  - Visually test in all browsers and devices after any change.
+  - For major changes, document in CHANGELOG.md and in this block.
 ============================================================
 */
-/* Justificar texto en la tarjeta de movie preview */
+/* Justify text in the movie preview card */
 html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieOverviewText {
     font-size: 0.85rem !important;
     line-height: 1.5 !important;
@@ -125,7 +141,7 @@ html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selec
     text-justify: inter-word !important;
 }
 
-/* Jerarquía visual mejorada en la tarjeta */
+/* Improved visual hierarchy in the card */
 /* Custom pastel button colors for suggestion cards */
 .btn-soft-primary {
     background-color: #6fa8dc;
@@ -169,7 +185,7 @@ html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
     color: #ffffff !important;
     font-weight: 400 !important;
 }
-/* TEST DEFINITIVO - REMOVER DESPUÉS */
+/* FINAL TEST - REMOVE AFTERWARDS */
 html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
     background-color: #1e2124 !important;
     border: 2px solid var(--cinelog-gold) !important;
@@ -413,8 +429,7 @@ H5.card-title,
     color: #e0e0e0;
     text-align: left;
 }
-/* Limpieza: Eliminado bloque de rollback y reglas vacías para validación CSS */
-/* All secondary text elements - make smaller */
+/* Cleanup: Removed rollback block and empty rules for CSS validation */
 .card-text, .card-subtitle, 
 .director-info, .release-info, .watched-info,
 .movie-details, .card-body small,
@@ -426,7 +441,7 @@ H5.card-title,
 .card-body p, .card-body div:not(.card-title) {
     font-size: 0.75rem;
 }
-/* Limpieza: Eliminado bloque de backup y reglas vacías para validación CSS */
+/* Cleanup: Removed backup block and empty rules for CSS validation */
 
 /* MOVIE CARDS - TEXT ALIGNMENT FIX */
 .card-title,
@@ -609,7 +624,7 @@ p {
 }
 /* --- FIN HERO LANDING PAGE --- */
 /* Ensure footer always appears above cards (stacking context fix) */
-/* Selector ultra específico para footer */
+/* Ultra-specific selector for footer */
 html body footer,
 footer.bg-secondary,
 .footer,
@@ -621,7 +636,7 @@ footer {
     position: relative;
 }
 
-/* También para cualquier texto dentro del footer */
+/* Also for any text inside the footer */
 footer a,
 footer p,
 footer span {

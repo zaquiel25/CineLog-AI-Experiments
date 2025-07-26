@@ -1,3 +1,8 @@
+# ✨ Cinema Gold Branding & UI Polish (2025-07-26)
+- **Suggestion Titles:** All suggestion section titles now use the `.cinelog-gold-title` class for gold color, matching the home page.
+- **Suggestion Cards:** Card titles and descriptions are now 1pt larger for better readability and visual consistency.
+- **Documentation:** These changes are described in `site.css` and the changelog.
+
 # Cast Suggestions (Actor)
 
 - Suggests movies based on actors from your recent movie history, rotating between most recent, most frequent, highest-rated, and random.
