@@ -67,7 +67,7 @@ namespace Ezequiel_Movies.Controllers
 
             // Build pool of valid movies - same logic as TrendingReshuffle
             var moviePool = new List<TmdbMovieBrief>();
-            int pageNum = 1;
+        int pageNum = 1; // Initialize page number for fetching movies
 
             while (moviePool.Count < 30 && pageNum <= 5)
             {
@@ -1766,7 +1766,7 @@ namespace Ezequiel_Movies.Controllers
             }
         }
 
-        /// <summary>
+        
         /// <summary>
         /// Builds the static pool of 80 deduplicated movies for Surprise Me suggestions.
         ///
@@ -1787,8 +1787,17 @@ namespace Ezequiel_Movies.Controllers
         private async Task<(List<TmdbMovieBrief> bucket3x3, List<TmdbMovieBrief> bucket2x3, List<TmdbMovieBrief> bucket1x3)>
             BuildSurprisePoolAsync(string userId)
         {
-            _logger.LogInformation("🏗️ Building surprise pool for user {UserId}", userId);
+            _logger.LogInformation("🏗️ Building surprise pool for user {UserId} with anti-repetition", userId);
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            // Get previous pools to avoid repetition (middle ground strategy)
+            var previousPoolKey1 = $"SurprisePool_Previous1_{userId}";
+            var previousPoolKey2 = $"SurprisePool_Previous2_{userId}";
+            var previousPool1 = _memoryCache.Get<HashSet<int>>(previousPoolKey1) ?? new HashSet<int>();
+            var previousPool2 = _memoryCache.Get<HashSet<int>>(previousPoolKey2) ?? new HashSet<int>();
+            var excludedTmdbIds = new HashSet<int>(previousPool1.Union(previousPool2));
+
+            _logger.LogInformation("📝 Excluding {Count} movies from previous 2 pools", excludedTmdbIds.Count);
 
             // --- 1. Get user ingredients ---
             var loggedMovies = await _dbContext.Movies
@@ -1806,6 +1815,11 @@ namespace Ezequiel_Movies.Controllers
                 .Select(m => m.TmdbId!.Value)
                 .ToListAsync();
             var recentMovieIdSet = recentMovieIds.ToHashSet();
+
+            // Combine all exclusions: blacklist + recent + previous pools
+            var allExcludedIds = userBlacklistedIds.Union(recentMovieIdSet).Union(excludedTmdbIds).ToHashSet();
+            _logger.LogInformation("🚫 Total excluded movies: {Count} (blacklist: {Blacklist}, recent: {Recent}, previous pools: {Previous})", 
+                allExcludedIds.Count, userBlacklistedIds.Count, recentMovieIdSet.Count, excludedTmdbIds.Count);
             _logger.LogInformation("⏱️ User filters took: {Ms}ms", stopwatch.ElapsedMilliseconds);
             stopwatch.Restart();
             _logger.LogInformation("🔍 Filters loaded: {BlacklistCount} blacklisted, {RecentCount} recent",
@@ -1869,16 +1883,22 @@ namespace Ezequiel_Movies.Controllers
             var allGenres = await _tmdbService.GetAllGenresAsync();
             var genreDict = allGenres.ToDictionary(g => g.Name!, g => g.Id, StringComparer.OrdinalIgnoreCase);
 
-            // --- 2. Build buckets with deduplication ---
+            // --- 2. Build buckets with parallel API calls ---
+            // ...declarations moved to parallelization block...
+
+            // Prepare all queries for parallel execution
+            var queries3x3 = new List<(int? directorId, int? actorId, int? genreId, int? decade)>();
+            var queries2x3 = new List<(int? directorId, int? actorId, int? genreId, int? decade)>();
+            var queries1x3 = new List<(int? directorId, int? actorId, int? genreId, int? decade)>();
+
+            _logger.LogInformation("🎯 Preparing parallel queries for bucket construction...");
             var allMoviesFound = new HashSet<int>(); // Global deduplication tracker
             var bucket3x3 = new List<TmdbMovieBrief>();
             var bucket2x3 = new List<TmdbMovieBrief>();
             var bucket1x3 = new List<TmdbMovieBrief>();
 
-            // --- BUCKET A: 3/3 MATCHES (Target: 20) - SEQUENTIAL OPTIMIZED ---
-            _logger.LogInformation("🎯 Building 3/3 matches bucket...");
-            var attempts3x3 = 0;
-            while (bucket3x3.Count < 20 && attempts3x3 < 5) // Reducir intentos de 10 a 5
+            // Build 3x3 queries (director + actor + genre combinations)
+            for (int i = 0; i < 5; i++) // Reduced from 10 to 5 attempts for 50-movie target
             {
                 var randDirector = directorPool[random.Next(directorPool.Count)];
                 var randActor = actorPool[random.Next(actorPool.Count)];
@@ -1889,199 +1909,135 @@ namespace Ezequiel_Movies.Controllers
 
                 if (directorId.HasValue && genreId.HasValue)
                 {
-                    var movies = await _tmdbService.DiscoverMoviesAsync(directorId, randActor.Id, genreId, null);
-                    var validMovies = movies
-                        .Where(m => m.VoteAverage >= 4.5)
-                        .Where(m => !userBlacklistedIds.Contains(m.Id))
-                        .Where(m => !recentMovieIdSet.Contains(m.Id))
-                        .Where(m => !allMoviesFound.Contains(m.Id))
-                        .ToList();
-
-                    foreach (var movie in validMovies.Take(20 - bucket3x3.Count))
-                    {
-                        bucket3x3.Add(movie);
-                        allMoviesFound.Add(movie.Id);
-                    }
+                    queries3x3.Add((directorId, randActor.Id, genreId, null));
                 }
-                attempts3x3++;
             }
+           
 
             _logger.LogInformation("✅ 3/3 bucket built: {Count} movies", bucket3x3.Count);
 
-            // --- BUCKET B: 2/3 MATCHES (Target: 60, complete missing from 3/3) - SEQUENTIAL OPTIMIZED ---
-            _logger.LogInformation("🎯 Building 2/3 matches bucket...");
-            var needed2x3 = 60 + Math.Max(0, 20 - bucket3x3.Count);
-            var attempts2x3 = 0;
-            var combos2x3 = new[] { "director_actor", "director_genre", "actor_genre" };
 
-            while (bucket2x3.Count < needed2x3 && attempts2x3 < 10) // Reducir intentos de 15 a 10
+            // Declare combos2x3 before its first use
+            var combos2x3 = new[] { "director_actor", "director_genre", "actor_genre" };
+            // Build 2x3 queries (director+actor, director+genre, actor+genre combinations)
+            for (int i = 0; i < 5; i++) // Reduced to 5 for rate limit safety
             {
-                var combo = combos2x3[attempts2x3 % 3];
+                var combo = combos2x3[i % 3];
                 var randDirector = directorPool[random.Next(directorPool.Count)];
                 var randActor = actorPool[random.Next(actorPool.Count)];
                 var randGenre = genrePool[random.Next(genrePool.Count)];
 
                 var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
-                var actorId = randActor.Id;
                 var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
-
-                List<TmdbMovieBrief> movies = new();
 
                 switch (combo)
                 {
                     case "director_actor":
                         if (directorId.HasValue)
-                            movies = await _tmdbService.DiscoverMoviesAsync(directorId, actorId, null, null);
+                            queries2x3.Add((directorId, randActor.Id, null, null));
                         break;
                     case "director_genre":
                         if (directorId.HasValue && genreId.HasValue)
-                            movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, genreId, null);
+                            queries2x3.Add((directorId, null, genreId, null));
                         break;
                     case "actor_genre":
                         if (genreId.HasValue)
-                            movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, genreId, null);
+                            queries2x3.Add((null, randActor.Id, genreId, null));
                         break;
                 }
-
-                var validMovies = movies
-                    .Where(m => m.VoteAverage >= 4.5)
-                    .Where(m => !userBlacklistedIds.Contains(m.Id))
-                    .Where(m => !recentMovieIdSet.Contains(m.Id))
-                    .Where(m => !allMoviesFound.Contains(m.Id))
-                    .ToList();
-
-                foreach (var movie in validMovies.Take(needed2x3 - bucket2x3.Count))
-                {
-                    bucket2x3.Add(movie);
-                    allMoviesFound.Add(movie.Id);
-
-                    // Early exit if we have enough
-                    if (bucket2x3.Count >= needed2x3) break;
-                }
-
-                attempts2x3++;
             }
+           
+            _logger.LogInformation("✅ 2/3 bucket built: {Count} movies", bucket2x3.Count);
 
-            _logger.LogInformation("✅ 2/3 bucket built: {Count} movies (needed: {Needed})", bucket2x3.Count, needed2x3);
 
-            // --- BUCKET C: 1/3 MATCHES (Target: 20, complete missing from 2/3) - SEQUENTIAL OPTIMIZED ---
-            _logger.LogInformation("🎯 Building 1/3 matches bucket...");
-            var needed1x3 = 20 + Math.Max(0, needed2x3 - bucket2x3.Count);
-            var attempts1x3 = 0;
+            // Declare singles1x3 before its first use
             var singles1x3 = new[] { "director", "actor", "genre" };
-
-            while (bucket1x3.Count < needed1x3 && attempts1x3 < 6) // Reducir intentos de 10 a 6
+            // Build 1x3 queries (single criteria: director, actor, or genre)
+            for (int i = 0; i < 5; i++) // Reduced to 5 for rate limit safety
             {
-                var single = singles1x3[attempts1x3 % 3];
+                var single = singles1x3[i % 3];
                 var randDirector = directorPool[random.Next(directorPool.Count)];
                 var randActor = actorPool[random.Next(actorPool.Count)];
                 var randGenre = genrePool[random.Next(genrePool.Count)];
-
-                List<TmdbMovieBrief> movies = new();
 
                 switch (single)
                 {
                     case "director":
                         var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
                         if (directorId.HasValue)
-                            movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, null, null);
+                            queries1x3.Add((directorId, null, null, null));
                         break;
                     case "actor":
-                        var actorId = randActor.Id;
-                        movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, null, null);
+                        queries1x3.Add((null, randActor.Id, null, null));
                         break;
                     case "genre":
                         var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
                         if (genreId.HasValue)
-                            movies = await _tmdbService.DiscoverMoviesAsync(null, null, genreId, null);
+                            queries1x3.Add((null, null, genreId, null));
                         break;
                 }
-
-                var validMovies = movies
-                    .Where(m => m.VoteAverage >= 4.5)
-                    .Where(m => !userBlacklistedIds.Contains(m.Id))
-                    .Where(m => !recentMovieIdSet.Contains(m.Id))
-                    .Where(m => !allMoviesFound.Contains(m.Id))
-                    .ToList();
-
-                foreach (var movie in validMovies.Take(needed1x3 - bucket1x3.Count))
-                {
-                    bucket1x3.Add(movie);
-                    allMoviesFound.Add(movie.Id);
-
-                    // Early exit if we have enough
-                    if (bucket1x3.Count >= needed1x3) break;
-                }
-
-                attempts1x3++;
             }
 
-            _logger.LogInformation("✅ 1/3 bucket built: {Count} movies (needed: {Needed})", bucket1x3.Count, needed1x3);
+            _logger.LogInformation("🚀 Executing {Total} queries in parallel ({Count3x3} 3x3, {Count2x3} 2x3, {Count1x3} 1x3)", 
+    queries3x3.Count + queries2x3.Count + queries1x3.Count, queries3x3.Count, queries2x3.Count, queries1x3.Count);
 
-            var totalFound = bucket3x3.Count + bucket2x3.Count + bucket1x3.Count;
-            _logger.LogInformation("🎁 Pool building complete: {Total} unique movies across all buckets", totalFound);
+// Execute all queries in parallel
+var allQueries = queries3x3.Concat(queries2x3).Concat(queries1x3).ToList();
+var allResults = await _tmdbService.ExecuteParallelDiscoveryAsync(allQueries);
 
-            // GUARANTEE exactly 80 movies - aggressive cascading if needed
-            if (totalFound < 80)
-            {
-                _logger.LogWarning("⚠️ Pool has only {Total} movies, need 80. Starting aggressive cascading...", totalFound);
+_logger.LogInformation("⏱️ Parallel API execution took: {Ms}ms", stopwatch.ElapsedMilliseconds);
+stopwatch.Restart();
 
-                // Try more 1x3 combinations until we reach 80
-                var additionalNeeded = 80 - totalFound;
-                var extraAttempts = 0;
-                var extraSingles = new[] { "director", "actor", "genre" };
+// Filter and organize results into buckets
+var filteredResults = allResults
+    .Where(m => m.VoteAverage >= 4.0)
+    .Where(m => !allExcludedIds.Contains(m.Id))
+    .Where(m => !allMoviesFound.Contains(m.Id))
+    .ToList();
 
-                while (totalFound < 80 && extraAttempts < 20) // Max 20 additional attempts
-                {
-                    var single = extraSingles[extraAttempts % 3];
-                    var randDirector = directorPool[random.Next(directorPool.Count)];
-                    var randActor = actorPool[random.Next(actorPool.Count)];
-                    var randGenre = genrePool[random.Next(genrePool.Count)];
+_logger.LogInformation("🎬 Got {Count} valid movies after filtering", filteredResults.Count);
 
-                    List<TmdbMovieBrief> movies = new();
+// Distribute results into buckets (maintaining original proportions for 50 movies)
+// Target: ~20 for 3x3, ~20 for 2x3, ~10 for 1x3
 
-                    switch (single)
-                    {
-                        case "director":
-                            var directorId = await _tmdbService.GetPersonIdAsync(randDirector);
-                            if (directorId.HasValue)
-                                movies = await _tmdbService.DiscoverMoviesAsync(directorId, null, null, null);
-                            break;
-                        case "actor":
-                            var actorId = randActor.Id;
-                            movies = await _tmdbService.DiscoverMoviesAsync(null, actorId, null, null);
-                            break;
-                        case "genre":
-                            var genreId = genreDict.ContainsKey(randGenre) ? genreDict[randGenre] : (int?)null;
-                            if (genreId.HasValue)
-                                movies = await _tmdbService.DiscoverMoviesAsync(null, null, genreId, null);
-                            break;
-                    }
+// Fill 3x3 bucket (target: 20 movies)
+var results3x3 = filteredResults.Take(20).ToList();
+foreach (var movie in results3x3)
+{
+    bucket3x3.Add(movie);
+    allMoviesFound.Add(movie.Id);
+}
 
-                    var validMovies = movies
-                        .Where(m => m.VoteAverage >= 4.0) // Lower threshold for guarantee
-                        .Where(m => !userBlacklistedIds.Contains(m.Id))
-                        .Where(m => !recentMovieIdSet.Contains(m.Id))
-                        .Where(m => !allMoviesFound.Contains(m.Id))
-                        .ToList();
+// Fill 2x3 bucket (target: 20 movies)
+var remaining = filteredResults.Where(m => !allMoviesFound.Contains(m.Id)).Take(20).ToList();
+foreach (var movie in remaining)
+{
+    bucket2x3.Add(movie);
+    allMoviesFound.Add(movie.Id);
+}
 
-                    foreach (var movie in validMovies.Take(80 - totalFound))
-                    {
-                        bucket1x3.Add(movie);
-                        allMoviesFound.Add(movie.Id);
-                        totalFound++;
-                    }
+// Fill 1x3 bucket (target: 10 movies)
+var final = filteredResults.Where(m => !allMoviesFound.Contains(m.Id)).Take(10).ToList();
+foreach (var movie in final)
+{
+    bucket1x3.Add(movie);
+    allMoviesFound.Add(movie.Id);
+}
 
-                    extraAttempts++;
-                }
+_logger.LogInformation("✅ Buckets filled: {Count3x3} + {Count2x3} + {Count1x3} = {Total} movies",
+    bucket3x3.Count, bucket2x3.Count, bucket1x3.Count, bucket3x3.Count + bucket2x3.Count + bucket1x3.Count);
 
-                _logger.LogInformation("✅ Aggressive cascading complete: {Total} movies guaranteed", totalFound);
-            }
+    // Save current pool IDs for future anti-repetition (middle ground strategy)
+var currentPoolIds = bucket3x3.Concat(bucket2x3).Concat(bucket1x3).Select(m => m.Id).ToHashSet();
+_memoryCache.Set(previousPoolKey2, previousPool1, TimeSpan.FromHours(6)); // Shift previous pools
+_memoryCache.Set(previousPoolKey1, currentPoolIds, TimeSpan.FromHours(6)); // Save current as previous
 
-            _logger.LogInformation("⏱️ Total pool building took: {Ms}ms", stopwatch.ElapsedMilliseconds);
-            return (bucket3x3, bucket2x3, bucket1x3);
-        }
+var totalFound = bucket3x3.Count + bucket2x3.Count + bucket1x3.Count;
+_logger.LogInformation("🎁 Pool building complete: {Total} unique movies, took: {Ms}ms", totalFound, stopwatch.ElapsedMilliseconds);
 
+return (bucket3x3, bucket2x3, bucket1x3);
+}
+            
         /// <summary>
         /// Helper para renderizar una partial view a string.
         /// Permite reutilizar la lógica de vistas parciales en endpoints AJAX, devolviendo HTML listo para insertar en el cliente.
