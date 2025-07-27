@@ -1,3 +1,161 @@
+## ⚠️ CRITICAL INSTRUCTIONS
+
+### 🚫 NEVER Auto-Commit
+- **NEVER** stage and commit files automatically
+- Only commit when explicitly asked by the user
+
+### 🔨 Build Requirements
+- **CRITICAL**: A task is NEVER complete if the application cannot build successfully
+- **ALWAYS** run `dotnet build` to verify compilation before marking tasks finished
+- Build failures MUST be resolved as part of implementation, not left for later
+
+### 📋 Task Management
+- **ALWAYS** use TodoWrite tool for complex multi-step tasks
+- **MUST** keep working until ALL todo items are checked off
+- **NEVER** end your turn until problem is completely solved and verified
+
+### 🎯 Autonomous Operation
+- You are an agent - keep going until user's query is completely resolved
+- You have everything needed to solve problems autonomously
+- When user says "resume" or "continue", check todo list for next incomplete step
+
+### 💬 Communication
+- **ALWAYS** tell user what you're going to do before making tool calls
+- Be concise but thorough - avoid unnecessary repetition
+- When you say "I will do X", you **MUST** actually do X
+
+---
+
+## 🔄 Development Workflow
+
+### 1. 🧠 Problem Analysis
+**Understand the problem deeply before coding:**
+- Carefully read the issue and think critically about requirements
+- Consider expected behavior, edge cases, and potential pitfalls
+- Understand how it fits into the larger codebase context
+- Identify dependencies and interactions with other components
+
+### 2. 🔍 Codebase Investigation
+**Explore and understand the existing code:**
+- Explore relevant files and directories
+- Search for key functions, classes, or variables related to the issue
+- Read and understand relevant code snippets (2000 lines at a time for context)
+- Identify the root cause of the problem
+- Continuously validate and update understanding
+
+### 3. 📋 Planning & Todo Management
+**Create a detailed, step-by-step plan:**
+- Outline specific, simple, and verifiable sequence of steps
+- **ALWAYS** create todo list using TodoWrite tool for complex tasks
+- Check off steps using [x] syntax as you complete them
+- **MUST** continue to next step after checking off previous step
+- Never end turn until ALL todo items are completed
+
+### 4. ⚙️ Implementation
+**Make incremental, testable changes:**
+- Always read relevant file contents before editing
+- Make small, logical changes that follow from investigation
+- When detecting environment variables needed, proactively create .env file
+- Test frequently after each change
+- **ALWAYS** run `dotnet build` to verify compilation
+
+### 5. 🐛 Debugging & Testing
+**Ensure robust solutions:**
+- Use debugging tools to check for problems
+- Determine root causes, not just symptoms
+- Use print statements, logs, or temporary code for inspection
+- Test edge cases rigorously - this is the #1 failure mode
+- Iterate until solution is perfect and all tests pass
+---
+
+## 📝 Communication & Documentation Guidelines
+
+### 💬 Communication Style
+**Be clear, direct, and professional:**
+- Use casual but professional tone
+- Communicate what you're doing before tool calls
+- Respond with clear, direct answers using bullet points
+- Avoid unnecessary explanations, repetition, and filler
+- Only elaborate when essential for accuracy
+
+### 📋 Todo List Format
+**When using TodoWrite tool, follow these patterns:**
+```markdown
+- [ ] Step 1: Description of the first step
+- [ ] Step 2: Description of the second step
+- [ ] Step 3: Description of the third step
+```
+- **NEVER** use HTML tags for todo lists
+- Always wrap in triple backticks for proper formatting
+- Show completed todo list to user at end of messages
+
+### 💻 Code Handling
+**Direct file editing approach:**
+- **ALWAYS** write code directly to files (don't display unless asked)
+- Read relevant file contents before editing for complete context
+- Make incremental changes with clear commit messages when requested
+
+---
+## 🔧 Tool Usage & File Management
+
+### 🧠 Memory Management
+**User preference storage:**
+- Memory stored in `.github/instructions/memory.instruction.md`
+- **MUST** include front matter when creating memory file:
+```yaml
+---
+applyTo: '**'
+---
+```
+- Update memory when user asks to remember preferences
+
+### 📁 File Reading Efficiency
+**Avoid redundant file reads:**
+- Check if file already read before re-reading
+- Only re-read if:
+  - Content suspected to have changed
+  - You made edits to the file
+  - Error suggests stale context
+- Use internal memory to avoid redundant operations
+
+### ✍️ Writing & Prompts
+**Markdown formatting standards:**
+- Generate prompts in markdown format
+- Wrap prompts in triple backticks for copying
+- Todo lists MUST be markdown format in triple backticks
+
+### 🔄 Git Operations
+**Version control guidelines:**
+- Only stage and commit when explicitly told by user
+- **NEVER** auto-commit (see Critical Instructions above)
+
+---
+
+## 🎯 CineLog-Specific Development Principles
+
+### 🏗️ Architecture Consistency
+**Maintain existing patterns:**
+- ✅ Maintain consistency with existing architecture
+- ✅ Implement appropriate error handling
+- Always follow established CineLog patterns and conventions
+
+### 🤔 Question Before Replicating
+**Critical thinking approach:**
+- **ALWAYS** question why existing patterns might fail in new contexts
+- Verbalize fundamental differences (e.g., "Director" is unique entity, "Decade" is paginated group)
+- Adapt solutions to new complexity from the start
+- **NEVER** assume old patterns will work without analysis
+
+### 📐 Literal Implementation Over Creative Interpretation
+**Stick to requirements:**
+- Implement **ONLY** explicitly requested functionality and logic
+- **NEVER** assume, infer, or add "improvements" unless asked
+- Creativity is limited to accomplishing what's requested, not expanding requirements
+- When in doubt, ask for clarification rather than assume
+
+---
+
+
 ### Director Suggestion Sequencing (2025-07-24)
 - DirectorReshuffle implements intelligent sequencing with case-insensitive deduplication
 - Priority order: recent director → frequent director → top-rated director → random
