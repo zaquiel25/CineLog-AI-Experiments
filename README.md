@@ -19,6 +19,25 @@
 - **Progressive Enhancement**: Works with JavaScript disabled (falls back to page navigation)
 - **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
 
+## 🤖 Claude Code Development Tools
+- **Specialized Subagents**: 6 task-specific AI assistants for accelerated development
+- **Context Efficiency**: Each subagent operates in its own context window for focused expertise
+- **Architecture Knowledge**: Deep understanding of CineLog patterns, conventions, and best practices
+
+### Available Subagents
+- **`cinelog-movie-specialist`**: Movie features, suggestion algorithms, CRUD operations, user data management
+- **`tmdb-api-expert`**: External API integration, rate limiting, caching strategies, data mapping
+- **`ef-migration-manager`**: Database operations, schema changes, performance indexes, Entity Framework
+- **`performance-optimizer`**: Caching optimization, query performance, API efficiency, resource management
+- **`aspnet-feature-developer`**: Complete feature development, MVC patterns, UI/UX, Bootstrap integration
+- **`docs-architect`**: Documentation maintenance, architecture updates, change tracking, technical writing
+
+### Benefits
+- **Faster Development**: Task-specific expertise reduces implementation time
+- **Consistent Patterns**: Each subagent knows established CineLog architectural conventions
+- **Quality Assurance**: Specialized knowledge ensures adherence to performance and security standards
+- **Maintainability**: Proper documentation and pattern following for long-term codebase health
+
 # ✨ Cinema Gold Branding & UI Polish (2025-07-26)
 - **Suggestion Titles:** All suggestion section titles now use the `.cinelog-gold-title` class for gold color, matching the home page.
 - **Suggestion Cards:** Card titles and descriptions are now 1pt larger for better readability and visual consistency.

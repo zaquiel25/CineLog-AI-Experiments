@@ -1,4 +1,16 @@
 ## 2025-07-27
+### 🤖 Claude Code Subagents System
+- **Development Workflow Enhancement**: Implemented 6 specialized Claude Code subagents for accelerated development
+- **Task-Specific Expertise**: Each subagent has deep knowledge of specific CineLog architecture patterns and conventions
+- **Context Efficiency**: Separate context windows prevent pollution and maintain focused expertise
+- **Subagents Created**:
+  - `cinelog-movie-specialist`: Movie features, suggestion algorithms, CRUD operations
+  - `tmdb-api-expert`: External API integration, rate limiting, caching strategies
+  - `ef-migration-manager`: Database operations, schema changes, performance indexes
+  - `performance-optimizer`: Caching optimization, query performance, API efficiency
+  - `aspnet-feature-developer`: Complete feature development, MVC patterns, UI/UX
+  - `docs-architect`: Documentation maintenance, architecture updates, change tracking
+
 ### ✨ Enhanced Wishlist & Blacklist Sorting
 - **Default Sort Behavior**: Wishlist and Blacklist pages now default to "Sort by Date Added (Newest)" instead of alphabetical
 - **Improved User Experience**: Users see their most recently added items first, providing better relevance and context
