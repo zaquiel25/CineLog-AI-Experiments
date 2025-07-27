@@ -22,10 +22,10 @@
     <form asp-controller="Movies" asp-action="Wishlist" method="get" class="d-inline">
         <input type="hidden" name="searchString" value="@ViewData["CurrentFilter"]" />
         <select name="sortOrder" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
-            <option value="" selected="@(ViewData["CurrentSort"] == null ? "selected" : null)">Sort by Title (A-Z)</option>
+            <option value="title_asc" selected="@(ViewData["CurrentSort"] as string == "title_asc" ? "selected" : null)">Sort by Title (A-Z)</option>
             <option value="title_desc" selected="@(ViewData["CurrentSort"] as string == "title_desc" ? "selected" : null)">Sort by Title (Z-A)</option>
             <option value="Date" selected="@(ViewData["CurrentSort"] as string == "Date" ? "selected" : null)">Sort by Date Added (Oldest)</option>
-            <option value="date_desc" selected="@(ViewData["CurrentSort"] as string == "date_desc" ? "selected" : null)">Sort by Date Added (Newest)</option>
+            <option value="date_desc" selected="@(ViewData["CurrentSort"] == null || ViewData["CurrentSort"] as string == "date_desc" ? "selected" : null)">Sort by Date Added (Newest)</option>
         </select>
     </form>
 </div>

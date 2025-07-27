@@ -100,6 +100,10 @@ See `MoviesController.cs` for implementation details and business logic comments
 ### 📋 Lists & Organization
 - **Dynamic Wishlist**: AJAX-enabled instant adding/removing without page reloads
 - **Smart Blacklist**: Block unwanted suggestions with mutual exclusion logic
+- **Enhanced Sorting**: Both wishlist and blacklist default to newest items first for better relevance
+  - Sort by Date Added (Newest/Oldest)
+  - Sort by Title (A-Z/Z-A)
+  - Pagination-aware sorting maintains selection across pages
 - **Advanced Filtering**: Search and sort by title, director, year, rating, and more
 
 

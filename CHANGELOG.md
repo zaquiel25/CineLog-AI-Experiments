@@ -1,4 +1,20 @@
 ## 2025-07-27
+### ✨ Enhanced Wishlist & Blacklist Sorting
+- **Default Sort Behavior**: Wishlist and Blacklist pages now default to "Sort by Date Added (Newest)" instead of alphabetical
+- **Improved User Experience**: Users see their most recently added items first, providing better relevance and context
+- **Fixed A-Z Sorting**: Resolved issue where "Sort by Title (A-Z)" option was not working correctly
+- **Sorting Options**: All four sorting options now work reliably:
+  - Sort by Title (A-Z) - `title_asc`
+  - Sort by Title (Z-A) - `title_desc` 
+  - Sort by Date Added (Oldest) - `Date`
+  - Sort by Date Added (Newest) - `date_desc` (default)
+
+### Technical Implementation
+- **Controller Logic**: Updated default cases in both `Wishlist` and `Blacklist` switch statements to use `OrderByDescending` by date
+- **View Updates**: Modified dropdown selection logic in both views to properly handle the new default
+- **Parameter Handling**: Changed from empty string `""` to explicit `"title_asc"` value for better ASP.NET model binding reliability
+- **Consistent UX**: Both wishlist and blacklist pages now have identical sorting behavior and options
+
 ### 🚀 Comprehensive Performance Optimization
 - **Database Indexing**: Added optimized indexes for BlacklistedMovies and WishlistItems tables
   - Individual indexes on `UserId` for faster user-specific queries

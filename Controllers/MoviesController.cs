@@ -363,6 +363,9 @@ namespace Ezequiel_Movies.Controllers
 
             switch (sortOrder)
             {
+                case "title_asc":
+                    blacklistQuery = blacklistQuery.OrderBy(b => b.Title);
+                    break;
                 case "title_desc":
                     blacklistQuery = blacklistQuery.OrderByDescending(b => b.Title);
                     break;
@@ -373,7 +376,7 @@ namespace Ezequiel_Movies.Controllers
                     blacklistQuery = blacklistQuery.OrderByDescending(b => b.BlacklistedDate);
                     break;
                 default:
-                    blacklistQuery = blacklistQuery.OrderBy(b => b.Title);
+                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.BlacklistedDate);
                     break;
             }
 
@@ -510,6 +513,9 @@ namespace Ezequiel_Movies.Controllers
 
             switch (sortOrder)
             {
+                case "title_asc":
+                    wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
+                    break;
                 case "title_desc":
                     wishlistQuery = wishlistQuery.OrderByDescending(w => w.Title);
                     break;
@@ -520,7 +526,7 @@ namespace Ezequiel_Movies.Controllers
                     wishlistQuery = wishlistQuery.OrderByDescending(w => w.DateAdded);
                     break;
                 default:
-                    wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
+                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.DateAdded);
                     break;
             }
 
