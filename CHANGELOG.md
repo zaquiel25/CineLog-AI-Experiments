@@ -1,4 +1,15 @@
 ## 2025-07-27
+
+### 🐛 Critical Pagination Bug Fix
+- **Fixed Pagination Navigation**: Resolved critical bug in both Wishlist and Blacklist pagination where page navigation was broken
+- **Root Cause**: Both methods incorrectly used `viewModels.Count` (current page items) instead of total database count for pagination calculations
+- **Solution**: Changed to use `paginatedList.TotalCount` (total database count) for proper pagination logic
+- **Enhanced PaginatedList**: Added `TotalCount` property with XML documentation to prevent future confusion
+- **User Impact**: Users can now properly navigate through all pages of their wishlist and blacklist collections
+- **Files Modified**: 
+  - `Controllers/MoviesController.cs` - Lines 438 and 577 corrected pagination count logic
+  - `Helpers/PaginatedList.cs` - Added `TotalCount` property with documentation
+
 ### 🤖 Claude Code Subagents System
 - **Development Workflow Enhancement**: Implemented 6 specialized Claude Code subagents for accelerated development
 - **Task-Specific Expertise**: Each subagent has deep knowledge of specific CineLog architecture patterns and conventions

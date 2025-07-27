@@ -3,6 +3,15 @@
 ## Overview
 This optimization addresses the performance bottlenecks identified in the performance diagnosis report by implementing batch processing, caching, pagination, and database indexing.
 
+## Recent Critical Fix (2025-07-27)
+
+### Pagination Bug Fix
+- **Issue**: Critical pagination navigation bug where page navigation was completely broken in Wishlist and Blacklist views
+- **Root Cause**: Both methods incorrectly used `viewModels.Count` (current page items, max 20) instead of total database count for pagination calculations
+- **Solution**: Changed to use `paginatedList.TotalCount` (total database count) for proper pagination logic
+- **User Impact**: Users can now properly navigate through all pages of large collections instead of being stuck on first page
+- **Technical Enhancement**: Added `TotalCount` property to `PaginatedList<T>` with XML documentation to prevent future confusion
+
 ## Development Workflow Optimization (2025-07-27)
 
 ### Claude Code Subagents System

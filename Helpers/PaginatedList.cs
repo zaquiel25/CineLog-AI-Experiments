@@ -10,12 +10,16 @@ namespace Ezequiel_Movies.Helpers
     {
         public int PageIndex { get; private set; }
         public int TotalPages { get; private set; }
+    /// <summary>
+    /// The total number of items in the full result set (before pagination).
+    /// </summary>
+    public int TotalCount { get; private set; }
 
         public PaginatedList(List<T> items, int count, int pageIndex, int pageSize)
         {
             PageIndex = pageIndex;
             TotalPages = (int)Math.Ceiling(count / (double)pageSize);
-
+            TotalCount = count;
             this.AddRange(items);
         }
 

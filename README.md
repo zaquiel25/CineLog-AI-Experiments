@@ -123,6 +123,7 @@ See `MoviesController.cs` for implementation details and business logic comments
   - Sort by Date Added (Newest/Oldest)
   - Sort by Title (A-Z/Z-A)
   - Pagination-aware sorting maintains selection across pages
+- **Reliable Pagination**: Fixed critical pagination navigation bug ensuring all items are accessible across pages
 - **Advanced Filtering**: Search and sort by title, director, year, rating, and more
 
 

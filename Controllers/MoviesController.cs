@@ -435,7 +435,7 @@ namespace Ezequiel_Movies.Controllers
 
             return View(new PaginatedList<BlacklistViewModel>(
                 blacklistViewModels,
-                blacklistViewModels.Count,
+                paginatedBlacklist.TotalCount,
                 paginatedBlacklist.PageIndex,
                 pageSize));
         }
@@ -574,7 +574,7 @@ namespace Ezequiel_Movies.Controllers
 
             return View(new PaginatedList<WishlistViewModel>(
                 wishlistViewModels,
-                wishlistViewModels.Count,
+                paginatedWishlist.TotalCount,
                 paginatedWishlist.PageIndex,
                 pageSize));
         }

@@ -380,6 +380,29 @@ var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
 _cacheService.InvalidateUserBlacklistCache(userId); // After changes
 ```
 
+### Pagination Implementation
+**CRITICAL**: Always use `TotalCount` property for pagination calculations, not `Count` of current page items:
+```csharp
+// CORRECT - Use TotalCount for pagination logic
+var paginatedList = await PaginatedList<EntityType>.CreateAsync(query, pageNumber, pageSize);
+var viewModel = new ViewModel
+{
+    // Other properties...
+    TotalCount = paginatedList.TotalCount,  // Total database count
+    HasPreviousPage = paginatedList.HasPreviousPage,
+    HasNextPage = paginatedList.HasNextPage
+};
+
+// INCORRECT - Never use Count of current page items for pagination
+// var totalCount = viewModels.Count; // This breaks pagination navigation!
+```
+
+**Key Points:**
+- `paginatedList.TotalCount` = Total records in database
+- `viewModels.Count` = Records on current page only (max 20)
+- Always use `TotalCount` for pagination calculations to ensure proper navigation
+- The `PaginatedList<T>` helper includes `TotalCount` property with XML documentation
+
 ## Code Quality Standards
 
 ### Documentation
