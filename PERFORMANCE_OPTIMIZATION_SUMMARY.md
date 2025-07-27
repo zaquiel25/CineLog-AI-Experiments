@@ -3,7 +3,15 @@
 ## Overview
 This optimization addresses the performance bottlenecks identified in the performance diagnosis report by implementing batch processing, caching, pagination, and database indexing.
 
-## Recent Critical Fix (2025-07-27)
+## Recent Critical Fixes (2025-07-27)
+
+### Director Suggestion Optimization
+- **Issue**: Director suggestion system was performing unnecessary TMDB API calls for directors with all movies blacklisted, resulting in empty suggestion states
+- **Root Cause**: System selected directors first, then fetched their filmography, only to discover all movies were blacklisted
+- **Solution**: Implemented proactive `HasAvailableMoviesForDirector()` filtering that checks for available movies before including directors in suggestion rotation
+- **Performance Impact**: Reduced redundant TMDB API calls by pre-filtering directors, improving response times for suggestion endpoints
+- **UX Enhancement**: Eliminated confusing "No suggestions available for [Director]" messages, providing seamless user experience
+- **Technical Enhancement**: Added comprehensive logging and FIX comments for maintainability
 
 ### Pagination Bug Fix
 - **Issue**: Critical pagination navigation bug where page navigation was completely broken in Wishlist and Blacklist views

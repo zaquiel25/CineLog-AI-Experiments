@@ -1340,14 +1340,23 @@ namespace Ezequiel_Movies.Controllers
                 var priorityQueue = new List<string>();
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                void AddDirector(string? director)
+                async Task AddDirector(string? director)
                 {
                     if (string.IsNullOrWhiteSpace(director)) return;
                     var trimmed = director.Trim();
                     if (seen.Add(trimmed)) // HashSet.Add returns true if item was newly added
                     {
-                        priorityQueue.Add(trimmed);
-                        _logger.LogInformation("Added director to queue: '{Director}'", trimmed);
+                        // FIX: Check if director has available movies before adding to queue
+                        // This prevents showing "No more suggestions available" message
+                        if (await HasAvailableMoviesForDirector(trimmed, userId))
+                        {
+                            priorityQueue.Add(trimmed);
+                            _logger.LogInformation("Added director to queue: '{Director}' (has available movies)", trimmed);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Skipped director: '{Director}' (all movies blacklisted)", trimmed);
+                        }
                     }
                     else
                     {
@@ -1356,9 +1365,9 @@ namespace Ezequiel_Movies.Controllers
                 }
 
                 // Add directors in priority order: recent → frequent → rated
-                AddDirector(recentDirector);
-                AddDirector(frequentDirector);
-                AddDirector(ratedDirector);
+                await AddDirector(recentDirector);
+                await AddDirector(frequentDirector);
+                await AddDirector(ratedDirector);
 
                 _logger.LogInformation("Final priority queue: [{Directors}]", string.Join(", ", priorityQueue));
 
@@ -1373,31 +1382,51 @@ namespace Ezequiel_Movies.Controllers
                     var allDirectors = allUserMovies.Select(m => m.Director!).Distinct().ToList();
                     if (allDirectors.Any())
                     {
-                        // Anti-repetición: evitar que se repita el último director random
-                        string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
-                        string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
-                        var availableDirectors = allDirectors;
-                        if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
+                        // FIX: Filter out directors with no available movies to prevent empty suggestions
+                        var directorsWithMovies = new List<string>();
+                        foreach (var director in allDirectors)
                         {
-                            availableDirectors = allDirectors.Where(d => d != lastRandomDirector).ToList();
+                            if (await HasAvailableMoviesForDirector(director, userId))
+                            {
+                                directorsWithMovies.Add(director);
+                            }
                         }
-                        directorToSuggest = availableDirectors[Random.Shared.Next(availableDirectors.Count)];
-                        HttpContext.Session.SetString(lastRandomDirectorKey, directorToSuggest);
+
+                        if (directorsWithMovies.Any())
+                        {
+                            // Anti-repetición: evitar que se repita el último director random
+                            string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
+                            string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
+                            var availableDirectors = directorsWithMovies;
+                            if (!string.IsNullOrEmpty(lastRandomDirector) && directorsWithMovies.Count > 1)
+                            {
+                                availableDirectors = directorsWithMovies.Where(d => d != lastRandomDirector).ToList();
+                                if (!availableDirectors.Any())
+                                {
+                                    availableDirectors = directorsWithMovies; // Fallback if filtering removes all directors
+                                }
+                            }
+                            directorToSuggest = availableDirectors[Random.Shared.Next(availableDirectors.Count)];
+                            HttpContext.Session.SetString(lastRandomDirectorKey, directorToSuggest);
+                        }
                     }
                 }
 
                 if (string.IsNullOrEmpty(directorToSuggest))
                 {
-                    throw new InvalidOperationException("Could not select a valid director to generate suggestions.");
+                    // All directors have been blacklisted - redirect to other suggestion types
+                    var emptyHtml = @"<div class='alert alert-info text-center my-5'>Try exploring other suggestion types!</div>";
+                    return Json(new { success = true, html = emptyHtml, count = 0 });
                 }
 
                 // 5. Obtener Sugerencias y Construir Respuesta
                 var suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId);
                 var suggestionTitle = $"Because you like {directorToSuggest}...";
 
+                // This should now rarely happen since we pre-filter directors, but keeping as safety net
                 if (!suggestedMovies.Any())
                 {
-                    var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {directorToSuggest}. Try another suggestion type!</div>";
+                    var emptyHtml = @"<div class='alert alert-info text-center my-5'>Try exploring other suggestion types!</div>";
                     return Json(new { success = true, html = emptyHtml, count = 0 });
                 }
 
@@ -2364,9 +2393,17 @@ return (bucket3x3, bucket2x3, bucket1x3);
                             .Select(d => d.Name)
                             .ToList();
 
-                        if (recentDirector is string rd) topDirectorQueue.Add(rd);
-                        if (frequentDirector is string fd && !topDirectorQueue.Contains(fd)) topDirectorQueue.Add(fd);
-                        if (ratedDirectors.Any() && !topDirectorQueue.Contains(ratedDirectors[0])) topDirectorQueue.Add(ratedDirectors[0]);
+                        // FIX: Add directors to queue only if they have available movies (not all blacklisted)
+                        if (recentDirector is string rd && await HasAvailableMoviesForDirector(rd, userId)) 
+                            topDirectorQueue.Add(rd);
+                        if (frequentDirector is string fd && !topDirectorQueue.Contains(fd) && await HasAvailableMoviesForDirector(fd, userId)) 
+                            topDirectorQueue.Add(fd);
+                        if (ratedDirectors.Any())
+                        {
+                            var topRatedDirector = ratedDirectors[0];
+                            if (!topDirectorQueue.Contains(topRatedDirector) && await HasAvailableMoviesForDirector(topRatedDirector, userId))
+                                topDirectorQueue.Add(topRatedDirector);
+                        }
 
                         // Debug logging for director queue
                         _logger.LogInformation("Original topDirectorQueue: {Queue}", string.Join(", ", topDirectorQueue));
@@ -2436,24 +2473,41 @@ return (bucket3x3, bucket2x3, bucket1x3);
                                 break;
                             }
 
+                            // Filter out directors with no available movies
+                            var directorsWithMovies = new List<string>();
+                            foreach (var director in allDirectors)
+                            {
+                                if (await HasAvailableMoviesForDirector(director, userId))
+                                {
+                                    directorsWithMovies.Add(director);
+                                }
+                            }
+
+                            if (!directorsWithMovies.Any())
+                            {
+                                suggestionTitle = "Try exploring other suggestion types!";
+                                break;
+                            }
+
                             // Anti-repetition: avoid last random director
                             string lastRandomDirectorKey = $"LastRandomDirector_{userId}";
                             string? lastRandomDirector = HttpContext.Session.GetString(lastRandomDirectorKey);
-                            var availableDirectors = allDirectors;
-                            if (!string.IsNullOrEmpty(lastRandomDirector) && allDirectors.Count > 1)
+                            var availableDirectors = directorsWithMovies;
+                            if (!string.IsNullOrEmpty(lastRandomDirector) && directorsWithMovies.Count > 1)
                             {
-                                var filtered = allDirectors.Where(d => d != lastRandomDirector).ToList();
-                                if (filtered.Count > 0)
+                                var filtered = directorsWithMovies.Where(d => d != lastRandomDirector).ToList();
+                                if (filtered.Any())
                                     availableDirectors = filtered;
                             }
 
                             var random = Random.Shared;
                             var randomIndex = random.Next(0, availableDirectors.Count);
                             _logger.LogInformation("All directors pool: {Directors}", string.Join(", ", allDirectors));
+                            _logger.LogInformation("Directors with available movies: {Directors}", string.Join(", ", directorsWithMovies));
                             _logger.LogInformation("Available directors (no repeat): {Directors}", string.Join(", ", availableDirectors));
                             _logger.LogInformation("Random index selected: {Index}", randomIndex);
                             var selectedDirector = availableDirectors[randomIndex];
-                            _logger.LogInformation("Selected director (before checking movies): {Director}", selectedDirector);
+                            _logger.LogInformation("Selected director: {Director}", selectedDirector);
                             var movies = await GetSuggestionsForDirector(selectedDirector, userId);
                             directorToSuggest = selectedDirector;
                             directorSuggestions = movies.Take(Math.Min(3, movies.Count)).ToList();
@@ -2464,12 +2518,23 @@ return (bucket3x3, bucket2x3, bucket1x3);
                         // Bulletproof fallback: force random selection if no suggestions found
                         if (directorSuggestions.Count == 0)
                         {
-                            _logger.LogWarning("No director suggestions found for {Type}, forcing random fallback", currentDirectorType);
+                            _logger.LogWarning("No director suggestions found for {Type}, trying fallback with directors who have available movies", currentDirectorType);
                             var allDirectorsFallback = loggedDirectorMovies.Select(m => m.Director!).Distinct().ToList();
-                            if (allDirectorsFallback.Any())
+                            
+                            // Filter fallback directors to only those with available movies
+                            var fallbackDirectorsWithMovies = new List<string>();
+                            foreach (var director in allDirectorsFallback)
+                            {
+                                if (await HasAvailableMoviesForDirector(director, userId))
+                                {
+                                    fallbackDirectorsWithMovies.Add(director);
+                                }
+                            }
+
+                            if (fallbackDirectorsWithMovies.Any())
                             {
                                 var random = Random.Shared;
-                                var fallbackDirector = allDirectorsFallback[random.Next(allDirectorsFallback.Count)];
+                                var fallbackDirector = fallbackDirectorsWithMovies[random.Next(fallbackDirectorsWithMovies.Count)];
                                 var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
                                 directorToSuggest = fallbackDirector;
                                 directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
@@ -2478,7 +2543,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                             }
                             else
                             {
-                                suggestionTitle = "Log some movies to get director suggestions!";
+                                suggestionTitle = "Try exploring other suggestion types!";
                                 ViewData["ShowAddMovieButton"] = true;
                                 break;
                             }
@@ -2925,6 +2990,33 @@ return (bucket3x3, bucket2x3, bucket1x3);
             return suggestions;
         }
 
+        /// <summary>
+        /// Checks if a director has any movies available for suggestions (not blacklisted by the user).
+        /// This is a lightweight check that avoids fetching full movie details when we just need to know
+        /// if the director should be included in the suggestion rotation.
+        /// 
+        /// FIX: Prevents showing "No more suggestions available for [Director]" message when user has
+        /// blacklisted all movies from a director. Instead, directors with no available movies are
+        /// silently skipped from the suggestion rotation.
+        /// </summary>
+        /// <param name="directorName">The name of the director to check</param>
+        /// <param name="userId">The current user's ID</param>
+        /// <returns>True if the director has at least one non-blacklisted movie, false otherwise</returns>
+        private async Task<bool> HasAvailableMoviesForDirector(string directorName, string userId)
+        {
+            var directorId = await _tmdbService.GetPersonIdAsync(directorName);
+            if (!directorId.HasValue) return false;
+
+            // Get the director's filmography
+            var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
+            if (!allDirectorMovies.Any()) return false;
+
+            // Get user's blacklisted movie IDs
+            var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
+
+            // Check if there are any movies not in the blacklist
+            return allDirectorMovies.Any(movie => !userBlacklistedIds.Contains(movie.Id));
+        }
 
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName, string userId, string sortBy = "popularity.desc", int page = 1)
         {

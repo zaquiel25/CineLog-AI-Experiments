@@ -425,6 +425,17 @@ private async Task<List<TmdbMovieBrief>> GetTypeMoviesWithFiltering(string userI
 }
 ```
 
+**Director filtering pattern:**
+```csharp
+// Check if director has available movies before including in suggestions
+private async Task<bool> HasAvailableMoviesForDirector(string directorName, string userId)
+{
+    // Lightweight check to prevent empty suggestion messages
+    // Filters out directors with all movies blacklisted
+    // Returns true only if director has at least one non-blacklisted movie
+}
+```
+
 ### ⚡ Cache Management
 **Use CacheService for user-specific data:**
 ```csharp
@@ -463,15 +474,57 @@ var viewModel = new ViewModel
 - **ALWAYS** run `dotnet build` before marking tasks finished
 - Build failures MUST be resolved as part of implementation
 
-### 📝 Documentation
-- **XML documentation** required for all public methods
-- **Business logic comments** explaining "why" not "what"
+### 📝 Documentation & Comments Standards
+
+#### 🎯 XML Documentation (Required)
+- **All public methods** must have comprehensive XML documentation
+- **Include purpose, parameters, returns, and remarks** when applicable
+- **Document edge cases** and special behavior
+- **Example format**:
+```csharp
+/// <summary>
+/// Brief description of what the method does and its purpose.
+/// 
+/// FIX/FEATURE: Add context for significant changes or new functionality.
+/// </summary>
+/// <param name="paramName">Description of parameter and its constraints</param>
+/// <returns>Description of return value and possible states</returns>
+/// <remarks>
+/// Additional context about implementation details, performance considerations,
+/// or architectural decisions that future developers should understand.
+/// </remarks>
+```
+
+#### 🔧 Inline Comments (Professional Standards)
+- **Explain "why" not "what"** - focus on business logic and reasoning
+- **Use FIX/FEATURE/ENHANCEMENT prefixes** for significant changes
+- **Add context for complex logic** or non-obvious solutions
+- **Comment architectural decisions** and trade-offs
+- **Examples**:
+```csharp
+// FIX: Check if director has available movies before adding to queue
+// This prevents showing "No more suggestions available" message
+if (await HasAvailableMoviesForDirector(trimmed, userId))
+
+// PERFORMANCE: Use batch API calls to prevent N+1 queries
+var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
+
+// ARCHITECTURE: Session-based sequencing for anti-repetition
+string directorTypeKey = $"DirectorTypeSequence_{userId}";
+```
+
+#### 📋 Documentation Requirements
 - **English only** for international collaboration
+- **Professional tone** - avoid casual or development-only comments
+- **Business-focused** - explain impact and purpose
+- **Maintainable** - help future developers understand decisions
+- **Consistent formatting** - follow established patterns in codebase
 
 ### 🚨 Error Handling
 - **Structured logging** using `_logger` throughout
 - **Try-catch blocks** for external API calls
 - **Graceful fallbacks** for suggestion system edge cases
+- **Proactive filtering** to prevent empty suggestion states (e.g., director blacklist filtering)
 
 ### ⚡ Performance
 - **Always** use async/await for database and API calls

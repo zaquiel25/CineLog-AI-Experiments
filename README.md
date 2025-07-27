@@ -149,7 +149,7 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 
 **Supported AJAX Types:**
 - ✅ **Trending**: Unified filtering with 90-minute cache
-- ✅ **Director**: Sequential rotation with anti-repetition  
+- ✅ **Director**: Sequential rotation with anti-repetition and smart blacklist filtering
 - ✅ **Genre**: Dynamic variety with quality filtering
 - ✅ **Cast**: Smart actor selection with session tracking
 - ✅ **Decade**: Triple fallback system with random parameters
@@ -173,6 +173,14 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 - **User Filtering**: Blacklist and watched movies are always filtered out, with all expensive operations cached per request.
 - **Performance**: Maintains ~1-2 API calls per user interaction, with early exit optimization and 24-hour caching per sort+page+decade combo.
 - **Reliability**: Bulletproof fallback ensures suggestions are always available, even for edge cases or niche decades.
+
+### 🎭 By Director (Enhanced Blacklist Filtering)
+- **Smart Director Filtering**: Directors with all movies blacklisted are silently skipped from suggestion rotation
+- **Seamless Experience**: No more "No suggestions available for [Director]" error messages
+- **Proactive Detection**: System checks for available movies before including directors in suggestions
+- **Sequential Priority**: Maintains intelligent rotation through recent, frequent, and top-rated directors
+- **Graceful Fallbacks**: Automatically redirects to other suggestion types when needed
+- **Enhanced Logging**: Detailed tracking of director filtering for improved debugging and monitoring
 
 ### 🎯 By Genre (Dynamic Variety System)
 - **Consistent Experience**: Genre suggestions now provide varied, high-quality content from the very first click—no more static or repetitive initial results

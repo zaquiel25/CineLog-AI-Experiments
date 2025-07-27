@@ -1,5 +1,19 @@
 ## 2025-07-27
 
+### 🐛 Director Suggestions Bug Fix
+- **Fixed Unwanted Empty Message**: Eliminated "No more suggestions available for [Director]. Try another suggestion type!" message when all of a director's movies are blacklisted
+- **Root Cause**: Director suggestion system would select directors and then discover they had no available movies, resulting in user-facing error messages
+- **Solution**: Implemented proactive director filtering that checks for available movies before including directors in suggestion rotation
+- **New Helper Method**: Added `HasAvailableMoviesForDirector()` method for lightweight pre-filtering without fetching full movie details
+- **Smart Filtering**: Directors with all movies blacklisted are now silently skipped from both initial suggestions and AJAX reshuffles
+- **Improved UX**: Users now see seamless director suggestions without confusing error messages, gracefully falling back to other suggestion types
+- **Enhanced Logging**: Added detailed logging to track director filtering for debugging and monitoring
+- **Files Modified**:
+  - `Controllers/MoviesController.cs` - Enhanced director suggestion logic in both `DirectorReshuffle()` AJAX endpoint and `ShowSuggestions()` method
+  - Added comprehensive FIX comments throughout director selection logic for future maintainability
+
+## 2025-07-27
+
 ### 🐛 Critical Pagination Bug Fix
 - **Fixed Pagination Navigation**: Resolved critical bug in both Wishlist and Blacklist pagination where page navigation was broken
 - **Root Cause**: Both methods incorrectly used `viewModels.Count` (current page items) instead of total database count for pagination calculations

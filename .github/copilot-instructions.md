@@ -153,6 +153,52 @@ applyTo: '**'
 - Creativity is limited to accomplishing what's requested, not expanding requirements
 - When in doubt, ask for clarification rather than assume
 
+### 📝 Documentation & Comments Standards
+
+#### 🎯 XML Documentation (Required)
+- **All public methods** must have comprehensive XML documentation
+- **Include purpose, parameters, returns, and remarks** when applicable
+- **Document edge cases** and special behavior
+- **Example format**:
+```csharp
+/// <summary>
+/// Brief description of what the method does and its purpose.
+/// 
+/// FIX/FEATURE: Add context for significant changes or new functionality.
+/// </summary>
+/// <param name="paramName">Description of parameter and its constraints</param>
+/// <returns>Description of return value and possible states</returns>
+/// <remarks>
+/// Additional context about implementation details, performance considerations,
+/// or architectural decisions that future developers should understand.
+/// </remarks>
+```
+
+#### 🔧 Inline Comments (Professional Standards)
+- **Explain "why" not "what"** - focus on business logic and reasoning
+- **Use FIX/FEATURE/ENHANCEMENT prefixes** for significant changes
+- **Add context for complex logic** or non-obvious solutions
+- **Comment architectural decisions** and trade-offs
+- **Examples**:
+```csharp
+// FIX: Check if director has available movies before adding to queue
+// This prevents showing "No more suggestions available" message
+if (await HasAvailableMoviesForDirector(trimmed, userId))
+
+// PERFORMANCE: Use batch API calls to prevent N+1 queries
+var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
+
+// ARCHITECTURE: Session-based sequencing for anti-repetition
+string directorTypeKey = $"DirectorTypeSequence_{userId}";
+```
+
+#### 📋 Documentation Requirements
+- **English only** for international collaboration
+- **Professional tone** - avoid casual or development-only comments
+- **Business-focused** - explain impact and purpose
+- **Maintainable** - help future developers understand decisions
+- **Consistent formatting** - follow established patterns in codebase
+
 ---
 
 
