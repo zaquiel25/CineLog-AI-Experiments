@@ -1,3 +1,9 @@
+
+---
+**Best Practice:**
+> For all AJAX POST requests (especially for Blacklist/Wishlist removal), **always include** the `X-Requested-With: XMLHttpRequest` header. This guarantees the backend returns JSON for AJAX, not HTML error pages, and prevents frontend parsing errors. This is required for robust, user-friendly error handling in all AJAX-powered UI actions.
+
+
 ## ⚠️ CRITICAL INSTRUCTIONS
 
 ### 🚫 NEVER Auto-Commit
@@ -39,6 +45,33 @@
 - When in doubt, ask for clarification rather than assume
 
 ---
+
+<!-- AJAX REMOVAL PATTERN: Blacklist & Wishlist -->
+<button type="button" class="btn btn-soft-danger btn-sm remove-from-blacklist" data-tmdb-id="12345">Remove</button>
+<button type="button" class="btn btn-soft-danger btn-sm remove-from-wishlist" data-tmdb-id="12345">Remove</button>
+```
+
+#### **AJAX Removal Pattern (Blacklist/Wishlist)**
+// Best Practice: Always use 'credentials: same-origin' and include the anti-forgery token in the body for secure, authenticated requests.
+```javascript
+// Always include X-Requested-With header to guarantee JSON response from backend
+fetch('/Movies/RemoveFromBlacklist', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
+    credentials: 'same-origin'
+});
+// Robust error handling: always parse response as text, then try JSON, fallback to alert
+```
+
+#### **Troubleshooting**
+- If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
++ If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
++ Quick tip: You can inspect network requests in your browser's dev tools to confirm the header is present and the response is valid JSON.
+- If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
 
 ## 🔄 Development Workflow
 
@@ -271,11 +304,11 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 - Mutual exclusion implemented preventively via conditional rendering
 - Error states avoided through visual state management
 - Consistent behavior across Details and Preview pages
-#
-# Model Comment Standards (2025-07-18)
-#
-# - Todos los modelos (`Models/`) han sido limpiados de comentarios de desarrollo, temporales y anotaciones vagas.
-# - Solo se mantienen comentarios técnicos, explicaciones de validación y documentación relevante para producción.
+
+---
+**Best Practice:**
+> For all AJAX POST requests (especially for Blacklist/Wishlist removal), **always include** the `X-Requested-With: XMLHttpRequest` header. This guarantees the backend returns JSON for AJAX, not HTML error pages, and prevents frontend parsing errors. This is required for robust, user-friendly error handling in all AJAX-powered UI actions.
+---
 # - No se permiten comentarios tipo "ADD THIS", "NUEVAS", ni notas de importancia sin justificación técnica.
 # - Los atributos de validación y la lógica funcional permanecen intactos.
 # - Los futuros cambios en modelos deben seguir este estándar de documentación.
