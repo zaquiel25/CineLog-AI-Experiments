@@ -24,6 +24,20 @@
 - Be concise but thorough - avoid unnecessary repetition
 - When you say "I will do X", you **MUST** actually do X
 
+### 🤔 Question Before Replicating
+**Critical thinking approach:**
+- **ALWAYS** question why existing patterns might fail in new contexts
+- Verbalize fundamental differences (e.g., "Director" is unique entity, "Decade" is paginated group)
+- Adapt solutions to new complexity from the start
+- **NEVER** assume old patterns will work without analysis
+
+### 📐 Literal Implementation Over Creative Interpretation
+**Stick to requirements:**
+- Implement **ONLY** explicitly requested functionality and logic
+- **NEVER** assume, infer, or add "improvements" unless asked
+- Creativity is limited to accomplishing what's requested, not expanding requirements
+- When in doubt, ask for clarification rather than assume
+
 ---
 
 ## 🔄 Development Workflow
@@ -42,6 +56,8 @@
 - Read and understand relevant code snippets (2000 lines at a time for context)
 - Identify the root cause of the problem
 - Continuously validate and update understanding
+- **Look for unified helper methods** that implement consistent business logic
+- **Check for existing patterns** before implementing new solutions
 
 ### 3. 📋 Planning & Todo Management
 **Create a detailed, step-by-step plan:**
@@ -58,14 +74,17 @@
 - When detecting environment variables needed, proactively create .env file
 - Test frequently after each change
 - **ALWAYS** run `dotnet build` to verify compilation
+- **Follow CineLog patterns** for user data isolation, caching, and API usage
+- **Use unified helper methods** for consistent business logic
 
 ### 5. 🐛 Debugging & Testing
 **Ensure robust solutions:**
 - Use debugging tools to check for problems
 - Determine root causes, not just symptoms
-- Use print statements, logs, or temporary code for inspection
+- Use structured `_logger` calls instead of console output
 - Test edge cases rigorously - this is the #1 failure mode
 - Iterate until solution is perfect and all tests pass
+- **Verify user data isolation** and proper filtering by UserId
 ---
 
 ## 📝 Communication & Documentation Guidelines
@@ -179,6 +198,7 @@ applyTo: '**'
 - **Use FIX/FEATURE/ENHANCEMENT prefixes** for significant changes
 - **Add context for complex logic** or non-obvious solutions
 - **Comment architectural decisions** and trade-offs
+- **English only** - replace any Spanish comments with English equivalents
 - **Examples**:
 ```csharp
 // FIX: Check if director has available movies before adding to queue
@@ -192,12 +212,19 @@ var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
 string directorTypeKey = $"DirectorTypeSequence_{userId}";
 ```
 
+#### 🚫 Avoid These Comment Patterns
+- Development artifacts like "ADD THIS", "NUEVAS", "TODO"
+- Shallow comments that just repeat the code
+- Spanish comments (replace with English)
+- Comments without business justification or technical value
+
 #### 📋 Documentation Requirements
 - **English only** for international collaboration
 - **Professional tone** - avoid casual or development-only comments
 - **Business-focused** - explain impact and purpose
 - **Maintainable** - help future developers understand decisions
 - **Consistent formatting** - follow established patterns in codebase
+- **Structured logging** - use `_logger.LogInformation("English message")` instead of console output
 
 ---
 
@@ -554,3 +581,960 @@ For new features, follow the established patterns in `MoviesController.cs` and u
 - API usage: 15 parallel calls per build (was 25+ sequential)
 - System is robust to TMDB rate limits and supports high concurrency
 - The old 4-cycle system is fully replaced by this unified, scalable approach
+
+---
+
+## 🤖 Advanced Claude Code Agent System (2025-07-29)
+
+### 🎭 Master Agent Director
+The project now includes an intelligent **Master Agent Director** that analyzes task complexity and routes requests to optimal specialized agents:
+
+**Intelligence Framework:**
+- **Task Analysis Engine**: Parses requests, analyzes complexity, detects domains
+- **Complexity Assessment**: Automatically classifies tasks as Simple/Medium/Complex/Strategic
+- **Strategic Planning**: Auto-triggered 5-step planning process for complex tasks
+- **Multi-Agent Orchestration**: Coordinates sequential and parallel agent workflows
+
+**Complexity-Based Routing:**
+- **Simple Tasks** (bug fixes) → Direct execution to specialist agent
+- **Medium Tasks** (enhancements) → Light planning → Execute
+- **Complex Tasks** (new features) → Strategic planning → Multi-agent execution
+- **Strategic Tasks** (major changes) → Deep planning → Phased execution
+
+### 🎬 Core CineLog Subagents
+
+#### `cinelog-movie-specialist`
+**Domain Expert** for movie-specific features and suggestion algorithms:
+- MoviesController patterns and CRUD operations
+- Unified helper methods for consistent business logic across initial/AJAX calls
+- Triple fallback systems ensuring suggestions are never empty
+- Session-based anti-repetition and sequencing logic
+- Dynamic variety systems with randomized sort criteria and pagination
+- Proactive director filtering to prevent empty suggestion states
+- Mutual exclusion logic (movies cannot be in both wishlist and blacklist)
+
+#### `tmdb-api-expert`
+**External API Integration Specialist**:
+- TmdbService architecture with 24-hour caching
+- Batch operations using `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
+- Parallel execution for pool building (up to 15 concurrent calls)
+- Rate limiting with SemaphoreSlim and error handling for API failures
+- Data mapping between TMDB API responses and CineLog models
+
+#### `performance-optimizer`
+**Performance & Caching Specialist**:
+- IMemoryCache optimization for TMDB data (24-hour expiration)
+- CacheService for user-specific data (15-minute expiration)
+- Batch processing patterns to eliminate N+1 query problems
+- Parallel execution strategies (85% performance improvement)
+- Database query optimization with proper indexing
+
+#### `aspnet-feature-developer`
+**Full-Stack Development Specialist**:
+- ASP.NET Core MVC patterns with Bootstrap 5 (Cyborg theme)
+- AJAX + Server-Side Rendering hybrid architecture
+- Event delegation for dynamic UI elements
+- Progressive enhancement (works without JavaScript)
+- Cinema Gold branding with `.cinelog-gold-title` classes
+- User data isolation patterns with UserId filtering
+
+### 🚀 Enhanced Development Subagents
+
+#### `test-writer-fixer` (Proactive)
+**Comprehensive Testing Specialist** - Auto-triggers after code changes:
+- Unit, integration, and end-to-end testing for ASP.NET Core
+- Movie-specific test scenarios (suggestions, CRUD, API integration)
+- Test failure analysis and repair without compromising test intent
+
+#### `ui-designer` (Proactive)
+**Visual Design Enhancement Specialist** - Auto-triggers after UI updates:
+- Movie-centric UI component design beyond Bootstrap
+- Cinema Gold branding implementation and design systems
+- Responsive design patterns for movie discovery interfaces
+- Screenshot-worthy design moments for social sharing
+
+#### `whimsy-injector` (Proactive)
+**User Engagement Specialist** - Auto-triggers after UI/UX changes:
+- Movie discovery and logging micro-interactions
+- Achievement celebrations and playful animations
+- Personality-filled copy and error states
+- Shareable moments that encourage user evangelism
+
+#### `backend-architect`
+**Scalable Architecture Specialist**:
+- ASP.NET Core architecture patterns and scalability design
+- Database optimization and performance architecture
+- API design with proper authentication and rate limiting
+- System architecture for movie data management at scale
+
+#### `performance-benchmarker`
+**Performance Testing Specialist**:
+- TMDB API integration performance and rate limiting testing
+- Suggestion system performance profiling and optimization
+- Database query performance analysis and recommendations
+- Frontend rendering optimization for movie-rich interfaces
+
+### 🎯 Agent Usage Patterns
+
+**Automatic Delegation:**
+```
+"Add movie feature X" → aspnet-feature-developer + test-writer-fixer + ui-designer
+"Fix suggestion bug" → cinelog-movie-specialist + test-writer-fixer
+"Optimize performance" → performance-optimizer + performance-benchmarker
+"TMDB API issue" → tmdb-api-expert + api-tester
+```
+
+**Proactive Invocation:**
+```
+Code changes made → test-writer-fixer (ensures test coverage)
+UI/feature updates → ui-designer (enhances visual appeal)
+UI/UX changes → whimsy-injector (adds personality and delight)
+```
+
+### 📊 Development Benefits
+- **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
+- **Proactive Quality**: Automatic testing, UI enhancement, and delight injection
+- **Strategic Planning**: Complex features receive proper planning before implementation
+- **Comprehensive Testing**: Built-in test coverage ensures robust, reliable features
+- **Enhanced User Experience**: Automatic UI enhancement and personality injection
+- **Performance Excellence**: Built-in performance analysis and optimization recommendations
+
+### 🔑 Key Principles for Agent Coordination
+- **Domain Expertise**: Each agent has deep knowledge of specific CineLog patterns
+- **Consistency**: All agents follow the same architectural conventions and coding standards
+- **Quality First**: Built-in quality gates and performance considerations
+- **User-Centric**: Every feature considers the complete user experience
+- **Performance-Aware**: All implementations consider scalability and optimization
+
+---
+
+## 🔍 CineLog Development Knowledge Base
+
+*Quick reference for GitHub Copilot to access specialized knowledge when working on specific CineLog components*
+
+### 🎬 Movie Suggestions **[WHEN: MoviesController, suggestion algorithms, AJAX reshuffles, empty states]**
+
+#### **Core Patterns:**
+```csharp
+// UNIFIED HELPER METHOD PATTERN - Use for all suggestion types
+private async Task<List<TmdbMovieBrief>> Get[Type]MoviesWithFiltering(string userId)
+{
+    // Get user blacklist and recent movies for filtering (cached per request)
+    var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+    var last25Movies = await GetLast25MoviesAsync(userId); // Cache this call
+    
+    // Build movie pool with variety and pagination
+    // Apply deduplication using HashSet<string> for TMDB IDs
+    // Return consistent results for both initial and AJAX calls
+}
+
+// USER DATA ISOLATION (CRITICAL) - Always filter by UserId
+var userId = _userManager.GetUserId(User);
+var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
+
+// TRIPLE FALLBACK SYSTEM - Ensure suggestions are never empty
+// Primary: Dynamic variety (random sort + random page)
+// Fallback 1: Same sort, page 1
+// Fallback 2: Popular, page 1 (ultimate safety net)
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** "No suggestions available for [Director]"
+```csharp
+// FIX: Proactive director filtering before suggestion
+private async Task<bool> HasAvailableMoviesForDirector(string directorName, string userId)
+{
+    var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+    // Lightweight check without fetching full movie details
+    // Only include directors with at least one non-blacklisted movie
+}
+```
+
+**Problem:** Repetitive suggestions / No variety
+```csharp
+// SOLUTION: Dynamic variety system
+var randomSort = new[] { "popularity.desc", "vote_average.desc", "release_date.desc" }
+    .OrderBy(x => Guid.NewGuid()).First();
+var randomPage = Random.Shared.Next(1, 4);
+
+// Use different parameters for each suggestion
+var movies = await _tmdbService.GetMoviesByGenreAsync(genreId, randomSort, randomPage);
+```
+
+**Problem:** Session anti-repetition not working
+```csharp
+// SOLUTION: Session-based sequencing
+string sequenceKey = $"DirectorTypeSequence_{userId}";
+var currentStep = HttpContext.Session.GetInt32(sequenceKey) ?? 0;
+HttpContext.Session.SetInt32(sequenceKey, (currentStep + 1) % 4);
+
+// Sequencing: Recent → Frequent → Top-rated → Random
+```
+
+#### **Suggestion Type Specifics:**
+
+**Trending:** Pool of 30 movies from multiple TMDB pages, 90-minute cache, exclude last 5 watched
+**Director/Cast:** Sequenced rotation with case-insensitive deduplication, session tracking
+**Genre/Decade:** Dynamic variety with 6.5+ rating filter, randomized sort/page, triple fallback
+**Surprise Me:** 50-movie deduplicated pool, parallel build (15 concurrent), 2-hour cache, instant reshuffles
+
+#### **AJAX Implementation:**
+```csharp
+// Return server-rendered HTML, not JSON
+return PartialView("_MovieSuggestionCard", suggestedMovies);
+
+// Event delegation pattern in JavaScript
+document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-suggestion-type]')) {
+        // Handle all reshuffle buttons dynamically
+    }
+});
+```
+
+### 🌐 TMDB API Integration **[WHEN: External API calls, rate limiting, caching, data mapping]**
+
+#### **Core Patterns:**
+```csharp
+// CENTRALIZED SERVICE USAGE - Always use TmdbService
+var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
+var searchResults = await _tmdbService.SearchMoviesAsync(query);
+
+// BATCH OPERATIONS - Avoid N+1 queries
+var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
+
+// PARALLEL EXECUTION - For pool building (Surprise Me)
+var poolTasks = buckets.Select(async bucket => 
+    await _tmdbService.GetMoviesAsync(bucket.endpoint)).ToArray();
+var results = await Task.WhenAll(poolTasks);
+
+// RATE LIMITING - SemaphoreSlim throttling
+private readonly SemaphoreSlim _semaphore = new(6, 6); // Max 6 concurrent
+await _semaphore.WaitAsync();
+try { /* API call */ } finally { _semaphore.Release(); }
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** TMDB API rate limiting
+```csharp
+// SOLUTION: Built-in throttling + retry logic
+await _semaphore.WaitAsync();
+try {
+    var response = await _httpClient.GetAsync(url);
+    if (response.StatusCode == HttpStatusCode.TooManyRequests) {
+        await Task.Delay(1000); // Wait and retry
+        response = await _httpClient.GetAsync(url);
+    }
+} finally { _semaphore.Release(); }
+```
+
+**Problem:** Slow API performance
+```csharp
+// SOLUTION: 24-hour caching + parallel execution
+_memoryCache.Set(cacheKey, result, TimeSpan.FromHours(24));
+
+// For multiple calls, use parallel execution
+var tasks = tmdbIds.Select(id => _tmdbService.GetMovieDetailsAsync(id));
+var results = await Task.WhenAll(tasks);
+```
+
+**Problem:** API failures breaking user experience
+```csharp
+// SOLUTION: Robust error handling with fallbacks
+try {
+    return await _tmdbService.GetMovieDetailsAsync(tmdbId);
+} catch (HttpRequestException) {
+    _logger.LogWarning("TMDB API unavailable, using cached data");
+    return GetCachedMovieDetails(tmdbId) ?? CreateFallbackMovieDetails(tmdbId);
+}
+```
+
+#### **Caching Strategy:**
+- **TMDB Movie Details:** 24 hours in IMemoryCache
+- **Search Results:** 1 hour (more dynamic)
+- **Trending Data:** 90 minutes (balances freshness with performance)
+- **Suggestion Pools:** 2 hours for Surprise Me, varies by type
+
+### ⚡ Performance Optimization **[WHEN: Slow queries, cache misses, N+1 problems, memory issues]**
+
+#### **Core Patterns:**
+```csharp
+// CACHING SERVICE - User-specific data
+var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+// 15-minute expiration, automatic invalidation on add/remove
+
+// BATCH PROCESSING - Eliminate N+1 queries
+// BAD: Individual API calls
+foreach (var item in wishlistItems) {
+    var details = await _tmdbService.GetMovieDetailsAsync(item.TmdbId);
+}
+
+// GOOD: Batch API call
+var tmdbIds = wishlistItems.Select(i => i.TmdbId).ToList();
+var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
+
+// PAGINATION - 20 items per page with proper indexing
+var paginatedItems = await PaginatedList<T>.CreateAsync(
+    query.Where(m => m.UserId == userId), pageNumber, 20);
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** Database queries are slow
+```csharp
+// SOLUTION: Composite indexes + proper filtering
+// Migration: Add index on (UserId, Title) for fast user-specific searches
+migrationBuilder.CreateIndex(
+    name: "IX_Movies_UserId_Title",
+    table: "Movies",
+    columns: new[] { "UserId", "Title" });
+
+// Always filter by UserId first (uses index)
+var userMovies = _dbContext.Movies
+    .Where(m => m.UserId == userId)  // Index hit
+    .Where(m => m.Title.Contains(searchTerm));
+```
+
+**Problem:** Cache misses causing performance hits
+```csharp
+// SOLUTION: Request-level caching for expensive operations
+private Dictionary<string, object> _requestCache = new();
+
+private async Task<List<Movies>> GetLast25MoviesAsync(string userId)
+{
+    var cacheKey = $"last25_{userId}";
+    if (_requestCache.TryGetValue(cacheKey, out var cached))
+        return (List<Movies>)cached;
+        
+    var result = await _dbContext.Movies
+        .Where(m => m.UserId == userId)
+        .OrderByDescending(m => m.DateWatched)
+        .Take(25).ToListAsync();
+        
+    _requestCache[cacheKey] = result;
+    return result;
+}
+```
+
+**Problem:** Surprise Me pool building is slow
+```csharp
+// SOLUTION: Parallel execution (85% faster)
+var buckets = CreateSurprisePoolBuckets(); // Different API endpoints
+var poolTasks = buckets.Select(async bucket => {
+    var semaphore = new SemaphoreSlim(1);
+    await semaphore.WaitAsync();
+    try {
+        return await _tmdbService.GetMoviesFromBucket(bucket);
+    } finally { semaphore.Release(); }
+}).ToArray();
+
+var poolResults = await Task.WhenAll(poolTasks);
+// Build time: ~400ms (was ~2800ms)
+```
+
+#### **Performance Benchmarks:**
+- API calls: Batch 20 movies in ~200ms vs 20 individual calls in ~4000ms
+- Database pagination: 20 items with index in <50ms
+- Surprise Me build: 50 movies in ~400ms with parallel execution
+- Cache hit rate: >90% for TMDB data, >80% for user blacklist/wishlist
+
+### 🏗️ ASP.NET Core Development **[WHEN: Controllers, Views, AJAX, Authentication, Routing]**
+
+#### **Core Patterns:**
+```csharp
+// CONTROLLER STRUCTURE - Standard CineLog pattern
+[Authorize] // Always require authentication
+public class MoviesController : Controller
+{
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly TmdbService _tmdbService;
+    private readonly CacheService _cacheService;
+    private readonly ILogger<MoviesController> _logger;
+
+    // Always get userId first in actions
+    var userId = _userManager.GetUserId(User);
+    
+    // Always filter data by userId
+    var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
+}
+
+// AJAX ENDPOINTS - Return server-rendered HTML
+[HttpPost]
+public async Task<IActionResult> TrendingReshuffle()
+{
+    var userId = _userManager.GetUserId(User);
+    var movies = await GetTrendingMoviesWithFiltering(userId);
+    return PartialView("_MovieSuggestionCard", movies.Take(3));
+}
+
+// MUTUAL EXCLUSION - Prevent wishlist/blacklist conflicts
+private async Task<bool> IsMovieInWishlist(string userId, string tmdbId)
+{
+    return await _dbContext.WishlistItems
+        .AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+}
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** User data exposed across accounts
+```csharp
+// SOLUTION: Always filter by UserId (CRITICAL SECURITY)
+// BAD: Exposes all users' data
+var movies = _dbContext.Movies.Where(m => m.Title.Contains(search));
+
+// GOOD: User isolation
+var userId = _userManager.GetUserId(User);
+var movies = _dbContext.Movies
+    .Where(m => m.UserId == userId)
+    .Where(m => m.Title.Contains(search));
+```
+
+**Problem:** AJAX not working with dynamic content
+```csharp
+// SOLUTION: Event delegation pattern
+// JavaScript: Handle dynamically added buttons
+document.addEventListener('click', function(e) {
+    if (e.target.matches('.reshuffle-btn')) {
+        handleReshuffle(e.target);
+    }
+});
+
+// Controller: Return HTML, not JSON for consistent styling
+return PartialView("_MovieSuggestionCard", suggestedMovies);
+```
+
+**Problem:** Anti-forgery token validation failing
+```csharp
+// SOLUTION: Include tokens in AJAX requests
+// Razor view:
+@Html.AntiForgeryToken()
+
+// JavaScript:
+var token = $('input[name="__RequestVerificationToken"]').val();
+$.post(url, { __RequestVerificationToken: token, data: data });
+```
+
+#### **View Patterns:**
+```html
+<!-- CINEMA GOLD BRANDING -->
+<h3 class="cinelog-gold-title">Trending Movies</h3>
+
+<!-- BOOTSTRAP 5 CYBORG THEME -->
+<div class="card bg-dark border-secondary">
+    <div class="card-body">
+        <!-- Movie content -->
+    </div>
+</div>
+
+<!-- EVENT DELEGATION ATTRIBUTES -->
+<button class="btn btn-outline-warning" 
+        data-suggestion-type="trending"
+        data-action="reshuffle">
+    Reshuffle
+</button>
+```
+
+### 🗄️ Database & Entity Framework **[WHEN: Migrations, queries, performance indexes, data models]**
+
+#### **Core Patterns:**
+```csharp
+// USER DATA ISOLATION - Critical for all queries
+var userId = _userManager.GetUserId(User);
+var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
+
+// COMPOSITE INDEXES - For fast user-specific searches
+migrationBuilder.CreateIndex(
+    name: "IX_Movies_UserId_Title",
+    table: "Movies", 
+    columns: new[] { "UserId", "Title" });
+
+// PAGINATION PATTERN
+var paginatedList = await PaginatedList<Movies>.CreateAsync(
+    _dbContext.Movies.Where(m => m.UserId == userId), pageNumber, 20);
+
+// Use TotalCount for pagination (NOT viewModels.Count)
+var totalCount = paginatedList.TotalCount; // Total database records
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** Pagination navigation broken
+```csharp
+// PROBLEM: Using current page count instead of total
+var totalItems = viewModels.Count; // WRONG - only current page items (max 20)
+
+// SOLUTION: Use total database count
+var totalItems = paginatedList.TotalCount; // CORRECT - all user's records
+var viewModel = new ViewModel {
+    TotalCount = paginatedList.TotalCount,
+    HasNextPage = paginatedList.HasNextPage,
+    HasPreviousPage = paginatedList.HasPreviousPage
+};
+```
+
+**Problem:** Slow user-specific queries
+```csharp
+// SOLUTION: Always filter by UserId first (uses index)
+// BAD: Full table scan
+var movies = _dbContext.Movies.Where(m => m.Title.Contains(search));
+
+// GOOD: Index-optimized
+var movies = _dbContext.Movies
+    .Where(m => m.UserId == userId)  // Uses IX_Movies_UserId
+    .Where(m => m.Title.Contains(search));
+```
+
+**Problem:** N+1 query problems in Entity Framework
+```csharp
+// BAD: N+1 queries
+var movies = _dbContext.Movies.Where(m => m.UserId == userId);
+foreach (var movie in movies) {
+    // This creates additional queries
+    var relatedData = movie.SomeRelatedEntity;
+}
+
+// GOOD: Include related data
+var movies = _dbContext.Movies
+    .Where(m => m.UserId == userId)
+    .Include(m => m.SomeRelatedEntity)
+    .ToListAsync();
+```
+
+#### **Entity Models:**
+```csharp
+// Standard CineLog entity pattern
+public class Movies
+{
+    public int Id { get; set; }
+    [Required] public string UserId { get; set; } // Always required
+    [Required] public string Title { get; set; }
+    public string? Director { get; set; }
+    public int ReleasedYear { get; set; }
+    public decimal? UserRating { get; set; }
+    public DateTime DateWatched { get; set; }
+    public string? WatchedLocation { get; set; }
+    public bool IsRewatch { get; set; }
+    public string? TmdbId { get; set; }
+    public string? PosterPath { get; set; }
+    public string? Overview { get; set; }
+    public string? Genres { get; set; }
+    public DateTime DateCreated { get; set; }
+}
+```
+
+#### **Migration Best Practices:**
+```csharp
+// Always include UserId indexes for new user-specific tables
+migrationBuilder.CreateIndex(
+    name: "IX_TableName_UserId",
+    table: "TableName",
+    column: "UserId");
+
+// Composite indexes for common query patterns
+migrationBuilder.CreateIndex(  
+    name: "IX_TableName_UserId_CommonField",
+    table: "TableName",
+    columns: new[] { "UserId", "CommonField" });
+```
+
+### 🎨 UI/UX & AJAX Patterns **[WHEN: Views, styling, JavaScript, responsive design, user interactions]**
+
+#### **Core Patterns:**
+```html
+<!-- CINEMA GOLD BRANDING -->
+<h2 class="cinelog-gold-title mb-4">Movie Suggestions</h2>
+
+<!-- BOOTSTRAP 5 CYBORG THEME -->
+<div class="container-fluid bg-dark text-light">
+    <div class="card bg-dark border-secondary mb-3">
+        <div class="card-body">
+            <h5 class="card-title text-warning">Movie Title</h5>
+            <p class="card-text">Movie description...</p>
+        </div>
+    </div>
+</div>
+
+<!-- EVENT DELEGATION FOR DYNAMIC CONTENT -->
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-action="reshuffle"]')) {
+        handleReshuffle(e.target.dataset.suggestionType);
+    }
+    
+    if (e.target.matches('.add-to-wishlist')) {
+        addToWishlist(e.target.dataset.tmdbId);
+    }
+});
+</script>
+```
+
+#### **Common Problems → Solutions:**
+
+**Problem:** AJAX buttons stop working after content updates
+```javascript
+// PROBLEM: Direct event binding breaks with dynamic content
+$('.reshuffle-btn').click(function() { /* Won't work for new buttons */ });
+
+// SOLUTION: Event delegation
+$(document).on('click', '.reshuffle-btn', function() {
+    // Works for all buttons, including dynamically added ones
+    handleReshuffle($(this).data('suggestion-type'));
+});
+```
+
+**Problem:** Inconsistent styling after AJAX updates
+```csharp
+// SOLUTION: Return server-rendered HTML from AJAX endpoints
+[HttpPost]
+public async Task<IActionResult> TrendingReshuffle()
+{
+    var movies = await GetTrendingMovies(userId);
+    // Return partial view with consistent styling
+    return PartialView("_MovieSuggestionCard", movies);
+}
+```
+
+**Problem:** Mobile responsiveness issues
+```html
+<!-- SOLUTION: Bootstrap responsive classes -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-4 mb-3">
+            <!-- Movie card - stacks on mobile, 2 per row on tablet, 3 on desktop -->
+            <div class="card">...</div>
+        </div>
+    </div>
+</div>
+```
+
+#### **JavaScript Patterns:**
+```javascript
+// AJAX with anti-forgery tokens
+function makeAjaxCall(url, data) {
+    const token = $('input[name="__RequestVerificationToken"]').val();
+    
+    return $.ajax({
+        url: url,
+        type: 'POST',
+        data: { ...data, __RequestVerificationToken: token },
+        success: function(html) {
+            // Replace content with server-rendered HTML
+            $('#suggestion-container').html(html);
+        },
+        error: function() {
+            showErrorMessage('Failed to load suggestions');
+        }
+    });
+}
+
+// Progressive enhancement - works without JavaScript
+function enhanceForm(formSelector) {
+    $(formSelector).on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        makeAjaxCall(form.attr('action'), form.serialize());
+    });
+}
+```
+
+#### **CSS Patterns:**
+```css
+/* Cinema Gold branding */
+.cinelog-gold-title {
+    color: #FFD700 !important;
+    font-weight: 600;
+}
+
+/* Hover effects for interactive elements */
+.movie-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+/* Responsive spacing */
+@media (max-width: 768px) {
+    .movie-card {
+        margin-bottom: 1rem;
+    }
+    
+    .suggestion-grid {
+        grid-template-columns: 1fr;
+    }
+}
+```
+
+#### **Accessibility Patterns:**
+```html
+<!-- Screen reader support -->
+<button class="btn btn-outline-warning" 
+        aria-label="Reshuffle trending movie suggestions"
+        data-suggestion-type="trending">
+    <i class="fas fa-refresh" aria-hidden="true"></i>
+    Reshuffle
+</button>
+
+<!-- Loading states -->
+<div id="loading-spinner" class="d-none" role="status" aria-live="polite">
+    <span class="sr-only">Loading suggestions...</span>
+    <div class="spinner-border text-warning"></div>
+</div>
+```
+
+### 🔧 Testing & Debugging **[WHEN: Test failures, debugging issues, performance problems]**
+
+#### **Core Patterns:**
+```csharp
+// STRUCTURED LOGGING - Use throughout controllers
+_logger.LogInformation("Generating {SuggestionType} suggestions for user {UserId}", 
+    suggestionType, userId);
+
+_logger.LogWarning("Director {DirectorName} has no available movies for user {UserId}", 
+    directorName, userId);
+
+_logger.LogError(ex, "TMDB API failed for user {UserId}: {ErrorMessage}", 
+    userId, ex.Message);
+
+// DEFENSIVE PROGRAMMING - Always validate user data
+private async Task<bool> ValidateUserAccess(string userId, string resourceId)
+{
+    return await _dbContext.SomeEntity
+        .AnyAsync(e => e.Id == resourceId && e.UserId == userId);
+}
+
+// PERFORMANCE TIMING
+using var activity = _logger.BeginScope("SuggestionBuild_{SuggestionType}", type);
+var stopwatch = Stopwatch.StartNew();
+var result = await BuildSuggestions(userId, type);
+_logger.LogInformation("Built {Count} suggestions in {ElapsedMs}ms", 
+    result.Count, stopwatch.ElapsedMilliseconds);
+```
+
+#### **Common Debugging Scenarios:**
+
+**Issue:** "Suggestions are empty"
+```csharp
+// DEBUG: Check each filter step
+_logger.LogDebug("Pool before blacklist filter: {Count} movies", poolMovies.Count);
+var filteredPool = poolMovies.Where(m => !blacklistIds.Contains(m.TmdbId));
+_logger.LogDebug("Pool after blacklist filter: {Count} movies", filteredPool.Count());
+
+var finalPool = filteredPool.Where(m => !recentTmdbIds.Contains(m.TmdbId));
+_logger.LogDebug("Final pool: {Count} movies", finalPool.Count());
+```
+
+**Issue:** "User seeing other users' data"
+```csharp
+// DEBUG: Verify UserId filtering
+_logger.LogDebug("Querying movies for user {UserId}", userId);
+var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
+_logger.LogDebug("Found {Count} movies for user {UserId}", 
+    await userMovies.CountAsync(), userId);
+```
+
+**Issue:** "Performance is slow"
+```csharp
+// DEBUG: Profile individual operations
+var sw = Stopwatch.StartNew();
+
+var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+_logger.LogDebug("Blacklist fetch: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+sw.Restart();
+
+var apiResult = await _tmdbService.GetTrendingMoviesAsync();
+_logger.LogDebug("TMDB API call: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+```
+
+#### **Test Patterns:**
+```csharp
+// User isolation testing
+[Test]
+public async Task GetUserMovies_ShouldOnlyReturnCurrentUserMovies()
+{
+    // Arrange
+    var user1Id = "user1";
+    var user2Id = "user2";
+    
+    await _dbContext.Movies.AddRangeAsync(
+        new Movies { UserId = user1Id, Title = "User1 Movie" },
+        new Movies { UserId = user2Id, Title = "User2 Movie" }
+    );
+    await _dbContext.SaveChangesAsync();
+    
+    // Act
+    var result = await _controller.GetUserMovies(user1Id);
+    
+    // Assert
+    Assert.That(result.All(m => m.UserId == user1Id));
+}
+```
+
+### 🔧 Code Refactoring & Technical Debt **[WHEN: Complex methods, duplicate code, legacy patterns, code smells]**
+
+#### **Core Patterns:**
+```csharp
+// EXTRACT METHOD PATTERN - Break down large methods
+// Before: 200+ line method
+public async Task<IActionResult> ShowSuggestions(string type)
+{
+    // Complex logic mixing concerns
+}
+
+// After: Focused, single-responsibility methods
+public async Task<IActionResult> ShowSuggestions(string type)
+{
+    var userId = _userManager.GetUserId(User);
+    var suggestionStrategy = _suggestionFactory.CreateStrategy(type);
+    var viewModel = await suggestionStrategy.GenerateAsync(userId);
+    return View(viewModel);
+}
+
+// ELIMINATE DUPLICATION - Common filtering logic
+private async Task<List<TmdbMovieBrief>> ApplyUserFiltering(
+    List<TmdbMovieBrief> movies, string userId)
+{
+    var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+    var recentTmdbIds = await GetRecentMovieTmdbIds(userId);
+    
+    return movies
+        .Where(m => !blacklistIds.Contains(m.TmdbId))
+        .Where(m => !recentTmdbIds.Contains(m.TmdbId))
+        .ToList();
+}
+
+// SIMPLIFY COMPLEX CONDITIONS
+// Before: Complex nested conditions
+if (suggestionType == "trending" && 
+    (userPreferences?.IncludeTrending == true || userPreferences == null) && 
+    !userMovies.Any(m => m.Genre?.Contains("Action") == true && m.Rating > 4.0))
+
+// After: Extracted to meaningful methods
+if (ShouldShowTrendingSuggestions(suggestionType, userPreferences, userMovies))
+```
+
+#### **CineLog-Specific Refactoring Patterns:**
+
+**MoviesController Simplification:**
+```csharp
+// BEFORE: Mixed concerns in controller
+public async Task<IActionResult> DirectorReshuffle()
+{
+    var userId = _userManager.GetUserId(User);
+    var directors = await GetDirectorPriorityQueue(userId);
+    var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
+    // ... 50+ lines of filtering, API calls, and business logic
+}
+
+// AFTER: Delegated to services
+public async Task<IActionResult> DirectorReshuffle()
+{
+    var userId = _userManager.GetUserId(User);
+    var suggestions = await _directorSuggestionService.GetNextSuggestionsAsync(userId);
+    return PartialView("_MovieSuggestionCard", suggestions);
+}
+```
+
+**Suggestion Algorithm Unification:**
+```csharp
+// STRATEGY PATTERN for suggestion types
+public interface ISuggestionStrategy
+{
+    Task<List<TmdbMovieBrief>> GenerateAsync(string userId);
+    string GetSuggestionTitle();
+}
+
+public class TrendingSuggestionStrategy : ISuggestionStrategy
+{
+    public async Task<List<TmdbMovieBrief>> GenerateAsync(string userId)
+    {
+        return await GetTrendingMoviesWithFiltering(userId);
+    }
+}
+
+// Factory for clean controller logic
+public class SuggestionStrategyFactory
+{
+    public ISuggestionStrategy CreateStrategy(string type) => type switch
+    {
+        "trending" => new TrendingSuggestionStrategy(_tmdbService, _cacheService),
+        "director" => new DirectorSuggestionStrategy(_tmdbService, _cacheService),
+        _ => new DefaultSuggestionStrategy()
+    };
+}
+```
+
+#### **Common Refactoring Scenarios:**
+
+**Problem:** Large, complex controller methods
+```csharp
+// SOLUTION: Service layer extraction
+// Move business logic to dedicated services
+// Controller only handles HTTP concerns and delegates to services
+// Each service has single responsibility (e.g., DirectorSuggestionService)
+```
+
+**Problem:** Duplicate filtering logic across suggestion types
+```csharp
+// SOLUTION: Common base class or shared service
+public abstract class BaseSuggestionService
+{
+    protected async Task<List<TmdbMovieBrief>> ApplyStandardFiltering(
+        List<TmdbMovieBrief> movies, string userId)
+    {
+        // Common blacklist, wishlist, recent movie filtering
+    }
+}
+```
+
+**Problem:** Complex LINQ queries mixed with business logic
+```csharp
+// SOLUTION: Repository pattern with domain-specific queries
+public class MovieRepository
+{
+    public async Task<List<Movies>> GetUserMoviesWithFilters(
+        string userId, MovieFilter filters)
+    {
+        var query = _dbContext.Movies.Where(m => m.UserId == userId);
+        
+        if (filters.MinRating.HasValue)
+            query = query.Where(m => m.Rating >= filters.MinRating);
+            
+        return await query.ToListAsync();
+    }
+}
+```
+
+#### **Quality Metrics to Monitor:**
+```csharp
+// CYCLOMATIC COMPLEXITY - Methods should have < 10 branches
+// METHOD LENGTH - Keep methods under 50 lines
+// CLASS SIZE - Controllers should focus on HTTP concerns only
+// DUPLICATION - DRY principle, extract common patterns
+
+// Performance impact measurement
+var stopwatch = Stopwatch.StartNew();
+var result = await RefactoredMethod();
+_logger.LogInformation("Refactored method completed in {ElapsedMs}ms", 
+    stopwatch.ElapsedMilliseconds);
+```
+
+#### **Test-Safe Refactoring:**
+```csharp
+// PRESERVE BEHAVIOR - Ensure existing functionality works
+[Test]
+public async Task RefactoredMethod_ShouldReturnSameResults()
+{
+    // Arrange - same test data
+    var userId = "test-user";
+    
+    // Act - call both old and new implementations
+    var oldResult = await OldSuggestionMethod(userId);
+    var newResult = await NewSuggestionService.GenerateAsync(userId);
+    
+    // Assert - verify identical behavior
+    Assert.That(newResult, Is.EqualTo(oldResult));
+}
+```

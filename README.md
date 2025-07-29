@@ -20,11 +20,19 @@
 - **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
 
 ## 🤖 Claude Code Development Tools
-- **Specialized Subagents**: 6 task-specific AI assistants for accelerated development
+- **Advanced Agent System**: 15 specialized AI assistants with intelligent orchestration
+- **Master Agent Director**: Intelligent task router that analyzes complexity and assigns optimal agents
 - **Context Efficiency**: Each subagent operates in its own context window for focused expertise
 - **Architecture Knowledge**: Deep understanding of CineLog patterns, conventions, and best practices
 
-### Available Subagents
+### 🎭 Master Agent Director
+The **Master Agent Director** is an intelligent orchestrator that:
+- **Analyzes Task Complexity**: Automatically determines if tasks need strategic planning
+- **Routes Optimally**: Assigns the most efficient agent(s) for each specific task
+- **Coordinates Multi-Agent Workflows**: Manages sequential and parallel agent execution
+- **Triggers Proactive Agents**: Automatically invokes testing, UI enhancement, and quality agents
+
+### 🎬 Core CineLog Subagents
 - **`cinelog-movie-specialist`**: Movie features, suggestion algorithms, CRUD operations, user data management
 - **`tmdb-api-expert`**: External API integration, rate limiting, caching strategies, data mapping
 - **`ef-migration-manager`**: Database operations, schema changes, performance indexes, Entity Framework
@@ -32,11 +40,35 @@
 - **`aspnet-feature-developer`**: Complete feature development, MVC patterns, UI/UX, Bootstrap integration
 - **`docs-architect`**: Documentation maintenance, architecture updates, change tracking, technical writing
 
+### 🚀 Enhanced Development Subagents
+- **`test-writer-fixer`** (Proactive): Comprehensive test coverage after code changes
+- **`backend-architect`**: Scalable architecture design and API planning
+- **`ui-designer`** (Proactive): Visual design enhancement and modern UI patterns
+- **`whimsy-injector`** (Proactive): Delightful micro-interactions and user engagement
+- **`performance-benchmarker`**: Performance testing and optimization analysis
+- **`devops-automator`**: CI/CD automation and deployment optimization
+- **`api-tester`**: API reliability testing and integration validation
+- **`feedback-synthesizer`**: User feedback analysis and feature prioritization
+
+### 🧠 Intelligent Planning System
+- **Complexity Assessment**: Simple tasks get direct execution, complex tasks trigger strategic planning
+- **Strategic Planning**: Auto-triggered 5-step planning process for complex features
+- **Risk Assessment**: Built-in risk identification and mitigation strategies
+- **Phased Execution**: Breaks large features into manageable, testable phases
+
 ### Benefits
-- **Faster Development**: Task-specific expertise reduces implementation time
-- **Consistent Patterns**: Each subagent knows established CineLog architectural conventions
-- **Quality Assurance**: Specialized knowledge ensures adherence to performance and security standards
-- **Maintainability**: Proper documentation and pattern following for long-term codebase health
+- **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
+- **Proactive Quality**: Automatic testing, UI enhancement, and delight injection
+- **Strategic Planning**: Complex features get proper planning before implementation
+- **Faster Development**: Task-specific expertise with intelligent coordination
+- **Consistent Architecture**: Deep knowledge ensures adherence to CineLog patterns
+- **Comprehensive Coverage**: From architecture to testing to user experience optimization
+
+### 🤝 **GitHub Copilot Integration**
+- **Comprehensive Knowledge Base**: GitHub Copilot has access to the same specialized expertise through a detailed development knowledge base
+- **Synchronized Behavior**: Both Claude Code and GitHub Copilot follow identical development workflows and patterns
+- **Domain Expertise**: Copilot can instantly reference CineLog-specific patterns, performance optimizations, and architectural decisions
+- **Professional Standards**: Unified documentation standards and coding conventions across all AI assistance
 
 # ✨ Cinema Gold Branding & UI Polish (2025-07-26)
 - **Suggestion Titles:** All suggestion section titles now use the `.cinelog-gold-title` class for gold color, matching the home page.
