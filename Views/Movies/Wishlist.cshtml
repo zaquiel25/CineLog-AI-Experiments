@@ -77,8 +77,8 @@ else
                             <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@wishlistItem.TmdbId" class="btn btn-success btn-sm position-relative" style="z-index:2;">
                                 <i class="bi bi-check-lg"></i> I've Watched It
                             </a>
-                            <button type="button" class="btn btn-soft-danger btn-sm remove-from-wishlist" data-tmdb-id="@wishlistItem.TmdbId">
-                                <i class="bi bi-x-circle"></i> Remove
+                            <button type="button" class="btn btn-danger btn-sm remove-from-wishlist" data-tmdb-id="@wishlistItem.TmdbId">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
