@@ -17,16 +17,25 @@
 ## 🔄 AJAX+HTML Hybrid Architecture
 - **Server-Side Rendering**: All HTML rendered on server for consistent styling and image paths
 - **Event Delegation**: Single JavaScript handler manages all reshuffle and removal buttons dynamically
-- **AJAX Removal Pattern**: Blacklist and Wishlist use a robust AJAX removal script with fade-out animation, user-friendly alerts, and single-body-read error handling.
-- **Required Header**: All AJAX POST requests (removal, etc.) must include `X-Requested-With: XMLHttpRequest` to guarantee backend returns JSON for AJAX (prevents Non-JSON response errors).
+- **Enhanced AJAX Removal**: Robust removal system with smooth fade-out animations, comprehensive error handling, and smart empty state detection
+- **Response Validation**: Text-to-JSON parsing with fallback error handling for malformed responses
+- **Required Header**: All AJAX POST requests include `X-Requested-With: XMLHttpRequest` to guarantee backend returns JSON responses
+- **Visual Feedback**: Toast-style notifications with 2.2-second auto-dismiss for all user actions
 - **Progressive Enhancement**: Works with JavaScript disabled (falls back to page navigation)
-- **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
+- **Consistent UX**: Identical behavior whether using initial load or AJAX operations
+
+### 🎯 AJAX Pattern Benefits
+- **Network Resilience**: Comprehensive try-catch blocks handle network failures gracefully
+- **Anti-Forgery Protection**: CSRF token validation maintained across all AJAX operations  
+- **State Management**: Button disable/enable prevents multiple simultaneous requests
+- **Error Transparency**: Clear distinction between network, server, and parsing errors
+- **Professional Polish**: Smooth animations and immediate visual feedback eliminate jarring page reloads
 
 ### Troubleshooting
 - If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
 
 ## 🤖 Claude Code Development Tools
-- **Advanced Agent System**: 15 specialized AI assistants with intelligent orchestration
+- **Advanced Agent System**: 16 specialized AI assistants with intelligent orchestration
 - **Master Agent Director**: Intelligent task router that analyzes complexity and assigns optimal agents
 - **Context Efficiency**: Each subagent operates in its own context window for focused expertise
 - **Architecture Knowledge**: Deep understanding of CineLog patterns, conventions, and best practices
@@ -55,6 +64,7 @@ The **Master Agent Director** is an intelligent orchestrator that:
 - **`devops-automator`**: CI/CD automation and deployment optimization
 - **`api-tester`**: API reliability testing and integration validation
 - **`feedback-synthesizer`**: User feedback analysis and feature prioritization
+- **`code-refactoring-specialist`** (Proactive): Code quality improvement and technical debt reduction
 
 ### 🧠 Intelligent Planning System
 - **Complexity Assessment**: Simple tasks get direct execution, complex tasks trigger strategic planning
@@ -64,17 +74,20 @@ The **Master Agent Director** is an intelligent orchestrator that:
 
 ### Benefits
 - **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
-- **Proactive Quality**: Automatic testing, UI enhancement, and delight injection
+- **Proactive Quality**: Automatic testing, UI enhancement, delight injection, and code refactoring
 - **Strategic Planning**: Complex features get proper planning before implementation
 - **Faster Development**: Task-specific expertise with intelligent coordination
 - **Consistent Architecture**: Deep knowledge ensures adherence to CineLog patterns
-- **Comprehensive Coverage**: From architecture to testing to user experience optimization
+- **Technical Debt Management**: Automatic code quality monitoring and improvement
+- **Comprehensive Coverage**: From architecture to testing to user experience optimization and code maintenance
 
 ### 🤝 **GitHub Copilot Integration**
 - **Comprehensive Knowledge Base**: GitHub Copilot has access to the same specialized expertise through a detailed development knowledge base
 - **Synchronized Behavior**: Both Claude Code and GitHub Copilot follow identical development workflows and patterns
+- **Enhanced Coordination**: Explicit agent invocation guidance, escalation rules, and planning templates for optimal task execution
 - **Domain Expertise**: Copilot can instantly reference CineLog-specific patterns, performance optimizations, and architectural decisions
 - **Professional Standards**: Unified documentation standards and coding conventions across all AI assistance
+- **Feedback-Driven Improvements**: Instructions continuously enhanced based on direct AI assistant feedback for maximum effectiveness
 
 # ✨ Cinema Gold Branding & UI Polish (2025-07-26)
 - **Suggestion Titles:** All suggestion section titles now use the `.cinelog-gold-title` class for gold color, matching the home page.

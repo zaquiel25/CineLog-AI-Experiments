@@ -121,6 +121,84 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Make incremental changes with clear commit messages when requested
 
 ---
+
+## 🎯 Enhanced Agent Coordination Guidelines
+
+### 📋 **Quick Agent Selection Guide**
+
+| Task Type | Primary Agent | Follow-up Agents | Why This Sequence |
+|-----------|---------------|------------------|-------------------|
+| New movie feature | `aspnet-feature-developer` | `test-writer-fixer`, `ui-designer` | Full-stack → Testing → Polish |
+| Suggestion system fix | `cinelog-movie-specialist` | `test-writer-fixer` | Domain expertise → Validation |
+| Performance issue | `performance-benchmarker` | `performance-optimizer` | Measure → Improve |
+| Code quality concern | `code-refactoring-specialist` | `test-writer-fixer` | Refactor → Verify |
+| TMDB integration | `tmdb-api-expert` | `api-tester` | Integration → Reliability |
+| Database change | `ef-migration-manager` | `backend-architect` | Schema → Architecture |
+
+### ⚡ **Escalation Protocol**
+
+**When to escalate to Master Agent Director:**
+- Task spans 3+ architectural domains
+- Requirements are ambiguous or conflicting  
+- User mentions "major", "redesign", or "comprehensive"
+- Risk of breaking existing functionality
+
+**Auto-escalation triggers:**
+```
+"Redesign the suggestion system" → Master Agent Director
+"Add comprehensive movie features" → Master Agent Director  
+"Major performance overhaul" → Master Agent Director
+```
+
+### 🔄 **Planning Template for Complex Tasks**
+
+```markdown
+## ANALYSIS
+- **Objective**: [Specific goal]
+- **Affected Components**: [Database, Backend, Frontend, etc.]
+- **Complexity Level**: [Simple/Medium/Complex/Strategic]
+
+## EXECUTION PLAN
+1. **Phase 1**: [Core functionality]
+2. **Phase 2**: [Enhanced features]  
+3. **Phase 3**: [Polish & optimization]
+
+## AGENT SEQUENCE
+- **Lead Agent**: [Most specialized]
+- **Supporting Agents**: [In execution order]
+- **Quality Gates**: [Testing, docs, performance]
+```
+
+### 📚 **Documentation Rules**
+
+**Auto-update documentation when:**
+- New architectural pattern is introduced
+- Bug fix reveals a common pitfall
+- Performance technique is implemented
+- Error handling is improved
+
+**Files to update:**
+- `CLAUDE.md`: Development patterns
+- `README.md`: User-facing features  
+- `CHANGELOG.md`: Change history
+- `copilot-instructions.md`: Agent knowledge
+
+### 🚨 **Error Communication Standards**
+
+- **Be Specific**: "TMDB API rate limited" not "API error"
+- **Be Actionable**: "Try again in 60 seconds" not "Request failed"  
+- **Be Contextual**: Include relevant details for debugging
+
+### ✏️ **Non-Destructive Documentation Edits**
+
+**Always preserve existing best practices** - only add or clarify unless explicitly told to refactor.
+
+**Safe patterns:**
+- ✅ Add new sections with clear labels
+- ✅ Enhance explanations with examples
+- ❌ Remove working patterns without replacement
+
+---
 ## 🔧 Tool Usage & File Management
 
 ### 🧠 Memory Management
@@ -967,6 +1045,40 @@ return PartialView("_MovieSuggestionCard", viewModel);
 - Reuse of existing partial views
 - Event delegation for dynamic button handling
 - Progressive enhancement (works without JavaScript)
+
+### 🚀 Enhanced AJAX Removal Pattern
+**Robust AJAX removal with comprehensive error handling:**
+```javascript
+// CRITICAL: Always include X-Requested-With header
+const response = await fetch('/Movies/RemoveFromBlacklist', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'  // REQUIRED for JSON response
+    },
+    body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
+    credentials: 'same-origin'
+});
+
+// Robust response parsing with fallback error handling
+const rawText = await response.text();
+let data;
+try {
+    data = JSON.parse(rawText);
+} catch (jsonErr) {
+    showTempAlert('Non-JSON response: ' + rawText, 'danger');
+    btn.disabled = false;
+    return;
+}
+```
+
+**Key Implementation Requirements:**
+- **X-Requested-With Header**: Essential for backend to return JSON instead of HTML error pages
+- **Text-First Parsing**: Always read response as text first, then parse JSON with try-catch
+- **State Management**: Disable buttons during requests, re-enable on errors
+- **Visual Feedback**: Fade-out animations (300ms) before removal
+- **Empty State Detection**: Auto-show "empty list" messages when no items remain
+- **Error Differentiation**: Distinguish between network, server, and parsing errors
 
 ### 🗃️ Business Rules Implementation
 

@@ -741,6 +741,133 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 
 ---
 
+## 🎯 Agent Invocation & Coordination Guide
+
+### 📋 **Explicit Agent Invocation Guidance**
+
+| User Request Pattern | Primary Agent(s) | Rationale |
+|---------------------|------------------|-----------|
+| "Add movie feature X" | `aspnet-feature-developer` → `test-writer-fixer` → `ui-designer` | Full-stack development with testing and UI enhancement |
+| "Fix suggestion bug" | `cinelog-movie-specialist` → `test-writer-fixer` | Domain expertise + test coverage |
+| "Make the app faster" | `performance-benchmarker` → `performance-optimizer` | Analysis first, then optimization |
+| "Database changes needed" | `ef-migration-manager` → `backend-architect` | Schema changes + architecture review |
+| "TMDB API not working" | `tmdb-api-expert` → `api-tester` | Integration expertise + reliability testing |
+| "Code is messy/complex" | `code-refactoring-specialist` → `test-writer-fixer` | Refactoring + maintained functionality |
+| "UI needs improvement" | `ui-designer` → `whimsy-injector` | Visual design + personality injection |
+| "Tests are failing" | `test-writer-fixer` + Domain expert | Fix tests + address root cause |
+| "Deploy to production" | `devops-automator` → `performance-benchmarker` | Deployment + performance validation |
+| "Users complaining about X" | `feedback-synthesizer` → Relevant domain agent | Analyze feedback + implement solution |
+
+### 🔄 **Stepwise Planning Template**
+
+For complex tasks, use this reusable breakdown:
+
+```markdown
+## TASK ANALYSIS
+- **Objective**: [What exactly needs to be accomplished?]
+- **Scope**: [Which components/files will be affected?]
+- **Complexity**: [Simple/Medium/Complex/Strategic?]
+
+## IMPLEMENTATION PLAN
+1. **Phase 1**: [Core functionality - MVP]
+2. **Phase 2**: [Enhanced features]  
+3. **Phase 3**: [Polish and optimization]
+
+## AGENT COORDINATION
+- **Primary Agent**: [Most specialized for the task]
+- **Secondary Agents**: [Supporting agents in order]
+- **Quality Gates**: [Testing, UI, documentation]
+
+## SUCCESS CRITERIA
+- [ ] Functional requirement met
+- [ ] Tests pass
+- [ ] Documentation updated
+- [ ] Performance validated
+```
+
+### ⚡ **Agent Escalation/Delegation Rules**
+
+**CRITICAL RULE**: If a task is ambiguous or spans multiple domains, **always escalate to the Master Agent Director** for orchestration and planning.
+
+**Escalation Triggers**:
+- Task affects 3+ architectural components
+- Requirements are unclear or conflicting
+- Multiple domain expertise needed simultaneously
+- Risk of breaking existing functionality
+- User mentions "comprehensive" or "major" changes
+
+**Example**: *"Redesign the entire suggestion system"* → **Master Agent Director** (Strategic planning required)
+
+### 🎭 **Multi-Agent Coordination Example**
+
+**User Prompt**: *"Add a movie rating system with stars, save to database, and make it look good"*
+
+**Master Agent Director Analysis**:
+```
+🎯 DOMAINS: Database, Backend, Frontend, UI/UX
+⚡ COMPLEXITY: COMPLEX → Strategic planning activated
+🚀 AGENTS: Sequential multi-agent workflow
+```
+
+**Execution Sequence**:
+1. **`backend-architect`**: Design rating system schema and API structure
+2. **`ef-migration-manager`**: Create database migration for ratings table
+3. **`aspnet-feature-developer`**: Implement MVC components and rating logic
+4. **`ui-designer`**: Create star rating component with Bootstrap integration
+5. **`whimsy-injector`**: Add hover effects and rating submission animations
+6. **`test-writer-fixer`**: Write comprehensive tests for rating functionality
+7. **`docs-architect`**: Update documentation with new rating feature
+
+**Coordination Benefits**: Each agent builds on previous work, ensuring cohesive implementation.
+
+### 📚 **Documentation Update Rules**
+
+**CRITICAL RULE**: Whenever a new pattern, best practice, or troubleshooting step is implemented, **update the relevant documentation section immediately after code changes**.
+
+**Auto-Update Triggers**:
+- New architectural pattern introduced
+- Bug fix that reveals common pitfall
+- Performance optimization technique
+- Error handling improvement
+- UI/UX enhancement pattern
+
+**Documentation Targets**:
+- `CLAUDE.md`: Development patterns and commands
+- `README.md`: User-facing features and architecture
+- `CHANGELOG.md`: Chronological change history
+- `.github/copilot-instructions.md`: Agent knowledge base
+
+### 🚨 **Error Handling & User Feedback**
+
+**CRITICAL RULE**: Always surface actionable error messages to the user, and document any new error handling patterns in the troubleshooting section.
+
+**Error Communication Standards**:
+- **Be Specific**: "TMDB API rate limited" not "API error"
+- **Be Actionable**: "Try again in 60 seconds" not "Request failed"
+- **Be Contextual**: "Movie not found in TMDB database" not "404 error"
+
+**Documentation Pattern**:
+```markdown
+**Problem**: [Specific error scenario]
+**Cause**: [Root cause explanation]  
+**Solution**: [Step-by-step fix]
+**Prevention**: [How to avoid in future]
+```
+
+### ✏️ **Non-Destructive Edits**
+
+**CRITICAL RULE**: When editing documentation or instructions, **never remove existing best practices**—only add or clarify, unless explicitly told to refactor or clean up.
+
+**Safe Edit Patterns**:
+- ✅ Add new sections with `### NEW: [Feature Name]`
+- ✅ Enhance existing explanations with more detail
+- ✅ Add examples to clarify existing concepts
+- ❌ Remove working code examples
+- ❌ Delete architectural guidance without replacement
+- ❌ Simplify complex patterns that are still needed
+
+---
+
 ## 🔍 CineLog Development Knowledge Base
 
 *Quick reference for GitHub Copilot to access specialized knowledge when working on specific CineLog components*
@@ -1174,6 +1301,8 @@ migrationBuilder.CreateIndex(
 ```
 
 ### 🎨 UI/UX & AJAX Patterns **[WHEN: Views, styling, JavaScript, responsive design, user interactions]**
+
+> **⚡ AJAX Quick Reference**: All AJAX POSTs must include `X-Requested-With: XMLHttpRequest`, `credentials: 'same-origin'`, and antiforgery token.
 
 #### **Core Patterns:**
 ```html
