@@ -3,12 +3,10 @@
 ### 🎯 Agent Coordination & Instructions Enhancement
 - **GitHub Copilot Feedback Integration**: Implemented targeted improvements based on direct feedback from GitHub Copilot for better planning and execution
 - **Explicit Agent Invocation Table**: Added comprehensive mapping of user request patterns to optimal agent selections with rationale
-- **Stepwise Planning Template**: Created reusable template for breaking down complex tasks with clear phases and success criteria
+- **Simplified Planning Guidance**: Created practical guidance for complex tasks without bureaucratic overhead
 - **Agent Escalation Rules**: Defined clear protocol for when to escalate to Master Agent Director based on complexity and domain scope
 - **Multi-Agent Coordination Examples**: Added real-world example showing complete workflow from user prompt to agent execution sequence
-- **Documentation Update Rules**: Established automatic documentation update triggers and target files for consistency
-- **Error Handling Standards**: Defined specific, actionable, and contextual error communication patterns with documentation templates
-- **Non-Destructive Edit Guidelines**: Implemented safe editing patterns to preserve existing best practices while enabling enhancements
+- **Streamlined Documentation Guidelines**: Simplified documentation update rules to focus on practical needs
 - **AJAX Quick Reference**: Added one-line summary for essential AJAX requirements at the top of relevant sections
 
 #### 🔍 Enhanced Guidance Areas

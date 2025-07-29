@@ -758,32 +758,14 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 | "Deploy to production" | `devops-automator` → `performance-benchmarker` | Deployment + performance validation |
 | "Users complaining about X" | `feedback-synthesizer` → Relevant domain agent | Analyze feedback + implement solution |
 
-### 🔄 **Stepwise Planning Template**
+### 🔄 **Simple Planning for Complex Tasks**
 
-For complex tasks, use this reusable breakdown:
+For complex tasks only, quickly think through:
+- **What needs to be done?** (objective)
+- **Which agent(s)?** (primary + follow-up)  
+- **What could break?** (risks)
 
-```markdown
-## TASK ANALYSIS
-- **Objective**: [What exactly needs to be accomplished?]
-- **Scope**: [Which components/files will be affected?]
-- **Complexity**: [Simple/Medium/Complex/Strategic?]
-
-## IMPLEMENTATION PLAN
-1. **Phase 1**: [Core functionality - MVP]
-2. **Phase 2**: [Enhanced features]  
-3. **Phase 3**: [Polish and optimization]
-
-## AGENT COORDINATION
-- **Primary Agent**: [Most specialized for the task]
-- **Secondary Agents**: [Supporting agents in order]
-- **Quality Gates**: [Testing, UI, documentation]
-
-## SUCCESS CRITERIA
-- [ ] Functional requirement met
-- [ ] Tests pass
-- [ ] Documentation updated
-- [ ] Performance validated
-```
+Keep it simple - no need for formal templates unless the task truly spans multiple domains.
 
 ### ⚡ **Agent Escalation/Delegation Rules**
 
@@ -820,51 +802,17 @@ For complex tasks, use this reusable breakdown:
 
 **Coordination Benefits**: Each agent builds on previous work, ensuring cohesive implementation.
 
-### 📚 **Documentation Update Rules**
+### 📚 **Documentation Updates**
 
-**CRITICAL RULE**: Whenever a new pattern, best practice, or troubleshooting step is implemented, **update the relevant documentation section immediately after code changes**.
+Update docs when you introduce new patterns or fix significant bugs. Key files: `CLAUDE.md`, `README.md`, `CHANGELOG.md`.
 
-**Auto-Update Triggers**:
-- New architectural pattern introduced
-- Bug fix that reveals common pitfall
-- Performance optimization technique
-- Error handling improvement
-- UI/UX enhancement pattern
+### 🚨 **Error Handling**
 
-**Documentation Targets**:
-- `CLAUDE.md`: Development patterns and commands
-- `README.md`: User-facing features and architecture
-- `CHANGELOG.md`: Chronological change history
-- `.github/copilot-instructions.md`: Agent knowledge base
+Always be specific and actionable: "TMDB API rate limited - try again in 60 seconds" not "API error".
 
-### 🚨 **Error Handling & User Feedback**
+### ✏️ **Documentation Edits**
 
-**CRITICAL RULE**: Always surface actionable error messages to the user, and document any new error handling patterns in the troubleshooting section.
-
-**Error Communication Standards**:
-- **Be Specific**: "TMDB API rate limited" not "API error"
-- **Be Actionable**: "Try again in 60 seconds" not "Request failed"
-- **Be Contextual**: "Movie not found in TMDB database" not "404 error"
-
-**Documentation Pattern**:
-```markdown
-**Problem**: [Specific error scenario]
-**Cause**: [Root cause explanation]  
-**Solution**: [Step-by-step fix]
-**Prevention**: [How to avoid in future]
-```
-
-### ✏️ **Non-Destructive Edits**
-
-**CRITICAL RULE**: When editing documentation or instructions, **never remove existing best practices**—only add or clarify, unless explicitly told to refactor or clean up.
-
-**Safe Edit Patterns**:
-- ✅ Add new sections with `### NEW: [Feature Name]`
-- ✅ Enhance existing explanations with more detail
-- ✅ Add examples to clarify existing concepts
-- ❌ Remove working code examples
-- ❌ Delete architectural guidance without replacement
-- ❌ Simplify complex patterns that are still needed
+Don't remove working patterns or guidance unless explicitly asked. Add and enhance, don't delete.
 
 ---
 

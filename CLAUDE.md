@@ -150,53 +150,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 "Major performance overhaul" → Master Agent Director
 ```
 
-### 🔄 **Planning Template for Complex Tasks**
+### 🔄 **Planning for Complex Tasks**
 
-```markdown
-## ANALYSIS
-- **Objective**: [Specific goal]
-- **Affected Components**: [Database, Backend, Frontend, etc.]
-- **Complexity Level**: [Simple/Medium/Complex/Strategic]
+For complex tasks: identify objective, select agents, consider risks. Keep it simple.
 
-## EXECUTION PLAN
-1. **Phase 1**: [Core functionality]
-2. **Phase 2**: [Enhanced features]  
-3. **Phase 3**: [Polish & optimization]
+### 📚 **Documentation Updates**
 
-## AGENT SEQUENCE
-- **Lead Agent**: [Most specialized]
-- **Supporting Agents**: [In execution order]
-- **Quality Gates**: [Testing, docs, performance]
-```
+Update docs when introducing new patterns or fixing significant bugs.
 
-### 📚 **Documentation Rules**
+### 🚨 **Error Communication**
 
-**Auto-update documentation when:**
-- New architectural pattern is introduced
-- Bug fix reveals a common pitfall
-- Performance technique is implemented
-- Error handling is improved
+Be specific and actionable: "TMDB API rate limited - try again in 60 seconds" not "API error".
 
-**Files to update:**
-- `CLAUDE.md`: Development patterns
-- `README.md`: User-facing features  
-- `CHANGELOG.md`: Change history
-- `copilot-instructions.md`: Agent knowledge
+### ✏️ **Documentation Edits**
 
-### 🚨 **Error Communication Standards**
-
-- **Be Specific**: "TMDB API rate limited" not "API error"
-- **Be Actionable**: "Try again in 60 seconds" not "Request failed"  
-- **Be Contextual**: Include relevant details for debugging
-
-### ✏️ **Non-Destructive Documentation Edits**
-
-**Always preserve existing best practices** - only add or clarify unless explicitly told to refactor.
-
-**Safe patterns:**
-- ✅ Add new sections with clear labels
-- ✅ Enhance explanations with examples
-- ❌ Remove working patterns without replacement
+Don't remove working patterns unless explicitly asked. Add and enhance.
 
 ---
 ## 🔧 Tool Usage & File Management
