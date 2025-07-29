@@ -1,4 +1,6 @@
 @model Ezequiel_Movies.Helpers.PaginatedList<Ezequiel_Movies.Models.BlacklistViewModel>
+
+@Html.AntiForgeryToken()
 @{
     ViewData["Title"] = "My Blacklist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
@@ -36,61 +38,125 @@
 }
 else
 {
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div id="blacklist-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         @foreach (var item in Model)
         {
             <div class="col">
-                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" class="text-decoration-none" style="display:block; height:100%;">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
-                            @if (!string.IsNullOrEmpty(item.PosterUrl))
-                            {
+                <div class="card h-100 shadow-sm movie-card">
+                    <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
+                        @if (!string.IsNullOrEmpty(item.PosterUrl))
+                        {
+                            <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">
                                 <img src="@(tmdbImageBaseUrl + item.PosterUrl)" alt="@item.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
-                            }
-                            else
-                            {
-                                <div class="d-flex align-items-center justify-content-center h-100">
-                                    <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
-                                </div>
-                            }
-                        </div>
-                        <div class="card-body d-flex flex-column position-relative">
-                            <h5 class="card-title mb-1">@item.Title</h5>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
-                                    {
-                                        <text>Directed by @item.Director</text>
-                                        @if (item.ReleasedYear != 0)
-                                        {
-                                            <text> &bull; @item.ReleasedYear</text>
-                                        }
-                                    }
-                                    else if (item.ReleasedYear != 0)
-                                    {
-                                        <text>@item.ReleasedYear</text>
-                                    }
-                                    else
-                                    {
-                                        <text>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</text>
-                                    }
-                                </small>
-                            </p>
-                            <div class="mt-auto">
-                                <form asp-action="RemoveFromBlacklist" method="post" class="d-inline position-relative" style="z-index:2;">
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                    <button type="submit" class="btn btn-danger btn-sm w-100"
-                                            onclick="return confirm('Are you sure you want to remove \'@item.Title?.Replace("'", "\\'")\' from your blacklist?');"
-                                            title="Remove from blacklist">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
                             </div>
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column position-relative">
+                        <h5 class="card-title mb-1">
+                            <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" class="link-as-text">
+                                @item.Title
+                            </a>
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
+                                {
+                                    <text>Directed by @item.Director</text>
+                                    @if (item.ReleasedYear != 0)
+                                    {
+                                        <text> &bull; @item.ReleasedYear</text>
+                                    }
+                                }
+                                else if (item.ReleasedYear != 0)
+                                {
+                                    <text>@item.ReleasedYear</text>
+                                }
+                                else
+                                {
+                                    <text>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</text>
+                                }
+                            </small>
+                        </p>
+                        <div class="mt-auto">
+                            <button type="button" class="btn btn-soft-danger btn-sm remove-from-blacklist" data-tmdb-id="@item.TmdbId">
+                                <i class="bi bi-x-circle"></i> Remove
+                            </button>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
         }
+
+<script>
+// Copilot AJAX Blacklist Removal
+document.addEventListener('click', async function (e) {
+    if (e.target.closest('.remove-from-blacklist')) {
+        const btn = e.target.closest('.remove-from-blacklist');
+        const card = btn.closest('.movie-card');
+        const tmdbId = btn.getAttribute('data-tmdb-id');
+        btn.disabled = true;
+        // Get anti-forgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        try {
+            const response = await fetch('/Movies/RemoveFromBlacklist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
+                credentials: 'same-origin'
+            });
+            const rawText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(rawText);
+            } catch (jsonErr) {
+                showTempAlert('Non-JSON response: ' + rawText, 'danger');
+                btn.disabled = false;
+                return;
+            }
+            if (!response.ok) {
+                showTempAlert('Server error: ' + (data.message || rawText), 'danger');
+                btn.disabled = false;
+                return;
+            }
+            if (data.success) {
+                card.classList.add('fade-out');
+                setTimeout(() => {
+                    card.remove();
+                    // Check if any cards remain
+                    const container = document.getElementById('blacklist-container');
+                    if (!container.querySelector('.movie-card')) {
+                        container.innerHTML = '<div class="alert alert-info mt-4">Your blacklist is empty. Find a movie from the suggestions page!</div>';
+                    }
+                }, 300);
+            } else {
+                showTempAlert(data.message || 'Failed to remove movie.', 'danger');
+                btn.disabled = false;
+            }
+        } catch (err) {
+            showTempAlert('Network/JS error: ' + (err && err.message ? err.message : err), 'danger');
+            btn.disabled = false;
+        }
+    }
+});
+
+function showTempAlert(message, type) {
+    let alert = document.createElement('div');
+    alert.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    alert.style.zIndex = 2000;
+    alert.textContent = message;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 2200);
+}
+</script>
     </div>
 
     <!-- Pagination -->

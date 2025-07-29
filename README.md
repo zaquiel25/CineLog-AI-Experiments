@@ -13,11 +13,17 @@
 - **Memory Optimization**: 15-minute caching for frequently accessed blacklist/wishlist IDs
 - **Scalability**: Pagination handles large datasets efficiently
 
+
 ## 🔄 AJAX+HTML Hybrid Architecture
 - **Server-Side Rendering**: All HTML rendered on server for consistent styling and image paths
-- **Event Delegation**: Single JavaScript handler manages all reshuffle buttons dynamically
+- **Event Delegation**: Single JavaScript handler manages all reshuffle and removal buttons dynamically
+- **AJAX Removal Pattern**: Blacklist and Wishlist use a robust AJAX removal script with fade-out animation, user-friendly alerts, and single-body-read error handling.
+- **Required Header**: All AJAX POST requests (removal, etc.) must include `X-Requested-With: XMLHttpRequest` to guarantee backend returns JSON for AJAX (prevents Non-JSON response errors).
 - **Progressive Enhancement**: Works with JavaScript disabled (falls back to page navigation)
 - **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
+
+### Troubleshooting
+- If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
 
 ## 🤖 Claude Code Development Tools
 - **Advanced Agent System**: 15 specialized AI assistants with intelligent orchestration

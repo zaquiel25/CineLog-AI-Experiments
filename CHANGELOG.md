@@ -1,5 +1,13 @@
 ## 2025-07-29
 
+### 🐞 AJAX Removal Bugfix: Blacklist & Wishlist
+- Fixed AJAX removal for both Blacklist and Wishlist to always send the `X-Requested-With: XMLHttpRequest` header.
+- Ensures backend always returns JSON for AJAX requests, preventing "Non-JSON response" errors.
+- Both views now use a single robust, error-handling script with fade-out animation and user-friendly alerts.
+- Controller actions for removal now guarantee JSON responses for all AJAX error/success cases.
+
+## 2025-07-29
+
 ### 🤝 GitHub Copilot Development Knowledge Base
 - **Comprehensive Knowledge Integration**: Created extensive development knowledge base for GitHub Copilot with instant access to specialized agent expertise
 - **Synchronized AI Assistance**: Both Claude Code and GitHub Copilot now follow identical development workflows, patterns, and conventions

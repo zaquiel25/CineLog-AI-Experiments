@@ -18,8 +18,6 @@ using Ezequiel_Movies1.Models.Entities;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-// using Microsoft.Extensions.Caching.Memory; // Already present, remove duplicate
-
 using Microsoft.Extensions.Caching.Memory;
 using Ezequiel_Movies.Services;
 namespace Ezequiel_Movies.Controllers
@@ -441,33 +439,64 @@ namespace Ezequiel_Movies.Controllers
         }
 
         /// <summary>
-        /// Removes a movie from the user's blacklist.
+        /// <summary>
+        /// Removes a movie from the user's blacklist by TMDB ID.
         /// </summary>
-        /// <param name="id">The database ID of the blacklisted movie entry.</param>
+        /// <param name="tmdbId">TMDB movie ID to remove from blacklist.</param>
         /// <remarks>
-        /// Only allows removal if the movie belongs to the current user to ensure data integrity.
+        /// - Supports both AJAX and standard POST requests.
+        /// - Only allows removal if the movie belongs to the current user.
+        /// - Uses async cache invalidation and structured logging.
         /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveFromBlacklist(int id)
+        public async Task<IActionResult> RemoveFromBlacklist(string tmdbId)
         {
             var userId = _userManager.GetUserId(User);
-            if (userId == null)
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(tmdbId))
             {
-                return RedirectToAction("Login", "Account");
+                _logger.LogWarning("RemoveFromBlacklist: Invalid user or tmdbId. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Invalid request." });
+                return BadRequest();
             }
+
+            if (!int.TryParse(tmdbId, out var tmdbIdInt))
+            {
+                _logger.LogWarning("RemoveFromBlacklist: Invalid tmdbId format. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Invalid TMDB ID format." });
+                return BadRequest();
+            }
+
             var blacklistedMovie = await _dbContext.BlacklistedMovies
-                .FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
+                .FirstOrDefaultAsync(b => b.UserId == userId && b.TmdbId == tmdbIdInt);
             if (blacklistedMovie == null)
             {
+                _logger.LogInformation("RemoveFromBlacklist: Movie not found. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Movie not found in blacklist." });
                 return NotFound();
             }
-            _dbContext.BlacklistedMovies.Remove(blacklistedMovie);
-            await _dbContext.SaveChangesAsync();
-            
-            // Invalidate cache to ensure fresh data
-            _cacheService.InvalidateUserBlacklistCache(userId);
-            
+
+            try
+            {
+                _dbContext.BlacklistedMovies.Remove(blacklistedMovie);
+                await _dbContext.SaveChangesAsync();
+                await _cacheService.InvalidateUserBlacklistCacheAsync(userId);
+                _logger.LogInformation("RemoveFromBlacklist: Movie removed. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogWarning(ex, "Concurrency error removing blacklist item. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "This movie was already removed from your blacklist." });
+                return NotFound();
+            }
+
+            if (isAjax)
+                return Json(new { success = true });
             return RedirectToAction(nameof(Blacklist));
         }
 
@@ -693,35 +722,63 @@ namespace Ezequiel_Movies.Controllers
         }
 
         /// <summary>
-        /// Removes a movie from the user's wishlist by TMDB ID.
+        /// Removes a movie from the user's wishlist by TMDB ID, supporting both AJAX and standard POST requests.
         /// </summary>
         /// <param name="tmdbId">TMDB movie ID to remove from wishlist.</param>
         /// <remarks>
         /// - Only allows removal if the movie belongs to the current user.
-        /// - Uses anti-forgery token for security.
+        /// - Supports AJAX requests (returns JSON) and standard POST (redirects).
+        /// - Uses async cache invalidation and structured logging.
         /// </remarks>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveFromWishlist(int tmdbId)
+        public async Task<IActionResult> RemoveFromWishlist(string tmdbId)
         {
             var userId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userId) || tmdbId == 0)
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(tmdbId))
             {
+                _logger.LogWarning("RemoveFromWishlist: Invalid user or tmdbId. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Invalid request." });
+                return BadRequest();
+            }
+
+            if (!int.TryParse(tmdbId, out var tmdbIdInt))
+            {
+                _logger.LogWarning("RemoveFromWishlist: Invalid tmdbId format. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Invalid TMDB ID format." });
                 return BadRequest();
             }
 
             var wishlistItem = await _dbContext.WishlistItems
-                .FirstOrDefaultAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.TmdbId == tmdbIdInt);
+            if (wishlistItem == null)
+            {
+                _logger.LogInformation("RemoveFromWishlist: Movie not found. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "Movie not found in wishlist." });
+                return NotFound();
+            }
 
-            if (wishlistItem != null)
+            try
             {
                 _dbContext.WishlistItems.Remove(wishlistItem);
                 await _dbContext.SaveChangesAsync();
-                
-                // Invalidate cache to ensure fresh data
-                _cacheService.InvalidateUserWishlistCache(userId);
+                await _cacheService.InvalidateUserWishlistCacheAsync(userId);
+                _logger.LogInformation("RemoveFromWishlist: Movie removed. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogWarning(ex, "Concurrency error removing wishlist item. UserId={UserId}, TmdbId={TmdbId}", userId, tmdbId);
+                if (isAjax)
+                    return Json(new { success = false, message = "This movie was already removed from your wishlist." });
+                return NotFound();
             }
 
+            if (isAjax)
+                return Json(new { success = true });
             return RedirectToAction("Wishlist");
         }
 

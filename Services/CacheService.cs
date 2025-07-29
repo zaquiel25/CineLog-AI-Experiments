@@ -87,5 +87,23 @@ namespace Ezequiel_Movies.Services
             var cacheKey = $"WishlistIds_{userId}";
             _memoryCache.Remove(cacheKey);
         }
+
+        /// <summary>
+        /// Invalidates user blacklist cache asynchronously
+        /// </summary>
+        public async Task InvalidateUserBlacklistCacheAsync(string userId)
+        {
+            InvalidateUserBlacklistCache(userId);
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Invalidates user wishlist cache asynchronously
+        /// </summary>
+        public async Task InvalidateUserWishlistCacheAsync(string userId)
+        {
+            InvalidateUserWishlistCache(userId);
+            await Task.CompletedTask;
+        }
     }
 }

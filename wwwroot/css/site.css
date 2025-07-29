@@ -1,4 +1,14 @@
-﻿/*
+﻿/* Fade-out animation for AJAX card removal */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+/* Fade-out animation for AJAX card removal */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+/*
 2025-07-26: UI Polish
 - .cinelog-gold-title: Gold color for suggestion section titles (matches home page)
 - .suggestion-card .card-title and .suggestion-card .suggestion-description: Font size increased by 1pt for better readability
