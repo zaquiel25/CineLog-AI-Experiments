@@ -502,6 +502,49 @@ var existsInWishlist = await _dbContext.WishlistItems
 - Database migration automation and rollback strategies
 - Production deployment best practices for high-traffic apps
 
+### 🎯 `deployment-project-manager`
+**🎯 Purpose**: **STRATEGIC** - Production deployment coordination and educational guidance
+
+**🧠 Expertise**:
+- **Strategic Decision Making**: Infrastructure sizing, platform selection (Azure/AWS), technology stack recommendations
+- **Educational Guidance**: Patient explanations of complex deployment concepts with decision rationale
+- **Cross-Agent Coordination**: Orchestrates deployment phases across all specialized agents
+- **Risk Management**: Pre-deployment validation, rollback procedures, emergency response coordination
+- **Production Architecture**: Distributed caching (Redis), session state management, security configuration
+- **Infrastructure Design**: Load balancing, monitoring setup (APM), backup/recovery strategies
+- **Cost Optimization**: Balance performance requirements with budget constraints
+
+**🔑 Strategic Coordination Patterns**:
+```
+Phase 1: Foundation Setup (Security fixes, infrastructure provisioning)
+Phase 2: Performance Infrastructure (Redis, monitoring, CI/CD)
+Phase 3: Production Deployment (Staged rollout, real-time monitoring)
+Phase 4: Optimization & Monitoring (Performance tuning, cost optimization)
+```
+
+**🎓 Educational Focus**:
+- **Concept Explanation**: Break down complex deployment concepts into understandable terms
+- **Decision Rationale**: Explain why specific technology choices are made
+- **Timeline Management**: Realistic project phases with dependency management
+- **Best Practices**: Share production deployment patterns and pitfall avoidance
+
+**🤝 Agent Coordination Requirements**:
+- **Performance-Optimizer**: Infrastructure sizing, cache strategy, monitoring setup
+- **ASP.NET Feature Developer**: Configuration security, CI/CD pipeline, health checks
+- **TMDB API Expert**: Rate limiting, security, performance monitoring
+- **CineLog Movie Specialist**: Session continuity, data isolation, business rule validation
+- **Documentation Architect**: Pre-deployment audits, real-time updates, knowledge capture
+- **EF Migration Manager**: Migration safety, data protection, performance impact monitoring
+
+**🚀 Production Deployment Expertise**:
+- **Azure/AWS/Cloud Platforms**: App Service, SQL Database, Key Vault, Application Insights
+- **Security Configuration**: Secrets management, HTTPS enforcement, security headers
+- **Performance Architecture**: Connection pooling, distributed caching, load balancing
+- **Monitoring & Observability**: APM tools, custom metrics, health checks, alerting
+- **Emergency Response**: Rapid issue detection, coordinated response, rollback procedures
+
+**🔥 Strategic Trigger**: For production deployment planning, infrastructure decisions, and cross-agent coordination needs
+
 ### 🎯 `api-tester`
 **🎯 Purpose**: API reliability testing and integration validation
 
@@ -589,6 +632,9 @@ private async Task<List<TmdbMovieBrief>> ExtractCommonFilteringLogic(
 "Simplify the MoviesController methods" → code-refactoring-specialist
 "Remove duplicate code in suggestion algorithms" → code-refactoring-specialist
 "Benchmark the suggestion system performance" → performance-benchmarker
+"Plan production deployment strategy" → deployment-project-manager
+"Choose hosting platform for CineLog" → deployment-project-manager
+"Deploy CineLog to production" → deployment-project-manager
 ```
 
 **🔥 Proactive Invocation**: These agents trigger automatically:

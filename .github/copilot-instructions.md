@@ -712,6 +712,9 @@ The project now includes an intelligent **Master Agent Director** that analyzes 
 "Fix suggestion bug" → cinelog-movie-specialist + test-writer-fixer
 "Optimize performance" → performance-optimizer + performance-benchmarker
 "TMDB API issue" → tmdb-api-expert + api-tester
+"Deploy to production" → deployment-project-manager + multi-agent coordination
+"Plan production deployment" → deployment-project-manager
+"Choose hosting platform" → deployment-project-manager
 ```
 
 **Proactive Invocation:**
@@ -721,6 +724,15 @@ UI/feature updates → ui-designer (enhances visual appeal)
 UI/UX changes → whimsy-injector (adds personality and delight)
 ```
 
+#### `deployment-project-manager`
+**Strategic production deployment coordination and educational guidance**:
+- **Strategic Decision Making**: Infrastructure sizing, platform selection (Azure/AWS), technology stack recommendations with cost optimization
+- **Educational Guidance**: Patient explanations of complex deployment concepts with clear decision rationale and best practices
+- **Cross-Agent Coordination**: Orchestrates deployment phases across all specialized agents with risk management and emergency response
+- **Production Architecture**: Distributed caching (Redis), session state management, security configuration, and performance monitoring
+- **Infrastructure Design**: Load balancing, monitoring setup (APM), backup/recovery strategies, and scalability planning
+- **Deployment Phases**: Foundation setup → Performance infrastructure → Production deployment → Optimization & monitoring
+
 ### 📊 Development Benefits
 - **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
 - **Proactive Quality**: Automatic testing, UI enhancement, and delight injection
@@ -728,6 +740,7 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 - **Comprehensive Testing**: Built-in test coverage ensures robust, reliable features
 - **Enhanced User Experience**: Automatic UI enhancement and personality injection
 - **Performance Excellence**: Built-in performance analysis and optimization recommendations
+- **Production Deployment Expertise**: Strategic deployment guidance with educational approach and cross-agent coordination
 
 ### 🔑 Key Principles for Agent Coordination
 - **Domain Expertise**: Each agent has deep knowledge of specific CineLog patterns
@@ -752,7 +765,9 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 | "Code is messy/complex" | `code-refactoring-specialist` → `test-writer-fixer` | Refactoring + maintained functionality |
 | "UI needs improvement" | `ui-designer` → `whimsy-injector` | Visual design + personality injection |
 | "Tests are failing" | `test-writer-fixer` + Domain expert | Fix tests + address root cause |
-| "Deploy to production" | `devops-automator` → `performance-benchmarker` | Deployment + performance validation |
+| "Deploy to production" | `deployment-project-manager` → Multi-agent coordination | Strategic deployment planning + execution |
+| "Plan production deployment" | `deployment-project-manager` | Infrastructure decisions + educational guidance |
+| "Choose hosting platform" | `deployment-project-manager` | Platform selection with cost/complexity analysis |
 | "Users complaining about X" | `feedback-synthesizer` → Relevant domain agent | Analyze feedback + implement solution |
 
 ### 🔄 **Simple Planning for Complex Tasks**
