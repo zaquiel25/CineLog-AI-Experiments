@@ -3004,11 +3004,21 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForDirector(string directorName, string userId)
         {
+            // Fetch director ID from TMDB
             var directorId = await _tmdbService.GetPersonIdAsync(directorName);
-            if (!directorId.HasValue) return new List<TmdbMovieBrief>();
+            if (!directorId.HasValue)
+            {
+                _logger.LogWarning("No TMDB director ID found for: {DirectorName}", directorName);
+                return new List<TmdbMovieBrief>();
+            }
 
-            // Get the director's ENTIRE filmography from our service
+            // Get the director's entire filmography from TMDB
             var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
+            if (allDirectorMovies == null || !allDirectorMovies.Any())
+            {
+                _logger.LogWarning("No movies found in TMDB filmography for director: {DirectorName} (ID: {DirectorId})", directorName, directorId.Value);
+                return new List<TmdbMovieBrief>();
+            }
 
             // Get user state sets
             var userLoggedTmdbIds = (await _dbContext.Movies
@@ -3025,19 +3035,18 @@ return (bucket3x3, bucket2x3, bucket1x3);
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
 
             // Blacklist filter
-            allDirectorMovies = allDirectorMovies.Where(m => !userBlacklistedIds.Contains(m.Id)).ToList();
-
-            if (!allDirectorMovies.Any())
+            var filteredMovies = allDirectorMovies.Where(m => !userBlacklistedIds.Contains(m.Id)).ToList();
+            if (!filteredMovies.Any())
             {
                 return new List<TmdbMovieBrief>(); // Return empty if they have no movies
             }
 
-            // If they have 3 or fewer movies, just return them all.
-            var suggestions = allDirectorMovies.Count <= 3
-                ? allDirectorMovies
-                : allDirectorMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+            // If they have 3 or fewer movies, just return them all. Otherwise, randomize and take 3.
+            var suggestions = filteredMovies.Count <= 3
+                ? filteredMovies
+                : filteredMovies.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
 
-            // Populate state properties
+            // Populate state properties for UI
             foreach (var movie in suggestions)
             {
                 movie.IsWatched = userLoggedTmdbIds.Contains(movie.Id);
