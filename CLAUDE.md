@@ -476,6 +476,69 @@ try {
 - **Empty State Detection**: Auto-show "empty list" messages when no items remain
 - **Error Differentiation**: Distinguish between network, server, and parsing errors
 
+### 🎬 AJAX Movie Deletion Pattern
+**Real-time movie deletion from List page with comprehensive UX handling:**
+```javascript
+// ENHANCEMENT: Full movie deletion with count updates and empty page handling
+const response = await fetch('/Movies/Delete', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'  // CRITICAL for JSON response
+    },
+    body: `id=${encodeURIComponent(movieId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
+    credentials: 'same-origin'
+});
+
+// Text-first parsing with JSON fallback for robust error handling
+const rawText = await response.text();
+let data;
+try {
+    data = JSON.parse(rawText);
+} catch (jsonErr) {
+    showTempAlert('Non-JSON response: ' + rawText, 'danger');
+    btn.disabled = false;
+    return;
+}
+
+if (data.success) {
+    // Smooth fade-out animation before removal
+    card.classList.add('fade-out');
+    setTimeout(() => {
+        card.remove();
+        
+        // Update movie count badge in real-time
+        const countBadge = document.querySelector('.badge.bg-secondary');
+        if (countBadge) {
+            const newCount = parseInt(countBadge.textContent) - 1;
+            countBadge.textContent = newCount;
+            
+            // Handle empty list state
+            if (newCount === 0) {
+                window.location.reload(); // Show "no movies" message
+            }
+        }
+        
+        // Check if current page is now empty
+        const container = document.getElementById('movies-grid');
+        if (container && !container.querySelector('.col')) {
+            window.location.reload(); // Handle pagination adjustment
+        }
+        
+        showTempAlert(`Movie "${movieTitle}" deleted successfully!`, 'success');
+    }, 300);
+}
+```
+
+**Key Movie Deletion Features:**
+- **Dual-Request Support**: Backend handles both AJAX (JSON response) and standard POST (redirect) requests
+- **Real-Time Count Updates**: Movie count badge updates immediately after deletion
+- **Smart Empty State Handling**: Automatically refreshes page when list becomes empty to show proper empty state
+- **Pagination Awareness**: Detects when current page becomes empty and reloads to adjust pagination
+- **Confirmation Dialog**: User confirmation required before deletion with movie title display
+- **Smooth Animations**: 300ms fade-out effect provides professional visual feedback
+- **Comprehensive Error Handling**: Distinguishes between network, server, and parsing errors with appropriate user messaging
+
 ### 🗃️ Business Rules Implementation
 
 #### Mutual Exclusion Logic

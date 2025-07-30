@@ -170,7 +170,7 @@ else
     @* VVVV THIS IS THE CORRECTED GRID STRUCTURE VVVV *@
 
     @* 1. This 'div' with the 'row' class is the main grid container *@
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+<div id="movies-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
 
     @foreach (var movie in Model)
     {
@@ -242,12 +242,12 @@ else
 
                     <div class="mt-auto">
                         <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@movie.Id">Edit</a>
-                        <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display: inline; margin-left: 5px;">
-                            <button type="submit" class="btn btn-danger btn-sm"
-                                    onclick="return confirm('Are you sure you want to delete the movie: \'@(movie.Title ?? "")\'?');">
-                                Delete
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-danger btn-sm delete-movie-btn" 
+                                data-movie-id="@movie.Id" 
+                                data-movie-title="@(movie.Title ?? "")"
+                                style="margin-left: 5px;">
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
@@ -309,3 +309,115 @@ else
         </a>
     </div>
 }
+
+@* Anti-forgery token for AJAX requests *@
+<form style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+</style>
+
+<script>
+// AJAX Movie Deletion
+document.addEventListener('click', async function (e) {
+    if (e.target.closest('.delete-movie-btn')) {
+        const btn = e.target.closest('.delete-movie-btn');
+        const card = btn.closest('.col');
+        const movieId = btn.getAttribute('data-movie-id');
+        const movieTitle = btn.getAttribute('data-movie-title');
+        
+        // Confirm deletion
+        if (!confirm(`Are you sure you want to delete the movie: '${movieTitle}'?`)) {
+            return;
+        }
+        
+        btn.disabled = true;
+        
+        // Get anti-forgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        
+        try {
+            const response = await fetch('/Movies/Delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `id=${encodeURIComponent(movieId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
+                credentials: 'same-origin'
+            });
+            
+            const rawText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(rawText);
+            } catch (jsonErr) {
+                showTempAlert('Non-JSON response: ' + rawText, 'danger');
+                btn.disabled = false;
+                return;
+            }
+            
+            if (!response.ok) {
+                showTempAlert('Server error: ' + (data.message || rawText), 'danger');
+                btn.disabled = false;
+                return;
+            }
+            
+            if (data.success) {
+                // Add fade-out animation
+                card.classList.add('fade-out');
+                setTimeout(() => {
+                    card.remove();
+                    
+                    // Update movie count badge
+                    const countBadge = document.querySelector('.badge.bg-secondary');
+                    if (countBadge) {
+                        const currentCount = parseInt(countBadge.textContent);
+                        const newCount = currentCount - 1;
+                        countBadge.textContent = newCount;
+                        
+                        // If count reaches 0, refresh page to show "no movies" message
+                        if (newCount === 0) {
+                            window.location.reload();
+                        }
+                    }
+                    
+                    // Check if any movie cards remain on current page
+                    const container = document.getElementById('movies-grid');
+                    if (container && !container.querySelector('.col')) {
+                        // No more movies on this page, reload to handle pagination
+                        window.location.reload();
+                    }
+                    
+                    showTempAlert(`Movie "${movieTitle}" deleted successfully!`, 'success');
+                }, 300);
+            } else {
+                showTempAlert(data.message || 'Failed to delete movie', 'danger');
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showTempAlert('Network error. Please try again.', 'danger');
+            btn.disabled = false;
+        }
+    }
+});
+
+// Temporary alert function
+function showTempAlert(message, type) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 2200);
+}
+</script>

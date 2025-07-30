@@ -467,9 +467,6 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 - **User Experience**: Consistent "Because you watched [GENRE] movies" titles regardless of underlying sort criteria
 
 ---
-
-### 2025-07-24 Genre Suggestion Consistency Fix
-
 ### 2025-07-24 Genre Suggestion Consistency Fix
 
 Initial genre suggestions now use the same dynamic variety system as AJAX reshuffles

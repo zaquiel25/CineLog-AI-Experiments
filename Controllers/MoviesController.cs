@@ -3714,28 +3714,61 @@ return (bucket3x3, bucket2x3, bucket1x3);
             _logger.LogWarning("Edit POST - Returning View(viewModel) due to invalid ModelState or error for Movie ID: {Id}", viewModel.Id);
             return View(viewModel);
         }
-        // POST: Movies/Delete/5
+        /// <summary>
+        /// Deletes a movie from the user's list with AJAX support.
+        /// 
+        /// ENHANCEMENT: Added AJAX support with JSON responses for smooth UX.
+        /// </summary>
+        /// <param name="id">The unique identifier of the movie to delete</param>
+        /// <returns>JSON response for AJAX requests, redirect for standard requests</returns>
+        /// <remarks>
+        /// Supports both AJAX and standard POST requests. AJAX requests receive JSON responses
+        /// while standard requests are redirected to the List page for backward compatibility.
+        /// All operations are filtered by current user for security.
+        /// </remarks>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
         {
             _logger.LogDebug("Delete action in MoviesController hit. ID received: {Id}", id);
-            // First, find the movie only if the ID matches AND it belongs to the current user.
             var userId = _userManager.GetUserId(User);
+            bool isAjax = Request.Headers.XRequestedWith == "XMLHttpRequest";
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("Delete: Invalid user. UserId={UserId}, MovieId={Id}", userId, id);
+                if (isAjax)
+                    return Json(new { success = false, message = "Invalid request." });
+                return BadRequest();
+            }
+
             var movieToDelete = await _dbContext.Movies
                 .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
-            if (movieToDelete != null)
-
+            if (movieToDelete == null)
             {
+                _logger.LogInformation("Delete: Movie not found. UserId={UserId}, MovieId={Id}", userId, id);
+                if (isAjax)
+                    return Json(new { success = false, message = "Movie not found." });
+                return NotFound();
+            }
 
+            try
+            {
                 _dbContext.Movies.Remove(movieToDelete);
                 await _dbContext.SaveChangesAsync();
-
+                _logger.LogInformation("Delete: Movie removed. UserId={UserId}, MovieId={Id}, Title={Title}", userId, id, movieToDelete.Title);
             }
-            else
+            catch (DbUpdateConcurrencyException ex)
             {
-                _logger.LogDebug("No movie found with ID: {Id}. Nothing to delete", id);
+                _logger.LogWarning(ex, "Concurrency error deleting movie. UserId={UserId}, MovieId={Id}", userId, id);
+                if (isAjax)
+                    return Json(new { success = false, message = "This movie was already deleted." });
+                return NotFound();
             }
+
+            if (isAjax)
+                return Json(new { success = true });
             return RedirectToAction("List");
         }
 
