@@ -609,12 +609,14 @@ if (existsInWishlist)
 - **Cinema Gold branding**: `.cinelog-gold-title` class for section titles
 - **Consistent layout**: Card-based design for movie displays
 - **Dark theme**: Cyborg Bootstrap theme throughout
+- **Modern Authentication**: Centered forms with friendly titles (h3) and professional typography
 
 #### 👤 User Experience
 - **Mutual exclusion**: Prevents movies in both wishlist and blacklist
 - **Visual feedback**: For all user actions
 - **Real-time updates**: AJAX without page reloads
 - **Responsive design**: Mobile-friendly interface
+- **Welcoming Authentication**: Friendly messaging ("Welcome Back", "Join CineLog") with clean, centered layouts
 
 ---
 

@@ -171,6 +171,10 @@ See `MoviesController.cs` for implementation details and business logic comments
 
 # CineLog-AI-Experiments
 
+**Your journey in film: Watch, Log, Discover.**
+
+CineLog is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, CineLog combines modern web development practices with sophisticated movie recommendation algorithms.
+
 ## ✨ Key Features
 
 ### 🎬 Movie Management
@@ -261,6 +265,13 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 - **Instant Feedback**: Visual confirmation of all actions
 - **Consistent UI/UX**: All suggestion cards and reshuffle actions are visually and behaviorally consistent across categories.
 - **Mobile Responsive**: Works perfectly on all devices
+
+### 🔐 Modern Authentication Experience
+- **Welcoming Interface**: Friendly titles ("Welcome Back", "Join CineLog") with professional typography using h3 instead of oversized headers
+- **Centered Layout**: Responsive design with better form centering using Bootstrap's `col-md-6 col-lg-4` for optimal viewing across devices
+- **Enhanced UX**: Improved button text ("Sign In", "Create Account") and clean link styling with proper spacing
+- **Professional Forms**: Bootstrap floating labels with consistent styling and better visual hierarchy
+- **External Login Ready**: Elegant external provider section with divider styling when configured
 
 ## Surprise Me System (2025-01-26)
 
