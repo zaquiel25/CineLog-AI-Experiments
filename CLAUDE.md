@@ -677,10 +677,31 @@ if (existsInWishlist)
 - **Real-time updates**: AJAX without page reloads
 - **Responsive design**: Mobile-friendly interface
 - **Welcoming Authentication**: Friendly messaging ("Welcome Back", "Join CineLog") with clean, centered layouts
+- **Reference-Only Display**: Streaming provider icons shown for reference without external navigation
 
 ---
 
 ## 💻 Development Patterns
+
+### 🎨 Reference-Only UI Pattern
+**For external data that should be shown but not linked:**
+```html
+<!-- ✅ CORRECT - Reference display only -->
+<img src="@(tmdbImageBaseUrl + provider.LogoPath)"
+     class="rounded"
+     style="width: 50px; height: 50px;"
+     title="@provider.ProviderName"
+     alt="@provider.ProviderName logo">
+
+<!-- ❌ AVOID - External navigation -->
+<a href="@provider.Link" target="_blank">
+    <img src="@(tmdbImageBaseUrl + provider.LogoPath)" ... >
+</a>
+```
+**Use cases:**
+- Streaming provider icons (Netflix, Disney+, etc.)
+- External service references that should inform but not redirect
+- Third-party branding display
 
 ### 🔒 User Data Security
 **ALWAYS filter by current user:**

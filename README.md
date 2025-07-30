@@ -230,6 +230,7 @@ CineLog is a comprehensive movie tracking application that helps you manage your
 - **Personal Movie Log**: Track what you've watched with ratings, dates, and locations
 - **Smart Search Integration**: Powered by The Movie Database (TMDB) API
 - **Rich Movie Details**: Automatic director, year, poster, and genre information
+- **Streaming Provider Reference**: View available streaming services (Netflix, Disney+, Amazon Prime, etc.) for reference - non-clickable display
 
 ### 📋 Lists & Organization
 - **Dynamic Wishlist**: AJAX-enabled instant adding/removing without page reloads

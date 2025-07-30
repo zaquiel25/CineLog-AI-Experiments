@@ -84,7 +84,7 @@
             }
             <h5 class="mt-4">Where to Watch</h5>
             <div class="alert alert-info py-2 mb-2" style="background:#222; color:#fff; border:none;">
-                Click any provider below to see all streaming, rental, and purchase options for <strong>@Model.Title</strong> on TMDB. You’ll see prices, regions, and official links.
+                Streaming providers for <strong>@Model.Title</strong> are shown for reference only.
             </div>
             @if (hasProviders && watchProviders != null)
             {
@@ -96,24 +96,11 @@
                             @foreach (var provider in watchProviders["Streaming"])
                             {
                                 <div class="me-2 mb-2">
-                                    @if (!string.IsNullOrEmpty(provider.Link))
-                                    {
-                                        <a href="@provider.Link" target="_blank" rel="noopener noreferrer">
-                                            <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                                 class="rounded"
-                                                 style="width: 50px; height: 50px;"
-                                                title="View streaming options for '@Model.Title' on TMDB"
-                                                alt="See where to watch '@Model.Title' on TMDB">
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                             class="rounded"
-                                             style="width: 50px; height: 50px;"
-                                             title="View streaming options for '@Model.Title' on TMDB"
-                                             alt="See where to watch '@Model.Title' on TMDB">
-                                    }
+                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
                                 </div>
                             }
                         </div>
@@ -127,24 +114,11 @@
                             @foreach (var provider in watchProviders["Buy"])
                             {
                                 <div class="me-2 mb-2">
-                                    @if (!string.IsNullOrEmpty(provider.Link))
-                                    {
-                                        <a href="@provider.Link" target="_blank" rel="noopener noreferrer">
-                                            <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                                 class="rounded"
-                                                 style="width: 50px; height: 50px;"
-                                                 title="Search for @Model.Title on @provider.ProviderName"
-                                                 alt="Search for @Model.Title on @provider.ProviderName">
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                             class="rounded"
-                                             style="width: 50px; height: 50px;"
-                                             title="Search for @Model.Title on @provider.ProviderName"
-                                             alt="Search for @Model.Title on @provider.ProviderName">
-                                    }
+                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
                                 </div>
                             }
                         </div>
@@ -158,24 +132,11 @@
                             @foreach (var provider in watchProviders["Rent"])
                             {
                                 <div class="me-2 mb-2">
-                                    @if (!string.IsNullOrEmpty(provider.Link))
-                                    {
-                                        <a href="@provider.Link" target="_blank" rel="noopener noreferrer">
-                                            <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                                 class="rounded"
-                                                 style="width: 50px; height: 50px;"
-                                                 title="@provider.ProviderName"
-                                                 alt="@provider.ProviderName logo">
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                             class="rounded"
-                                             style="width: 50px; height: 50px;"
-                                             title="@provider.ProviderName"
-                                             alt="@provider.ProviderName logo">
-                                    }
+                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
+                                         class="rounded"
+                                         style="width: 50px; height: 50px;"
+                                         title="@provider.ProviderName"
+                                         alt="@provider.ProviderName logo">
                                 </div>
                             }
                         </div>
