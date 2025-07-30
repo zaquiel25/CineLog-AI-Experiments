@@ -6,6 +6,25 @@
 
 ## ⚠️ CRITICAL INSTRUCTIONS
 
+### 🚨 GOLDEN RULE: DO NOT INVENT THINGS
+**MOST IMPORTANT - User explicitly emphasized:**
+- **NEVER** add features, improvements, or enhancements unless explicitly requested
+- **NEVER** add loading states, animations, or visual changes unless asked
+- **NEVER** assume user wants "better" UX or performance improvements
+- **NEVER** add "nice-to-have" functionality or creative interpretations
+- **REMEMBER**: "don't add things we don't ask for" - this is the #1 rule
+- When user says something is wrong, it's because you added things they didn't want
+- Implement ONLY what is specifically requested, nothing more
+
+### 📝 MANDATORY PROFESSIONAL COMMENTS
+**ALWAYS add comments when making significant changes:**
+- **ALL** new methods MUST have comprehensive XML documentation
+- **ALL** complex logic MUST have inline comments explaining "why"
+- Use FEATURE/FIX/ENHANCEMENT prefixes for significant changes
+- Explain business logic, architectural decisions, and performance considerations
+- Comments MUST be in English and follow professional standards
+- **NEVER** leave new code uncommented - this is unprofessional
+
 ### 🚫 NEVER Auto-Commit
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
@@ -38,11 +57,15 @@
 - **NEVER** assume old patterns will work without analysis
 
 ### 📐 Literal Implementation Over Creative Interpretation
-**Stick to requirements:**
+**CRITICAL: Stick to requirements - DO NOT INVENT THINGS:**
 - Implement **ONLY** explicitly requested functionality and logic
-- **NEVER** assume, infer, or add "improvements" unless asked
+- **NEVER** assume, infer, or add "improvements" unless explicitly asked
+- **NEVER** add extra features, UI enhancements, or "nice-to-have" functionality
+- **NEVER** assume user wants optimizations, refactoring, or architectural changes
+- **NEVER** add loading states, animations, or visual improvements unless requested
 - Creativity is limited to accomplishing what's requested, not expanding requirements
 - When in doubt, ask for clarification rather than assume
+- **REMEMBER**: User feedback like "don't add things we don't ask for" means STOP INVENTING
 
 ---
 
@@ -75,6 +98,12 @@ fetch('/Movies/RemoveFromBlacklist', {
 
 ## 🔄 Development Workflow
 
+### 🚨 WORKFLOW REMINDERS (CRITICAL)
+**Before starting ANY development task:**
+1. **DO NOT INVENT**: Implement ONLY what is explicitly requested
+2. **COMMENT EVERYTHING**: All new code must have professional comments
+3. **NO ASSUMPTIONS**: Ask for clarification instead of assuming improvements
+
 ### 1. 🧠 Problem Analysis
 **Understand the problem deeply before coding:**
 - Carefully read the issue and think critically about requirements
@@ -104,6 +133,8 @@ fetch('/Movies/RemoveFromBlacklist', {
 **Make incremental, testable changes:**
 - Always read relevant file contents before editing
 - Make small, logical changes that follow from investigation
+- **MANDATORY**: Add professional comments to ALL new code (XML docs + inline comments)
+- **DO NOT ADD** features, improvements, or enhancements unless explicitly requested
 - When detecting environment variables needed, proactively create .env file
 - Test frequently after each change
 - **ALWAYS** run `dotnet build` to verify compilation
@@ -199,16 +230,22 @@ applyTo: '**'
 - **NEVER** assume old patterns will work without analysis
 
 ### 📐 Literal Implementation Over Creative Interpretation
-**Stick to requirements:**
+**CRITICAL: Stick to requirements - DO NOT INVENT THINGS:**
 - Implement **ONLY** explicitly requested functionality and logic
-- **NEVER** assume, infer, or add "improvements" unless asked
+- **NEVER** assume, infer, or add "improvements" unless explicitly asked
+- **NEVER** add extra features, UI enhancements, or "nice-to-have" functionality
+- **NEVER** assume user wants optimizations, refactoring, or architectural changes
+- **NEVER** add loading states, animations, or visual improvements unless requested
 - Creativity is limited to accomplishing what's requested, not expanding requirements
 - When in doubt, ask for clarification rather than assume
+- **REMEMBER**: User feedback like "don't add things we don't ask for" means STOP INVENTING
 
-### 📝 Documentation & Comments Standards
+### 📝 Documentation & Comments Standards (MANDATORY)
+
+**CRITICAL: ALL new code MUST be professionally commented - no exceptions**
 
 #### 🎯 XML Documentation (Required)
-- **All public methods** must have comprehensive XML documentation
+- **ALL new methods** (public and private) must have comprehensive XML documentation
 - **Include purpose, parameters, returns, and remarks** when applicable
 - **Document edge cases** and special behavior
 - **Example format**:
@@ -911,6 +948,80 @@ document.addEventListener('click', function(e) {
     }
 });
 ```
+
+#### **NEW: AJAX Suggestion Cards (2025-07-30)**
+**Complete AJAX implementation for suggestion card navigation without page reloads:**
+
+```html
+<!-- Convert anchor tags to buttons with data attributes -->
+<button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" 
+        data-suggestion-type="trending">
+    <div class="card-body text-center">
+        <h5 class="card-title">Trending Movies</h5>
+    </div>
+</button>
+```
+
+```javascript
+/*
+ * FEATURE: Loads movie suggestions via AJAX without page reload.
+ * Maintains identical functionality to traditional navigation while providing seamless UX.
+ * Includes graceful fallback to regular navigation if AJAX fails.
+ */
+function loadSuggestions(suggestionType) {
+    // ARCHITECTURE: Route to appropriate controller endpoint
+    let endpoint = suggestionType === 'surprise_me' ? 
+        '/Movies/GetSurpriseSuggestion' : '/Movies/ShowSuggestions';
+    
+    fetch(endpoint, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }  // Critical for backend detection
+    })
+    .then(response => response.json())
+    .then(data => {
+        // ARCHITECTURE: Insert server-rendered HTML for styling consistency
+        container.insertAdjacentHTML('beforeend', data.html);
+        attachEventListeners(); // CRITICAL: Re-attach for new content
+    })
+    .catch(error => {
+        // RELIABILITY: Graceful fallback to traditional navigation
+        window.location.href = url;
+    });
+}
+```
+
+```csharp
+/// <summary>
+/// Renders the suggestion results area HTML for AJAX responses.
+/// 
+/// FEATURE: Added comprehensive AJAX support for suggestion cards to eliminate page reloads
+/// while preserving exact original functionality and visual appearance.
+/// </summary>
+private async Task<string> RenderSuggestionResultsHtml(List<TmdbMovieBrief> suggestedMovies, string suggestionTitle, string nextSuggestionType, string? nextQuery)
+{
+    // CRITICAL: Populate movie properties (IsWatched, IsInWishlist, IsInBlacklist)
+    await PopulateMovieProperties(suggestedMovies, userId!);
+    
+    // ARCHITECTURE: Use server-side partial view rendering for consistency
+    foreach (var movie in suggestedMovies) {
+        var partialViewResult = await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+        html.Append($"<div class=\"col\">{partialViewResult}</div>");
+    }
+}
+
+// FEATURE: Handle AJAX requests for suggestion card clicks
+if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+{
+    var html = await RenderSuggestionResultsHtml(suggestedMovies, suggestionTitle, nextSuggestionType, nextQuery);
+    return Json(new { success = true, html = html });
+}
+```
+
+**Key Principles:**
+- **Preserve Original Functionality**: AJAX version works identically to traditional navigation
+- **Server-Side Rendering**: Use existing partial views for consistent styling and image paths
+- **State Preservation**: PopulateMovieProperties ensures watched badges, wishlist states remain visible
+- **Graceful Fallback**: Automatic fallback to regular navigation if AJAX fails
+- **No Visual Changes**: NO loading states, animations, or UI enhancements unless requested
 
 ### 🌐 TMDB API Integration **[WHEN: External API calls, rate limiting, caching, data mapping]**
 

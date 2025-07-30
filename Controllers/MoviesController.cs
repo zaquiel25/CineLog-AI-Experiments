@@ -1084,6 +1084,16 @@ namespace Ezequiel_Movies.Controllers
 
             ViewData["SuggestionTitle"] = suggestionTitle;
             ViewData["NextSuggestionType"] = "surprise_me";
+
+            // FEATURE: Handle AJAX requests for suggestion card clicks to eliminate page reloads
+            // This provides seamless user experience while maintaining identical functionality
+            if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                // ARCHITECTURE: Use server-side rendering for consistent styling and form helpers
+                var html = await RenderSuggestionResultsHtml(suggestedMoviesList, suggestionTitle, "surprise_me", "");
+                return Json(new { success = true, html = html });
+            }
+
             return View("Suggest", suggestedMoviesList);
         }
 
@@ -2208,6 +2218,133 @@ return (bucket3x3, bucket2x3, bucket1x3);
         }
 
         /// <summary>
+        /// Renders the suggestion results area HTML for AJAX responses.
+        /// 
+        /// FEATURE: Added comprehensive AJAX support for suggestion cards to eliminate page reloads
+        /// while preserving exact original functionality and visual appearance.
+        /// </summary>
+        /// <param name="suggestedMovies">List of movie suggestions to render</param>
+        /// <param name="suggestionTitle">Title to display for the suggestion section</param>
+        /// <param name="nextSuggestionType">Type identifier for reshuffle functionality</param>
+        /// <param name="nextQuery">Optional query parameter for suggestion context</param>
+        /// <returns>Complete HTML string for the suggestion results area including cards and reshuffle button</returns>
+        /// <remarks>
+        /// Uses server-side partial view rendering to ensure consistent styling, image paths,
+        /// and form helper functionality. Populates all movie properties (IsWatched, IsInWishlist, 
+        /// IsInBlacklist) to maintain visual state consistency between AJAX and traditional navigation.
+        /// </remarks>
+        private async Task<string> RenderSuggestionResultsHtml(List<TmdbMovieBrief> suggestedMovies, string suggestionTitle, string nextSuggestionType, string? nextQuery)
+        {
+            // CRITICAL: Populate movie properties for proper display (IsWatched, IsInWishlist, IsInBlacklist)
+            // Without this, AJAX-loaded cards would lose visual state indicators
+            var userId = _userManager.GetUserId(User);
+            await PopulateMovieProperties(suggestedMovies, userId!);
+
+            // ARCHITECTURE: Set ViewData to match original view rendering behavior
+            ViewData["SuggestionTitle"] = suggestionTitle;
+            ViewData["NextSuggestionType"] = nextSuggestionType;
+            ViewData["NextQuery"] = nextQuery;
+
+            var html = new StringBuilder();
+            html.Append("<div id=\"suggestion-results-area\">");
+            html.Append("<hr class=\"my-5\">");
+            html.Append("<div class=\"text-center mb-4\">");
+            html.Append($"<div id=\"suggestion-header\" class=\"d-flex justify-content-center align-items-center\">");
+            
+            // Add actor profile image if available
+            if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
+            {
+                var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
+                html.Append($"<img id=\"actor-profile-image\" src=\"{tmdbImageBaseUrl}{ViewData["ActorProfilePath"]}\" class=\"rounded-circle me-3\" style=\"width: 50px; height: 50px; object-fit: cover;\" alt=\"Profile picture\" />");
+            }
+            
+            html.Append($"<h4 id=\"suggestion-title\" class=\"cinelog-gold-title mb-0\">{suggestionTitle}</h4>");
+            html.Append("</div>");
+
+            if (suggestedMovies.Any())
+            {
+                // FEATURE: Generate reshuffle button with proper data attributes for AJAX functionality
+                // Transform suggestion type to base type for consistent reshuffle endpoint routing
+                var suggestionBaseType = nextSuggestionType?.StartsWith("year_") == true ? "decade" :
+                    nextSuggestionType?.StartsWith("genre_") == true ? "genre" :
+                    nextSuggestionType == "surprise_me" ? "surprise" :
+                    (nextSuggestionType?.Contains("_") == true ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
+
+                // UX: Only show reshuffle button for suggestion types that support it
+                if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") || nextSuggestionType == "surprise_me"))
+                {
+                    html.Append($"<button id=\"reshuffle-btn\" type=\"button\" class=\"btn btn-outline-light btn-sm mt-2\" data-suggestion-type=\"{suggestionBaseType}\">");
+                    html.Append("<i class=\"bi bi-shuffle\"></i> Reshuffle");
+                    html.Append("</button>");
+                }
+            }
+
+            html.Append("</div>");
+
+            if (suggestedMovies.Any())
+            {
+                // ARCHITECTURE: Use Bootstrap grid system matching original view layout
+                html.Append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center\">");
+                foreach (var movie in suggestedMovies)
+                {
+                    // PERFORMANCE: Render each movie using existing partial view for consistency
+                    // This ensures identical styling, form helpers, and image paths
+                    var partialViewResult = await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+                    html.Append($"<div class=\"col\">{partialViewResult}</div>");
+                }
+                html.Append("</div>");
+            }
+
+            html.Append("</div>");
+            return html.ToString();
+        }
+
+        /// <summary>
+        /// Populates IsWatched, IsInWishlist, and IsInBlacklist properties for movie suggestions.
+        /// 
+        /// FIX: Essential for AJAX responses to maintain visual consistency with original page loads.
+        /// Without this, suggestion cards would lose watched badges, wishlist states, and blacklist buttons.
+        /// </summary>
+        /// <param name="movies">List of movies to populate with user-specific properties</param>
+        /// <param name="userId">Current user's ID for filtering user-specific data</param>
+        /// <remarks>
+        /// Performs efficient batch queries to get user's logged movies, wishlist items, and blacklisted movies.
+        /// Sets boolean properties on TmdbMovieBrief objects to control UI state in partial views.
+        /// Critical for maintaining identical functionality between AJAX and traditional navigation.
+        /// </remarks>
+        private async Task PopulateMovieProperties(List<TmdbMovieBrief> movies, string userId)
+        {
+            if (movies == null || !movies.Any() || string.IsNullOrEmpty(userId)) return;
+
+            var tmdbIds = movies.Where(m => m.Id > 0).Select(m => m.Id).ToList();
+            if (!tmdbIds.Any()) return;
+
+            // Get user's logged movies, wishlist, and blacklist
+            var loggedTmdbIds = await _dbContext.Movies
+                .Where(m => m.UserId == userId && m.TmdbId.HasValue && tmdbIds.Contains(m.TmdbId.Value))
+                .Select(m => m.TmdbId!.Value)
+                .ToListAsync();
+
+            var wishlistTmdbIds = await _dbContext.WishlistItems
+                .Where(w => w.UserId == userId && tmdbIds.Contains(w.TmdbId))
+                .Select(w => w.TmdbId)
+                .ToListAsync();
+
+            var blacklistTmdbIds = await _dbContext.BlacklistedMovies
+                .Where(b => b.UserId == userId && tmdbIds.Contains(b.TmdbId))
+                .Select(b => b.TmdbId)
+                .ToListAsync();
+
+            // Set properties for each movie
+            foreach (var movie in movies)
+            {
+                movie.IsWatched = loggedTmdbIds.Contains(movie.Id);
+                movie.IsInWishlist = wishlistTmdbIds.Contains(movie.Id);
+                movie.IsInBlacklist = blacklistTmdbIds.Contains(movie.Id);
+            }
+        }
+
+        /// <summary>
         /// Displays a genre selection view based on the user's logged movies.
         /// </summary>
         /// <remarks>
@@ -2998,6 +3135,16 @@ return (bucket3x3, bucket2x3, bucket1x3);
             ViewData["SuggestionTitle"] = suggestionTitle;
             ViewData["NextSuggestionType"] = nextSuggestionType;
             ViewData["NextQuery"] = nextQuery;
+
+            // FEATURE: Handle AJAX requests for suggestion card clicks to eliminate page reloads
+            // This provides seamless user experience while maintaining identical functionality
+            if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                // ARCHITECTURE: Use server-side rendering for consistent styling and form helpers
+                var html = await RenderSuggestionResultsHtml(suggestedMovies, suggestionTitle, nextSuggestionType, nextQuery);
+                return Json(new { success = true, html = html });
+            }
+
             return View("Suggest", suggestedMovies);
         }
 

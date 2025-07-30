@@ -6,6 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚠️ CRITICAL INSTRUCTIONS
 
+### 🚨 GOLDEN RULE: DO NOT INVENT THINGS
+**MOST IMPORTANT - User explicitly emphasized:**
+- **NEVER** add features, improvements, or enhancements unless explicitly requested
+- **NEVER** add loading states, animations, or visual changes unless asked
+- **NEVER** assume user wants "better" UX or performance improvements
+- **NEVER** add "nice-to-have" functionality or creative interpretations
+- **REMEMBER**: "don't add things we don't ask for" - this is the #1 rule
+- When user says something is wrong, it's because you added things they didn't want
+- Implement ONLY what is specifically requested, nothing more
+
+### 📝 MANDATORY PROFESSIONAL COMMENTS
+**ALWAYS add comments when making significant changes:**
+- **ALL** new methods MUST have comprehensive XML documentation
+- **ALL** complex logic MUST have inline comments explaining "why"
+- Use FEATURE/FIX/ENHANCEMENT prefixes for significant changes
+- Explain business logic, architectural decisions, and performance considerations
+- Comments MUST be in English and follow professional standards
+- **NEVER** leave new code uncommented - this is unprofessional
+
 ### 🚫 NEVER Auto-Commit
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
@@ -55,9 +74,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🔄 Development Workflow
 
+### 🚨 WORKFLOW REMINDERS (CRITICAL)
+**Before starting ANY development task:**
+1. **DO NOT INVENT**: Implement ONLY what is explicitly requested
+2. **COMMENT EVERYTHING**: All new code must have professional comments
+3. **NO ASSUMPTIONS**: Ask for clarification instead of assuming improvements
+
 ### 1. 🧠 Problem Analysis
 **Understand the problem deeply before coding:**
-- Carefully read the issue and think critically about requirements
+- Carefully read the issue and think critically about requirements 
 - Consider expected behavior, edge cases, and potential pitfalls
 - Understand how it fits into the larger codebase context
 - Identify dependencies and interactions with other components
@@ -85,6 +110,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Make incremental, testable changes:**
 - Always read relevant file contents before editing
 - Make small, logical changes that follow from investigation
+- **MANDATORY**: Add professional comments to ALL new code (XML docs + inline comments)
+- **DO NOT ADD** features, improvements, or enhancements unless explicitly requested
 - When detecting environment variables needed, proactively create .env file
 - Test frequently after each change
 - **ALWAYS** run `dotnet build` to verify compilation
@@ -371,36 +398,46 @@ SqlCmd -S {server} -d Ezequiel_Movies -Q "UPDATE STATISTICS"
 - **Production consideration**: Requires distributed caching for multi-instance deployments
 - **Dependency injection**: Configured in `Program.cs`
 
-#### 🎮 Controller Layer (Security-Hardened)
-- **`MoviesController`**: Main business logic for movie management and suggestions with comprehensive AJAX support
+#### 🎮 Controller Layer (Security-Hardened with Full AJAX Support)
+- **`MoviesController`**: Main business logic for movie management and suggestions with comprehensive AJAX architecture
+- **AJAX Detection**: Enhanced with `X-Requested-With` header detection for seamless AJAX/traditional navigation
+- **Unified Rendering**: `RenderSuggestionResultsHtml()` method provides server-side HTML rendering for AJAX responses
+- **State Management**: `PopulateMovieProperties()` ensures all movie states are preserved in AJAX interactions
 - **Authentication**: Enforced via `[Authorize]` attribute with ASP.NET Core Identity
 - **Security**: All data queries filtered by current user ID with excellent isolation patterns
 - **Production security**: CSRF token validation, SQL injection prevention, and proper error handling
 - **Performance**: Optimized with batch processing and efficient caching strategies
 
 #### 🎯 Suggestion System Architecture
-The app features a sophisticated movie suggestion system with multiple strategies:
+The app features a sophisticated movie suggestion system with complete AJAX functionality:
 
-**🎬 Suggestion Types:**
-- **📈 Trending**: Uses TMDB trending API with user filtering
-- **🎬 By Director**: Suggests based on directors from user's movie history
-- **🎭 By Genre**: Prioritized queue based on recent/frequent/highly-rated genres
-- **⭐ By Cast**: Rotates through actors from user's watched movies
-- **📅 By Decade**: Dynamic variety system with randomized parameters
-- **🎲 Surprise Me**: Optimized pool-based system with parallel API calls
+**🎬 Suggestion Types (All AJAX-Enabled):**
+- **📈 Trending**: Uses TMDB trending API with user filtering and seamless AJAX navigation
+- **🎬 By Director**: Suggests based on directors from user's movie history with AJAX card interactions
+- **🎭 By Genre**: Prioritized queue based on recent/frequent/highly-rated genres with smooth transitions
+- **⭐ By Cast**: Rotates through actors from user's watched movies with AJAX support
+- **📅 By Decade**: Dynamic variety system with randomized parameters and AJAX interactions
+- **🎲 Surprise Me**: Optimized pool-based system with parallel API calls and AJAX navigation
 
-**🔑 Key Patterns:**
-- **Unified filtering**: Helper methods for consistent filtering and pool building
-- **Identical logic**: Both initial loads and AJAX reshuffles use same business logic
-- **Session tracking**: Anti-repetition and sequencing via session state
-- **Triple fallback**: Logic ensures suggestions always available
-- **Consistent filtering**: Blacklist and recent movie filtering applied throughout
+**🔑 Key AJAX Architecture Patterns:**
+- **Unified AJAX Logic**: Both initial loads and AJAX interactions use identical server-side business logic
+- **Server-Side HTML Rendering**: AJAX responses return server-rendered HTML for consistent styling and functionality
+- **State Preservation**: `PopulateMovieProperties()` ensures all movie states are maintained in AJAX responses
+- **Graceful Fallback**: Automatic fallback to page navigation if AJAX fails, ensuring reliability
+- **Session tracking**: Anti-repetition and sequencing via session state works seamlessly with AJAX
+- **Triple fallback**: Logic ensures suggestions always available in both AJAX and traditional navigation
+- **Consistent filtering**: Blacklist and recent movie filtering applied throughout all AJAX interactions
 
-#### 🔄 AJAX + Server-Side Rendering Hybrid
-- **HTML responses**: AJAX reshuffles return server-rendered HTML (not JSON)
-- **Event delegation**: Handles dynamic suggestion cards
-- **Progressive enhancement**: Works without JavaScript
-- **Real-time updates**: All suggestion types support reshuffling
+#### 🔄 Enhanced AJAX + Server-Side Rendering Architecture
+- **Complete AJAX Support**: All suggestion cards converted from anchor tags to interactive buttons with seamless AJAX functionality
+- **Unified Business Logic**: Both AJAX and traditional navigation use identical server-side logic through shared helper methods
+- **Server-Side HTML Rendering**: AJAX responses return server-rendered HTML fragments using `RenderSuggestionResultsHtml()` method
+- **State Preservation**: `PopulateMovieProperties()` ensures movie states (watched, wishlisted, blacklisted) are maintained in AJAX responses
+- **Clean Implementation**: Minimal JavaScript with no loading overlays or visual disruptions - learned from previous implementations
+- **Graceful Fallback**: Automatic fallback to regular navigation if AJAX fails, ensuring reliability
+- **Event delegation**: Single JavaScript handler manages all suggestion card clicks and reshuffle buttons
+- **Progressive enhancement**: Works perfectly without JavaScript enabled
+- **Real-time updates**: All suggestion types support both initial AJAX loading and reshuffling
 
 ### 📊 Data Models
 
@@ -459,10 +496,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 - **ALWAYS** configure distributed caching and session storage for scalability
 
 ### 🌐 TMDB Service Integration Patterns
-**Use centralized service for all external API calls:**
+**Use centralized service for all external API calls with AJAX support:**
 ```csharp
 var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
 var searchResults = await _tmdbService.SearchMoviesAsync(query);
+
+// AJAX-enhanced suggestion methods maintain same TMDB service usage
+var suggestions = await GetTrendingMoviesWithFiltering(userId); // Used by both AJAX and traditional requests
 ```
 **Best Practices:**
 - **24-hour caching** for TMDB data in IMemoryCache
@@ -470,8 +510,8 @@ var searchResults = await _tmdbService.SearchMoviesAsync(query);
 - **Rate limiting**: Respect TMDB API limits with SemaphoreSlim
 - **Error handling**: Robust try-catch for all external API calls
 
-### 🎭 Suggestion System Architecture
-**Unified helper methods for consistency:**
+### 🎭 AJAX-Enhanced Suggestion System Architecture
+**Unified helper methods for AJAX and traditional navigation:**
 ```csharp
 private async Task<List<TmdbMovieBrief>> Get[Type]MoviesWithFiltering(string userId)
 {
@@ -479,6 +519,15 @@ private async Task<List<TmdbMovieBrief>> Get[Type]MoviesWithFiltering(string use
     // Build movie pool with pagination and variety
     // Apply deduplication and randomization
     // Return consistent results for both initial and AJAX calls
+}
+
+// AJAX response rendering method
+private async Task<string> RenderSuggestionResultsHtml(List<TmdbMovieBrief> suggestedMovies, 
+    string suggestionTitle, string nextSuggestionType, string? nextQuery)
+{
+    await PopulateMovieProperties(suggestedMovies, userId); // Ensure all states preserved
+    // Render server-side HTML for AJAX responses
+    return await RenderPartialViewToStringAsync("_SuggestionResults", suggestedMovies);
 }
 ```
 
@@ -677,31 +726,10 @@ if (existsInWishlist)
 - **Real-time updates**: AJAX without page reloads
 - **Responsive design**: Mobile-friendly interface
 - **Welcoming Authentication**: Friendly messaging ("Welcome Back", "Join CineLog") with clean, centered layouts
-- **Reference-Only Display**: Streaming provider icons shown for reference without external navigation
 
 ---
 
 ## 💻 Development Patterns
-
-### 🎨 Reference-Only UI Pattern
-**For external data that should be shown but not linked:**
-```html
-<!-- ✅ CORRECT - Reference display only -->
-<img src="@(tmdbImageBaseUrl + provider.LogoPath)"
-     class="rounded"
-     style="width: 50px; height: 50px;"
-     title="@provider.ProviderName"
-     alt="@provider.ProviderName logo">
-
-<!-- ❌ AVOID - External navigation -->
-<a href="@provider.Link" target="_blank">
-    <img src="@(tmdbImageBaseUrl + provider.LogoPath)" ... >
-</a>
-```
-**Use cases:**
-- Streaming provider icons (Netflix, Disney+, etc.)
-- External service references that should inform but not redirect
-- Third-party branding display
 
 ### 🔒 User Data Security
 **ALWAYS filter by current user:**
@@ -748,6 +776,26 @@ var blacklistIds = await _cacheService.GetUserBlacklistIdsAsync(userId);
 _cacheService.InvalidateUserBlacklistCache(userId); // After changes
 ```
 
+### 🔄 AJAX Suggestion Card Implementation
+**Enhanced AJAX architecture for suggestion cards:**
+```csharp
+// Detect AJAX requests and return appropriate response
+if (Request.Headers.ContainsKey("X-Requested-With") && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+{
+    var html = await RenderSuggestionResultsHtml(suggestedMovies, suggestionTitle, nextSuggestionType, nextQuery);
+    return Json(new { success = true, html = html });
+}
+return View("Suggest", suggestedMovies); // Traditional navigation fallback
+```
+
+**Key AJAX Implementation Requirements:**
+- **X-Requested-With Header**: Essential for backend to detect AJAX requests and return appropriate JSON/HTML responses
+- **Graceful Fallback**: Always implement fallback to regular navigation if AJAX fails
+- **State Preservation**: Use `PopulateMovieProperties()` to ensure all movie states are maintained in AJAX responses
+- **Server-Side Rendering**: Return server-rendered HTML in JSON responses for consistent styling
+- **Clean Implementation**: Avoid loading overlays, spinners, or visual changes that create jarring experiences
+- **Unified Business Logic**: Same helper methods used for both AJAX and traditional requests
+
 ### 📄 Pagination Implementation
 **⚠️ CRITICAL**: Always use `TotalCount` property for pagination calculations:
 ```csharp
@@ -778,10 +826,12 @@ var viewModel = new ViewModel
 - **ALWAYS** run `dotnet build` before marking tasks finished
 - Build failures MUST be resolved as part of implementation
 
-### 📝 Documentation & Comments Standards
+### 📝 Documentation & Comments Standards (MANDATORY)
+
+**CRITICAL: ALL new code MUST be professionally commented - no exceptions**
 
 #### 🎯 XML Documentation (Required)
-- **All public methods** must have comprehensive XML documentation
+- **ALL new methods** (public and private) must have comprehensive XML documentation
 - **Include purpose, parameters, returns, and remarks** when applicable
 - **Document edge cases** and special behavior
 - **English only** for international collaboration

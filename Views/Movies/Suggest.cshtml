@@ -16,58 +16,58 @@
         @* This is the full grid for all six suggestion buttons *@
         <div class="row justify-content-center g-4">
             <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="trending" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="trending">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Trending Movies</h5>
                         <p class="suggestion-description small mt-2">See what's popular right now.</p>
                     </div>
-                </a>
+                </button>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="director_recent" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="director_recent">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-person-video3 display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Director</h5>
                         <p class="suggestion-description small mt-2">From your recently watched, most frequent, or top-rated directors.</p>
                     </div>
-                </a>
+                </button>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="genre_recent" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="genre_recent">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-tags display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Genre</h5>
                         <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
                     </div>
-                </a>
+                </button>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="cast_recent" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="cast_recent">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-people display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Cast</h5>
                         <p class="suggestion-description small mt-2">Find movies featuring actors from your logged films.</p>
                     </div>
-                </a>
+                </button>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a asp-action="ShowSuggestions" asp-route-suggestionType="year_recent" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="year_recent">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-calendar3 display-4 mb-2"></i>
                         <h5 class="card-title mb-0">By Decade</h5>
                         <p class="suggestion-description small mt-2">Explore movies from your favorite eras.</p>
                     </div>
-                </a>
+                </button>
             </div>
             <div class="col-lg-4 col-md-6">
-                <a asp-action="GetSurpriseSuggestion" class="suggestion-card card h-100 text-decoration-none">
+                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="surprise_me">
                     <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
                         <i class="bi bi-shuffle display-4 mb-2"></i>
                         <h5 class="card-title mb-0">Surprise Me!</h5>
                         <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
                     </div>
-                </a>
+                </button>
             </div>
         </div>
 
@@ -178,7 +178,85 @@
             resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         attachEventListeners();
+        attachSuggestionCardListeners();
     });
+
+    /*
+     * FEATURE: Attaches AJAX click listeners to suggestion cards for seamless navigation.
+     * Converts traditional anchor-based navigation to AJAX-powered interactions without page reloads.
+     */
+    function attachSuggestionCardListeners() {
+        document.querySelectorAll('.suggestion-card[data-suggestion-type]').forEach(card => {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                const suggestionType = this.getAttribute('data-suggestion-type');
+                loadSuggestions(suggestionType);
+            });
+        });
+    }
+
+    /*
+     * FEATURE: Loads movie suggestions via AJAX without page reload.
+     * Maintains identical functionality to traditional navigation while providing seamless UX.  
+     * Includes graceful fallback to regular navigation if AJAX fails.
+     * suggestionType: Type of suggestion to load (trending, director_recent, etc.)
+     */
+    function loadSuggestions(suggestionType) {
+        let endpoint = '';
+        let params = new URLSearchParams();
+        
+        // ARCHITECTURE: Route to appropriate controller endpoint based on suggestion type
+        if (suggestionType === 'surprise_me') {
+            endpoint = '/Movies/GetSurpriseSuggestion';
+        } else {
+            endpoint = '/Movies/ShowSuggestions';
+            params.append('suggestionType', suggestionType);
+        }
+
+        const url = endpoint + (params.toString() ? '?' + params.toString() : '');
+        
+        // PERFORMANCE: Fetch suggestions with AJAX header to get JSON response instead of full page
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'  // Critical for backend AJAX detection
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.html) {
+                // UX: Remove existing results before showing new ones
+                const existingResults = document.getElementById('suggestion-results-area');
+                if (existingResults) {
+                    existingResults.remove();
+                }
+                
+                // ARCHITECTURE: Insert server-rendered HTML to maintain styling consistency
+                const container = document.querySelector('.col-md-10.col-lg-9.mb-5');
+                container.insertAdjacentHTML('beforeend', data.html);
+                
+                // UX: Smooth scroll to new results for better user experience
+                const newResults = document.getElementById('suggestion-results-area');
+                if (newResults) {
+                    newResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                
+                // CRITICAL: Re-attach event listeners to new suggestion card content
+                attachEventListeners();
+            } else {
+                throw new Error(data.error || 'Invalid response');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading suggestions:', error);
+            // RELIABILITY: Graceful fallback to traditional navigation if AJAX fails
+            window.location.href = url;
+        });
+    }
 
     document.addEventListener('click', function(e) {
         // Find the reshuffle button, even if the click was on the <i> icon inside it.

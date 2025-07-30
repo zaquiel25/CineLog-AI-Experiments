@@ -230,7 +230,6 @@ CineLog is a comprehensive movie tracking application that helps you manage your
 - **Personal Movie Log**: Track what you've watched with ratings, dates, and locations
 - **Smart Search Integration**: Powered by The Movie Database (TMDB) API
 - **Rich Movie Details**: Automatic director, year, poster, and genre information
-- **Streaming Provider Reference**: View available streaming services (Netflix, Disney+, Amazon Prime, etc.) for reference - non-clickable display
 
 ### 📋 Lists & Organization
 - **Dynamic Wishlist**: AJAX-enabled instant adding/removing without page reloads
@@ -259,23 +258,26 @@ CineLog is a comprehensive movie tracking application that helps you manage your
 Our suggestion system follows a **hybrid architecture** that provides both traditional page navigation and modern AJAX experiences:
 
 **Core Components:**
-1. **Initial Suggestions**: Server-side rendered pages with full context
-2. **AJAX Reshuffles**: Client-side updates using server-rendered HTML fragments  
-3. **Shared Business Logic**: Unified helper methods ensure consistency
+1. **AJAX Suggestion Cards**: Converted suggestion buttons from anchor tags to interactive buttons with seamless AJAX functionality
+2. **Unified Business Logic**: Both initial loads and AJAX interactions use identical server-side logic through shared helper methods
+3. **Server-Side HTML Rendering**: AJAX responses return server-rendered HTML fragments for consistent styling and functionality
+4. **Graceful Fallback**: Automatic fallback to regular navigation if AJAX fails, ensuring reliability
 
-**Supported AJAX Types:**
-- ✅ **Trending**: Unified filtering with 90-minute cache
-- ✅ **Director**: Sequential rotation with anti-repetition and smart blacklist filtering
-- ✅ **Genre**: Dynamic variety with quality filtering
-- ✅ **Cast**: Smart actor selection with session tracking
-- ✅ **Decade**: Triple fallback system with random parameters
-- ✅ **Surprise Me**: Optimized pool-based approach with 2-hour cache
+**Enhanced AJAX Features:**
+- ✅ **All Suggestion Types**: Complete AJAX support for Trending, Director, Genre, Cast, Decade, and Surprise Me
+- ✅ **Seamless Navigation**: No page reloads when clicking suggestion cards - smooth transitions with loading states
+- ✅ **Consistent Experience**: Identical filtering, business logic, and user states across AJAX and traditional navigation
+- ✅ **Clean Implementation**: Minimal JavaScript with no loading overlays or visual disruptions
+- ✅ **State Preservation**: All movie properties (watched, wishlisted, blacklisted) properly maintained in AJAX responses
+- ✅ **Error Resilience**: Comprehensive error handling with automatic fallback to page navigation
 
-**Technical Benefits:**
-- **Server-Side Rendering**: All HTML is rendered on the server for consistent styling and image paths
-- **Event Delegation**: Single JavaScript handler manages all reshuffle buttons dynamically
-- **Progressive Enhancement**: Works with JavaScript disabled (falls back to page navigation)
-- **Consistent UX**: Identical behavior whether using initial load or AJAX reshuffle
+**Technical Architecture:**
+- **Server-Side Rendering**: All HTML rendered on server using `RenderSuggestionResultsHtml()` method for consistent styling and image paths
+- **AJAX Detection**: Backend detects AJAX requests via `X-Requested-With` header and returns JSON with HTML content
+- **Event Delegation**: Single JavaScript handler manages all suggestion card clicks and reshuffle buttons dynamically
+- **State Management**: `PopulateMovieProperties()` ensures all movie states are correctly populated in AJAX responses
+- **Progressive Enhancement**: Works perfectly with JavaScript disabled (falls back to page navigation)
+- **Unified Caching**: Same caching strategies and performance optimizations apply to both AJAX and traditional requests
 
 
 ### 🎯 By Decade (Dynamic Variety System)
@@ -311,10 +313,14 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 - **Performance Optimized**: Maintains fast response times while delivering maximum content variety
 
 ### 🔄 Seamless Experience
-- **No Page Reloads**: AJAX-powered interactions for smooth user experience
-- **Instant Feedback**: Visual confirmation of all actions
-- **Consistent UI/UX**: All suggestion cards and reshuffle actions are visually and behaviorally consistent across categories.
-- **Mobile Responsive**: Works perfectly on all devices
+- **AJAX Suggestion Cards**: All suggestion types now use interactive buttons instead of page navigation for seamless user experience
+- **No Page Reloads**: Complete elimination of page refreshes when navigating between suggestion types
+- **Instant Feedback**: Smooth transitions with subtle loading states that don't disrupt the user interface
+- **Clean Implementation**: Learned from previous AJAX implementations - no loading overlays, spinners, or visual changes that create jarring experiences
+- **Graceful Fallback**: Automatic fallback to regular navigation ensures the application works even if AJAX fails
+- **Consistent UI/UX**: All suggestion cards and reshuffle actions are visually and behaviorally consistent across categories
+- **State Preservation**: Movie states (watched, wishlisted, blacklisted) are properly maintained across AJAX interactions
+- **Mobile Responsive**: Enhanced touch interaction support for mobile devices with smooth AJAX transitions
 
 ### 🔐 Modern Authentication Experience
 - **Welcoming Interface**: Friendly titles ("Welcome Back", "Join CineLog") with professional typography using h3 instead of oversized headers
