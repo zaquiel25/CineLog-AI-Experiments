@@ -1,5 +1,11 @@
 ## 2025-07-31
 
+### 🛰️ AI Development Tools Enhancement
+- **MCP Server Integration**: Added automatic utilization of Model Context Protocol servers in development workflow
+- **Enhanced Documentation Access**: Integrated seamless access to Microsoft Learn docs, DeepWiki, Context7, and Codacy code analysis
+- **Proactive AI Assistance**: AI tools now automatically leverage available MCP servers when context is relevant, improving development efficiency
+- **Available MCP Servers**: microsoft-docs, deepwiki, context7, and codacy (with account token configuration)
+
 ### 🎭 Cast Suggestion System Logic Update
 - **Improved Cast Reshuffle Logic**: The cast-based suggestion system now automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random).
 - **Sequence Advancement**: The system always advances through the sequence: recent → frequent → rated → random → random ...

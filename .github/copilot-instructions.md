@@ -1,3 +1,19 @@
+## 🛰️ MCP Server & Extension Usage
+
+If a user requests information or actions related to an MCP server or extension, and the MCP is available, you should automatically fetch or use it as needed to fulfill the request. You do not need to wait for explicit invocation if the context is clear.
+
+### Available MCP Servers:
+- **microsoft-docs**: Microsoft Learn documentation for ASP.NET Core, Entity Framework, and related technologies
+- **deepwiki**: Deep Wikipedia access for comprehensive research and information retrieval  
+- **context7**: Upstash Context7 for enhanced contextual AI operations and reasoning
+- **codacy**: Code quality analysis and review tools (requires account token configuration)
+
+**Usage Examples:**
+- ASP.NET Core questions → Automatically use microsoft-docs MCP
+- Research tasks → Leverage deepwiki for comprehensive information
+- Code quality issues → Utilize codacy for analysis and recommendations
+- Complex reasoning tasks → Apply context7 for enhanced AI capabilities
+
 
 ---
 **Best Practice:**
@@ -333,10 +349,11 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 ### Consistency Achievement
 - Decade and genre suggestion systems now share a unified dynamic variety and fallback approach, providing a consistent and reliable user experience across all suggestion types.
 
-- Si un usuario intenta blacklistear la mayoría o totalidad de las películas trending (por ejemplo, más de 20 en una sola sesión), puede encontrar que los últimos títulos no se pueden blacklistear por limitaciones de estado, caché o validación.
-- Este es un caso extremo y poco realista en el uso normal de la app. La mayoría de los usuarios nunca intentarán blacklistear tantas películas trending de una vez.
-- Se decidió no priorizar la solución de este edge case para optimizar el tiempo de desarrollo y enfocarse en flujos que impactan a la mayoría de los usuarios.
-- El sistema ya muestra un mensaje amigable cuando no hay más sugerencias trending disponibles, por lo que el usuario nunca queda "atrapado".
+**Edge Case: Mass Trending Blacklisting**
+- If a user attempts to blacklist the majority or all trending movies (e.g., more than 20 in a single session), they may find that the last few titles cannot be blacklisted due to state, cache, or validation limitations.
+- This is an extreme and unrealistic edge case in normal app usage. Most users will never attempt to blacklist so many trending movies at once.
+- Decision was made not to prioritize solving this edge case to optimize development time and focus on workflows that impact the majority of users.
+- The system already shows a friendly message when no more trending suggestions are available, so the user is never "trapped".
 ## UI/UX Patterns
 - Mutual exclusion implemented preventively via conditional rendering
 - Error states avoided through visual state management
@@ -346,17 +363,19 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 **Best Practice:**
 > For all AJAX POST requests (especially for Blacklist/Wishlist removal), **always include** the `X-Requested-With: XMLHttpRequest` header. This guarantees the backend returns JSON for AJAX, not HTML error pages, and prevents frontend parsing errors. This is required for robust, user-friendly error handling in all AJAX-powered UI actions.
 ---
-# - No se permiten comentarios tipo "ADD THIS", "NUEVAS", ni notas de importancia sin justificación técnica.
-# - Los atributos de validación y la lógica funcional permanecen intactos.
-# - Los futuros cambios en modelos deben seguir este estándar de documentación.
-## Movie Preview Card (Add/Edit Movie) - Notas de Estilo y Mantenimiento (2025-07-15)
+### Code Comment Standards (Legacy Note)
+- Comments like "ADD THIS", "NUEVAS", or importance notes without technical justification are not permitted.
+- Validation attributes and functional logic remain intact.
+- Future model changes must follow established documentation standards.
 
-- Se utiliza un selector ultra específico en el CSS de la tarjeta de movie preview para garantizar que los estilos personalizados prevalezcan sobre Bootstrap y el tema Cyborg.
-- No reducir la especificidad del selector ni cambiar la estructura HTML/clases de la tarjeta sin revisar los estilos, ya que puede romper la visual.
-- Los colores, jerarquía tipográfica y efectos hover están documentados en la cabecera de `site.css`.
-- El overview ahora se muestra completo, sin scrollbar, y con texto justificado para mejor legibilidad.
-- Todas las mejoras visuales y de UX se documentan en `CHANGELOG.md`.
-- Tras cualquier cambio visual, probar la tarjeta en todos los navegadores y dispositivos para asegurar consistencia.
+## Movie Preview Card (Add/Edit Movie) - Style and Maintenance Notes (2025-07-15)
+
+- Uses ultra-specific CSS selector for movie preview card to ensure custom styles override Bootstrap and Cyborg theme.
+- Do not reduce selector specificity or change HTML structure/classes of the card without reviewing styles, as this may break visuals.
+- Colors, typographic hierarchy, and hover effects are documented in the `site.css` header.
+- Overview now displays complete text without scrollbar and with justified text for better readability.
+- All visual and UX improvements are documented in `CHANGELOG.md`.
+- After any visual changes, test the card across all browsers and devices to ensure consistency.
 
 # Copilot Instructions for CineLog-AI-Experiments
 
@@ -486,12 +505,13 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 
 ### Suggestion System Behavior
 - Implement bulletproof fallbacks for edge cases
-- **Cast Reshuffle ahora implementa una secuencia robusta:** rota entre sugerir por actor más reciente, actor más frecuente, actor de la película mejor puntuada y, si se agotan, un actor aleatorio. El paso actual se almacena en Session y avanza en cada reshuffle.
-- Anti-repetition: el mismo actor nunca será sugerido dos veces seguidas (anti-repetición inmediata vía Session).
-- Track session state to avoid repetitive suggestions (Session sequencing is only used on the initial suggestion click; all reshuffles use client parameters, excepto en Cast donde la secuencia es gestionada por Session).
+- **Enhanced Cast Suggestion Logic (2025-07-31)**: Cast reshuffle now implements robust sequencing that automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random). The sequence always advances through: recent → frequent → rated → random → random...
+- **No Empty Actor Messages**: Users will never see "no suggestions for this actor" message; only valid suggestions are shown with seamless progression.
+- **Edge Case Handling**: If no actors have suggestions, a generic message is displayed (extremely rare scenario).
+- Track session state to avoid repetitive suggestions (Session sequencing is used for cast suggestions to maintain proper rotation through actor categories).
 - Handle empty result sets gracefully with actionable next steps
 - The "Reshuffle" button is implemented via event delegation and always maintains the correct context for all suggestion types.
-- IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing (y para la secuencia de Cast).
+- IMemoryCache is used for TMDB API data; Session State is used for user-specific anti-repetition and sequencing (including cast suggestion rotation).
 
 ### Genre Suggestion Variety System (2025-07-24)
 - GenreReshuffle implements dynamic content variety through randomized sort criteria and pagination

@@ -1,3 +1,13 @@
+## 🛰️ MCP Server & Extension Usage
+
+If a user requests information or actions related to an MCP server or extension, and the MCP is available, you should automatically fetch or use it as needed to fulfill the request. You do not need to wait for explicit invocation if the context is clear.
+
+### Available MCP Servers:
+- **microsoft-docs**: Microsoft Learn documentation for ASP.NET Core, Entity Framework, and related technologies
+- **deepwiki**: Deep Wikipedia access for comprehensive research and information retrieval
+- **context7**: Upstash Context7 for enhanced contextual AI operations and reasoning
+- **codacy**: Code quality analysis and review tools (requires account token configuration)
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

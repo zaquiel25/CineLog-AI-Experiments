@@ -1,8 +1,22 @@
-# 🎭 Cast Suggestion System Logic (2025-07-31)
+# CineLog-AI-Experiments
 
-The cast-based movie suggestion system now automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random). The sequence always advances: recent → frequent → rated → random → random ...
+**Your journey in film: Watch, Log, Discover.**
 
-Users will never see a "no suggestions for this actor" message; only valid suggestions are shown. If no actors have suggestions, a generic message is displayed (extremely rare). All changes are documented in the code for maintainability.
+CineLog is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, CineLog combines modern web development practices with sophisticated movie recommendation algorithms.
+
+## 🚀 Latest Updates (2025-07-31)
+
+### 🛰️ Enhanced AI Development Tools
+- **MCP Server Integration**: Automatic utilization of Model Context Protocol servers for enhanced development capabilities
+- **Seamless Documentation**: Integrated access to Microsoft Learn docs, DeepWiki, Context7, and Codacy code analysis
+- **Proactive Assistance**: AI tools automatically leverage available MCP servers when context is relevant
+
+### 🎭 Cast Suggestion System Logic Improvements
+- **Smart Actor Filtering**: System automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random)
+- **Seamless Progression**: Sequence always advances through: recent → frequent → rated → random → random...
+- **Enhanced User Experience**: Users never see "no suggestions for this actor" messages; only valid suggestions are displayed
+- **Edge Case Handling**: Generic message displayed if no actors have suggestions (extremely rare scenario)
+- **Professional Documentation**: All changes documented in code for long-term maintainability
 
 # 🚀 Production Deployment Readiness Assessment (2025-07-30)
 
@@ -223,12 +237,6 @@ See `MoviesController.cs` for implementation details and business logic comments
 - All major public methods in `MoviesController.cs` now have professional XML documentation and clarified business logic comments.
 - Mutual exclusion logic for wishlist/blacklist is now clearly documented and visually enforced.
 - Please maintain this standard for all future contributions.
-
-# CineLog-AI-Experiments
-
-**Your journey in film: Watch, Log, Discover.**
-
-CineLog is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, CineLog combines modern web development practices with sophisticated movie recommendation algorithms.
 
 ## ✨ Key Features
 
