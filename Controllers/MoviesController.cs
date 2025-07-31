@@ -1187,11 +1187,16 @@ namespace Ezequiel_Movies.Controllers
         /// <list type="bullet">
         /// <item>Excludes blacklisted and already-watched movies from suggestions.</item>
         /// <item>Returns server-rendered HTML (partial views) to ensure correct image paths and consistent UI.</item>
-        /// <item>Handles all edge cases gracefully, always providing actionable feedback to the user.</item>
-        /// <item>All logic and edge cases are documented for maintainability and future extension.</item>
-        /// </list>
-        /// </para>
-        /// </remarks>
+    /// <item>Handles all edge cases gracefully, always providing actionable feedback to the user.</item>
+    /// <item>Actors with no available suggestions are automatically skipped in all categories (recent, frequent, rated, random).</item>
+    /// <item>The user never sees a 'no suggestions for this actor' message; only valid suggestions are shown.</item>
+    /// <item>Sequence advances: recent → frequent → rated → random → random ...</item>
+    /// <item>All logic and edge cases are documented for maintainability and future extension.</item>
+    /// </list>
+    /// </para>
+    /// <remarks>
+    /// FIX: Updated July 2025 to skip actors with no suggestions and always advance the sequence, never showing an empty-actor message.
+    /// </remarks>
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> CastReshuffle()
@@ -1208,12 +1213,14 @@ namespace Ezequiel_Movies.Controllers
 
                 // --- Robust Cast Suggestion Sequence ---
                 // 1. SEQUENCE MANAGEMENT: Track the current step in Session to rotate between strategies (recent, frequent, rated, random).
+                //    If an actor in any step has no suggestions, skip to the next in the sequence.
                 string castTypeKey = $"CastTypeSequence_{userId}";
                 int castTypeCount = HttpContext.Session.GetInt32(castTypeKey) ?? 0;
                 HttpContext.Session.SetInt32(castTypeKey, castTypeCount + 1);
                 _logger.LogInformation("Cast Reshuffle Sequence: Attempting Step {Step}", castTypeCount);
 
                 // 2. ACTOR POOL CONSTRUCTION: Build a pool of top 3 actors from the user's last 15 logged movies.
+                //    This pool is used for all selection strategies and deduplicated by actor ID.
                 var loggedCastMovies = await _dbContext.Movies
                     .Where(m => m.UserId == userId && m.TmdbId.HasValue)
                     .OrderByDescending(m => m.DateWatched)
@@ -1242,8 +1249,12 @@ namespace Ezequiel_Movies.Controllers
                     return Json(new { success = true, html = emptyHtml, count = 0 });
                 }
 
-                // 3. SEQUENTIAL ACTOR SELECTION: Try each strategy in order; if the current step yields no actor, fall back to random.
+                // 3. SEQUENTIAL ACTOR SELECTION: Use castTypeCount to select the Nth actor in the priority queue (recent, frequent, rated).
+                //    If that actor has no suggestions, skip to the next in the sequence.
+                //    After the priority queue, all further reshuffles use random eligible actors (excluding immediate repetition).
+                //    Actors with no suggestions are always skipped; user never sees a 'no suggestions for this actor' message.
                 TmdbCastPerson? selectedActor = null;
+                List<TmdbCastPerson> triedActors = new();
 
                 // Build the prioritized actor queue: recent, frequent, highest-rated.
                 var recentActor = allTopActors.FirstOrDefault();
@@ -1262,76 +1273,88 @@ namespace Ezequiel_Movies.Controllers
                     .DistinctBy(a => a.Id)
                     .ToList();
 
-
-                // --- ANTI-REPETICIÓN INMEDIATA DE ACTOR ---
+                // --- ANTI-REPETITION: Avoid immediate repetition of actor ---
+                //    The last suggested actor is tracked in Session and excluded from selection if possible.
                 string lastActorKey = $"LastActorId_{userId}";
                 int? lastActorId = HttpContext.Session.GetInt32(lastActorKey);
 
-                // 1. Intentar seleccionar actor de la cola priorizada evitando el último actor si es posible
-                if (castTypeCount < priorityQueue.Count)
+                // Use castTypeCount to select the Nth actor in the priority queue (recent, frequent, rated)
+                //    If no valid actor is found in the queue, try random actors from the pool (excluding those already tried and the last actor).
+                //    If no actors with suggestions are found at all, show a generic message (extremely rare edge case).
+                int queueIndex = castTypeCount;
+                int maxQueueIndex = priorityQueue.Count - 1;
+                bool found = false;
+                // Try to find a valid actor in the sequence (recent, frequent, rated)
+                while (queueIndex <= maxQueueIndex && !found)
                 {
-                    var candidate = priorityQueue[castTypeCount];
-                    if (lastActorId.HasValue && candidate != null && candidate.Id == lastActorId.Value && priorityQueue.Count > 1)
+                    var candidate = priorityQueue[queueIndex];
+                    if (lastActorId.HasValue && candidate.Id == lastActorId.Value && priorityQueue.Count > 1)
                     {
-                        // Buscar otro actor distinto si hay más opciones
-                        candidate = priorityQueue.FirstOrDefault(a => a.Id != lastActorId.Value);
+                        queueIndex++;
+                        continue;
                     }
-                    selectedActor = candidate;
-                }
-
-                // 2. Si no se pudo seleccionar, fallback a random evitando el último actor si es posible
-                if (selectedActor == null)
-                {
-                    _logger.LogInformation("Sequence step {Step} was empty or finished. Switching to random.", castTypeCount);
-                    var distinctActors = allTopActors.Where(a => a != null).DistinctBy(a => a.Id).ToList();
-                    if (distinctActors.Any())
+                    var suggestedMovies = await GetSuggestionsForActor(candidate.Id, userId);
+                    if (suggestedMovies.Any())
                     {
-                        var pool = distinctActors;
-                        if (lastActorId.HasValue && pool.Count > 1)
+                        selectedActor = candidate;
+                        HttpContext.Session.SetInt32(lastActorKey, selectedActor.Id);
+                        var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
+                        var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
+                        var htmlBuilder = new StringBuilder();
+                        foreach (var movie in suggestedMovies)
                         {
-                            pool = pool.Where(a => a.Id != lastActorId.Value).ToList();
+                            var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+                            htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
                         }
-                        selectedActor = pool[Random.Shared.Next(pool.Count)];
+                        return Json(new
+                        {
+                            success = true,
+                            html = htmlBuilder.ToString(),
+                            count = suggestedMovies.Count,
+                            suggestionTitle = suggestionTitle,
+                            actorProfileUrl = actorDetails?.ProfilePath
+                        });
+                    }
+                    queueIndex++;
+                }
+
+                // If not found in priority queue, try random actors (excluding last actor and those already tried)
+                if (!found)
+                {
+                    var alreadyTriedIds = priorityQueue.Select(a => a.Id).ToHashSet();
+                    var distinctActors = allTopActors.Where(a => a != null).DistinctBy(a => a.Id)
+                        .Where(a => !alreadyTriedIds.Contains(a.Id) && (!lastActorId.HasValue || a.Id != lastActorId.Value))
+                        .ToList();
+                    foreach (var randomActor in distinctActors.OrderBy(x => Random.Shared.Next()))
+                    {
+                        var suggestedMovies = await GetSuggestionsForActor(randomActor.Id, userId);
+                        if (suggestedMovies.Any())
+                        {
+                            selectedActor = randomActor;
+                            HttpContext.Session.SetInt32(lastActorKey, selectedActor.Id);
+                            var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
+                            var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
+                            var htmlBuilder = new StringBuilder();
+                            foreach (var movie in suggestedMovies)
+                            {
+                                var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
+                                htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
+                            }
+                            return Json(new
+                            {
+                                success = true,
+                                html = htmlBuilder.ToString(),
+                                count = suggestedMovies.Count,
+                                suggestionTitle = suggestionTitle,
+                                actorProfileUrl = actorDetails?.ProfilePath
+                            });
+                        }
                     }
                 }
 
-                // 3. Si no hay actor posible, lanzar error (caso extremo)
-                if (selectedActor == null)
-                {
-                    throw new InvalidOperationException("Could not select a valid actor to generate suggestions.");
-                }
-
-                // Guardar el actor sugerido en Session para la próxima vez
-                HttpContext.Session.SetInt32(lastActorKey, selectedActor.Id);
-
-                // 4. SUGGESTION GENERATION & RESPONSE: Fetch movies for the selected actor and return server-rendered HTML or a friendly message if none found.
-                var actorDetails = await _tmdbService.GetPersonDetailsAsync(selectedActor.Id);
-                var suggestedMovies = await GetSuggestionsForActor(selectedActor.Id, userId);
-
-                // FIX 1: Simple and consistent title.
-                var suggestionTitle = $"Because you like movies with {selectedActor.Name}";
-
-                if (!suggestedMovies.Any())
-                {
-                    var emptyHtml = $@"<div class='alert alert-info text-center my-5'>No more suggestions available for {selectedActor.Name}. Try another suggestion type!</div>";
-                    return Json(new { success = true, html = emptyHtml, count = 0 });
-                }
-
-                var htmlBuilder = new StringBuilder();
-                foreach (var movie in suggestedMovies)
-                {
-                    var partialViewResult = await this.RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
-                    htmlBuilder.Append($"<div class=\"col\">{partialViewResult}</div>");
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    html = htmlBuilder.ToString(),
-                    count = suggestedMovies.Count,
-                    suggestionTitle = suggestionTitle,
-                    actorProfileUrl = actorDetails?.ProfilePath
-                });
+                // If no actors with suggestions, show a generic message (should be extremely rare)
+                var emptyHtmlFinal = $@"<div class='alert alert-info text-center my-5'>No cast-based suggestions available at this time. Try another suggestion type!</div>";
+                return Json(new { success = true, html = emptyHtmlFinal, count = 0 });
             }
             catch (Exception ex)
             {

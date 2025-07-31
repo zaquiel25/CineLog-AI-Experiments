@@ -1,3 +1,9 @@
+# 🎭 Cast Suggestion System Logic (2025-07-31)
+
+The cast-based movie suggestion system now automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random). The sequence always advances: recent → frequent → rated → random → random ...
+
+Users will never see a "no suggestions for this actor" message; only valid suggestions are shown. If no actors have suggestions, a generic message is displayed (extremely rare). All changes are documented in the code for maintainability.
+
 # 🚀 Production Deployment Readiness Assessment (2025-07-30)
 
 ## 🏭 Production Readiness Status: 8.5/10

@@ -1,3 +1,12 @@
+## 2025-07-31
+
+### 🎭 Cast Suggestion System Logic Update
+- **Improved Cast Reshuffle Logic**: The cast-based suggestion system now automatically skips actors with no available movie suggestions in all categories (recent, frequent, rated, random).
+- **Sequence Advancement**: The system always advances through the sequence: recent → frequent → rated → random → random ...
+- **No More Empty Actor Messages**: Users will never see a "no suggestions for this actor" message; only valid suggestions are shown.
+- **Edge Case Handling**: If no actors have suggestions, a generic message is shown (extremely rare).
+- **Code Comments Updated**: All changes are professionally documented in the controller for future maintainability.
+
 ## 2025-07-30
 
 ### 🔄 AJAX Suggestion Cards Enhancement: Seamless Navigation Without Page Reloads
