@@ -58,6 +58,20 @@ if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in configuration.");
 }
 
+// Replace password placeholder with actual value from Key Vault
+if (builder.Environment.IsProduction() && connectionString.Contains("{DatabasePassword}"))
+{
+    var databasePassword = builder.Configuration["DatabasePassword"];
+    if (!string.IsNullOrEmpty(databasePassword))
+    {
+        connectionString = connectionString.Replace("{DatabasePassword}", databasePassword);
+    }
+    else
+    {
+        throw new InvalidOperationException("DatabasePassword not found in Key Vault configuration");
+    }
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(connectionString, sqlOptions =>

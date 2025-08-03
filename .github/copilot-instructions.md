@@ -305,15 +305,18 @@ if (builder.Environment.IsProduction())
 - **Azure SQL Database**: `CineLog_Production` on server `cinelog-sql-server.database.windows.net`
 - **Azure Key Vault**: `cinelogdb.vault.azure.net` with secrets `DatabasePassword` and `TMDB--AccessToken`
 - **Connection String Format**: `Server=tcp:cinelog-sql-server.database.windows.net,1433;Database=CineLog_Production;User ID=cinelogadmin;Password={DatabasePassword};Encrypt=True;TrustServerCertificate=False`
+- **Automatic Placeholder Replacement**: Production mode automatically replaces `{DatabasePassword}` with actual Key Vault values
 
 **Security Requirements:**
 - **NEVER** hardcode connection strings or passwords in source code
 - **ALWAYS** use `Encrypt=True` for Azure SQL Database connections  
 - **ALWAYS** use Azure Key Vault for production secret management with DefaultAzureCredential
 - **ALWAYS** implement connection retry policies for Azure SQL resilience
+- **ALWAYS** implement automatic placeholder replacement for Key Vault secrets in production
 - Use `TrustServerCertificate=False` for Azure SQL (True only for localhost testing)
 - **ALWAYS** validate connection strings exist before using them
 - **ALWAYS** handle Key Vault connection failures gracefully with fallback patterns
+- **ALWAYS** validate Key Vault secrets are available before replacing placeholders
 
 **Required NuGet Packages for Production Security:**
 ```xml
@@ -340,6 +343,33 @@ if (builder.Environment.IsProduction())
 **Azure Key Vault Secrets:**
 - `DatabasePassword`: Azure SQL Database password for cinelogadmin user
 - `TMDB--AccessToken`: TMDB API access token (uses -- instead of : for Key Vault compatibility)
+
+**Key Vault Integration Pattern (CRITICAL for Security):**
+```csharp
+// REQUIRED: Automatic placeholder replacement in production
+if (builder.Environment.IsProduction() && connectionString.Contains("{DatabasePassword}"))
+{
+    var databasePassword = builder.Configuration["DatabasePassword"];
+    if (!string.IsNullOrEmpty(databasePassword))
+    {
+        connectionString = connectionString.Replace("{DatabasePassword}", databasePassword);
+    }
+    else
+    {
+        throw new InvalidOperationException("DatabasePassword not found in Key Vault configuration");
+    }
+}
+```
+
+**Local Testing of Production Configuration:**
+```bash
+# Test Azure Key Vault integration locally
+ASPNETCORE_ENVIRONMENT=Production dotnet ef database update
+
+# Verify Azure authentication
+az account show
+az keyvault secret show --vault-name cinelogdb --name DatabasePassword --query attributes.updated
+```
 
 ### 🏗️ Architecture Consistency
 **Maintain existing patterns:**
