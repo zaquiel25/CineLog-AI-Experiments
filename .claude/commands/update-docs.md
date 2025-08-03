@@ -1,15 +1,15 @@
 ---
-description: "Automatically update all documentation files after successful changes"
+description: "Automatically update all documentation files and session notes after successful changes"
 allowed-tools: ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "LS", "WebFetch"]
 argument-hint: "[optional: specific change description]"
 ---
 
-# Auto-Update Documentation Command
+# Auto-Update Documentation & Session Notes Command
 
-You are tasked with automatically updating all documentation files in this CineLog-AI-Experiments project after successful code changes.
+You are tasked with automatically updating all documentation files and session context in this CineLog-AI-Experiments project after successful code changes.
 
 ## Context
-This is an ASP.NET Core movie logging application with sophisticated suggestion algorithms, TMDB API integration, and performance optimizations. The project has multiple documentation files that need to stay synchronized with code changes.
+This is an ASP.NET Core movie logging application with sophisticated suggestion algorithms, TMDB API integration, and performance optimizations. The project has multiple documentation files and a session secretary agent system that need to stay synchronized with code changes. The SESSION_NOTES.md file maintains cross-session context for development continuity.
 
 ## Your Mission
 
@@ -23,6 +23,7 @@ This is an ASP.NET Core movie logging application with sophisticated suggestion 
    - `CLAUDE.md` - Update development commands, architecture patterns, and guidance
    - `CHANGELOG.md` - Add new entries for the changes made
    - `PERFORMANCE_OPTIMIZATION_SUMMARY.md` - Update if performance-related changes were made
+   - `SESSION_NOTES.md` - Update session context with accomplishments, decisions, and next priorities
 
 3. **Ensure Consistency**:
    - Maintain existing formatting and style
@@ -56,6 +57,16 @@ This is an ASP.NET Core movie logging application with sophisticated suggestion 
 - Update metrics or performance notes
 - Maintain the technical focus
 
+### For SESSION_NOTES.md:
+- **Update Current Session**: Add/update the current session entry with today's date
+- **Document Accomplishments**: Record what was completed in this session
+- **Track Key Decisions**: Note important architectural choices and their rationale
+- **Record User Preferences**: Capture any coding patterns or workflow preferences observed
+- **Note Blockers/Issues**: Document any problems encountered and their resolution status
+- **Set Next Priorities**: Clear action items and context for the next session
+- **Maintain Privacy**: Keep notes focused on technical decisions, not sensitive business logic
+- **Follow Session Notes Format**: Use the established markdown structure for consistency
+
 ## Change Description
 $ARGUMENTS
 
@@ -65,5 +76,7 @@ $ARGUMENTS
 - Don't duplicate information across files
 - Focus on user-facing changes and developer guidance
 - Test that all information is accurate and up-to-date
+- **Session Context**: Always read SESSION_NOTES.md first to understand current project state
+- **Privacy Protection**: SESSION_NOTES.md is gitignored and contains local development context only
 
-Start by analyzing recent changes, then systematically update each documentation file as needed.
+Start by reading SESSION_NOTES.md for context, analyze recent changes, then systematically update each documentation file as needed.
