@@ -65,3 +65,6 @@ dist-server/
 
 .vs/
 .fake
+
+# Session secretary context notes (local development context only)
+SESSION_NOTES.md

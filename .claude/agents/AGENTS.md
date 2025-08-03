@@ -440,6 +440,41 @@ var existsInWishlist = await _dbContext.WishlistItems
 - Change tracking and CHANGELOG management
 - Development workflow documentation
 
+### 🗂️ `session-secretary`
+**🎯 Purpose**: **AUTOMATIC** - Session context management and project continuity coordination
+
+**🧠 Expertise**:
+- **Session Initialization**: Reads SESSION_NOTES.md and provides context summary to master director
+- **Continuous Note-Taking**: Records decisions, patterns, user preferences, and project state throughout conversations
+- **Session Closure**: Updates notes with accomplishments, blockers, and next priorities
+- **Context Bridging**: Maintains project continuity across multiple coding sessions
+- **Decision History**: Tracks architectural choices, approach changes, and rationale
+- **User Pattern Learning**: Captures coding preferences, workflow patterns, and common issues
+
+**🔑 Core Responsibilities**:
+```markdown
+SESSION START:
+- Read SESSION_NOTES.md immediately (first action every conversation)
+- Provide 2-3 line context summary to master director
+- Note current work-in-progress state and priorities
+
+DURING SESSION:
+- Record key decisions and their rationale
+- Track approach changes and why they were made
+- Note user preferences and patterns observed
+
+SESSION END:
+- Summarize what was accomplished
+- Update project state and current priorities
+- Record any blockers or issues for next session
+```
+
+**🎭 Master Director Level Operation**:
+- **Auto-Activation**: Triggered automatically at conversation start/end (no explicit invocation needed)
+- **Strategic Context**: Operates alongside master director for seamless project continuity
+- **Cross-Session Memory**: Bridges context gaps that static documentation cannot fill
+- **Privacy Protection**: SESSION_NOTES.md is gitignored for local context only
+
 ## 🚀 Enhanced Development Subagents
 
 ### 🧪 `test-writer-fixer`
@@ -639,6 +674,8 @@ private async Task<List<TmdbMovieBrief>> ExtractCommonFilteringLogic(
 
 **🔥 Proactive Invocation**: These agents trigger automatically:
 ```
+Every conversation start → session-secretary (reads session context)
+Every conversation end → session-secretary (updates session notes)
 Code changes made → test-writer-fixer (ensures test coverage)
 UI/feature updates → ui-designer (enhances visual appeal)
 UI/UX changes → whimsy-injector (adds personality and delight)

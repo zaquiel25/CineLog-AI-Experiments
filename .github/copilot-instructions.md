@@ -20,6 +20,17 @@ If a user requests information or actions related to an MCP server or extension,
 > For all AJAX POST requests (especially for Blacklist/Wishlist removal), **always include** the `X-Requested-With: XMLHttpRequest` header. This guarantees the backend returns JSON for AJAX, not HTML error pages, and prevents frontend parsing errors. This is required for robust, user-friendly error handling in all AJAX-powered UI actions.
 
 
+## 🗂️ Session Context Management
+
+**CRITICAL**: Always check SESSION_NOTES.md first to understand:
+- Current work-in-progress state and priorities
+- Previous session outcomes and decisions made
+- User preferences and coding patterns observed
+- Blocked items and their resolution status
+- Project context and architectural decisions
+
+---
+
 ## ⚠️ CRITICAL INSTRUCTIONS
 
 ### 🚨 GOLDEN RULE: DO NOT INVENT THINGS

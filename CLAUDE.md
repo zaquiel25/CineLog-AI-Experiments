@@ -45,6 +45,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
 
+### 🗂️ Session Context Management
+**CRITICAL**: ALWAYS read SESSION_NOTES.md as first action in every conversation
+- Review the last entry to understand current project state and work-in-progress
+- Note blockers, decisions made, and next priorities from previous sessions
+- Update notes at session end with accomplishments and next steps
+- This file is gitignored - contains local working context only, never committed
+
 ---
 
 ## 🔄 Development Workflow
@@ -90,6 +97,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Database changes | `ef-migration-manager` | Schema & migrations |
 | Full-stack features | `aspnet-feature-developer` | Complete MVC development |
 | Production deployment | `deployment-project-manager` | Strategic deployment coordination |
+| Session continuity | `session-secretary` | Automatic context management |
 
 ---
 
