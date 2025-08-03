@@ -4,17 +4,43 @@ using System.Net.Http.Headers; // <<< ADD THIS IF YOUR IDE DOESN'T ADD IT AUTOMA
 using Ezequiel_Movies;
 using Microsoft.AspNetCore.Identity;
 using Ezequiel_Movies.Services;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/// <summary>
+/// PRODUCTION: Configure Azure Key Vault integration for secure secret management.
+/// This replaces hardcoded secrets with secure cloud-based storage.
+/// </summary>
+if (builder.Environment.IsProduction())
+{
+    var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
+    if (!string.IsNullOrEmpty(keyVaultUri) && !keyVaultUri.Contains("{"))
+    {
+        try
+        {
+            // Use Managed Identity or DefaultAzureCredential for authentication
+            builder.Configuration.AddAzureKeyVault(
+                new Uri(keyVaultUri),
+                new DefaultAzureCredential());
+        }
+        catch (Exception ex)
+        {
+            // Log KeyVault connection issues but don't stop the application
+            Console.WriteLine($"Warning: Could not connect to Key Vault: {ex.Message}");
+        }
+    }
+}
+
 // --- VVVV START: ADDED CODE FOR TMDB TOKEN AND HTTPCLIENT VVVV ---
-// Retrieve the TMDB Access Token from User Secrets
+// Retrieve the TMDB Access Token from configuration (User Secrets in dev, Key Vault in production)
 var tmdbAccessToken = builder.Configuration["TMDB:AccessToken"];
 
 if (string.IsNullOrEmpty(tmdbAccessToken))
 {
     // This is a critical configuration.
-    throw new InvalidOperationException("TMDB Access Token not found in configuration. Ensure it's set in User Secrets (TMDB:AccessToken).");
+    throw new InvalidOperationException("TMDB Access Token not found in configuration. Ensure it's set in User Secrets (TMDB:AccessToken) for development or Key Vault for production.");
 }
 // --- ^^^^ END: ADDED CODE FOR TMDB TOKEN ^^^^ ---
 
@@ -22,10 +48,36 @@ if (string.IsNullOrEmpty(tmdbAccessToken))
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Your existing DbContext registration
-var conStringBuider = builder.Configuration.GetConnectionString("Ezequiel"); // This line isn't used, conString is hardcoded below
-var conString = "Server=localhost,1433 ;Database=Ezequiel_Movies;User Id=sa; Password=***REMOVED***; TrustServerCertificate=True";
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(conString));
+/// <summary>
+/// PRODUCTION: Configure secure database connection with retry policies and timeouts.
+/// Uses configuration-based connection strings instead of hardcoded values.
+/// </summary>
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in configuration.");
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        // PRODUCTION: Add connection resilience with retry policies
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+        
+        // PRODUCTION: Set command timeout for long-running queries
+        sqlOptions.CommandTimeout(60);
+    });
+    
+    // PERFORMANCE: Only enable sensitive data logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+    }
+});
 
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
