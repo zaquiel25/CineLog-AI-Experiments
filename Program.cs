@@ -14,37 +14,36 @@ var builder = WebApplication.CreateBuilder(args);
 /// This approach builds the connection string directly from Key Vault secrets,
 /// eliminating configuration file loading issues in Azure App Service.
 /// </summary>
-Console.WriteLine($"DEBUG: Current environment: {builder.Environment.EnvironmentName}");
-Console.WriteLine($"DEBUG: Is Production: {builder.Environment.IsProduction()}");
+// Environment configuration logging removed for security
 
 // Configure Key Vault integration for production
 if (builder.Environment.IsProduction())
 {
-    Console.WriteLine("DEBUG: Configuring Production Azure Key Vault integration...");
+    // Configuring Azure Key Vault integration
     
     // Get Key Vault URI from environment variable (set in Azure App Service)
     var keyVaultUri = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URI");
-    Console.WriteLine($"DEBUG: Key Vault URI: {keyVaultUri}");
+    // Key Vault URI configured from environment variable
     
     if (!string.IsNullOrEmpty(keyVaultUri))
     {
         try
         {
-            Console.WriteLine($"DEBUG: Connecting to Key Vault: {keyVaultUri}");
+            // Connecting to Azure Key Vault
             builder.Configuration.AddAzureKeyVault(
                 new Uri(keyVaultUri),
                 new DefaultAzureCredential());
-            Console.WriteLine("DEBUG: Successfully connected to Key Vault");
+            // Successfully connected to Key Vault
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ERROR: Key Vault connection failed: {ex.Message}");
+            // Key Vault connection failed - check configuration
             throw new InvalidOperationException($"Failed to connect to Azure Key Vault: {ex.Message}", ex);
         }
     }
     else
     {
-        Console.WriteLine("ERROR: AZURE_KEY_VAULT_URI environment variable not set");
+        // AZURE_KEY_VAULT_URI environment variable not set
         throw new InvalidOperationException("AZURE_KEY_VAULT_URI environment variable is required for production");
     }
 }
@@ -68,47 +67,40 @@ builder.Services.AddControllersWithViews();
 /// PRODUCTION: Configure secure database connection with direct Key Vault integration.
 /// Builds connection string from individual secrets to eliminate configuration file dependencies.
 /// </summary>
-Console.WriteLine("DEBUG: Configuring database connection...");
+// Configuring database connection
 string connectionString;
 
 if (builder.Environment.IsProduction())
 {
-    Console.WriteLine("DEBUG: Building production connection string from Key Vault secrets...");
+    // Building production connection string from Key Vault secrets
     
     // Get database password directly from Key Vault
     var databasePassword = builder.Configuration["DatabasePassword"];
-    Console.WriteLine($"DEBUG: DatabasePassword retrieved: {(!string.IsNullOrEmpty(databasePassword) ? "YES" : "NO")}");
+    // DatabasePassword retrieved from Key Vault
     
     if (string.IsNullOrEmpty(databasePassword))
     {
-        Console.WriteLine("ERROR: DatabasePassword not found in Key Vault");
-        // Debug: Show available configuration keys
-        var allKeys = builder.Configuration.AsEnumerable()
-            .Where(kv => !string.IsNullOrEmpty(kv.Value))
-            .Select(kv => kv.Key)
-            .Take(15);
-        Console.WriteLine("DEBUG: Available configuration keys:");
-        foreach (var key in allKeys)
-        {
-            Console.WriteLine($"  {key}");
-        }
+        // DatabasePassword not found in Key Vault
         throw new InvalidOperationException("DatabasePassword secret not found in Azure Key Vault");
     }
     
-    // Build Azure SQL connection string directly
-    connectionString = $"Server=tcp:cinelog-sql-server.database.windows.net,1433;Database=CineLog_Production;User ID=cinelogadmin;Password={databasePassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
-    Console.WriteLine("DEBUG: Production connection string built successfully from Key Vault secrets");
+    // Build Azure SQL connection string directly from environment variables
+    var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER") ?? "your-sql-server.database.windows.net";
+    var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE") ?? "your-database-name";
+    var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER") ?? "your-sql-user";
+    connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={databasePassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
+    // Production connection string built successfully from Key Vault secrets
 }
 else
 {
     // Development: Use connection string from appsettings.json
-    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    Console.WriteLine($"DEBUG: Development connection string loaded: {(!string.IsNullOrEmpty(connectionString) ? "YES" : "NO")}");
-    
-    if (string.IsNullOrEmpty(connectionString))
+    var devConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(devConnectionString))
     {
         throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in development configuration.");
     }
+    connectionString = devConnectionString;
+    // Development connection string loaded from configuration
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -159,14 +159,29 @@ dotnet ef database drop                # Drop database (development only)
 /docs [description]             # Quick documentation sync
 ```
 
+### 🔧 Production Environment Setup
+```bash
+# Set required environment variables for production deployment
+export AZURE_SQL_SERVER="your-sql-server.database.windows.net"
+export AZURE_SQL_DATABASE="your-database-name"
+export AZURE_SQL_USER="your-sql-user"
+export AZURE_KEY_VAULT_URI="https://your-keyvault.vault.azure.net/"
+
+# Test production configuration locally
+ASPNETCORE_ENVIRONMENT=Production dotnet run
+
+# Build with production configuration
+ASPNETCORE_ENVIRONMENT=Production dotnet build
+```
+
 ### 🔧 Azure Key Vault Testing
 ```bash
 # Test Key Vault connection locally
 ASPNETCORE_ENVIRONMENT=Production dotnet run
 
-# Verify Key Vault secrets
-az keyvault secret show --vault-name "cinelogdb" --name "DatabasePassword"
-az keyvault secret show --vault-name "cinelogdb" --name "TMDB--AccessToken"
+# Verify Key Vault secrets (replace [YOUR-KEYVAULT] with your actual Key Vault name)
+az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "DatabasePassword"
+az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "TMDB--AccessToken"
 
 # Debug Key Vault integration
 # Application will log Key Vault connection status and placeholder replacement
@@ -199,7 +214,7 @@ az keyvault secret show --vault-name "cinelogdb" --name "TMDB--AccessToken"
 - **Development Security**: User Secrets for secure local development with zero hardcoded credentials
 - **Encryption**: All Azure SQL connections use `Encrypt=True` with SSL/TLS certificate validation
 - **Zero Secrets in Code**: Complete elimination of hardcoded credentials with enterprise-grade secret management
-- **Private Access**: Production environment secured with private access controls for controlled testing
+- **Private Access**: Production environment secured with private IP access for controlled testing
 - **Repository Security**: Enhanced .gitignore protection for conversation transcripts and sensitive files
 
 ### 🏗️ Core Architecture Patterns

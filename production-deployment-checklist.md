@@ -3,7 +3,7 @@
 ## Database Production Readiness Assessment - Complete
 
 **Assessment Date:** August 3, 2025  
-**Database:** CineLog_Production (Azure SQL Database)
+**Database:** [YOUR-DATABASE] (Azure SQL Database)
 **Infrastructure:** Azure Cloud (SQL Database + Key Vault)
 **Framework:** Entity Framework Core 8.0.6 with Azure SQL Server  
 **Status:** ✅ AZURE CLOUD DEPLOYED - PRODUCTION READY (9.5/10)
@@ -65,7 +65,7 @@ if (builder.Environment.IsProduction())
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not connect to Key Vault: {ex.Message}");
+            // Warning: Could not connect to Key Vault - check configuration
         }
     }
 }
@@ -162,7 +162,7 @@ builder.Services.AddSession(options =>
 
 ### ✅ **Migration Status: AZURE CLOUD DEPLOYED**
 - **Total Migrations:** 25 migrations successfully applied to Azure SQL Database
-- **Azure SQL Database:** `CineLog_Production` on server `cinelog-sql-server.database.windows.net`
+- **Azure SQL Database:** `[YOUR-DATABASE]` on server `[YOUR-SQL-SERVER].database.windows.net`
 - **Migration Date:** August 3, 2025
 - **Schema Version:** Current and consistent with Azure SQL Database
 - **No Pending Migrations:** ✅ All applied to Azure production database
@@ -242,7 +242,7 @@ builder.Services.AddSession(options =>
 // appsettings.Production.json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=tcp:cinelog-sql-server.database.windows.net,1433;Initial Catalog=CineLog_Production;Persist Security Info=False;User ID=cinelogadmin;Password={secure_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    "DefaultConnection": "Server=tcp:[YOUR-SQL-SERVER].database.windows.net,1433;Initial Catalog=[YOUR-DATABASE];Persist Security Info=False;User ID=[YOUR-SQL-USER];Password={secure_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }
 }
 
@@ -269,7 +269,7 @@ SqlCmd -S {production_server} -d Ezequiel_Movies -i production-performance-index
 // For monitoring slow queries in staging
 builder.Services.AddDbContext<ApplicationDbContext>(options => 
     options.UseSqlServer(conString)
-           .LogTo(Console.WriteLine, LogLevel.Information)
+           .LogTo(logger => { /* Production logging configured via appsettings */ }, LogLevel.Information)
            .EnableSensitiveDataLogging() // Only in non-production
            .EnableDetailedErrors());
 ```
@@ -326,8 +326,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 ## 🎉 **AZURE CLOUD DEPLOYMENT COMPLETED (2025-08-03)**
 
 ### 🌐 **AZURE INFRASTRUCTURE DEPLOYED:**
-1. **Azure SQL Database**: `CineLog_Production` deployed on server `cinelog-sql-server.database.windows.net`
-2. **Azure Key Vault**: `cinelogdb.vault.azure.net` configured with production secrets
+1. **Azure SQL Database**: `[YOUR-DATABASE]` deployed on server `[YOUR-SQL-SERVER].database.windows.net`
+2. **Azure Key Vault**: `[YOUR-KEYVAULT].vault.azure.net` configured with production secrets
 3. **Database Migration**: All 25 EF Core migrations successfully applied to Azure SQL
 4. **Secret Management**: `DatabasePassword` and `TMDB--AccessToken` stored securely in Key Vault
 5. **Connection Testing**: Application verified working with Azure infrastructure
