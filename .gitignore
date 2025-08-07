@@ -12,6 +12,10 @@
 [Bb]in/
 [Oo]bj/
 
+# Publish outputs and deployment artifacts
+publish/
+*.zip
+
 # Visual Studio Code files
 .vscode/
 
@@ -68,3 +72,39 @@ dist-server/
 
 # Session secretary context notes (local development context only)
 SESSION_NOTES.md
+
+# Claude Code session transcripts and conversation exports (local AI development context only)
+2025-*.txt
+*-claude-conversation*.txt
+*-session-transcript*.txt
+*-ai-conversation*.txt
+
+# Specific Claude conversation files
+2025-08-07-can-u-read-our-project-and-your-instructions.txt
+2025-07-30-i-need-you-to-review-please-the-layout-and-design.txt
+2025-08-07-this-session-is-being-continued-from-a-previous-co.txt
+2025-07-29-this-session-is-being-continued-from-a-previous-co.txt
+
+# Visual Studio/MonoDevelop files
+.vs/
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+
+# VSCode settings (can contain personal preferences)
+.vscode/
+
+# Build and publish outputs (already handled but ensuring completeness)
+[Bb]in/
+[Oo]bj/
+publish/
+*.zip
+
+# Azure deployment files and local settings
+.claude/settings.local.json
+
+# SQLite database files (if using SQLite for development)
+*.db
+*.db-*
+EzequielMovies.db

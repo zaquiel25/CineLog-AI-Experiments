@@ -11,25 +11,41 @@ var builder = WebApplication.CreateBuilder(args);
 
 /// <summary>
 /// PRODUCTION: Configure Azure Key Vault integration for secure secret management.
-/// This replaces hardcoded secrets with secure cloud-based storage.
+/// This approach builds the connection string directly from Key Vault secrets,
+/// eliminating configuration file loading issues in Azure App Service.
 /// </summary>
+Console.WriteLine($"DEBUG: Current environment: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"DEBUG: Is Production: {builder.Environment.IsProduction()}");
+
+// Configure Key Vault integration for production
 if (builder.Environment.IsProduction())
 {
-    var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
-    if (!string.IsNullOrEmpty(keyVaultUri) && !keyVaultUri.Contains("{"))
+    Console.WriteLine("DEBUG: Configuring Production Azure Key Vault integration...");
+    
+    // Get Key Vault URI from environment variable (set in Azure App Service)
+    var keyVaultUri = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URI");
+    Console.WriteLine($"DEBUG: Key Vault URI: {keyVaultUri}");
+    
+    if (!string.IsNullOrEmpty(keyVaultUri))
     {
         try
         {
-            // Use Managed Identity or DefaultAzureCredential for authentication
+            Console.WriteLine($"DEBUG: Connecting to Key Vault: {keyVaultUri}");
             builder.Configuration.AddAzureKeyVault(
                 new Uri(keyVaultUri),
                 new DefaultAzureCredential());
+            Console.WriteLine("DEBUG: Successfully connected to Key Vault");
         }
         catch (Exception ex)
         {
-            // Log KeyVault connection issues but don't stop the application
-            Console.WriteLine($"Warning: Could not connect to Key Vault: {ex.Message}");
+            Console.WriteLine($"ERROR: Key Vault connection failed: {ex.Message}");
+            throw new InvalidOperationException($"Failed to connect to Azure Key Vault: {ex.Message}", ex);
         }
+    }
+    else
+    {
+        Console.WriteLine("ERROR: AZURE_KEY_VAULT_URI environment variable not set");
+        throw new InvalidOperationException("AZURE_KEY_VAULT_URI environment variable is required for production");
     }
 }
 
@@ -49,46 +65,71 @@ if (string.IsNullOrEmpty(tmdbAccessToken))
 builder.Services.AddControllersWithViews();
 
 /// <summary>
-/// PRODUCTION: Configure secure database connection with retry policies and timeouts.
-/// Uses configuration-based connection strings instead of hardcoded values.
+/// PRODUCTION: Configure secure database connection with direct Key Vault integration.
+/// Builds connection string from individual secrets to eliminate configuration file dependencies.
 /// </summary>
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in configuration.");
-}
+Console.WriteLine("DEBUG: Configuring database connection...");
+string connectionString;
 
-// Replace password placeholder with actual value from Key Vault
-if (builder.Environment.IsProduction() && connectionString.Contains("{DatabasePassword}"))
+if (builder.Environment.IsProduction())
 {
+    Console.WriteLine("DEBUG: Building production connection string from Key Vault secrets...");
+    
+    // Get database password directly from Key Vault
     var databasePassword = builder.Configuration["DatabasePassword"];
-    if (!string.IsNullOrEmpty(databasePassword))
+    Console.WriteLine($"DEBUG: DatabasePassword retrieved: {(!string.IsNullOrEmpty(databasePassword) ? "YES" : "NO")}");
+    
+    if (string.IsNullOrEmpty(databasePassword))
     {
-        connectionString = connectionString.Replace("{DatabasePassword}", databasePassword);
+        Console.WriteLine("ERROR: DatabasePassword not found in Key Vault");
+        // Debug: Show available configuration keys
+        var allKeys = builder.Configuration.AsEnumerable()
+            .Where(kv => !string.IsNullOrEmpty(kv.Value))
+            .Select(kv => kv.Key)
+            .Take(15);
+        Console.WriteLine("DEBUG: Available configuration keys:");
+        foreach (var key in allKeys)
+        {
+            Console.WriteLine($"  {key}");
+        }
+        throw new InvalidOperationException("DatabasePassword secret not found in Azure Key Vault");
     }
-    else
+    
+    // Build Azure SQL connection string directly
+    connectionString = $"Server=tcp:cinelog-sql-server.database.windows.net,1433;Database=CineLog_Production;User ID=cinelogadmin;Password={databasePassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
+    Console.WriteLine("DEBUG: Production connection string built successfully from Key Vault secrets");
+}
+else
+{
+    // Development: Use connection string from appsettings.json
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    Console.WriteLine($"DEBUG: Development connection string loaded: {(!string.IsNullOrEmpty(connectionString) ? "YES" : "NO")}");
+    
+    if (string.IsNullOrEmpty(connectionString))
     {
-        throw new InvalidOperationException("DatabasePassword not found in Key Vault configuration");
+        throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in development configuration.");
     }
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(connectionString, sqlOptions =>
+    if (builder.Environment.IsProduction())
     {
-        // PRODUCTION: Add connection resilience with retry policies
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 3,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
-        
-        // PRODUCTION: Set command timeout for long-running queries
-        sqlOptions.CommandTimeout(60);
-    });
-    
-    // PERFORMANCE: Only enable sensitive data logging in development
-    if (builder.Environment.IsDevelopment())
+        // PRODUCTION: Use SQL Server with retry policies
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+            
+            sqlOptions.CommandTimeout(60);
+        });
+    }
+    else
     {
+        // DEVELOPMENT: Use SQL Server with simpler configuration
+        options.UseSqlServer(connectionString);
         options.EnableSensitiveDataLogging();
     }
 });
