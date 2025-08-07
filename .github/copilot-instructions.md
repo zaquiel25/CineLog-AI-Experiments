@@ -269,7 +269,7 @@ applyTo: '**'
 - ✅ **Azure Key Vault Integration**: Complete secret management with automatic placeholder replacement
 - ✅ **Connection Resilience**: Retry policies and 60s timeouts for Azure SQL reliability
 - ✅ **Security Standards**: Zero hardcoded credentials, enterprise-grade secret management
-- ✅ **Private Access**: Restricted to IP 37.228.237.123 for controlled testing environment
+- ✅ **Private Access**: Restricted access controls for controlled testing environment
 
 #### 🔧 Production Architecture Breakthrough (2025-08-07)
 **MAJOR INNOVATION**: Direct Key Vault integration eliminating configuration file dependencies:

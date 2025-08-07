@@ -62,7 +62,7 @@
   - Azure SQL Database "CineLog_Production" with all 25 migrations applied
   - Azure Key Vault "cinelogdb" providing secure secret management
   - Managed Identity with RBAC permissions for secure authentication
-- **🔒 Production Security**: Private IP access (37.228.237.123) with enterprise-grade SSL/TLS encryption
+- **🔒 Production Security**: Private access controls with enterprise-grade SSL/TLS encryption
 
 #### 🔧 **Critical Technical Breakthrough: Configuration Architecture Redesign**
 - **Problem Solved**: Eliminated `appsettings.Production.json` file loading dependencies that caused deployment failures

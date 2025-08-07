@@ -15,7 +15,7 @@ CineLog is a comprehensive movie tracking application that helps you manage your
 - **🗄️ Azure SQL Database**: "CineLog_Production" fully operational with all 25 migrations successfully applied
 - **🔐 Azure Key Vault**: "cinelogdb" providing secure secret management for database passwords and API tokens
 - **🛡️ Enterprise Security**: Complete Managed Identity integration with RBAC permissions and DefaultAzureCredential authentication
-- **🔒 Production Security**: Private IP access (37.228.237.123) with SSL/TLS encryption and zero hardcoded secrets
+- **🔒 Production Security**: Private access controls with SSL/TLS encryption and zero hardcoded secrets
 - **📊 Application Status**: **100% Operational** - HTTP 200 responses with full ASP.NET Core functionality
 
 ### 🚀 **GitHub Publication Ready (August 2025)**

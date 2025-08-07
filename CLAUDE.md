@@ -199,7 +199,7 @@ az keyvault secret show --vault-name "cinelogdb" --name "TMDB--AccessToken"
 - **Development Security**: User Secrets for secure local development with zero hardcoded credentials
 - **Encryption**: All Azure SQL connections use `Encrypt=True` with SSL/TLS certificate validation
 - **Zero Secrets in Code**: Complete elimination of hardcoded credentials with enterprise-grade secret management
-- **Private Access**: Production environment secured with private IP access (37.228.237.123) for controlled testing
+- **Private Access**: Production environment secured with private access controls for controlled testing
 - **Repository Security**: Enhanced .gitignore protection for conversation transcripts and sensitive files
 
 ### 🏗️ Core Architecture Patterns
