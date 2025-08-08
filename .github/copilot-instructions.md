@@ -20,14 +20,45 @@ If a user requests information or actions related to an MCP server or extension,
 > For all AJAX POST requests (especially for Blacklist/Wishlist removal), **always include** the `X-Requested-With: XMLHttpRequest` header. This guarantees the backend returns JSON for AJAX, not HTML error pages, and prevents frontend parsing errors. This is required for robust, user-friendly error handling in all AJAX-powered UI actions.
 
 
-## 🗂️ Session Context Management
+## 🗂️ Critical Workflow System (Session 2025-08-08)
 
-**CRITICAL**: Always check SESSION_NOTES.md first to understand:
-- Current work-in-progress state and priorities
-- Previous session outcomes and decisions made
-- User preferences and coding patterns observed
-- Blocked items and their resolution status
-- Project context and architectural decisions
+### 🚨 MANDATORY WORKFLOW - ALWAYS START HERE
+**CRITICAL**: Every session MUST begin with SESSION_NOTES.md reading as first action:
+1. **Context Reading**: Read SESSION_NOTES.md to understand current project state
+2. **Compliance Check**: Verify request against CLAUDE.md golden rules
+3. **Agent Selection**: Choose optimal agent based on enhanced decision tree
+4. **Execution**: Execute with systematic 6-step pattern
+5. **Verification**: Build verification and compliance checking
+6. **Documentation**: Update SESSION_NOTES.md after significant milestones
+
+### 📋 6-Step Systematic Approach
+**For ALL development tasks, follow this pattern:**
+1. **Problem Analysis**: Understand requirements deeply, question existing patterns
+2. **Codebase Investigation**: Search, read, and understand relevant code
+3. **Planning & TodoWrite**: Create detailed todo list, check off systematically
+4. **Implementation**: Professional comments, build verification, CineLog patterns
+5. **Debugging & Testing**: Edge cases, user isolation, structured logging
+6. **Documentation Update**: Update SESSION_NOTES.md after major milestones
+
+### 🤖 Enhanced Agent Decision Tree
+**Proactive agent usage with enhanced decision criteria:**
+
+| Task Domain | Primary Agent | Auto-Triggers | Decision Criteria |
+|-------------|---------------|---------------|-------------------|
+| Movie features/algorithms | `cinelog-movie-specialist` | `test-writer-fixer` | MoviesController, suggestions, TMDB |
+| API integration issues | `tmdb-api-expert` | None | External API, rate limiting, caching |
+| Performance problems | `performance-optimizer` | `performance-benchmarker` | Slow queries, N+1 problems, cache |
+| Database changes | `ef-migration-manager` | `backend-architect` | Schema, migrations, EF Core |
+| Full-stack features | `aspnet-feature-developer` | `test-writer-fixer`, `ui-designer` | Complete MVC development |
+| Production deployment | `deployment-project-manager` | Multi-agent coordination | Strategic deployment, infrastructure |
+| Session continuity | `session-secretary` | Auto after milestones | Context management, note updates |
+
+### 🎯 Session Continuity Management
+**SESSION_NOTES.md is critical for project context and continuity:**
+- **Read First**: ALWAYS read as first action to understand current state
+- **Track Progress**: Note blockers, decisions, and next priorities
+- **Update Triggers**: After resolving blockers, TodoWrite completions, successful builds
+- **Context Preservation**: Maintain working context across sessions (gitignored file)
 
 ---
 
@@ -56,7 +87,7 @@ If a user requests information or actions related to an MCP server or extension,
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
 
-### 🔨 Build Requirements
+### 🔨 Build Requirements & Verification
 - **CRITICAL**: A task is NEVER complete if the application cannot build successfully
 - **ALWAYS** run `dotnet build` to verify compilation before marking tasks finished
 - Build failures MUST be resolved as part of implementation, not left for later
@@ -66,6 +97,7 @@ If a user requests information or actions related to an MCP server or extension,
   dotnet run --environment=Development   # Test local development configuration
   dotnet run --environment=Production    # Test Azure production configuration
   ```
+- **Compliance Verification**: Built-in verification against CLAUDE.md instructions
 
 ### 🌐 Azure Cloud Commands
 - **Database Migration to Azure SQL:**
@@ -78,10 +110,12 @@ If a user requests information or actions related to an MCP server or extension,
   az keyvault secret set --vault-name "[YOUR-KEYVAULT]" --name "TMDB--AccessToken" --value "your-tmdb-token"
   ```
 
-### 📋 Task Management
+### 📋 Task Management & TodoWrite Integration
 - **ALWAYS** use TodoWrite tool for complex multi-step tasks
 - **MUST** keep working until ALL todo items are checked off
 - **NEVER** end your turn until problem is completely solved and verified
+- **Systematic Workflow**: Follow 6-step pattern for all complex tasks
+- **Auto-Update SESSION_NOTES.md**: After TodoWrite milestone completions
 
 ### 🎯 Autonomous Operation
 - You are an agent - keep going until user's query is completely resolved
@@ -99,6 +133,7 @@ If a user requests information or actions related to an MCP server or extension,
 - Verbalize fundamental differences (e.g., "Director" is unique entity, "Decade" is paginated group)
 - Adapt solutions to new complexity from the start
 - **NEVER** assume old patterns will work without analysis
+- **Systematic Analysis**: Use 6-step workflow pattern for complex pattern adaptation
 
 ### 📐 Literal Implementation Over Creative Interpretation
 **CRITICAL: Stick to requirements - DO NOT INVENT THINGS:**
@@ -932,22 +967,25 @@ For new features, follow the established patterns in `MoviesController.cs` and u
 
 ---
 
-## 🤖 Advanced Claude Code Agent System (2025-07-29)
+## 🤖 Enhanced Claude Code Agent System (2025-08-08 Update)
 
-### 🎭 Master Agent Director
-The project now includes an intelligent **Master Agent Director** that analyzes task complexity and routes requests to optimal specialized agents:
+### 🎭 Master Agent Director with Critical Workflow Integration
+The project includes an intelligent **Master Agent Director** enhanced with the new critical workflow system:
 
-**Intelligence Framework:**
+**Intelligence Framework (Enhanced):**
 - **Task Analysis Engine**: Parses requests, analyzes complexity, detects domains
 - **Complexity Assessment**: Automatically classifies tasks as Simple/Medium/Complex/Strategic
-- **Strategic Planning**: Auto-triggered 5-step planning process for complex tasks
+- **Critical Workflow Integration**: Mandatory SESSION_NOTES.md reading as first action
+- **6-Step Systematic Pattern**: Built-in systematic approach for all complex tasks
+- **Strategic Planning**: Auto-triggered planning with TodoWrite integration
 - **Multi-Agent Orchestration**: Coordinates sequential and parallel agent workflows
+- **Session Continuity**: Automatic context preservation across sessions
 
-**Complexity-Based Routing:**
-- **Simple Tasks** (bug fixes) → Direct execution to specialist agent
-- **Medium Tasks** (enhancements) → Light planning → Execute
-- **Complex Tasks** (new features) → Strategic planning → Multi-agent execution
-- **Strategic Tasks** (major changes) → Deep planning → Phased execution
+**Complexity-Based Routing (Enhanced):**
+- **Simple Tasks** (bug fixes) → SESSION_NOTES.md check → Direct execution to specialist agent
+- **Medium Tasks** (enhancements) → SESSION_NOTES.md check → Light planning → Execute
+- **Complex Tasks** (new features) → Critical workflow → Strategic planning → Multi-agent execution
+- **Strategic Tasks** (major changes) → Full workflow → Deep planning → Phased execution
 
 ### 🎬 Core CineLog Subagents
 
@@ -1051,7 +1089,13 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 - **Infrastructure Design**: Load balancing, monitoring setup (APM), backup/recovery strategies, and scalability planning
 - **Deployment Phases**: Foundation setup → Performance infrastructure → Production deployment → Optimization & monitoring
 
-### 📊 Development Benefits
+### 📊 Enhanced Development Benefits (2025-08-08)
+- **Critical Workflow System**: Mandatory systematic approach addresses previous workflow issues
+- **Session Continuity**: SESSION_NOTES.md ensures context preservation across sessions
+- **Systematic Progress**: 6-step pattern prevents incomplete implementations
+- **Agent Utilization**: Enhanced decision tree ensures optimal agent selection
+- **Compliance Verification**: Built-in verification against CLAUDE.md golden rules
+- **Professional Standards**: Mandatory commenting and build verification
 - **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
 - **Proactive Quality**: Automatic testing, UI enhancement, and delight injection
 - **Strategic Planning**: Complex features receive proper planning before implementation
@@ -1060,7 +1104,11 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 - **Performance Excellence**: Built-in performance analysis and optimization recommendations
 - **Production Deployment Expertise**: Strategic deployment guidance with educational approach and cross-agent coordination
 
-### 🔑 Key Principles for Agent Coordination
+### 🔑 Key Principles for Agent Coordination (Enhanced)
+- **Critical Workflow Compliance**: All agents follow mandatory 6-step systematic pattern
+- **Session Context Awareness**: Every agent starts with SESSION_NOTES.md reading
+- **Build Verification**: All agents verify compilation before task completion
+- **Professional Standards**: Mandatory commenting and documentation standards
 - **Domain Expertise**: Each agent has deep knowledge of specific CineLog patterns
 - **Consistency**: All agents follow the same architectural conventions and coding standards
 - **Quality First**: Built-in quality gates and performance considerations

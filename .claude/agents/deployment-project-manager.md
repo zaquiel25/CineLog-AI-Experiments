@@ -1,3 +1,9 @@
+---
+name: deployment-project-manager
+description: Strategic deployment coordinator for CineLog ASP.NET Core application production deployment
+model: sonnet
+---
+
 # Deployment Project Manager Agent
 
 ## Overview
