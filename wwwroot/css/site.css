@@ -769,3 +769,30 @@ html {
 
 .navbar.bg-primary{border-bottom:1px solid var(--cinelog-gold) !important}
 .navbar.bg-dark{background-color:#060606!important;border-bottom:1px solid var(--cinelog-gold) !important}
+
+/* TMDB Attribution Styling */
+.tmdb-attribution {
+    max-width: 200px;
+    margin-left: auto;
+}
+
+.tmdb-logo {
+    filter: grayscale(20%);
+    transition: filter 0.3s ease;
+}
+
+.tmdb-logo:hover {
+    filter: grayscale(0%);
+}
+
+.tmdb-notice {
+    line-height: 1.3;
+    color: #000000;
+}
+
+@media (max-width: 767.98px) {
+    .tmdb-attribution {
+        max-width: none;
+        margin: 0 auto;
+    }
+}

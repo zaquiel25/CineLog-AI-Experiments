@@ -83,9 +83,21 @@
             </div>
         </main>
 
-        <footer class="border-top footer text-light bg-dark mt-auto py-3">
-            <div class="container text-center">
-                &copy; @DateTime.Now.Year - CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-light">Privacy</a>
+        <footer class="border-top footer text-dark bg-light mt-auto py-3">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8 text-center text-md-start">
+                        &copy; @DateTime.Now.Year - CineLog - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-dark">Privacy</a>
+                    </div>
+                    <div class="col-md-4 text-center text-md-end mt-2 mt-md-0">
+                        <div class="tmdb-attribution">
+                            <img src="~/images/tmdb-logo.svg" alt="TMDB Logo" class="tmdb-logo mb-1" style="height: 20px; opacity: 0.8;">
+                            <div class="tmdb-notice" style="font-size: 0.75rem;">
+                                This website uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </footer>
 

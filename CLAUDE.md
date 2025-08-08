@@ -41,6 +41,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **MUST** keep working until ALL todo items are checked off
 - **NEVER** end your turn until problem is completely solved and verified
 
+### 🚫 PRODUCTION DEPLOYMENT SAFEGUARDS - CRITICAL SECURITY
+- **NEVER** deploy to production without EXPLICIT user permission
+- **NEVER** run deployment commands unless user says "deploy to production" or similar
+- **NEVER** push to git unless explicitly requested
+- **ALWAYS** work locally by default - production site must remain stable
+- **FORBIDDEN COMMANDS without explicit permission:**
+  - `az webapp deployment`
+  - `curl -X POST "https://cinelog-app.scm.azurewebsites.net/api/zipdeploy"`
+  - `git push` 
+  - Any Azure deployment command
+- **REQUIRED**: User must explicitly say "deploy this to production" or "push to Azure"
+
 ### 🚫 Never Auto-Commit
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
@@ -129,12 +141,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🛠️ Development Commands
 
-### 🔨 Build and Run
+### 🛡️ DEVELOPMENT SAFETY PROTOCOL
+**PRODUCTION SITE: https://cinelog-app.azurewebsites.net/ (LIVE - DO NOT TOUCH)**
+**LOCAL DEVELOPMENT: https://localhost:7186 (SAFE FOR TESTING)**
+
 ```bash
-dotnet build                    # Build the project
-dotnet run                      # Run the application
-dotnet watch run               # Run with hot reload during development
+# ✅ ALWAYS SAFE - Work locally
+dotnet watch run                # Start local development server
+
+# 🚨 DANGER - Never run without explicit permission
+az webapp deployment            # FORBIDDEN without "deploy to production" 
+git push                        # FORBIDDEN without "push to git"
 ```
+
+### 🏠 LOCAL DEVELOPMENT (SAFE) - DEFAULT MODE
+**ALWAYS work locally first - production site stays untouched!**
+
+```bash
+# ✅ SAFE: Local development and testing
+dotnet build                    # Build locally
+dotnet run                      # Run locally at https://localhost:7186
+dotnet watch run               # Hot reload development (RECOMMENDED)
+
+# ✅ SAFE: Local testing commands  
+dotnet test                     # Run tests locally
+dotnet ef database update      # Update local database only
+```
+
+### 🔨 Build and Run
 
 ### 🔐 Secure Configuration Setup
 ```bash
@@ -160,12 +194,17 @@ curl -I https://[YOUR-APP-NAME].azurewebsites.net/
 # Expected: HTTP/2 200 (Application confirmed operational)
 ```
 
-### 🗄️ Database Commands
+### 🗄️ Database Commands (LOCAL ONLY)
 ```bash
-dotnet ef migrations add <Name>        # Create new migration
-dotnet ef database update              # Apply migrations to database
-dotnet ef database drop                # Drop database (development only)
+# ✅ SAFE: Local database operations
+dotnet ef migrations add <Name>        # Create new migration locally
+dotnet ef database update              # Apply migrations to LOCAL database
+dotnet ef database drop                # Drop LOCAL database only
 ```
+
+### ⚠️ DANGER ZONE - PRODUCTION DEPLOYMENT
+**🚨 REQUIRES EXPLICIT USER PERMISSION 🚨**
+**NEVER run these commands without user saying "deploy to production"**
 
 ### 🚀 Production Deployment
 ```bash

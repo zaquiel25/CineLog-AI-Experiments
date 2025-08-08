@@ -1,5 +1,26 @@
 ## 2025-08-08
 
+### 🛡️ **PRODUCTION DEPLOYMENT SAFEGUARDS** - Critical Development Security Enhancement!
+
+#### 🚨 **Enhanced Development Safety Protocol**
+**Security Enhancement**: Implemented comprehensive production deployment safeguards to prevent accidental deployments to the live CineLog production environment at https://cinelog-app.azurewebsites.net/.
+
+**Problem Addressed**: Following recent deployment issues and fixes, implemented proactive safeguards to prevent unintended production deployments during development work.
+
+**Technical Implementation**:
+- **CLAUDE.md Integration**: Added "PRODUCTION DEPLOYMENT SAFEGUARDS - CRITICAL SECURITY" section with explicit command restrictions
+- **GitHub Copilot Protection**: Updated `.github/copilot-instructions.md` with identical safety measures for comprehensive AI assistant coverage
+- **Forbidden Command List**: Automatic blocking of `az webapp deployment`, `curl -X POST` Azure ZIP deploys, and `git push` without explicit user permission
+- **Development Safety Protocol**: Visual separation between safe local commands and restricted production operations
+
+**Security Features**:
+- **Explicit Permission Required**: AI assistants cannot execute deployment commands without clear user authorization ("deploy to production", "push to Azure", etc.)
+- **Local Development Default**: All development work automatically defaults to safe local environment (https://localhost:7186)
+- **Production Environment Protection**: Live production site remains stable and untouched during all development activities
+- **Dual AI Coverage**: Both Claude Code and GitHub Copilot follow identical deployment safety standards
+
+**User Impact**: Provides peace of mind for safe local development while ensuring production site stability. Developers can experiment and test locally without risk of accidentally affecting the live application.
+
 ### ⚡ **USER-DRIVEN OPTIMIZATION: SESSION_NOTES.md Reading Efficiency** - 94.2% Token Reduction Achievement!
 
 #### 🎯 **User Feedback & Optimization Implementation**

@@ -83,6 +83,18 @@ If a user requests information or actions related to an MCP server or extension,
 - Comments MUST be in English and follow professional standards
 - **NEVER** leave new code uncommented - this is unprofessional
 
+### 🚫 PRODUCTION DEPLOYMENT SAFEGUARDS - CRITICAL SECURITY
+- **NEVER** deploy to production without EXPLICIT user permission
+- **NEVER** run deployment commands unless user says "deploy to production" or similar
+- **NEVER** push to git unless explicitly requested  
+- **ALWAYS** work locally by default - production site must remain stable
+- **FORBIDDEN COMMANDS without explicit permission:**
+  - `az webapp deployment`
+  - `curl -X POST "https://cinelog-app.scm.azurewebsites.net/api/zipdeploy"`
+  - `git push`
+  - Any Azure deployment command
+- **REQUIRED**: User must explicitly say "deploy this to production" or "push to Azure"
+
 ### 🚫 NEVER Auto-Commit
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
@@ -174,6 +186,33 @@ fetch('/Movies/RemoveFromBlacklist', {
 + If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
 + Quick tip: You can inspect network requests in your browser's dev tools to confirm the header is present and the response is valid JSON.
 - If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
+
+## 🛡️ DEVELOPMENT SAFETY PROTOCOL
+**PRODUCTION SITE: https://cinelog-app.azurewebsites.net/ (LIVE - DO NOT TOUCH)**
+**LOCAL DEVELOPMENT: https://localhost:7186 (SAFE FOR TESTING)**
+
+```bash
+# ✅ ALWAYS SAFE - Work locally  
+dotnet watch run                # Start local development server
+
+# 🚨 DANGER - Never run without explicit permission
+az webapp deployment            # FORBIDDEN without "deploy to production"
+git push                        # FORBIDDEN without "push to git"
+```
+
+### 🏠 LOCAL DEVELOPMENT (SAFE) - DEFAULT MODE
+**ALWAYS work locally first - production site stays untouched!**
+
+```bash
+# ✅ SAFE: Local development and testing
+dotnet build                    # Build locally
+dotnet run                      # Run locally at https://localhost:7186
+dotnet watch run               # Hot reload development (RECOMMENDED)
+
+# ✅ SAFE: Local testing commands
+dotnet test                     # Run tests locally
+dotnet ef database update      # Update local database only
+```
 
 ## 🔄 Development Workflow
 
@@ -2128,3 +2167,29 @@ public async Task RefactoredMethod_ShouldReturnSameResults()
     Assert.That(newResult, Is.EqualTo(oldResult));
 }
 ```
+
+---
+
+## ⚠️ DANGER ZONE - PRODUCTION DEPLOYMENT
+**🚨 REQUIRES EXPLICIT USER PERMISSION 🚨**
+**NEVER run these commands without user saying "deploy to production"**
+
+### 🚀 Production Deployment Commands
+```bash
+# 🚨 FORBIDDEN without explicit permission:
+az webapp deployment             # Deploy to Azure App Service
+curl -X POST "https://cinelog-app.scm.azurewebsites.net/api/zipdeploy"  # Deploy ZIP
+git push origin main             # Push code to repository
+dotnet publish -c Release       # Build for production
+
+# ✅ Safe commands (local only):
+dotnet build                    # Local build
+dotnet run                      # Local development server
+dotnet watch run                # Local hot reload
+```
+
+### 🛡️ Safety Requirements:
+1. **User must explicitly request deployment**: "deploy to production", "push to Azure", etc.
+2. **Never assume user wants to deploy**: Always ask for permission
+3. **Default to local development**: Keep production site stable
+4. **Test locally first**: Always verify changes work locally before any deployment discussion

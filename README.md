@@ -86,6 +86,22 @@ CineLog is a comprehensive movie tracking application that helps you manage your
 - Scalable for growing SESSION_NOTES.md files (1000+ lines ready)
 - Enhanced signal-to-noise ratio for relevant session context
 
+### 🛡️ **PRODUCTION DEPLOYMENT SAFEGUARDS** - Critical Security Enhancement!
+
+**🚨 DEVELOPMENT SAFETY PROTOCOL IMPLEMENTED**: Added comprehensive production deployment safeguards to prevent accidental deployments to live production environment at https://cinelog-app.azurewebsites.net/.
+
+**🔒 Security Features**:
+- **Explicit Permission Required**: AI assistants cannot deploy without clear user authorization
+- **Forbidden Commands**: Automatic blocking of `az webapp deployment`, Azure ZIP deploy, and `git push` without permission
+- **Local Development Default**: All development work defaults to safe local environment (https://localhost:7186)
+- **Production Protection**: Live production site remains stable during all development activities
+
+**📋 Enhanced Safety Protocol**:
+- **CLAUDE.md Integration**: Production safeguards built into core development instructions
+- **GitHub Copilot Protection**: `.github/copilot-instructions.md` updated with identical safety measures
+- **Dual AI Coverage**: Both Claude Code and GitHub Copilot follow same deployment safety standards
+- **Clear Separation**: Visual distinction between safe local commands and restricted production operations
+
 ### 🤝 **GITHUB COPILOT ENHANCEMENT** - Synchronized AI Assistance!
 
 **📚 Critical Workflow Integration**: Updated `.github/copilot-instructions.md` with comprehensive workflow system ensuring both Claude Code and GitHub Copilot follow identical development patterns and professional standards.
