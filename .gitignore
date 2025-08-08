@@ -16,6 +16,12 @@
 publish/
 *.zip
 
+# Azure logs and deployment artifacts (downloaded for troubleshooting)
+LogFiles/
+deployments/
+current-logs.zip
+deployment-*.zip
+
 # Visual Studio Code files
 .vscode/
 
