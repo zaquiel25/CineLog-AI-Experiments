@@ -57,38 +57,64 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **NEVER** stage and commit files automatically
 - Only commit when explicitly asked by the user
 
-### 🗂️ Session Context Management - OPTIMIZED with 94.2% Efficiency Gain!
-**CRITICAL**: ALWAYS read SESSION_NOTES.md as first action in every conversation using INTELLIGENT DATE-BASED SEARCH
-- **OPTIMIZATION IMPLEMENTED**: Use smart search pattern instead of reading entire file (saves 94.2% tokens)
-- **Search Strategy**: Current date → previous day → 2 days ago with 75-100 line context extraction
+### 🗂️ Session Context Management - MANDATORY WORKFLOW
+**CRITICAL**: This process is REQUIRED at start and end of every conversation
+
+#### 📖 **START OF EVERY CONVERSATION:**
+- **MANDATORY FIRST ACTION**: Use Grep tool with intelligent date-based search:
+  1. `grep "Session YYYY-MM-DD" SESSION_NOTES.md -A 75` (current date)
+  2. If no results: `grep "Session YYYY-MM-DD" SESSION_NOTES.md -A 75` (previous day)
+  3. If no results: `grep "Session YYYY-MM-DD" SESSION_NOTES.md -A 75` (2 days ago)
+  4. Only use Read tool as fallback if no recent sessions found
 - **Performance**: ~248 tokens vs. ~4,290 tokens (94.2% reduction)
-- Review the last entry to understand current project state and work-in-progress
-- Note blockers, decisions made, and next priorities from previous sessions
-- **AUTO-UPDATE TRIGGERS**: Update notes immediately after:
-  - Resolving any major error or blocker
-  - Completing TodoWrite milestones (especially when marking items complete)
-  - Successful deployments, builds, or infrastructure changes
-  - Every 20+ messages during complex troubleshooting sessions
-  - Before switching to different problem areas
+- Review recent context to understand current project state and work-in-progress
+
+#### ✍️ **END OF EVERY CONVERSATION/TASK:**
+- **MANDATORY**: Add brief summary (2-3 lines) to SESSION_NOTES.md stating what was accomplished
+- Use Edit tool to append new session entry with date, goals, and key accomplishments
+- This ensures future sessions have proper context continuation
+
+#### 🔧 **Implementation Details:**
+- Use Grep tool (not Bash commands) for date-based search
+- Search pattern: "Session YYYY-MM-DD" with -A 75 for context
 - This file is gitignored - contains local working context only, never committed
 
 ### 📋 **CRITICAL WORKFLOW SYSTEM (2025-08-08) - ENHANCED WITH OPTIMIZATION ACHIEVEMENT**
 **MANDATORY 6-STEP SYSTEMATIC WORKFLOW - IMPLEMENTED WITH 93.7% EFFICIENCY GAIN:**
 1. **Context Review**: Read SESSION_NOTES.md for previous session context and work-in-progress
 2. **Compliance Check**: Verify task requirements against CLAUDE.md instructions  
-3. **Agent Selection**: Use decision tree to determine optimal agent for task complexity and type
+3. **Agent Selection**: MANDATORY - Classify task and route to appropriate agent:
+   - **Task Type Assessment**: Identify primary domain (movie/TMDB/performance/database/documentation/deployment/etc.)
+   - **Agent Selection**: Select from decision tree based on task classification:
+     * Movie features/CRUD → `cinelog-movie-specialist`
+     * TMDB API work → `tmdb-api-expert`
+     * Caching/optimization → `performance-optimizer`
+     * Performance testing → `performance-monitor`
+     * Database/EF work → `ef-migration-manager`
+     * Full-stack MVC features → `aspnet-feature-developer`
+     * Deployment/infrastructure → `deployment-project-manager`
+     * Session management → `session-secretary`
+     * Documentation updates → `docs-architect`
+     * Complex research tasks → `general-purpose`
+   - **Execution**: Use Task tool to launch appropriate agent (usage is MANDATORY, not optional)
 4. **Execution**: Implement with appropriate agent expertise and professional standards
 5. **Verification**: Ensure build success, testing completion, and TodoWrite task completion
 6. **Documentation**: Update session notes with progress, decisions, and next priorities
 
-**AGENT DECISION TREE - PROACTIVE USAGE:**
-- Movie features/suggestions → `cinelog-movie-specialist`
-- TMDB API integration → `tmdb-api-expert` 
-- Performance issues → `performance-optimizer`
-- Database changes → `ef-migration-manager`
-- Full-stack features → `aspnet-feature-developer`
-- Production deployment → `deployment-project-manager`
-- Session continuity → `session-secretary` (with 94.2% efficiency optimization - USER-DRIVEN BREAKTHROUGH)
+**AGENT DECISION TREE - MANDATORY PROACTIVE USAGE (All 10 Agents):**
+- Movie features/suggestions → `cinelog-movie-specialist` (REQUIRED)
+- TMDB API integration → `tmdb-api-expert` (REQUIRED)
+- Performance issues → `performance-optimizer` (REQUIRED)
+- Performance testing/validation → `performance-monitor` (REQUIRED)
+- Database changes → `ef-migration-manager` (REQUIRED)  
+- Full-stack features → `aspnet-feature-developer` (REQUIRED)
+- Production deployment → `deployment-project-manager` (REQUIRED)
+- Session continuity → `session-secretary` (REQUIRED)
+- Documentation work → `docs-architect` (REQUIRED)
+- Complex multi-step research → `general-purpose` (REQUIRED)
+
+**CRITICAL**: Agent usage is MANDATORY, not optional. Every task MUST be routed through appropriate agent(s).
+**COVERAGE**: All 10 available agents must be actively used - no agent should be ignored or underutilized.
 
 ---
 
