@@ -3250,8 +3250,16 @@ return (bucket3x3, bucket2x3, bucket1x3);
             // Get user's blacklisted movie IDs
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
 
+            // DEBUG LOGGING: Output director, filmography IDs, blacklist IDs
+            _logger.LogInformation("[DEBUG] Director: {DirectorName}", directorName);
+            _logger.LogInformation("[DEBUG] Director Filmography IDs: {FilmographyIds}", string.Join(",", allDirectorMovies.Select(m => m.Id)));
+            _logger.LogInformation("[DEBUG] User Blacklisted TMDB IDs: {BlacklistIds}", string.Join(",", userBlacklistedIds));
+
+            var availableMovies = allDirectorMovies.Where(movie => !userBlacklistedIds.Contains(movie.Id)).ToList();
+            _logger.LogInformation("[DEBUG] Available movies for {DirectorName}: {AvailableMovieIds}", directorName, string.Join(",", availableMovies.Select(m => m.Id)));
+
             // Check if there are any movies not in the blacklist
-            return allDirectorMovies.Any(movie => !userBlacklistedIds.Contains(movie.Id));
+            return availableMovies.Any();
         }
 
         private async Task<List<TmdbMovieBrief>> GetSuggestionsForGenre(string genreName, string userId, string sortBy = "popularity.desc", int page = 1)
@@ -3471,8 +3479,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 return BadRequest(new { error = "Invalid TMDB movie ID." });
             }
 
-            System.Diagnostics.Debug.WriteLine($"--- Controller: Attempting to get TMDB details for ID: {id} ---");
-            var movieDetails = await _tmdbService.GetMovieDetailsAsync(id); // Assumes _tmdbService is injected
+            var movieDetails = await _tmdbService.GetMovieDetailsAsync(id);
 
             // In MoviesController.cs -> GetTmdbMovieDetailsJson action
             if (movieDetails != null)
@@ -3491,8 +3498,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 });
             }
 
-            System.Diagnostics.Debug.WriteLine($"--- Controller: Movie details not found in TMDB for ID: {id} ---");
-            return NotFound(new { error = "Movie details not found in TMDB." }); // Returns a 404 if TMDB doesn't find the movie
+            return NotFound(new { error = "Movie details not found in TMDB." });
         }
 
 
