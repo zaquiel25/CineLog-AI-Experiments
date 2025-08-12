@@ -79,8 +79,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Search pattern: "Session YYYY-MM-DD" with -A 75 for context
 - This file is gitignored - contains local working context only, never committed
 
-### 📋 **CRITICAL WORKFLOW SYSTEM (2025-08-08) - ENHANCED WITH OPTIMIZATION ACHIEVEMENT**
-**MANDATORY 6-STEP SYSTEMATIC WORKFLOW - IMPLEMENTED WITH 93.7% EFFICIENCY GAIN:**
+### 📋 **CRITICAL WORKFLOW SYSTEM (2025-08-12) - ENHANCED WITH AGENT FRAMEWORK OPTIMIZATION**
+**MANDATORY 6-STEP SYSTEMATIC WORKFLOW - OPTIMIZED WITH 100% AGENT COVERAGE:**
 1. **Context Review**: Read SESSION_NOTES.md for previous session context and work-in-progress
 2. **Compliance Check**: Verify task requirements against CLAUDE.md instructions  
 3. **Agent Selection**: MANDATORY - Classify task and route to appropriate agent:
@@ -97,6 +97,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
      * Documentation updates → `docs-architect`
      * Complex research tasks → `general-purpose`
    - **Execution**: Use Task tool to launch appropriate agent (usage is MANDATORY, not optional)
+   - **CRITICAL**: Zero direct work - all substantial tasks MUST be routed through appropriate agents
 4. **Execution**: Implement with appropriate agent expertise and professional standards
 5. **Verification**: Ensure build success, testing completion, and TodoWrite task completion
 6. **Documentation**: Update session notes with progress, decisions, and next priorities
@@ -115,6 +116,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CRITICAL**: Agent usage is MANDATORY, not optional. Every task MUST be routed through appropriate agent(s).
 **COVERAGE**: All 10 available agents must be actively used - no agent should be ignored or underutilized.
+**ZERO DIRECT WORK**: Working directly without agent routing is forbidden - all substantial tasks require specialist expertise.
 
 ---
 
@@ -154,16 +156,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **📚 For detailed agent documentation, see [AGENTS.md](./.claude/agents/AGENTS.md)**
 
-### 🎯 Agent Selection Guide
-| Task Type | Primary Agent | Use Case |
-|-----------|---------------|----------|
-| Movie features/suggestions | `cinelog-movie-specialist` | Domain expertise |
-| TMDB API integration | `tmdb-api-expert` | External API operations |
-| Performance issues | `performance-optimizer` | Caching & optimization |
-| Database changes | `ef-migration-manager` | Schema & migrations |
-| Full-stack features | `aspnet-feature-developer` | Complete MVC development |
-| Production deployment | `deployment-project-manager` | Strategic deployment coordination |
-| Session continuity | `session-secretary` | Automatic context management |
+### 🎯 Enhanced Agent Selection Guide (2025-08-12)
+| Task Type | Primary Agent | Use Case | Multi-Agent Coordination |
+|-----------|---------------|----------|-------------------------|
+| Movie features/suggestions | `cinelog-movie-specialist` | Domain expertise | + `performance-optimizer` if needed |
+| TMDB API integration | `tmdb-api-expert` | External API operations | + `performance-optimizer` for caching |
+| Performance issues | `performance-optimizer` | Caching & optimization | + `performance-monitor` for validation |
+| Database changes | `ef-migration-manager` | Schema & migrations | + `performance-optimizer` for indexes |
+| Full-stack features | `aspnet-feature-developer` | Complete MVC development | + `docs-architect` for updates |
+| Production deployment | `deployment-project-manager` | Strategic deployment coordination | Multiple agents for coordination |
+| Session continuity | `session-secretary` | Automatic context management | Autonomous operation |
+| Documentation work | `docs-architect` | Comprehensive documentation | + domain agents for context |
+| Complex research | `general-purpose` | Multi-domain analysis | + domain agents for implementation |
+| Performance testing | `performance-monitor` | Validation & metrics | + `performance-optimizer` for fixes |
 
 ---
 
@@ -298,6 +303,7 @@ grep "Session $(date -d '2 days ago' +%Y-%m-%d)" SESSION_NOTES.md -A 75 # 2 days
 
 ### 📄 Documentation Management
 ```bash
+/session                        # Automatic session notes update and context management
 /update-docs [description]      # Comprehensive documentation update after changes
 /docs [description]             # Quick documentation sync
 ```

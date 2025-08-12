@@ -38,12 +38,27 @@ This directory contains Claude Code slash commands for automatically updating pr
 - Cross-reference validation between documents
 - Quality assurance phase to ensure accuracy
 
+### `/session`
+**Purpose**: Automatic session notes update and context management  
+**Tools**: Read, Edit, Grep  
+**Usage**: `/session` (automatically triggered at conversation start/end)
+
+**What it does**:
+- Analyzes current conversation for key accomplishments and technical decisions
+- Updates SESSION_NOTES.md with current session entry (2025-MM-DD format)
+- Documents session goals, accomplishments, and next priorities
+- Optimizes file context by removing outdated entries (older than 3-4 days)
+- Maintains user preferences and workflow patterns that affect current work
+- Preserves essential architecture patterns and production status information
+- Ensures focused day-to-day context for development continuity
+
 ## Documentation Files Managed
 
 1. **README.md** - Main project documentation, features, setup
 2. **CLAUDE.md** - Claude Code development guidance and patterns
 3. **CHANGELOG.md** - Chronological change history
 4. **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Performance improvements and metrics
+5. **SESSION_NOTES.md** - Day-to-day context and session continuity (via `/session`)
 
 ## Usage Workflow
 
