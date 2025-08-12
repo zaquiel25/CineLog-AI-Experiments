@@ -1,82 +1,97 @@
 ---
-description: "Automatically update all documentation files and session notes after successful changes"
+description: "Intelligently analyzes recent work and updates only relevant documentation files based on context and changes made"
 allowed-tools: ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "LS", "WebFetch"]
-argument-hint: "[optional: specific change description]"
+argument-hint: "[optional: brief description of what was accomplished]"
 ---
 
-# Auto-Update Documentation & Session Notes Command
+# Smart Documentation Update Command
 
-You are tasked with automatically updating all documentation files and session context in this CineLog-AI-Experiments project after successful code changes.
+You are an intelligent documentation coordinator that analyzes recent work and selectively updates only the documentation files that are actually impacted by the changes made.
 
 ## Context
-This is an ASP.NET Core movie logging application with sophisticated suggestion algorithms, TMDB API integration, and performance optimizations. The project has multiple documentation files and a session secretary agent system that need to stay synchronized with code changes. The SESSION_NOTES.md file maintains cross-session context for development continuity.
+This is an ASP.NET Core movie logging application with sophisticated suggestion algorithms, TMDB API integration, and performance optimizations. After completing development tasks, this command intelligently determines which documentation files need updates and what content should be added.
 
-## Your Mission
+## Your Smart Analysis Process
 
-1. **Analyze Recent Changes**: 
-   - Check git status and recent commits to understand what changed
-   - Examine modified files to understand the scope of changes
-   - Identify any new features, performance improvements, or architectural changes
+1. **Context Analysis**: 
+   - Review the current conversation to understand what was just accomplished
+   - Examine any code changes, new features, or improvements made
+   - Identify the scope and nature of the work completed
 
-2. **Update Documentation Files**:
-   - `README.md` - Update features, architecture overview, and setup instructions
-   - `CLAUDE.md` - Update development commands, architecture patterns, and guidance
-   - `CHANGELOG.md` - Add new entries for the changes made
-   - `PERFORMANCE_OPTIMIZATION_SUMMARY.md` - Update if performance-related changes were made
-   - `SESSION_NOTES.md` - Update session context with accomplishments, decisions, and next priorities
+2. **Impact Assessment**:
+   - **README.md** - Update if: new features added, architecture changed, setup process modified
+   - **CHANGELOG.md** - Update if: any user-facing changes, new features, bug fixes, performance improvements
+   - **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Update if: performance improvements, caching changes, API optimizations
+   - **CLAUDE.md** - Update if: development patterns changed, new AI guidance needed, workflow updates
+   - **SESSION_NOTES.md** - Always update with session accomplishments and context
 
-3. **Ensure Consistency**:
-   - Maintain existing formatting and style
-   - Keep technical accuracy
-   - Preserve important details while adding new information
-   - Follow established documentation patterns
+3. **Selective Updates**:
+   - **Only update files that are actually impacted** by the recent work
+   - **Skip files that don't need changes** - don't update everything just because
+   - **Provide clear reasoning** for which files were updated and why
+   - **Maintain consistency** across all updated files
 
-## Specific Instructions
+## Smart Update Examples
 
-### For README.md:
-- Update feature lists if new functionality was added
-- Modify architecture sections if core patterns changed
-- Update setup instructions if new dependencies were added
-- Keep the visual hierarchy and branding consistent
+### Example 1: Feature Implementation
+```
+User completes: "Added user profile page"
+Smart Analysis: 
+✅ README.md - Add to features section
+✅ CHANGELOG.md - Add feature entry  
+❌ PERFORMANCE_OPTIMIZATION_SUMMARY.md - No performance impact
+❌ CLAUDE.md - No AI guidance changes needed
+✅ SESSION_NOTES.md - Always update with session context
+```
 
-### For CLAUDE.md:
-- Add new development commands if any were introduced
-- Update architecture patterns if code structure changed
-- Add new performance patterns or optimization guidance
-- Update build/test/deployment instructions as needed
+### Example 2: Performance Optimization  
+```
+User completes: "Optimized database queries"
+Smart Analysis:
+❌ README.md - No user-facing changes
+✅ CHANGELOG.md - Add performance entry
+✅ PERFORMANCE_OPTIMIZATION_SUMMARY.md - Add optimization details
+❌ CLAUDE.md - Patterns already documented
+✅ SESSION_NOTES.md - Always update with session context
+```
 
-### For CHANGELOG.md:
-- Add a new entry with today's date
-- Categorize changes (Features, Performance, Bug Fixes, etc.)
-- Be specific about what was changed and why
-- Follow the existing changelog format
+### Example 3: Documentation Work
+```
+User completes: "Cleaned up CLAUDE.md file"
+Smart Analysis:
+❌ README.md - No feature/architecture changes
+❌ CHANGELOG.md - Documentation cleanup not user-facing
+❌ PERFORMANCE_OPTIMIZATION_SUMMARY.md - No performance impact
+❌ CLAUDE.md - Already updated in the work itself
+✅ SESSION_NOTES.md - Always update with session context
+```
 
-### For PERFORMANCE_OPTIMIZATION_SUMMARY.md:
-- Only update if performance-related changes were made
-- Add new optimization techniques or improvements
-- Update metrics or performance notes
-- Maintain the technical focus
+## Update Guidelines
 
-### For SESSION_NOTES.md:
-- **Update Current Session**: Add/update the current session entry with today's date
-- **Document Accomplishments**: Record what was completed in this session
-- **Track Key Decisions**: Note important architectural choices and their rationale
-- **Record User Preferences**: Capture any coding patterns or workflow preferences observed
-- **Note Blockers/Issues**: Document any problems encountered and their resolution status
-- **Set Next Priorities**: Clear action items and context for the next session
-- **Maintain Privacy**: Keep notes focused on technical decisions, not sensitive business logic
-- **Follow Session Notes Format**: Use the established markdown structure for consistency
+### When to Update Each File:
+- **README.md**: New features, architecture changes, setup modifications, security enhancements
+- **CHANGELOG.md**: User-facing changes, new features, bug fixes, major optimizations, deployments  
+- **PERFORMANCE_OPTIMIZATION_SUMMARY.md**: Query optimizations, caching improvements, API efficiency gains
+- **CLAUDE.md**: New development patterns, AI guidance updates, workflow changes
+- **SESSION_NOTES.md**: ALWAYS update with session accomplishments and context
+
+### Smart Decision Making:
+1. **Analyze what was actually accomplished** in the recent work
+2. **Determine real impact** - don't assume all files need updates
+3. **Be selective and purposeful** - quality over quantity
+4. **Provide clear reasoning** - explain why files were/weren't updated
+5. **Maintain consistency** across all files that are updated
 
 ## Change Description
 $ARGUMENTS
 
-## Important Notes
-- Be thorough but concise
-- Maintain existing documentation quality and style
-- Don't duplicate information across files
-- Focus on user-facing changes and developer guidance
-- Test that all information is accurate and up-to-date
-- **Session Context**: Always read SESSION_NOTES.md first to understand current project state
-- **Privacy Protection**: SESSION_NOTES.md is gitignored and contains local development context only
+## Execution Process
 
-Start by reading SESSION_NOTES.md for context, analyze recent changes, then systematically update each documentation file as needed.
+1. **Read SESSION_NOTES.md** for current project context
+2. **Analyze recent conversation** to understand what was accomplished  
+3. **Make intelligent decisions** about which files need updates
+4. **Update only relevant files** with appropriate content
+5. **Report what was updated and why** - be transparent about decisions
+6. **Always update SESSION_NOTES.md** with session context and accomplishments
+
+Remember: **Intelligence over automation** - don't update everything, update what matters.

@@ -203,32 +203,14 @@ dotnet ef database update      # Update local database only
 
 ### 🔨 Build and Run
 
-### 🔐 Secure Configuration Setup
+### 🔐 Configuration Setup
+**For detailed setup instructions, see [README.md](README.md#setup)**
+
+**AI Development Essentials:**
 ```bash
-# Development secrets setup (secure, never committed)
-dotnet user-secrets set "TMDB:AccessToken" "your-tmdb-bearer-token"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
-  "Server=localhost,1433;Database=Ezequiel_Movies;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;Connection Timeout=60"
-
-# Google OAuth development setup (secure, never committed)
-dotnet user-secrets set "Authentication:Google:ClientId" "your-google-client-id.apps.googleusercontent.com"
-dotnet user-secrets set "Authentication:Google:ClientSecret" "your-google-client-secret"
-
-# Cross-platform SQL Server setup (Docker)
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
-   -p 1433:1433 --name cinelog-sql -d mcr.microsoft.com/mssql/server:2022-latest
-
-# Production environment variables (Azure App Service)
-export AZURE_KEY_VAULT_URI="https://[YOUR-KEYVAULT].vault.azure.net/"
-export ASPNETCORE_ENVIRONMENT="Production"
-
-# Local testing of production configuration
-ASPNETCORE_ENVIRONMENT=Production dotnet run
-# This will test Key Vault integration and direct connection string construction
-
-# Verify Azure deployment status - CineLog is LIVE! ✅
-curl -I https://[YOUR-APP-NAME].azurewebsites.net/
-# Expected: HTTP/2 200 (Application confirmed operational)
+# Quick setup for AI development
+dotnet user-secrets set "TMDB:AccessToken" "your-token"
+dotnet watch run  # Start with hot reload
 ```
 
 ### 🗄️ Database Commands (LOCAL ONLY)
@@ -243,173 +225,38 @@ dotnet ef database drop                # Drop LOCAL database only
 **🚨 REQUIRES EXPLICIT USER PERMISSION 🚨**
 **NEVER run these commands without user saying "deploy to production"**
 
-### 🚀 Production Deployment - ✅ LATEST: 2025-08-11 Clean Code Deployment
+### 🚀 Production Deployment
+**🚨 REQUIRES EXPLICIT USER PERMISSION 🚨**
+
+**For detailed deployment procedures and latest status, see [README.md](README.md#deployment)**
+
+**AI Deployment Essentials:**
 ```bash
-# ✅ LATEST DEPLOYMENT STATUS - CineLog Production Cleanup Complete!
-# Deployment ID: 638ff88b-f887-41fc-a700-13a75c1798b9 (RuntimeSuccessful)
-# Production URL: https://cinelog-app.azurewebsites.net/ (VERIFIED OPERATIONAL)
+# Pre-deployment cleanup (MANDATORY)
+dotnet build -c Release  # Must show 0 warnings, 0 errors
 
-# BEST PRACTICE: Clean Release Build First
-dotnet build -c Release  # Verify 0 warnings, 0 errors
-dotnet publish -c Release -o ./publish-clean  # All static files included
+# Clean diagnostic code from:
+# - Program.cs (Console.WriteLine statements)
+# - Controllers/*.cs (Debug.WriteLine calls) 
+# - Identity pages (debug logging)
 
-# Professional Deployment Package
+# Professional deployment
+dotnet publish -c Release -o ./publish-clean
 cd publish-clean && zip -r ../deployment-clean-$(date +%Y%m%d-%H%M).zip .
-
-# Azure CLI Deployment (Recommended)
-az webapp deploy --resource-group CineLog --name cinelog-app --src-path "deployment-clean-YYYYMMDD-HHMM.zip" --type zip
-
-# Comprehensive Verification Checklist
-curl -I https://cinelog-app.azurewebsites.net/  # Main app: HTTP/2 200 ✅
-curl -I https://cinelog-app.azurewebsites.net/css/bootstrap.min.css  # CSS: HTTP/2 200 ✅
-curl -I https://cinelog-app.azurewebsites.net/css/site.css  # Custom CSS: HTTP/2 200 ✅
-curl -I https://cinelog-app.azurewebsites.net/lib/jquery/dist/jquery.min.js  # JS: HTTP/2 200 ✅
-curl -I https://cinelog-app.azurewebsites.net/Identity/Account/Register  # Registration: HTTP/2 200 ✅
-
-# Performance: Application startup optimized with diagnostic code removal
-# Security: 9.5/10 security score, zero hardcoded credentials
-# Quality: Clean, professional code with 0 build warnings/errors
-```
-
-### 🧹 **CRITICAL: Code Cleanup Before Production Deployment**
-**MANDATORY PRACTICE**: Always clean diagnostic code before production deployment:
-
-**Files to Review**:
-- `Areas/Identity/Pages/Account/Register.cshtml.cs` - Remove debug logging
-- `Program.cs` - Clean Console.WriteLine statements 
-- `Controllers/*.cs` - Remove System.Diagnostics.Debug.WriteLine calls
-- Build verification: `dotnet build -c Release` must show 0 warnings, 0 errors
-
-**Security Checklist**:
-- Configuration files use placeholders (no hardcoded credentials)
-- Key Vault integration properly configured
-- .gitignore protects sensitive files and conversation transcripts
-
-### ⚠️ Static Files Deployment Troubleshooting
-**CRITICAL ISSUE**: If deployed application shows only HTML without styling:
-- **Root Cause**: wwwroot folder with static files not included in deployment package
-- **Solution**: Always use `dotnet publish -c Release` instead of `dotnet build` for deployment packages
-- **Verification**: Check that publish/wwwroot contains css/, js/, lib/ folders with all static files
-- **Azure Deployment**: Ensure complete ZIP package includes wwwroot structure
-- **Validation**: Test direct URLs to CSS/JS files to confirm static file serving
-
-### 🔍 SESSION_NOTES.md Optimization Pattern
-**EFFICIENCY BREAKTHROUGH**: Intelligent date-based reading achieves 94.2% token reduction
-```bash
-# Optimized reading pattern (use instead of full file read):
-grep "Session $(date +%Y-%m-%d)" SESSION_NOTES.md -A 75       # Current date first
-grep "Session $(date -d '1 day ago' +%Y-%m-%d)" SESSION_NOTES.md -A 75  # Previous day fallback  
-grep "Session $(date -d '2 days ago' +%Y-%m-%d)" SESSION_NOTES.md -A 75 # 2 days ago fallback
-
-# Only read full file if no recent sessions found (emergency fallback)
-```
-**Performance Impact**: 4,290 tokens → 248 tokens (94.2% reduction), 85% faster processing
-
-### 📄 Documentation Management
-```bash
-/session                        # Automatic session notes update and context management
-/update-docs [description]      # Comprehensive documentation update after changes
-/docs [description]             # Quick documentation sync
-```
-
-### 🔧 Production Environment Setup
-```bash
-# Set required environment variables for production deployment
-export AZURE_SQL_SERVER="your-sql-server.database.windows.net"
-export AZURE_SQL_DATABASE="your-database-name"
-export AZURE_SQL_USER="your-sql-user"
-export AZURE_KEY_VAULT_URI="https://your-keyvault.vault.azure.net/"
-
-# Test production configuration locally
-ASPNETCORE_ENVIRONMENT=Production dotnet run
-
-# Build with production configuration
-ASPNETCORE_ENVIRONMENT=Production dotnet build
-```
-
-### 🔧 Azure Key Vault Testing
-```bash
-# Test Key Vault connection locally
-ASPNETCORE_ENVIRONMENT=Production dotnet run
-
-# Verify Key Vault secrets (replace [YOUR-KEYVAULT] with your actual Key Vault name)
-az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "DatabasePassword"
-az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "TMDB--AccessToken"
-
-# Debug Key Vault integration
-# Application will log Key Vault connection status and placeholder replacement
 ```
 
 ---
 
 ## 🏛️ Architecture Overview
 
-### 🔧 Tech Stack
-- **🚀 Framework**: ASP.NET Core 8.0 with MVC pattern
-- **🗄️ Database**: Azure SQL Database "CineLog_Production" with Entity Framework Core 9.0.8 (25 migrations) and connection resilience
-- **🔐 Authentication**: ASP.NET Core Identity with Google OAuth integration (Microsoft.AspNetCore.Authentication.Google v8.0.8) and robust user isolation
-- **☁️ Security**: Azure Key Vault "cinelogdb" integration with DefaultAzureCredential for secure secret management
-- **🌐 External API**: TMDB API integration with rate limiting and caching
-- **🎨 Frontend**: Bootstrap 5 with Cyborg dark theme, jQuery for AJAX
-- **⚡ Caching**: IMemoryCache for TMDB data, custom CacheService for user-specific data
-- **🔧 Configuration**: Environment-specific configuration with User Secrets (dev) and Azure Key Vault (prod)
-- **📦 Package Management**: Entity Framework 9.0.8 consistency across all components
+**For comprehensive architecture details, tech stack specifications, and feature descriptions, see [README.md](README.md)**
 
-### 🔐 Security Architecture & GitHub Publication Ready
-- **🚀 LIVE PRODUCTION**: Application successfully deployed at https://[YOUR-APP-NAME].azurewebsites.net/ with full functionality
-- **🛡️ GitHub Publication Security**: 10/10 security audit score with zero credential exposure risk
-- **Azure Key Vault Integration**: Production secrets managed through "cinelogdb" Key Vault with DefaultAzureCredential
-- **Azure SQL Database**: Production database "CineLog_Production" with SSL/TLS encryption and dedicated application user
-- **Connection Resilience**: Azure SQL-optimized retry policies (3 attempts, 10s delay) and extended timeouts (60s)
-- **Environment Separation**: Development uses User Secrets, production uses Azure SQL Database and Key Vault
-- **Direct Configuration**: **NEW** - Connection strings built directly from Key Vault secrets, eliminating file dependencies
-- **Secret Management**: DatabasePassword, TMDB--AccessToken, and Google OAuth credentials (Authentication--Google--ClientId/ClientSecret) managed through Azure Key Vault
-- **Development Security**: User Secrets for secure local development with zero hardcoded credentials
-- **Encryption**: All Azure SQL connections use `Encrypt=True` with SSL/TLS certificate validation
-- **Zero Secrets in Code**: Complete elimination of hardcoded credentials with enterprise-grade secret management
-- **Private Access**: Production environment secured with private IP access for controlled testing
-- **Repository Security**: Enhanced .gitignore protection for conversation transcripts and sensitive files
-
-### 🏗️ Core Architecture Patterns
-
-#### 🗃️ Data Layer
-- **`ApplicationDbContext`**: EF Core context with Identity integration
-- **Entity models**: Movies, WishlistItem, BlacklistedMovie with foreign key relationships
-- **User isolation**: All user data isolated by `UserId` with excellent security model
-
-#### ⚙️ Service Layer
-- **`TmdbService`**: External TMDB API calls with caching and rate limiting (24-hour cache)
-- **`CacheService`**: Centralized caching for user blacklist/wishlist IDs (15-minute expiration)
-- **Batch processing**: N+1 query prevention with `GetMultipleMovieDetailsAsync`
-
-#### 🎮 Controller Layer
-- **`MoviesController`**: Main business logic with comprehensive AJAX architecture
-- **AJAX Detection**: `X-Requested-With` header detection for seamless navigation
-- **Unified Rendering**: `RenderSuggestionResultsHtml()` for server-side HTML in AJAX responses
-- **State Management**: `PopulateMovieProperties()` preserves movie states in AJAX interactions
-- **Security**: All data queries filtered by current user ID
-
-#### 🎯 Suggestion System
-**🎬 Suggestion Types (All AJAX-Enabled):**
-- **📈 Trending**: TMDB trending API with user filtering
-- **🎬 By Director**: Based on directors from user's movie history
-- **🎭 By Genre**: Prioritized queue based on recent/frequent/highly-rated genres
-- **⭐ By Cast**: Rotates through actors from user's watched movies
-- **📅 By Decade**: Dynamic variety system with randomized parameters
-- **🎲 Surprise Me**: Optimized pool-based system with parallel API calls
-
-**🔑 Key AJAX Patterns:**
-- **Unified Logic**: Same helper methods for initial load and AJAX reshuffles
-- **Server-Side Rendering**: AJAX responses return server-rendered HTML
-- **Graceful Fallback**: Automatic fallback to page navigation if AJAX fails
-- **Session Tracking**: Anti-repetition and sequencing via session state
-
-### 📊 Data Models
-- **`Movies`**: User's logged movies with ratings, dates, locations
-- **`WishlistItem`**: Movies user wants to watch
-- **`BlacklistedMovie`**: Movies user wants to exclude from suggestions
-- **`TmdbMovieDetails`**: Full movie data from TMDB API
-- **`TmdbMovieBrief`**: Simplified movie data for suggestions
+### Key CineLog-Specific AI Patterns:
+- **User Data Isolation**: All queries MUST filter by UserId
+- **AJAX-Enhanced Suggestions**: 6 suggestion types with unified helper methods
+- **Batch API Processing**: Use `GetMultipleMovieDetailsAsync()` to prevent N+1 queries
+- **24-hour TMDB Caching**: IMemoryCache for external API responses
+- **15-minute User Data Caching**: CacheService for blacklist/wishlist operations
 
 ---
 
@@ -426,296 +273,96 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - **NEVER** expose data across user accounts
 - Use ASP.NET Identity for authentication and authorization
 
-### 🔐 Google OAuth Authentication Pattern (2025-08-12)
-**CRITICAL: Enterprise-Grade OAuth Integration with Security Enhancements**
+### 🔐 Google OAuth Authentication Pattern
+**For complete OAuth implementation details, see [README.md](README.md#google-oauth) and [CHANGELOG.md](CHANGELOG.md)**
 
-**Implementation Architecture**:
+**Critical AI Pattern - Authentication Middleware:**
 ```csharp
-// Program.cs - Google OAuth configuration
-builder.Services.AddAuthentication()
-    .AddGoogle("Google", options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] 
-            ?? throw new InvalidOperationException("Google ClientId not configured");
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] 
-            ?? throw new InvalidOperationException("Google ClientSecret not configured");
-        options.CallbackPath = "/signin-google";
-        options.Scope.Add("profile");
-        options.Scope.Add("email");
-        options.SaveTokens = true;
-    });
-
 // CRITICAL: Authentication middleware MUST be present
 app.UseAuthentication(); // REQUIRED for OAuth functionality
 app.UseAuthorization();
 ```
 
-**External Login Handler Pattern**:
+**Key Security Requirements:**
+- CSRF Protection with anti-forgery tokens
+- User data isolation (Google users get separate namespaces)
+- Secure credential management via User Secrets/Key Vault
+
+### 🎬 TMDB Director Validation Pattern
+**For complete implementation details, see [README.md](README.md#tmdb-optimization) and [PERFORMANCE_OPTIMIZATION_SUMMARY.md](PERFORMANCE_OPTIMIZATION_SUMMARY.md)**
+
+**Critical AI Pattern - Smart API Optimization:**
 ```csharp
-// ExternalLogin.cshtml.cs - Complete OAuth callback processing
-public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
-{
-    // 1. Comprehensive input validation
-    if (!ModelState.IsValid) return Page();
+// 1. Check known directors cache first (0 API calls)
+if (KnownDirectors.TryGetValue(personName, out int knownId))
+    return knownId;
     
-    // 2. CSRF protection validation
-    var info = await _signInManager.GetExternalLoginInfoAsync();
-    if (info == null) return RedirectToPage("./Login");
-    
-    // 3. Create user with Google account linking
-    var user = CreateUser();
-    await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-    await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-    
-    var result = await _userManager.CreateAsync(user);
-    if (result.Succeeded)
-    {
-        await _userManager.AddLoginAsync(user, info);
-        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-        return LocalRedirect(returnUrl);
-    }
-}
+// 2. Use director credential validation for disambiguation
+var directorCredits = creditsResponse?.Crew?.Count(c => c.Job == "Director") ?? 0;
+if (directorCredits > 0) return candidate.Id;
 ```
 
-**Security Features**:
-- **CSRF Protection**: Anti-forgery tokens in all OAuth forms and callbacks
-- **User Data Isolation**: Google users get completely separate data namespaces 
-- **Input Validation**: All OAuth parameters validated and sanitized
-- **Secure Configuration**: Credentials managed via User Secrets (dev) / Azure Key Vault (prod)
-- **Error Handling**: Secure logging without sensitive data exposure
+**Performance Impact**: 70-90% reduction in TMDB API usage through intelligent caching and validation
 
-**User Experience Benefits**:
-- **Cross-Device Access**: Users can access CineLog data from any device using Google account
-- **Seamless Integration**: All CineLog features work with Google authentication
-- **Progressive Enhancement**: Application works with email/password if OAuth not configured
+### 🏭 Azure Integration Pattern
+**For complete Azure architecture details, see [README.md](README.md#azure-architecture)**
 
-### 🎬 TMDB Director Validation Pattern (2025-08-11)
-**CRITICAL: Enhanced Person Selection for Director Disambiguation**
-
-**Problem Solved**: TMDB person search by name returns multiple people with identical names but different roles (directors, cinematographers, actors).
-
-**Solution Pattern**:
+**Key AI Pattern - Automatic Placeholder Replacement:**
 ```csharp
-// Enhanced person selection with director credential validation
-public async Task<int?> GetPersonIdAsync(string personName)
-{
-    // 1. Check known directors cache first (0 API calls)
-    if (KnownDirectors.TryGetValue(personName, out int knownId))
-        return knownId;
-    
-    // 2. Search TMDB for person candidates
-    var searchResponse = await _httpClient.GetFromJsonAsync<TmdbPersonSearchResponse>(...);
-    
-    // 3. Use smart validation logic
-    if (searchResponse?.Results?.Count == 1)
-    {
-        // Single result - skip validation
-        return searchResponse.Results.First().Id;
-    }
-    else if (HasSignificantPopularityDifference(candidates))
-    {
-        // 5x+ popularity difference - likely correct person
-        return topCandidate.Id;
-    }
-    else
-    {
-        // Similar popularity - validate director credentials
-        foreach (var candidate in candidates)
-        {
-            var creditsResponse = await ExecuteWithThrottlingAsync(() =>
-                _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>(...));
-            var directorCredits = creditsResponse?.Crew?.Count(c => c.Job == "Director") ?? 0;
-            
-            if (directorCredits > 0)
-                return candidate.Id; // Found actual director
-        }
-    }
-}
-```
-
-**API Optimization Features**:
-- **Known Directors Cache**: Hardcoded famous directors bypass API calls entirely
-- **Single Candidate Skip**: No validation needed for unambiguous searches  
-- **Popularity Heuristics**: 5x popularity difference identifies likely candidates
-- **Semaphore Protection**: All validation calls use rate limiting (`ExecuteWithThrottlingAsync`)
-- **24-Hour Caching**: Validated person IDs cached to prevent re-validation
-
-**Performance Impact**: 70-90% reduction in TMDB API usage through intelligent optimization
-
-### 🏭 Azure Production Deployment Security with Enhanced Password Protection & Automatic Placeholder Replacement
-**AZURE INTEGRATION WITH ENHANCED KEY VAULT FEATURES COMPLETED (2025-08-03):**
-```csharp
-// ✅ AZURE CONFIGURATION: Production-ready Azure integration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in configuration.");
-}
-
-// ✅ AZURE KEY VAULT: Automatic integration for production secrets
-var keyVaultUri = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URI");
-if (!string.IsNullOrEmpty(keyVaultUri))
-{
-    try
-    {
-        builder.Configuration.AddAzureKeyVault(
-            new Uri(keyVaultUri),
-            new DefaultAzureCredential());
-        Console.WriteLine($"Successfully connected to Azure Key Vault: {keyVaultUri}");
-    }
-    catch (Exception ex)
-    {
-        // Graceful fallback with comprehensive logging
-        Console.WriteLine($"Warning: Could not connect to Azure Key Vault: {ex.Message}");
-    }
-}
-
-// ✅ ENHANCED FEATURE: Automatic password placeholder replacement
+// Production configuration pattern
 if (builder.Environment.IsProduction() && connectionString.Contains("{DatabasePassword}"))
 {
     var databasePassword = builder.Configuration["DatabasePassword"];
-    if (!string.IsNullOrEmpty(databasePassword))
-    {
-        connectionString = connectionString.Replace("{DatabasePassword}", databasePassword);
-        Console.WriteLine("Successfully replaced database password placeholder with Key Vault value");
-    }
-    else
-    {
-        throw new InvalidOperationException("DatabasePassword not found in Key Vault configuration");
-    }
+    connectionString = connectionString.Replace("{DatabasePassword}", databasePassword);
 }
-
-// ✅ AZURE SQL DATABASE: Connection resilience with retry policies
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(connectionString, sqlOptions =>
-    {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 3,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
-        sqlOptions.CommandTimeout(60);
-    });
-});
 ```
 
-**Azure Production Security Architecture with Enhanced Password Security & Automatic Placeholder Replacement:**
-- **✅ AZURE SQL DATABASE**: Production database deployed with all 25 migrations, SSL encryption, and enhanced password security
-- **✅ AZURE KEY VAULT INTEGRATION**: Complete secret management through "cinelogdb" Key Vault with securely generated passwords
-- **✅ AUTOMATIC PLACEHOLDER REPLACEMENT**: Production configuration automatically replaces `{DatabasePassword}` with Key Vault values
-- **✅ LOCAL TESTING CAPABILITY**: Developers can test production configuration locally using `ASPNETCORE_ENVIRONMENT=Production`
-- **✅ ENHANCED ERROR HANDLING**: Clear error messages if Key Vault secrets are missing or inaccessible
-- **✅ ENHANCED PASSWORD SECURITY**: Secure password generation, storage, and rotation protocols implemented
-- **✅ CONNECTION RESILIENCE**: Azure SQL-optimized retry policies and extended timeouts with secure authentication
-- **✅ ENVIRONMENT SEPARATION**: Development uses local SQL Server, production uses Azure infrastructure with secure credential management
-- **✅ GRACEFUL FALLBACK**: Azure Key Vault connection failures handled gracefully with comprehensive security logging
-- **✅ SSL/TLS ENCRYPTION**: All Azure SQL connections use secure encryption with certificate validation and secure password protocols
-- **✅ ZERO PASSWORD EXPOSURE**: Complete elimination of hardcoded passwords with enterprise-grade secret management
-
-**Azure Integration NuGet Packages:**
-```xml
-<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.3.2" />
-<PackageReference Include="Azure.Identity" Version="1.12.1" />
-```
-
-**Azure Production Configuration with Enhanced Security & Automatic Placeholder Replacement:**
-- **Azure SQL Database**: `cinelog-sql-server.database.windows.net/CineLog_Production` with enhanced password security
-- **Azure Key Vault**: `cinelogdb.vault.azure.net` with securely generated DatabasePassword and TMDB--AccessToken secrets
-- **Automatic Placeholder Replacement**: Connection strings with `{DatabasePassword}` automatically replaced with Key Vault values
-- **Local Testing Support**: Production configuration can be tested locally with proper environment variables
-- **Enhanced Error Handling**: Clear messages if Key Vault secrets are missing or connection fails
-- **Environment Variables**: `AZURE_KEY_VAULT_URI=https://cinelogdb.vault.azure.net/` for secure Key Vault integration
-- **Password Security Standards**: Enterprise-grade password generation and secure storage protocols implemented
+**Essential Azure Components:**
+- Azure Key Vault: `cinelogdb.vault.azure.net` 
+- Azure SQL Database: `CineLog_Production`
+- Environment Variable: `AZURE_KEY_VAULT_URI` for automatic integration
 
 ### 🌐 TMDB Service Integration
-**Use centralized service for all external API calls:**
 ```csharp
 var movieDetails = await _tmdbService.GetMovieDetailsAsync(tmdbId);
 var searchResults = await _tmdbService.SearchMoviesAsync(query);
 ```
-**Best Practices:**
-- **24-hour caching** for TMDB data in IMemoryCache
-- **Batch operations**: Use `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
-- **Rate limiting**: Respect TMDB API limits with SemaphoreSlim
+**Key Patterns:**
+- 24-hour caching for all TMDB data
+- Use `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
+- Rate limiting with SemaphoreSlim protection
 
 ### 🎭 AJAX-Enhanced Suggestion System
-**Unified helper methods for AJAX and traditional navigation:**
-```csharp
-private async Task<List<TmdbMovieBrief>> Get[Type]MoviesWithFiltering(string userId)
-{
-    // Get user blacklist and recent movies for filtering
-    // Build movie pool with pagination and variety
-    // Return consistent results for both initial and AJAX calls
-}
-```
-
-**Key AJAX Implementation Requirements:**
-- **X-Requested-With Header**: Essential for backend to detect AJAX requests
-- **Graceful Fallback**: Always implement fallback to regular navigation if AJAX fails
-- **State Preservation**: Use `PopulateMovieProperties()` to ensure all movie states are maintained
-- **Server-Side Rendering**: Return server-rendered HTML in JSON responses
-- **Clean Implementation**: Avoid loading overlays or visual changes that create jarring experiences
-
-### 🚀 Enhanced AJAX Patterns
-**Robust AJAX with comprehensive error handling:**
+**Critical AI Pattern - X-Requested-With Header:**
 ```javascript
-// CRITICAL: Always include X-Requested-With header
-const response = await fetch('/Movies/RemoveFromBlacklist', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Requested-With': 'XMLHttpRequest'  // REQUIRED for JSON response
-    },
-    body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
-    credentials: 'same-origin'
-});
-
-// Text-first parsing with JSON fallback for robust error handling
-const rawText = await response.text();
-let data;
-try {
-    data = JSON.parse(rawText);
-} catch (jsonErr) {
-    showTempAlert('Non-JSON response: ' + rawText, 'danger');
-    return;
+// REQUIRED for JSON response
+headers: {
+    'X-Requested-With': 'XMLHttpRequest'
 }
 ```
 
-### 📄 Pagination Implementation
-**⚠️ CRITICAL**: Always use `TotalCount` property for pagination calculations:
+**Key Requirements:**
+- Unified helper methods for initial load and AJAX reshuffles
+- Graceful fallback to page navigation if AJAX fails
+- Server-side rendering for all AJAX responses
+- State preservation with `PopulateMovieProperties()`
+
+### 📄 Critical Implementation Patterns
 ```csharp
-// ✅ CORRECT - Use TotalCount for pagination logic
-var paginatedList = await PaginatedList<EntityType>.CreateAsync(query, pageNumber, pageSize);
-var viewModel = new ViewModel
-{
-    TotalCount = paginatedList.TotalCount,  // Total database count
-    HasPreviousPage = paginatedList.HasPreviousPage,
-    HasNextPage = paginatedList.HasNextPage
+// CORRECT: Use TotalCount for pagination
+var viewModel = new ViewModel {
+    TotalCount = paginatedList.TotalCount  // Total DB count
 };
 
-// ❌ INCORRECT - Never use Count of current page items
-// var totalCount = viewModels.Count; // This breaks pagination navigation!
-```
-
-### 🗃️ Business Rules Implementation
-```csharp
-// A movie cannot exist in both wishlist and blacklist
+// Business rule: Mutual exclusion
 var existsInWishlist = await _dbContext.WishlistItems
     .AnyAsync(w => w.UserId == userId && w.TmdbId == tmdbId);
 ```
 
-### ⚡ Performance Patterns
-- **Batch Processing**: Always use `GetMultipleMovieDetailsAsync()` for multiple movies
-- **CacheService**: 15-minute expiration for user blacklist/wishlist IDs
-- **Pagination**: 20 items per page with proper navigation
-- **Index Usage**: Composite indexes on `UserId+Title` for fast searches
-
-### 🎨 UI/UX Standards
-- **Cinema Gold branding**: `.cinelog-gold-title` class for section titles
-- **Consistent layout**: Card-based design for movie displays
-- **Dark theme**: Cyborg Bootstrap theme throughout
-- **Mutual exclusion**: Prevents movies in both wishlist and blacklist
-- **Real-time updates**: AJAX without page reloads
+**Performance Requirements:**
+- Batch processing for multiple movies
+- 15-minute cache for user data
+- Composite indexes on `UserId+Title`
 
 
 ---
@@ -768,40 +415,27 @@ var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
 
 ## ⚙️ Configuration
 
-### 🔐 Enhanced Azure Secret Management with Automatic Placeholder Replacement
-- **Development**: User Secrets for TMDB token (`TMDB:AccessToken`) and local SQL Server with integrated security
-- **Production**: Azure Key Vault "cinelogdb" for securely generated DatabasePassword and TMDB--AccessToken secrets
-- **Automatic Placeholder Replacement**: `{DatabasePassword}` placeholders automatically replaced with Key Vault values in production
-- **Local Testing**: Production configuration testable locally with `ASPNETCORE_ENVIRONMENT=Production`
-- **Enhanced Error Handling**: Clear error messages if Key Vault secrets are missing or inaccessible
-- **Enhanced Password Security**: Secure password generation, storage, and rotation protocols for all production credentials
-- **Environment Variable**: `AZURE_KEY_VAULT_URI=https://cinelogdb.vault.azure.net/` enables automatic secure integration
-- **Zero Password Exposure**: Complete elimination of hardcoded passwords with enterprise-grade secret management practices
+**For detailed configuration setup and Azure architecture, see [README.md](README.md#configuration)**
 
-### 🗄️ Enhanced Azure Database Configuration with Automatic Password Management
-- **Development**: Local SQL Server with integrated authentication from `appsettings.Development.json`
-- **Production**: Azure SQL Database "CineLog_Production" with enhanced Key Vault-managed credentials and automatic placeholder replacement
-- **Automatic Password Injection**: Connection strings with `{DatabasePassword}` automatically get values from Key Vault
-- **Local Testing Support**: Production database configuration testable locally with proper environment setup
-- **Enhanced Error Handling**: Clear messages for missing Key Vault secrets or connection issues
-- **Connection Resilience**: Azure SQL-optimized retry policies (3 attempts, 10s delays, 60s timeout) with secure authentication
-- **Enhanced Security**: `Encrypt=True` with SSL/TLS certificate validation and enterprise-grade password security for Azure SQL connections
-- **Password Security Standards**: Secure password generation, storage, and rotation implemented for all database connections
+### Essential AI Configuration Patterns:
+- **Development**: User Secrets for secure local development
+- **Production**: Azure Key Vault with automatic placeholder replacement
+- **Caching Strategy**: 24-hour TMDB cache, 15-minute user data cache
+- **Session Management**: 20-minute timeout for anti-repetition
 
-### ⚙️ Configuration Files Structure
-```
-appsettings.json               # Base configuration
-appsettings.Development.json   # Development overrides with local connection
-appsettings.Production.json    # Production templates with Key Vault placeholders
-```
+---
 
-### 🔄 Sessions & Caching
-- **Sessions**: 20-minute timeout for anti-repetition and sequencing
-- **TMDB Caching**: 24-hour IMemoryCache for API responses
-- **User Data Caching**: 15-minute CacheService for blacklist/wishlist operations
+## 📚 Documentation References
 
-### 🏗️ Azure Environment-Specific Behavior
-- **Development**: Local SQL Server with integrated security and User Secrets for TMDB API
-- **Production**: Azure SQL Database with Azure Key Vault secret management and DefaultAzureCredential
-- **Automatic Detection**: Azure Key Vault integration activates when `AZURE_KEY_VAULT_URI` environment variable is set
-- **Graceful Fallback**: Application continues even if Azure Key Vault connection fails (with comprehensive logging)
+This CLAUDE.md file contains essential AI guidance and CineLog-specific patterns. For comprehensive information, refer to:
+
+### Primary Documentation
+- **[README.md](README.md)**: Complete architecture, features, setup instructions, and tech stack
+- **[CHANGELOG.md](CHANGELOG.md)**: Recent updates, feature releases, and bug fixes  
+- **[PERFORMANCE_OPTIMIZATION_SUMMARY.md](PERFORMANCE_OPTIMIZATION_SUMMARY.md)**: Performance metrics, optimization details, and improvements
+
+### Specialized Documentation
+- **[AGENTS.md](./.claude/agents/AGENTS.md)**: Detailed agent system documentation and usage patterns
+- **[SESSION_NOTES.md](SESSION_NOTES.md)**: Development session history and context (gitignored)
+
+**This optimization reduces CLAUDE.md size by ~35% while preserving all essential AI guidance and creating clear documentation references.**
