@@ -64,6 +64,8 @@
         </div>
         <section>
             <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                @* SECURITY: Add anti-forgery token protection for external login *@
+                @Html.AntiForgeryToken()
                 <div class="d-grid gap-2">
                     @foreach (var provider in Model.ExternalLogins!)
                     {

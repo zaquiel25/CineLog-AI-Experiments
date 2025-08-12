@@ -2897,9 +2897,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     }
 
                     var loggedCastMovies = await _dbContext.Movies.Where(m => m.UserId == userId && m.TmdbId.HasValue).OrderByDescending(m => m.DateWatched).ToListAsync();
-                    if (loggedCastMovies == null || !loggedCastMovies.Any())
+                    if (loggedCastMovies == null || loggedCastMovies.Count < 3)
                     {
-                        suggestionTitle = "Log some movies to get cast suggestions!";
+                        suggestionTitle = "Log at least 3 movies to get a 'Cast' suggestion";
                         ViewData["ShowAddMovieButton"] = true;
                         break;
                     }

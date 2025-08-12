@@ -146,8 +146,39 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
 
+/// <summary>
+/// FEATURE: Configure ASP.NET Identity with Google OAuth external authentication support.
+/// Integrates with Azure Key Vault for secure credential management in production.
+/// </summary>
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Configure Google authentication
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"] ?? builder.Configuration["Authentication--Google--ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? builder.Configuration["Authentication--Google--ClientSecret"];
+
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(googleOptions =>
+        {
+            googleOptions.ClientId = googleClientId;
+            googleOptions.ClientSecret = googleClientSecret;
+            googleOptions.CallbackPath = "/signin-google";
+            
+            // Optional: Request additional scopes for user information
+            googleOptions.Scope.Add("profile");
+            googleOptions.Scope.Add("email");
+            
+            // Save tokens for potential future API calls
+            googleOptions.SaveTokens = true;
+        });
+}
+else
+{
+    // Google OAuth not configured - users can still use email/password authentication
+    // In development, add secrets using: dotnet user-secrets set "Authentication:Google:ClientId" "your-client-id"
+}
 // --- VVVV START: ADDED HTTP CLIENT CONFIGURATION FOR TMDB SERVICE HERE VVVV ---
 builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure Ezequiel_Movies.TmdbService is the correct full name for your service class
 {
@@ -182,6 +213,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+/// <summary>
+/// SECURITY: Critical middleware for external authentication (Google OAuth).
+/// Must be placed before UseAuthorization() in the pipeline.
+/// </summary>
+app.UseAuthentication();
 app.UseAuthorization();
 
 

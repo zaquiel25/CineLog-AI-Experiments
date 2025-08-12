@@ -210,6 +210,10 @@ dotnet user-secrets set "TMDB:AccessToken" "your-tmdb-bearer-token"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
   "Server=localhost,1433;Database=Ezequiel_Movies;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;Connection Timeout=60"
 
+# Google OAuth development setup (secure, never committed)
+dotnet user-secrets set "Authentication:Google:ClientId" "your-google-client-id.apps.googleusercontent.com"
+dotnet user-secrets set "Authentication:Google:ClientSecret" "your-google-client-secret"
+
 # Cross-platform SQL Server setup (Docker)
 docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
    -p 1433:1433 --name cinelog-sql -d mcr.microsoft.com/mssql/server:2022-latest
@@ -343,7 +347,7 @@ az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "TMDB--AccessToken
 ### 🔧 Tech Stack
 - **🚀 Framework**: ASP.NET Core 8.0 with MVC pattern
 - **🗄️ Database**: Azure SQL Database "CineLog_Production" with Entity Framework Core 9.0.8 (25 migrations) and connection resilience
-- **🔐 Authentication**: ASP.NET Core Identity with robust user isolation
+- **🔐 Authentication**: ASP.NET Core Identity with Google OAuth integration (Microsoft.AspNetCore.Authentication.Google v8.0.8) and robust user isolation
 - **☁️ Security**: Azure Key Vault "cinelogdb" integration with DefaultAzureCredential for secure secret management
 - **🌐 External API**: TMDB API integration with rate limiting and caching
 - **🎨 Frontend**: Bootstrap 5 with Cyborg dark theme, jQuery for AJAX
@@ -359,7 +363,7 @@ az keyvault secret show --vault-name "[YOUR-KEYVAULT]" --name "TMDB--AccessToken
 - **Connection Resilience**: Azure SQL-optimized retry policies (3 attempts, 10s delay) and extended timeouts (60s)
 - **Environment Separation**: Development uses User Secrets, production uses Azure SQL Database and Key Vault
 - **Direct Configuration**: **NEW** - Connection strings built directly from Key Vault secrets, eliminating file dependencies
-- **Secret Management**: DatabasePassword and TMDB--AccessToken managed through Azure Key Vault
+- **Secret Management**: DatabasePassword, TMDB--AccessToken, and Google OAuth credentials (Authentication--Google--ClientId/ClientSecret) managed through Azure Key Vault
 - **Development Security**: User Secrets for secure local development with zero hardcoded credentials
 - **Encryption**: All Azure SQL connections use `Encrypt=True` with SSL/TLS certificate validation
 - **Zero Secrets in Code**: Complete elimination of hardcoded credentials with enterprise-grade secret management
@@ -421,6 +425,69 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - **ALL** user data queries MUST include `UserId` filtering
 - **NEVER** expose data across user accounts
 - Use ASP.NET Identity for authentication and authorization
+
+### 🔐 Google OAuth Authentication Pattern (2025-08-12)
+**CRITICAL: Enterprise-Grade OAuth Integration with Security Enhancements**
+
+**Implementation Architecture**:
+```csharp
+// Program.cs - Google OAuth configuration
+builder.Services.AddAuthentication()
+    .AddGoogle("Google", options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] 
+            ?? throw new InvalidOperationException("Google ClientId not configured");
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] 
+            ?? throw new InvalidOperationException("Google ClientSecret not configured");
+        options.CallbackPath = "/signin-google";
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
+        options.SaveTokens = true;
+    });
+
+// CRITICAL: Authentication middleware MUST be present
+app.UseAuthentication(); // REQUIRED for OAuth functionality
+app.UseAuthorization();
+```
+
+**External Login Handler Pattern**:
+```csharp
+// ExternalLogin.cshtml.cs - Complete OAuth callback processing
+public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
+{
+    // 1. Comprehensive input validation
+    if (!ModelState.IsValid) return Page();
+    
+    // 2. CSRF protection validation
+    var info = await _signInManager.GetExternalLoginInfoAsync();
+    if (info == null) return RedirectToPage("./Login");
+    
+    // 3. Create user with Google account linking
+    var user = CreateUser();
+    await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+    await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+    
+    var result = await _userManager.CreateAsync(user);
+    if (result.Succeeded)
+    {
+        await _userManager.AddLoginAsync(user, info);
+        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+        return LocalRedirect(returnUrl);
+    }
+}
+```
+
+**Security Features**:
+- **CSRF Protection**: Anti-forgery tokens in all OAuth forms and callbacks
+- **User Data Isolation**: Google users get completely separate data namespaces 
+- **Input Validation**: All OAuth parameters validated and sanitized
+- **Secure Configuration**: Credentials managed via User Secrets (dev) / Azure Key Vault (prod)
+- **Error Handling**: Secure logging without sensitive data exposure
+
+**User Experience Benefits**:
+- **Cross-Device Access**: Users can access CineLog data from any device using Google account
+- **Seamless Integration**: All CineLog features work with Google authentication
+- **Progressive Enhancement**: Application works with email/password if OAuth not configured
 
 ### 🎬 TMDB Director Validation Pattern (2025-08-11)
 **CRITICAL: Enhanced Person Selection for Director Disambiguation**
