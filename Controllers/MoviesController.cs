@@ -1430,6 +1430,14 @@ namespace Ezequiel_Movies.Controllers
                 var priorityQueue = new List<string>();
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+                // FEATURE: Debug log all distinct director names for current user
+                var allDirectorNames = allUserMovies
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Director))
+                    .Select(m => m.Director!.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                _logger.LogInformation("[DEBUG] All distinct director names for user {UserId}: [{Directors}]", userId, string.Join(", ", allDirectorNames));
+
                 async Task AddDirector(string? director)
                 {
                     if (string.IsNullOrWhiteSpace(director)) return;
@@ -3245,6 +3253,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
             // Get the director's filmography
             var allDirectorMovies = await _tmdbService.GetDirectorFilmographyAsync(directorId.Value);
+            
+            
             if (!allDirectorMovies.Any()) return false;
 
             // Get user's blacklisted movie IDs

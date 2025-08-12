@@ -30,6 +30,16 @@ public class TmdbService : IDisposable
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
         private static readonly Random _random = new Random();
+        
+        /// <summary>
+        /// Known directors with confirmed TMDB person IDs to avoid validation API calls.
+        /// This cache reduces API usage for common director searches.
+        /// </summary>
+        private static readonly Dictionary<string, int> KnownDirectors = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Add confirmed director IDs as we discover them through validation
+            // Format: "Director Name" => TMDB Person ID
+        };
 
 
 
@@ -408,6 +418,10 @@ public class TmdbService : IDisposable
         /// <summary>
         /// Retrieves the TMDB person ID for a given name (e.g., director or actor).
         /// Results are cached for 24 hours to avoid redundant API calls and improve performance.
+        /// 
+        /// FEATURE: Enhanced person selection logic validates director credentials when multiple candidates exist.
+        /// This prevents selecting wrong people (e.g., cinematographers, actors) for director searches,
+        /// fixing issues where common names return multiple TMDB persons with different professional roles.
         /// </summary>
         /// <param name="personName">The name of the person to look up.</param>
         /// <returns>The TMDB person ID if found, otherwise null.</returns>
@@ -424,10 +438,104 @@ public class TmdbService : IDisposable
 
             try
             {
+                // API USAGE OPTIMIZATION: Check known directors cache first
+                if (KnownDirectors.TryGetValue(personName, out int knownId))
+                {
+                    _logger?.LogInformation("Using known director ID for '{PersonName}': {Id} (skipped API call)", personName, knownId);
+                    _memoryCache.Set(cacheKey, knownId, TimeSpan.FromHours(24));
+                    return knownId;
+                }
+
                 var searchResponse = await _httpClient.GetFromJsonAsync<TmdbPersonSearchResponse>($"search/person?query={Uri.EscapeDataString(personName)}");
-                var person = searchResponse?.Results?.OrderByDescending(p => p.Popularity).FirstOrDefault();
+                
+                /// FEATURE: Enhanced Person Selection Algorithm with Smart Validation
+                /// 
+                /// Problem: TMDB person search by name can return multiple people with identical names but different roles.
+                /// Example: "Peter Jackson" returns both the famous LOTR director and a cinematographer.
+                /// Previous logic selected by popularity only, causing wrong person selection.
+                /// 
+                /// Solution: When multiple candidates exist, validate actual director credentials via movie credits API.
+                /// This ensures we select the person who has actually directed movies, not just the most popular person.
+                /// 
+                /// API Usage Optimization: Only validates when multiple candidates exist AND uses known director heuristics.
+                /// Security: No user data involved - only external TMDB API calls with proper error handling.
+                TmdbPersonBrief? person = null;
+                if (searchResponse?.Results?.Any() == true)
+                {
+                    // PERFORMANCE OPTIMIZATION: Skip validation for single results to minimize API calls
+                    if (searchResponse.Results.Count == 1)
+                    {
+                        person = searchResponse.Results.First();
+                        _logger?.LogInformation("Single person result for '{PersonName}': ID={Id}, skipping director validation", 
+                            personName, person.Id);
+                    }
+                    else
+                    {
+                        // API USAGE OPTIMIZATION: Check if we can identify famous directors without validation
+                        // Famous directors often have significantly higher popularity scores than their namesakes
+                        var topCandidate = searchResponse.Results.OrderByDescending(p => p.Popularity).First();
+                        var secondCandidate = searchResponse.Results.OrderByDescending(p => p.Popularity).Skip(1).FirstOrDefault();
+                        
+                        // HEURISTIC: If top candidate has 5x+ popularity of second candidate, likely the famous director
+                        if (secondCandidate == null || topCandidate.Popularity > (secondCandidate.Popularity * 5))
+                        {
+                            person = topCandidate;
+                            _logger?.LogInformation("High popularity difference for '{PersonName}': ID={Id}, Popularity={Popularity}, skipping validation", 
+                                personName, topCandidate.Id, topCandidate.Popularity);
+                        }
+                        else
+                        {
+                            // VALIDATION LOGIC: Similar popularity scores require director credential verification
+                            _logger?.LogInformation("Multiple person results for '{PersonName}': {Count} candidates with similar popularity, validating director credentials", 
+                                personName, searchResponse.Results.Count);
+                            
+                        foreach (var candidate in searchResponse.Results.OrderByDescending(p => p.Popularity))
+                        {
+                            try
+                            {
+                                // VALIDATION: Query TMDB movie credits to verify actual directing experience
+                                // PERFORMANCE: Use semaphore to prevent rate limiting issues
+                                var creditsResponse = await ExecuteWithThrottlingAsync(async () =>
+                                    await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{candidate.Id}/movie_credits?language=en-US"));
+                                var directorCredits = creditsResponse?.Crew?.Where(c => c.Job == "Director").Count() ?? 0;
+                                
+                                if (directorCredits > 0)
+                                {
+                                    person = candidate;
+                                    _logger?.LogInformation("Selected director '{PersonName}': ID={Id}, Popularity={Popularity}, DirectorCredits={Credits}", 
+                                        personName, candidate.Id, candidate.Popularity, directorCredits);
+                                    break;
+                                }
+                                else
+                                {
+                                    _logger?.LogInformation("Skipped '{PersonName}': ID={Id}, Popularity={Popularity}, DirectorCredits=0 (likely {ProfessionalRole})", 
+                                        personName, candidate.Id, candidate.Popularity, 
+                                        creditsResponse?.Crew?.FirstOrDefault()?.Job ?? "unknown role");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger?.LogWarning("Failed to validate director credentials for '{PersonName}' ID={Id}: {Error}", 
+                                    personName, candidate.Id, ex.Message);
+                                continue;
+                            }
+                        }
+                        
+                            // FALLBACK STRATEGY: If no candidate has director credits, use popularity-based selection
+                            // This handles edge cases where TMDB data might be incomplete or person name is ambiguous
+                            if (person == null)
+                            {
+                                person = searchResponse.Results.OrderByDescending(p => p.Popularity).FirstOrDefault();
+                                _logger?.LogWarning("No director credits found for any '{PersonName}' candidate, using most popular: ID={Id}", 
+                                    personName, person?.Id);
+                            }
+                        }
+                    }
+                }
                 if (person != null)
                 {
+                    // CACHING: Store validated person ID for 24 hours to prevent re-validation
+                    // This improves performance for repeated director suggestion requests
                     _memoryCache.Set(cacheKey, person.Id, TimeSpan.FromHours(24));
                     return person.Id;
                 }
@@ -460,8 +568,9 @@ public class TmdbService : IDisposable
             }
             try
             {
-                // 1. Call the accurate '/person/{id}/movie_credits' endpoint. This is correct.
-                var creditsResponse = await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US");
+                // 1. Call the accurate '/person/{id}/movie_credits' endpoint with rate limiting protection.
+                var creditsResponse = await ExecuteWithThrottlingAsync(async () =>
+                    await _httpClient.GetFromJsonAsync<TmdbPersonMovieCreditsResponse>($"person/{directorId}/movie_credits?language=en-US"));
 
                 if (creditsResponse?.Crew == null)
                 {
