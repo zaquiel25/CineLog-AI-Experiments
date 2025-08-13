@@ -146,6 +146,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
 
+
 /// <summary>
 /// FEATURE: Configure ASP.NET Identity with Google OAuth external authentication support.
 /// Integrates with Azure Key Vault for secure credential management in production.
@@ -217,6 +218,54 @@ app.UseSession();
 /// SECURITY: Critical middleware for external authentication (Google OAuth).
 /// Must be placed before UseAuthorization() in the pipeline.
 /// </summary>
+/// <summary>
+/// FEATURE: Site-wide password protection middleware for friend testing phase.
+/// Redirects all requests to password gate unless user is authenticated or accessing password gate itself.
+/// </summary>
+app.Use(async (context, next) =>
+{
+    // Allow access to password gate controller
+    if (context.Request.Path.StartsWithSegments("/PasswordGate", StringComparison.OrdinalIgnoreCase))
+    {
+        await next();
+        return;
+    }
+    
+    // Allow access to static files (CSS, JS, images)
+    if (context.Request.Path.StartsWithSegments("/css") || 
+        context.Request.Path.StartsWithSegments("/js") || 
+        context.Request.Path.StartsWithSegments("/lib") ||
+        context.Request.Path.StartsWithSegments("/images") ||
+        context.Request.Path.StartsWithSegments("/favicon"))
+    {
+        await next();
+        return;
+    }
+    
+    // Check session authentication
+    var sessionAuth = context.Session.GetString("SiteAccess");
+    
+    // Check persistent cookie authentication
+    var cookieAuth = context.Request.Cookies["SiteAccess"];
+    
+    // If authenticated via session or cookie, allow access
+    if (sessionAuth == "granted" || cookieAuth == "granted")
+    {
+        // If authenticated via cookie but not session, update session
+        if (sessionAuth != "granted" && cookieAuth == "granted")
+        {
+            context.Session.SetString("SiteAccess", "granted");
+        }
+        
+        await next();
+        return;
+    }
+    
+    // Not authenticated - redirect to password gate with return URL
+    var returnUrl = context.Request.Path + context.Request.QueryString;
+    context.Response.Redirect($"/PasswordGate?returnUrl={Uri.EscapeDataString(returnUrl)}");
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 

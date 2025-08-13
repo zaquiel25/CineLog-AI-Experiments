@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Ezequiel_Movies.Services;
+using Ezequiel_Movies.Models;
 
 namespace Ezequiel_Movies.Areas.Identity.Pages.Account
 {
@@ -70,6 +72,7 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
+
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
@@ -115,6 +118,7 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account
             {
                 try
                 {
+
                     var user = CreateUser();
                     await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                     await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -126,6 +130,7 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account
                         _logger.LogInformation("User created a new account with password.");
 
                         var userId = await _userManager.GetUserIdAsync(user);
+
                         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                         var callbackUrl = Url.Page(

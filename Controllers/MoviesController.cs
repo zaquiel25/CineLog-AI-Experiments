@@ -988,7 +988,6 @@ namespace Ezequiel_Movies.Controllers
 
             if (cachedPool.bucket3x3 != null && cachedPool.bucket2x3 != null && cachedPool.bucket1x3 != null)
             {
-                _logger.LogDebug("🎯 Using cached surprise pool for user {UserId}", userId);
 
                 bucket3x3 = cachedPool.bucket3x3;
                 bucket2x3 = cachedPool.bucket2x3;
@@ -996,7 +995,6 @@ namespace Ezequiel_Movies.Controllers
             }
             else
             {
-                _logger.LogDebug("🏗️ Building new surprise pool for user {UserId}", userId);
 
                 var poolResult = await BuildSurprisePoolAsync(userId);
                 bucket3x3 = poolResult.bucket3x3;
@@ -1436,7 +1434,6 @@ namespace Ezequiel_Movies.Controllers
                     .Select(m => m.Director!.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
-                _logger.LogInformation("[DEBUG] All distinct director names for user {UserId}: [{Directors}]", userId, string.Join(", ", allDirectorNames));
 
                 async Task AddDirector(string? director)
                 {
@@ -1818,15 +1815,13 @@ namespace Ezequiel_Movies.Controllers
 
                 if (cachedPool.bucket3x3 != null && cachedPool.bucket2x3 != null && cachedPool.bucket1x3 != null)
                 {
-                    _logger.LogDebug("🎯 Using cached surprise pool for user {UserId}", userId);
-                    bucket3x3 = cachedPool.bucket3x3;
+                        bucket3x3 = cachedPool.bucket3x3;
                     bucket2x3 = cachedPool.bucket2x3;
                     bucket1x3 = cachedPool.bucket1x3;
                 }
                 else
                 {
-                    _logger.LogDebug("🏗️ Building new surprise pool for user {UserId}", userId);
-
+    
                     // Build new pool (we'll create this helper next)
                     var poolResult = await BuildSurprisePoolAsync(userId);
                     bucket3x3 = poolResult.bucket3x3;

@@ -17,6 +17,7 @@ namespace Ezequiel_Movies.Data
         public DbSet<WishlistItem> WishlistItems { get; set; }
         public DbSet<BlacklistedMovie> BlacklistedMovies { get; set; }
 
+
         // VVVV ADD THIS METHOD VVVV
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,7 @@ namespace Ezequiel_Movies.Data
                 entity.Property(m => m.UserRating)
                       .HasPrecision(3, 1); // Sets precision to 3 and scale to 1 (e.g., can store 12.3, 5.0, 0.5)
             });
+
 
             // If you have other entity configurations in the future, they would also go in this method.
         }
