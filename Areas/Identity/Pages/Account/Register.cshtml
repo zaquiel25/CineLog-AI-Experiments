@@ -23,7 +23,7 @@
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" data-confirm-password="true" />
                 <label asp-for="Input.ConfirmPassword">Confirm Password</label>
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
@@ -54,8 +54,15 @@
                 <div class="d-grid gap-2">
                     @foreach (var provider in Model.ExternalLogins!)
                     {
-                        <button type="submit" class="btn btn-outline-secondary" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
-                            <i class="fas fa-user-plus me-2"></i>Sign up with @provider.DisplayName
+                        <button type="submit" class="@(provider.Name.ToLower() == "google" ? "btn btn-google" : "btn btn-outline-secondary")" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
+                            @if (provider.Name.ToLower() == "google")
+                            {
+                                <i class="fab fa-google me-2"></i><text>Sign up with @provider.DisplayName</text>
+                            }
+                            else
+                            {
+                                <i class="fas fa-user-plus me-2"></i><text>Sign up with @provider.DisplayName</text>
+                            }
                         </button>
                     }
                 </div>

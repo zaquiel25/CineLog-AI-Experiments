@@ -796,3 +796,257 @@ html {
         margin: 0 auto;
     }
 }
+
+/* ===== GOOGLE OAUTH BUTTON STYLING ===== */
+/* 
+ * Google Brand Guidelines Compliant Button
+ * Follows official Google Sign-In branding requirements
+ * Maintains accessibility and responsive design
+ */
+.btn-google {
+    background-color: #4285F4 !important;
+    border: 1px solid #4285F4 !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    padding: 0.625rem 1.25rem !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.btn-google:hover {
+    background-color: #357ae8 !important;
+    border-color: #357ae8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-google:focus {
+    background-color: #357ae8 !important;
+    border-color: #357ae8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25) !important;
+}
+
+.btn-google:active {
+    background-color: #2d5dc9 !important;
+    border-color: #2d5dc9 !important;
+    transform: translateY(0px) !important;
+}
+
+/* Google icon styling for better visual consistency */
+.btn-google .fab.fa-google {
+    color: #ffffff !important;
+    font-size: 1.1em !important;
+    margin-right: 0.75rem !important;
+    vertical-align: middle !important;
+}
+
+/* Enhanced hover effect for the Google icon */
+.btn-google:hover .fab.fa-google {
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Ensure consistent spacing and alignment */
+.btn-google {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
+
+/* Mobile responsiveness for Google button */
+@media (max-width: 576px) {
+    .btn-google {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .btn-google .fab.fa-google {
+        margin-right: 0.5rem !important;
+    }
+}
+
+/* Dark theme compatibility - maintains Google blue on Cyborg theme */
+.btn-google {
+    /* These values ensure the button remains Google-branded even on dark themes */
+    background-color: #4285F4 !important;
+    border-color: #4285F4 !important;
+}
+
+/* ===== IDENTITY MANAGE PAGES STYLING ENHANCEMENTS ===== */
+/*
+ * FEATURE: Targeted font size reduction and visual improvements for Identity Manage pages
+ * Applies ONLY to /Identity/Account/Manage/* pages using URL-based detection
+ * Maintains accessibility standards while reducing font sizes for better visual density
+ * Preserves Cinema Gold branding and Bootstrap Cyborg theme integration
+ */
+
+/* Target only Identity Manage pages using body class or URL detection */
+body[class*="manage"], 
+body[data-page*="manage"],
+body[data-area="Identity"][data-page*="Account"] .container,
+.manage-layout,
+/* Fallback: Target common Manage page elements */
+.nav-pills + h3,
+.nav-pills ~ div h3 {
+    /* Container-level settings for Manage pages */
+}
+
+/* MANAGE PAGES: Reduce page titles/headings (h1, h2, h3) */
+body:has(.nav-pills) h1,
+body:has(.nav-pills) h2, 
+body:has(.nav-pills) h3,
+.nav-pills + h3,
+.nav-pills ~ * h3,
+/* More specific targeting for Manage page titles */
+div:has(.nav-pills) ~ * h3,
+.nav-pills ~ div h3 {
+    font-size: 1.3rem !important; /* Reduced from ~2rem to 1.3rem */
+    font-weight: 500 !important;
+    color: var(--cinelog-gold) !important; /* Cinema Gold branding */
+    margin-bottom: 1rem !important;
+    line-height: 1.4 !important;
+}
+
+/* MANAGE PAGES: Reduce form labels */
+body:has(.nav-pills) label,
+body:has(.nav-pills) .form-label,
+.nav-pills ~ * label,
+.nav-pills ~ * .form-label {
+    font-size: 0.85rem !important; /* Reduced from 1rem to 0.85rem */
+    font-weight: 500 !important;
+    margin-bottom: 0.4rem !important;
+}
+
+/* MANAGE PAGES: Reduce input text and form control text */
+body:has(.nav-pills) .form-control,
+body:has(.nav-pills) input,
+body:has(.nav-pills) select,
+body:has(.nav-pills) textarea,
+.nav-pills ~ * .form-control,
+.nav-pills ~ * input,
+.nav-pills ~ * select,
+.nav-pills ~ * textarea {
+    font-size: 0.9rem !important; /* Reduced from 1rem to 0.9rem */
+    padding: 0.5rem 0.75rem !important; /* Slightly reduced padding */
+    line-height: 1.4 !important;
+}
+
+/* MANAGE PAGES: Reduce navigation pills text */
+.nav-pills .nav-link {
+    font-size: 0.85rem !important; /* Reduced from 1rem to 0.85rem */
+    padding: 0.4rem 0.8rem !important; /* Reduced padding */
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+}
+
+/* MANAGE PAGES: Active nav pill with Cinema Gold accent */
+.nav-pills .nav-link.active {
+    background-color: var(--cinelog-gold) !important;
+    color: #1a1a1a !important;
+    font-weight: 600 !important;
+}
+
+/* MANAGE PAGES: Reduce button text */
+body:has(.nav-pills) .btn,
+.nav-pills ~ * .btn {
+    font-size: 0.85rem !important; /* Reduced from 1rem to 0.85rem */
+    padding: 0.5rem 1rem !important; /* Reduced padding */
+    font-weight: 500 !important;
+}
+
+/* MANAGE PAGES: Reduce validation message text */
+body:has(.nav-pills) .text-danger,
+body:has(.nav-pills) .field-validation-error,
+body:has(.nav-pills) .validation-summary-errors,
+.nav-pills ~ * .text-danger,
+.nav-pills ~ * .field-validation-error,
+.nav-pills ~ * .validation-summary-errors {
+    font-size: 0.75rem !important; /* Reduced from 0.875rem to 0.75rem */
+    margin-top: 0.25rem !important;
+}
+
+/* MANAGE PAGES: Reduce general paragraph and div text */
+body:has(.nav-pills) p,
+body:has(.nav-pills) div:not(.form-floating):not(.btn):not(.nav):not(.card),
+.nav-pills ~ * p,
+.nav-pills ~ * div:not(.form-floating):not(.btn):not(.nav):not(.card) {
+    font-size: 0.9rem !important; /* Reduced from 1rem to 0.9rem */
+    line-height: 1.5 !important;
+}
+
+/* MANAGE PAGES: Improve form spacing and visual density */
+body:has(.nav-pills) .form-floating,
+body:has(.nav-pills) .mb-3,
+.nav-pills ~ * .form-floating,
+.nav-pills ~ * .mb-3 {
+    margin-bottom: 1rem !important; /* Reduced from 1.5rem to 1rem */
+}
+
+/* MANAGE PAGES: Status messages styling */
+body:has(.nav-pills) .alert,
+.nav-pills ~ * .alert {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: 6px !important;
+}
+
+/* MANAGE PAGES: Reduce overall container padding for better space usage */
+body:has(.nav-pills) .container,
+body:has(.nav-pills) .row,
+.manage-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* MANAGE PAGES: Navigation container improvements */
+.nav-pills {
+    margin-bottom: 1.5rem !important;
+    padding: 0.5rem !important;
+    background-color: rgba(var(--bs-dark-rgb), 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* RESPONSIVE: Maintain readability on smaller screens */
+@media (max-width: 768px) {
+    /* On mobile, don't make fonts too small */
+    body:has(.nav-pills) h3,
+    .nav-pills + h3,
+    .nav-pills ~ * h3 {
+        font-size: 1.4rem !important;
+    }
+    
+    body:has(.nav-pills) label,
+    body:has(.nav-pills) .form-label,
+    .nav-pills ~ * label,
+    .nav-pills ~ * .form-label {
+        font-size: 0.9rem !important;
+    }
+    
+    body:has(.nav-pills) .form-control,
+    body:has(.nav-pills) input,
+    .nav-pills ~ * .form-control,
+    .nav-pills ~ * input {
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ACCESSIBILITY: Ensure focus states remain visible with reduced sizes */
+body:has(.nav-pills) .form-control:focus,
+body:has(.nav-pills) .btn:focus,
+body:has(.nav-pills) .nav-link:focus,
+.nav-pills ~ * .form-control:focus,
+.nav-pills ~ * .btn:focus,
+.nav-pills ~ * .nav-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--cinelog-gold-rgb), 0.25) !important;
+    border-color: var(--cinelog-gold) !important;
+}
+
+/* ===== END IDENTITY MANAGE PAGES STYLING ===== */
