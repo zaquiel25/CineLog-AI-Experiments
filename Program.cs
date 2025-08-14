@@ -7,6 +7,7 @@ using Ezequiel_Movies.Services;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using System.Collections;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -146,20 +147,44 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
 
+/// <summary>
+/// FEATURE: Configure session state for suggestion system anti-repetition tracking.
+/// Required for shuffle pools, last selected genres/actors, and user preference tracking.
+/// Uses in-memory provider for development, could be extended to Redis for production scaling.
+/// </summary>
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = "CineLog.Session";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works in both HTTP (dev) and HTTPS (prod)
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.IdleTimeout = TimeSpan.FromMinutes(20); // Match password gate timeout
+    options.Cookie.IsEssential = true; // Required for GDPR compliance
+});
+
 
 /// <summary>
 /// FEATURE: Configure ASP.NET Identity with Google OAuth external authentication support.
+/// Identity remains the DEFAULT authentication scheme for MoviesController [Authorize] attributes.
 /// Integrates with Azure Key Vault for secure credential management in production.
 /// </summary>
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Configure Google authentication
+// Configure Google authentication - this extends the default Identity authentication
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"] ?? builder.Configuration["Authentication--Google--ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? builder.Configuration["Authentication--Google--ClientSecret"];
 
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
 {
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        // Keep Identity as default, just configure its cookie settings
+        options.LoginPath = "/Identity/Account/Login";
+        options.LogoutPath = "/Identity/Account/Logout";
+        options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    });
+
     builder.Services.AddAuthentication()
         .AddGoogle(googleOptions =>
         {
@@ -179,6 +204,12 @@ else
 {
     // Google OAuth not configured - users can still use email/password authentication
     // In development, add secrets using: dotnet user-secrets set "Authentication:Google:ClientId" "your-client-id"
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.LoginPath = "/Identity/Account/Login";
+        options.LogoutPath = "/Identity/Account/Logout";
+        options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    });
 }
 // --- VVVV START: ADDED HTTP CLIENT CONFIGURATION FOR TMDB SERVICE HERE VVVV ---
 builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure Ezequiel_Movies.TmdbService is the correct full name for your service class
@@ -193,10 +224,11 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 
 
 /// <summary>
-/// FEATURE: Configure cookie-based password gate authentication.
+/// FEATURE: Configure cookie-based password gate authentication as NAMED scheme.
+/// Works alongside Identity authentication - PasswordGate for site access, Identity for user accounts.
 /// Eliminates Redis dependency and provides consistent authentication across environments.
 /// </summary>
-builder.Services.AddAuthentication("PasswordGate")
+builder.Services.AddAuthentication()
     .AddCookie("PasswordGate", options =>
     {
         options.LoginPath = "/PasswordGate";
@@ -223,10 +255,6 @@ builder.Services.AddAuthentication("PasswordGate")
         };
     });
 
-/// <summary>
-/// DEPRECATED: Session-based authentication removed in favor of cookie authentication.
-/// Previous Redis/session configuration removed to eliminate Azure dependencies.
-/// </summary>
 
 var app = builder.Build();
 
@@ -240,6 +268,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseSession(); // Required for suggestion system anti-repetition tracking
 app.UseAuthorization();
 
 /// <summary>
@@ -251,6 +280,13 @@ app.Use(async (context, next) =>
 {
     // Allow access to password gate controller
     if (context.Request.Path.StartsWithSegments("/PasswordGate", StringComparison.OrdinalIgnoreCase))
+    {
+        await next();
+        return;
+    }
+    
+    // Allow access to Identity authentication pages (login, register, etc.)
+    if (context.Request.Path.StartsWithSegments("/Identity", StringComparison.OrdinalIgnoreCase))
     {
         await next();
         return;
@@ -268,7 +304,10 @@ app.Use(async (context, next) =>
     }
     
     // Check if user is authenticated via password gate cookie
-    var isAuthenticated = context.User.HasClaim("PasswordGate", "granted");
+    // We need to explicitly authenticate against the PasswordGate scheme
+    var authenticateResult = await context.AuthenticateAsync("PasswordGate");
+    var isAuthenticated = authenticateResult.Succeeded && 
+                         authenticateResult.Principal.HasClaim("PasswordGate", "granted");
     
     if (isAuthenticated)
     {

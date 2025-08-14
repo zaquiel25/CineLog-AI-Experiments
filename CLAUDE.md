@@ -273,6 +273,41 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - **NEVER** expose data across user accounts
 - Use ASP.NET Identity for authentication and authorization
 
+### 🔐 Two-Layer Authentication Architecture Pattern
+**CRITICAL AI Pattern - Password Gate + Identity Authentication Coexistence**
+
+**Essential Understanding - Authentication Scheme Hierarchy:**
+```csharp
+// CRITICAL: Identity as default scheme, PasswordGate as named scheme
+builder.Services.AddAuthentication() // No default scheme specified - Identity remains default
+    .AddCookie("PasswordGate", options => // Named scheme for site access
+    {
+        options.LoginPath = "/PasswordGate";
+        // PasswordGate-specific configuration
+    });
+
+// Identity authentication remains default for [Authorize] attributes
+builder.Services.AddDefaultIdentity<IdentityUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+```
+
+**Critical Controller Pattern - Explicit Scheme Authentication:**
+```csharp
+// CORRECT: Explicit authentication against named scheme
+var authenticateResult = await HttpContext.AuthenticateAsync("PasswordGate");
+var isAuthenticated = authenticateResult.Succeeded && 
+                     authenticateResult.Principal.HasClaim("PasswordGate", "granted");
+
+// WRONG: Implicit authentication only checks default scheme
+var isAuthenticated = HttpContext.User.HasClaim("PasswordGate", "granted");
+```
+
+**Key Architectural Rules:**
+- **Identity (Default Scheme)**: Used by `[Authorize]` attributes on controllers - handles user account authentication
+- **PasswordGate (Named Scheme)**: Used for site-wide access control - requires explicit authentication calls
+- **Cookie Coexistence**: Both authentication cookies can coexist without conflicts
+- **Configuration Flexibility**: Support multiple password key formats (SitePassword, Sitepassword, SiteAccess:Password)
+
 ### 🔐 Google OAuth Authentication Pattern
 **For complete OAuth implementation details, see [README.md](README.md#google-oauth) and [CHANGELOG.md](CHANGELOG.md)**
 

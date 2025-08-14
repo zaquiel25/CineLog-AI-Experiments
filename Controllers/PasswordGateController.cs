@@ -25,13 +25,15 @@ namespace Ezequiel_Movies.Controllers
         /// Uses cookie-based authentication to check existing access.
         /// </summary>
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             _logger.LogInformation("PasswordGate Index GET accessed from IP: {IpAddress}", HttpContext.Connection.RemoteIpAddress);
             _logger.LogInformation("Request path: {Path}, Query: {Query}", HttpContext.Request.Path, HttpContext.Request.QueryString);
             
-            // Check if already authenticated via cookie
-            var isAuthenticated = HttpContext.User.HasClaim("PasswordGate", "granted");
+            // Check if already authenticated via password gate cookie
+            var authenticateResult = await HttpContext.AuthenticateAsync("PasswordGate");
+            var isAuthenticated = authenticateResult.Succeeded && 
+                                 authenticateResult.Principal.HasClaim("PasswordGate", "granted");
             _logger.LogInformation("Current authentication status: {IsAuthenticated}", isAuthenticated);
             
             if (isAuthenticated)
@@ -52,8 +54,8 @@ namespace Ezequiel_Movies.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(string password, bool rememberMe = false)
         {
-            // Get password from configuration (lowercase 'p' to match Key Vault secret)
-            var sitePassword = _configuration["Sitepassword"] ?? _configuration["SiteAccess:Password"];
+            // Get password from configuration - try multiple key formats
+            var sitePassword = _configuration["SitePassword"] ?? _configuration["Sitepassword"] ?? _configuration["SiteAccess:Password"];
             
             if (string.IsNullOrEmpty(sitePassword))
             {
