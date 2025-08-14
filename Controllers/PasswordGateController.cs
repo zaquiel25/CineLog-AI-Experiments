@@ -20,17 +20,32 @@ namespace Ezequiel_Movies.Controllers
 
         /// <summary>
         /// Display password gate form for site access.
+        /// AZURE DIAGNOSTIC: Enhanced logging for production debugging.
         /// </summary>
         [HttpGet]
         public IActionResult Index()
         {
-            // If already authenticated, redirect to home
-            var authenticated = HttpContext.Session.GetString("SiteAccess");
-            if (authenticated == "granted")
+            _logger.LogInformation("PasswordGate Index GET accessed from IP: {IpAddress}", HttpContext.Connection.RemoteIpAddress);
+            _logger.LogInformation("Request path: {Path}, Query: {Query}", HttpContext.Request.Path, HttpContext.Request.QueryString);
+            
+            try
             {
-                return RedirectToAction("Index", "Home");
+                // If already authenticated, redirect to home
+                var authenticated = HttpContext.Session.GetString("SiteAccess");
+                _logger.LogInformation("Current session authentication: {Auth}", authenticated ?? "NULL");
+                
+                if (authenticated == "granted")
+                {
+                    _logger.LogInformation("User already authenticated, redirecting to home");
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Session access failed in PasswordGate GET");
             }
 
+            _logger.LogInformation("Displaying password gate form");
             return View();
         }
 
@@ -70,10 +85,21 @@ namespace Ezequiel_Movies.Controllers
                     {
                         Expires = DateTimeOffset.UtcNow.AddDays(7),
                         HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict
+                        Secure = Request.IsHttps, // Azure-compatible: Only secure if HTTPS
+                        SameSite = SameSiteMode.Lax, // More permissive for Azure load balancer
+                        Path = "/",
+                        Domain = null // Let browser determine domain
                     };
-                    Response.Cookies.Append("SiteAccess", "granted", cookieOptions);
+                    
+                    try
+                    {
+                        Response.Cookies.Append("SiteAccess", "granted", cookieOptions);
+                        _logger.LogInformation("Persistent cookie set for site access");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to set persistent cookie");
+                    }
                 }
 
                 _logger.LogInformation("Site access granted from IP: {IpAddress}", HttpContext.Connection.RemoteIpAddress);

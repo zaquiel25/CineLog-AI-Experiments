@@ -192,15 +192,52 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 // --- ^^^^ END: ADDED HTTP CLIENT CONFIGURATION ^^^^ ---
 
 
-// VVVV ADD THESE TWO LINES TO ENABLE SESSION VVVV
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
+/// <summary>
+/// AZURE COMPATIBILITY FIX: Configure session provider for Azure App Service.
+/// Uses SQL Server-based sessions for persistence across container restarts.
+/// </summary>
+if (builder.Environment.IsProduction())
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(20); // The session will expire after 20 minutes of inactivity
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-// ^^^^ END OF NEW LINES ^^^^
+    // Production: Use SQL Server session state for Azure App Service compatibility
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        // Try Redis first (if available)
+        var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? 
+                                   Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+        
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            options.Configuration = redisConnectionString;
+        }
+        else
+        {
+            // Fallback to localhost Redis (will fail gracefully)
+            options.Configuration = "localhost:6379";
+        }
+    });
+    
+    // Fallback: If Redis fails, use SQL Server sessions
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(20);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax; // More permissive for Azure
+        options.Cookie.Name = "CineLog.Session";
+    });
+}
+else
+{
+    // Development: Use memory cache
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(20);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+    });
+}
 
 var app = builder.Build();
 
@@ -242,23 +279,49 @@ app.Use(async (context, next) =>
         return;
     }
     
-    // Check session authentication
-    var sessionAuth = context.Session.GetString("SiteAccess");
-    
-    // Check persistent cookie authentication
-    var cookieAuth = context.Request.Cookies["SiteAccess"];
-    
-    // If authenticated via session or cookie, allow access
-    if (sessionAuth == "granted" || cookieAuth == "granted")
+    try
     {
-        // If authenticated via cookie but not session, update session
-        if (sessionAuth != "granted" && cookieAuth == "granted")
+        // AZURE DIAGNOSTIC: Log middleware execution
+        var logger = context.RequestServices.GetService<ILogger<Program>>();
+        logger?.LogInformation("Password middleware executing for path: {Path}", context.Request.Path);
+        
+        // Check session authentication
+        var sessionAuth = context.Session.GetString("SiteAccess");
+        logger?.LogInformation("Session auth value: {SessionAuth}", sessionAuth ?? "NULL");
+        
+        // Check persistent cookie authentication  
+        var cookieAuth = context.Request.Cookies["SiteAccess"];
+        logger?.LogInformation("Cookie auth value: {CookieAuth}", cookieAuth ?? "NULL");
+        
+        // If authenticated via session or cookie, allow access
+        if (sessionAuth == "granted" || cookieAuth == "granted")
         {
-            context.Session.SetString("SiteAccess", "granted");
+            // If authenticated via cookie but not session, update session
+            if (sessionAuth != "granted" && cookieAuth == "granted")
+            {
+                try
+                {
+                    context.Session.SetString("SiteAccess", "granted");
+                    logger?.LogInformation("Updated session from cookie authentication");
+                }
+                catch (Exception sessionEx)
+                {
+                    logger?.LogError(sessionEx, "Failed to update session from cookie");
+                }
+            }
+            
+            logger?.LogInformation("Access granted, proceeding to next middleware");
+            await next();
+            return;
         }
         
-        await next();
-        return;
+        logger?.LogInformation("No valid authentication found, redirecting to password gate");
+    }
+    catch (Exception ex)
+    {
+        // AZURE DIAGNOSTIC: Log session errors instead of silently swallowing
+        var logger = context.RequestServices.GetService<ILogger<Program>>();
+        logger?.LogError(ex, "Session access failed in password middleware");
     }
     
     // Not authenticated - redirect to password gate with return URL
