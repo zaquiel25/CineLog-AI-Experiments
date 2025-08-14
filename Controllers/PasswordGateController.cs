@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 namespace Ezequiel_Movies.Controllers
 {
@@ -20,7 +22,7 @@ namespace Ezequiel_Movies.Controllers
 
         /// <summary>
         /// Display password gate form for site access.
-        /// AZURE DIAGNOSTIC: Enhanced logging for production debugging.
+        /// Uses cookie-based authentication to check existing access.
         /// </summary>
         [HttpGet]
         public IActionResult Index()
@@ -28,21 +30,14 @@ namespace Ezequiel_Movies.Controllers
             _logger.LogInformation("PasswordGate Index GET accessed from IP: {IpAddress}", HttpContext.Connection.RemoteIpAddress);
             _logger.LogInformation("Request path: {Path}, Query: {Query}", HttpContext.Request.Path, HttpContext.Request.QueryString);
             
-            try
+            // Check if already authenticated via cookie
+            var isAuthenticated = HttpContext.User.HasClaim("PasswordGate", "granted");
+            _logger.LogInformation("Current authentication status: {IsAuthenticated}", isAuthenticated);
+            
+            if (isAuthenticated)
             {
-                // If already authenticated, redirect to home
-                var authenticated = HttpContext.Session.GetString("SiteAccess");
-                _logger.LogInformation("Current session authentication: {Auth}", authenticated ?? "NULL");
-                
-                if (authenticated == "granted")
-                {
-                    _logger.LogInformation("User already authenticated, redirecting to home");
-                    return RedirectToAction("Index", "Home");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Session access failed in PasswordGate GET");
+                _logger.LogInformation("User already authenticated, redirecting to home");
+                return RedirectToAction("Index", "Home");
             }
 
             _logger.LogInformation("Displaying password gate form");
@@ -51,14 +46,14 @@ namespace Ezequiel_Movies.Controllers
 
         /// <summary>
         /// Process password gate form submission.
-        /// Validates password and grants site access via session.
+        /// Validates password and grants site access via cookie authentication.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Index(string password, bool rememberMe = false)
+        public async Task<IActionResult> Index(string password, bool rememberMe = false)
         {
-            // Get password from configuration
-            var sitePassword = _configuration["SitePassword"] ?? _configuration["SiteAccess:Password"];
+            // Get password from configuration (lowercase 'p' to match Key Vault secret)
+            var sitePassword = _configuration["Sitepassword"] ?? _configuration["SiteAccess:Password"];
             
             if (string.IsNullOrEmpty(sitePassword))
             {
@@ -75,34 +70,43 @@ namespace Ezequiel_Movies.Controllers
 
             if (password == sitePassword)
             {
-                // Grant access via session
-                HttpContext.Session.SetString("SiteAccess", "granted");
-
-                // If "Remember Me" is checked, set a persistent cookie for 7 days
-                if (rememberMe)
+                try
                 {
-                    var cookieOptions = new CookieOptions
+                    // Create claims for authentication
+                    var claims = new List<Claim>
                     {
-                        Expires = DateTimeOffset.UtcNow.AddDays(7),
-                        HttpOnly = true,
-                        Secure = Request.IsHttps, // Azure-compatible: Only secure if HTTPS
-                        SameSite = SameSiteMode.Lax, // More permissive for Azure load balancer
-                        Path = "/",
-                        Domain = null // Let browser determine domain
+                        new Claim("PasswordGate", "granted"),
+                        new Claim(ClaimTypes.Name, "PasswordGateUser")
                     };
-                    
-                    try
-                    {
-                        Response.Cookies.Append("SiteAccess", "granted", cookieOptions);
-                        _logger.LogInformation("Persistent cookie set for site access");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to set persistent cookie");
-                    }
-                }
 
-                _logger.LogInformation("Site access granted from IP: {IpAddress}", HttpContext.Connection.RemoteIpAddress);
+                    var claimsIdentity = new ClaimsIdentity(claims, "PasswordGate");
+                    var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                    // Configure authentication properties
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = rememberMe, // Remember Me functionality
+                        ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddMinutes(20)
+                    };
+
+                    // Store Remember Me preference for the authentication event
+                    if (rememberMe)
+                    {
+                        authProperties.Items["RememberMe"] = "true";
+                    }
+
+                    // Sign in the user with cookie authentication
+                    await HttpContext.SignInAsync("PasswordGate", claimsPrincipal, authProperties);
+                    
+                    _logger.LogInformation("Site access granted from IP: {IpAddress}, RememberMe: {RememberMe}", 
+                                         HttpContext.Connection.RemoteIpAddress, rememberMe);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to sign in user with cookie authentication");
+                    ViewBag.ErrorMessage = "Authentication failed. Please try again.";
+                    return View();
+                }
                 
                 // Redirect to home page or return URL
                 var returnUrl = Request.Query["returnUrl"].ToString();
@@ -119,6 +123,19 @@ namespace Ezequiel_Movies.Controllers
                 ViewBag.ErrorMessage = "Incorrect password. Please try again.";
                 return View();
             }
+        }
+
+        /// <summary>
+        /// FEATURE: Logout functionality for password gate authentication.
+        /// Signs out user and redirects to password gate.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("PasswordGate");
+            _logger.LogInformation("User signed out from password gate");
+            return RedirectToAction("Index", "PasswordGate");
         }
     }
 }

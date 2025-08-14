@@ -193,51 +193,40 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 
 
 /// <summary>
-/// AZURE COMPATIBILITY FIX: Configure session provider for Azure App Service.
-/// Uses SQL Server-based sessions for persistence across container restarts.
+/// FEATURE: Configure cookie-based password gate authentication.
+/// Eliminates Redis dependency and provides consistent authentication across environments.
 /// </summary>
-if (builder.Environment.IsProduction())
-{
-    // Production: Use SQL Server session state for Azure App Service compatibility
-    builder.Services.AddStackExchangeRedisCache(options =>
+builder.Services.AddAuthentication("PasswordGate")
+    .AddCookie("PasswordGate", options =>
     {
-        // Try Redis first (if available)
-        var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? 
-                                   Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+        options.LoginPath = "/PasswordGate";
+        options.LogoutPath = "/PasswordGate/Logout";
+        options.AccessDeniedPath = "/PasswordGate";
+        options.Cookie.Name = "CineLog.PasswordGate";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works in both HTTP (dev) and HTTPS (prod)
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20); // Session timeout
+        options.SlidingExpiration = true; // Extend on activity
         
-        if (!string.IsNullOrEmpty(redisConnectionString))
+        // Remember Me functionality - extend expiration
+        options.Events.OnSigningIn = context =>
         {
-            options.Configuration = redisConnectionString;
-        }
-        else
-        {
-            // Fallback to localhost Redis (will fail gracefully)
-            options.Configuration = "localhost:6379";
-        }
+            // Check if Remember Me was requested (stored in ticket properties)
+            if (context.Properties.Items.ContainsKey("RememberMe") && 
+                context.Properties.Items["RememberMe"] == "true")
+            {
+                context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7);
+                context.Properties.IsPersistent = true;
+            }
+            return Task.CompletedTask;
+        };
     });
-    
-    // Fallback: If Redis fails, use SQL Server sessions
-    builder.Services.AddSession(options =>
-    {
-        options.IdleTimeout = TimeSpan.FromMinutes(20);
-        options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Lax; // More permissive for Azure
-        options.Cookie.Name = "CineLog.Session";
-    });
-}
-else
-{
-    // Development: Use memory cache
-    builder.Services.AddDistributedMemoryCache();
-    builder.Services.AddSession(options =>
-    {
-        options.IdleTimeout = TimeSpan.FromMinutes(20);
-        options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true;
-    });
-}
+
+/// <summary>
+/// DEPRECATED: Session-based authentication removed in favor of cookie authentication.
+/// Previous Redis/session configuration removed to eliminate Azure dependencies.
+/// </summary>
 
 var app = builder.Build();
 
@@ -250,14 +239,13 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
+
 /// <summary>
-/// SECURITY: Critical middleware for external authentication (Google OAuth).
-/// Must be placed before UseAuthorization() in the pipeline.
-/// </summary>
-/// <summary>
-/// FEATURE: Site-wide password protection middleware for friend testing phase.
-/// Redirects all requests to password gate unless user is authenticated or accessing password gate itself.
+/// FEATURE: Site-wide password protection middleware using cookie authentication.
+/// Redirects all requests to password gate unless user is authenticated or accessing allowed paths.
+/// Must be placed AFTER UseAuthentication() to properly read authentication cookies.
 /// </summary>
 app.Use(async (context, next) =>
 {
@@ -279,58 +267,19 @@ app.Use(async (context, next) =>
         return;
     }
     
-    try
+    // Check if user is authenticated via password gate cookie
+    var isAuthenticated = context.User.HasClaim("PasswordGate", "granted");
+    
+    if (isAuthenticated)
     {
-        // AZURE DIAGNOSTIC: Log middleware execution
-        var logger = context.RequestServices.GetService<ILogger<Program>>();
-        logger?.LogInformation("Password middleware executing for path: {Path}", context.Request.Path);
-        
-        // Check session authentication
-        var sessionAuth = context.Session.GetString("SiteAccess");
-        logger?.LogInformation("Session auth value: {SessionAuth}", sessionAuth ?? "NULL");
-        
-        // Check persistent cookie authentication  
-        var cookieAuth = context.Request.Cookies["SiteAccess"];
-        logger?.LogInformation("Cookie auth value: {CookieAuth}", cookieAuth ?? "NULL");
-        
-        // If authenticated via session or cookie, allow access
-        if (sessionAuth == "granted" || cookieAuth == "granted")
-        {
-            // If authenticated via cookie but not session, update session
-            if (sessionAuth != "granted" && cookieAuth == "granted")
-            {
-                try
-                {
-                    context.Session.SetString("SiteAccess", "granted");
-                    logger?.LogInformation("Updated session from cookie authentication");
-                }
-                catch (Exception sessionEx)
-                {
-                    logger?.LogError(sessionEx, "Failed to update session from cookie");
-                }
-            }
-            
-            logger?.LogInformation("Access granted, proceeding to next middleware");
-            await next();
-            return;
-        }
-        
-        logger?.LogInformation("No valid authentication found, redirecting to password gate");
-    }
-    catch (Exception ex)
-    {
-        // AZURE DIAGNOSTIC: Log session errors instead of silently swallowing
-        var logger = context.RequestServices.GetService<ILogger<Program>>();
-        logger?.LogError(ex, "Session access failed in password middleware");
+        await next();
+        return;
     }
     
     // Not authenticated - redirect to password gate with return URL
     var returnUrl = context.Request.Path + context.Request.QueryString;
     context.Response.Redirect($"/PasswordGate?returnUrl={Uri.EscapeDataString(returnUrl)}");
 });
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 
 app.MapControllerRoute(
