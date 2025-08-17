@@ -230,16 +230,6 @@ namespace Ezequiel_Movies.Services
             try
             {
                 // Check for existence of key performance indexes deployed on 2025-08-15
-                var indexCheckQuery = @"
-                    SELECT COUNT(*) 
-                    FROM sys.indexes 
-                    WHERE name IN (
-                        'IX_Movies_UserId_DateAdded_Title', 
-                        'IX_Movies_UserId_Genre_VoteAverage',
-                        'IX_WishlistItems_UserId_TmdbId',
-                        'IX_BlacklistedMovies_UserId_TmdbId'
-                    )";
-
                 var indexCount = await _dbContext.Database.ExecuteSqlRawAsync(
                     "SELECT 1 WHERE EXISTS (SELECT 1 FROM sys.indexes WHERE name LIKE 'IX_Movies_UserId_%')",
                     cancellationToken);

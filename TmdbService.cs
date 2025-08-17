@@ -391,13 +391,11 @@ public class TmdbService : IDisposable
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             string cacheKey = $"movie_details_{tmdbMovieId}";
-            bool isCacheHit = false;
 
             // Check cache first
             if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails? cachedDetails) && cachedDetails != null)
             {
                 stopwatch.Stop();
-                isCacheHit = true;
                 
                 _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 
