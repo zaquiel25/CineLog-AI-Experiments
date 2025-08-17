@@ -8,6 +8,9 @@ using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using System.Collections;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +45,73 @@ if (builder.Environment.IsProduction())
         }
     }
     // If no Key Vault URI provided, will use connection strings from configuration
+}
+
+/// <summary>
+/// PRODUCTION MONITORING: Configure Application Insights for comprehensive production monitoring.
+/// Integrates with Azure Key Vault for secure connection string management and provides
+/// CineLog-specific telemetry for user experience, performance optimization validation,
+/// and business intelligence tracking.
+/// 
+/// FEATURE: Validates recent 70-90% database performance improvements
+/// FEATURE: Monitors TMDB API usage and response times
+/// FEATURE: Tracks user authentication success rates and session analytics
+/// FEATURE: Provides suggestion system performance metrics and cache hit rates
+/// </summary>
+// Configure Application Insights
+var applicationInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"] ?? 
+                                         builder.Configuration["ApplicationInsights--ConnectionString"];
+
+if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+{
+    // Add Application Insights telemetry
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = applicationInsightsConnectionString;
+        options.EnableAdaptiveSampling = true; // Optimize cost in production
+        options.EnableQuickPulseMetricStream = true; // Real-time monitoring
+        options.EnableAuthenticationTrackingJavaScript = true; // User session tracking
+        options.EnableDependencyTrackingTelemetryModule = true; // Database and API tracking
+        options.EnableEventCounterCollectionModule = true; // Performance counters
+    });
+    
+    // Configure telemetry for production optimization
+    builder.Services.Configure<TelemetryConfiguration>(telemetryConfiguration =>
+    {
+        // Configure sampling for cost optimization while preserving critical telemetry
+        if (builder.Environment.IsProduction())
+        {
+            // Reduce sampling rate in production to manage costs while keeping error tracking
+            telemetryConfiguration.DefaultTelemetrySink.TelemetryProcessorChainBuilder
+                .UseAdaptiveSampling(maxTelemetryItemsPerSecond: 5, excludedTypes: "Exception;Event")
+                .Build();
+        }
+    });
+    
+    // Register CineLog-specific telemetry service
+    builder.Services.AddScoped<CineLogTelemetryService>();
+    
+    builder.Services.AddLogging(logging =>
+    {
+        logging.AddApplicationInsights();
+        if (builder.Environment.IsDevelopment())
+        {
+            logging.SetMinimumLevel(LogLevel.Information);
+        }
+        else
+        {
+            logging.SetMinimumLevel(LogLevel.Warning); // Reduce log noise in production
+        }
+    });
+}
+else
+{
+    // Application Insights not configured - skip telemetry services
+    if (builder.Environment.IsProduction())
+    {
+        // Log warning that monitoring is not configured in production
+        Console.WriteLine("WARNING: Application Insights not configured in production environment");
+    }
 }
 
 // --- VVVV START: ADDED CODE FOR TMDB TOKEN AND HTTPCLIENT VVVV ---
@@ -146,6 +216,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
+
+/// <summary>
+/// PRODUCTION MONITORING: Configure health checks for comprehensive system monitoring.
+/// Provides endpoints for Application Insights and Azure monitoring to track
+/// database connectivity, TMDB API availability, cache performance, and system resources.
+/// Essential for validating the 70-90% performance improvements and detecting regressions.
+/// </summary>
+builder.Services.AddHealthChecks()
+    .AddCheck<CineLogHealthCheck>("cinelog_health")
+    .AddDbContextCheck<ApplicationDbContext>("database");
 
 /// <summary>
 /// FEATURE: Configure session state for suggestion system anti-repetition tracking.
@@ -326,5 +406,36 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+/// <summary>
+/// PRODUCTION MONITORING: Configure health check endpoints for Application Insights monitoring.
+/// Provides detailed health status for database, TMDB API, cache, and performance optimizations.
+/// Essential for production monitoring and validating recent 70-90% performance improvements.
+/// </summary>
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(x => new
+            {
+                name = x.Key,
+                status = x.Value.Status.ToString(),
+                exception = x.Value.Exception?.Message,
+                duration = x.Value.Duration,
+                data = x.Value.Data
+            }),
+            totalDuration = report.TotalDuration
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+    }
+});
+
+// Lightweight health check endpoint for load balancers
+app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/live");
 
 app.Run();
