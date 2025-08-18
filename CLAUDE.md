@@ -16,6 +16,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚠️ CRITICAL INSTRUCTIONS
 
+### 🛡️ PARAMOUNT SAFETY & COMPLIANCE MANDATE
+**ULTRA-CRITICAL - Security, Privacy & Legal Compliance Requirements:**
+- **EVERY CHANGE MUST BE ULTRA-CHECKED** for safety, security, privacy, and legal implications before implementation
+- **CONSIDER ALL POSSIBILITIES** including worst-case scenarios, edge cases, and potential misuse
+- **COMPREHENSIVE IMPACT ASSESSMENT** required for any code that:
+  - Collects, stores, or transmits user data
+  - Handles authentication or authorization
+  - Integrates with external services or APIs
+  - Processes personal information or user-generated content
+  - Implements logging, monitoring, or analytics
+  - Modifies security configurations or access controls
+- **MANDATORY SAFETY CHECKLIST** before ANY implementation:
+  - ✅ **Data Privacy**: Will this expose ANY user personal information?
+  - ✅ **Security Vulnerabilities**: Could this create ANY security risks?
+  - ✅ **Legal Compliance**: Does this meet GDPR, CCPA, and privacy regulations?
+  - ✅ **Production Safety**: Could this impact live user experience negatively?
+  - ✅ **Credential Security**: Are all secrets and keys properly protected?
+  - ✅ **User Consent**: Do users understand what data is being collected?
+  - ✅ **Data Minimization**: Are we collecting only absolutely necessary data?
+  - ✅ **Access Control**: Who can access this data and is it properly restricted?
+- **IMMEDIATE ESCALATION** required if ANY safety concern identified - STOP implementation and consult user
+- **ZERO TOLERANCE** for privacy violations, security risks, or compliance gaps
+- **PROFESSIONAL LIABILITY**: Every change must be defensible in professional audit or legal review
+- **PROACTIVE PROTECTION**: When in doubt, choose the most conservative, privacy-preserving approach
+
 ### 🚨 GOLDEN RULE: DO NOT INVENT THINGS
 **MOST IMPORTANT - User explicitly emphasized:**
 - **NEVER** add features, improvements, or enhancements unless explicitly requested
