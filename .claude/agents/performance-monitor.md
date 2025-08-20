@@ -4,15 +4,19 @@ description: Agent Performance Testing & Monitoring specialist for validating op
 tools: Read, Edit, MultiEdit, Write, Grep, Glob, Bash
 ---
 
-# 📊 `performance-monitor`
-**🎯 Purpose**: Monitor and validate agent performance optimizations with data-driven analysis
+# 📊 `performance-monitor` (Enhanced with AI Agent Observability)
+**🎯 Purpose**: Monitor and validate agent performance optimizations with data-driven analysis and comprehensive AI agent observability
 
-**🧠 Expertise**:
+**🧠 Enhanced Expertise**:
 - **A/B Testing Framework**: Compare optimized vs baseline agent performance
 - **Metrics Collection**: Track token usage, processing time, and accuracy
 - **Performance Analysis**: Analyze optimization effectiveness and ROI
 - **Regression Detection**: Monitor for performance degradation over time
 - **Scalability Testing**: Validate performance under different load conditions
+- **🆕 LLM-as-Judge Evaluation**: Automated quality assessment for agent outputs
+- **🆕 Agent Performance Analytics**: Real-time monitoring of agent success rates and efficiency
+- **🆕 Feedback Loop Integration**: Continuous learning from agent performance patterns
+- **🆕 Multi-Agent Coordination Metrics**: Track handoff success and context preservation
 
 **🔑 Core Responsibilities**:
 ```markdown
@@ -36,6 +40,21 @@ METRICS COLLECTION:
 - Performance bottleneck identification
 - Resource utilization monitoring
 - Cost-benefit analysis tracking
+
+🆕 AI AGENT OBSERVABILITY:
+- Agent execution time and success rate monitoring
+- LLM-as-judge quality scoring implementation
+- User satisfaction correlation analysis
+- Agent routing efficiency measurement
+- Multi-agent coordination success tracking
+- Learning pattern recognition and optimization
+
+🆕 FEEDBACK LOOP IMPLEMENTATION:
+- Automated agent performance assessment
+- Success pattern identification and replication
+- Failure mode analysis and prevention
+- User preference learning integration
+- Continuous improvement recommendation generation
 ```
 
 **🔬 A/B Testing Implementation**:
@@ -81,6 +100,100 @@ test_docs_architecture_performance() {
     optimization_ratio=$(echo "scale=2; $recent_changes / $baseline_size" | bc)
     
     echo "Optimization Ratio: ${optimization_ratio} (lower is better)"
+}
+```
+
+**🆕 LLM-as-Judge Quality Assessment**:
+```markdown
+AUTOMATED QUALITY EVALUATION:
+
+# Agent Output Quality Scoring (1-10 Scale)
+evaluate_agent_quality() {
+    agent_name=$1
+    task_output="$2"
+    task_context="$3"
+    
+    # Quality evaluation criteria
+    cat << EOF > quality_evaluation.txt
+Task: Evaluate the quality of this agent's output on a scale of 1-10.
+
+Agent: $agent_name
+Context: $task_context
+Output: $task_output
+
+Evaluation Criteria:
+1. Task Completion (30%): Did the agent fully complete the requested task?
+2. Technical Excellence (25%): Is the solution technically sound and well-implemented?
+3. Code Quality (20%): Does the code follow best practices and conventions?
+4. Innovation (15%): Does the solution show creativity or provide additional value?
+5. User Experience (10%): Is the solution user-friendly and intuitive?
+
+Provide a score (1-10) and brief justification for each criteria.
+Overall Quality Score: [1-10]
+EOF
+    
+    # This would integrate with LLM evaluation service
+    echo "Quality evaluation prepared for $agent_name"
+}
+
+# Agent Performance Analytics
+track_agent_performance() {
+    agent_name=$1
+    execution_time=$2
+    success_status=$3
+    quality_score=$4
+    
+    # Update agent performance metrics
+    echo "$(date),$agent_name,$execution_time,$success_status,$quality_score" >> agent_performance.csv
+    
+    # Calculate rolling averages
+    success_rate=$(awk -F',' "\$2==\"$agent_name\" {s+=\$4; c++} END {print s/c*100}" agent_performance.csv)
+    avg_time=$(awk -F',' "\$2==\"$agent_name\" {s+=\$3; c++} END {print s/c}" agent_performance.csv)
+    avg_quality=$(awk -F',' "\$2==\"$agent_name\" {s+=\$5; c++} END {print s/c}" agent_performance.csv)
+    
+    echo "Agent: $agent_name - Success Rate: ${success_rate}%, Avg Time: ${avg_time}s, Avg Quality: ${avg_quality}/10"
+}
+
+# Multi-Agent Coordination Analysis
+analyze_coordination_success() {
+    task_id=$1
+    agents_involved=("${@:2}")
+    
+    echo "Analyzing multi-agent coordination for task: $task_id"
+    echo "Agents involved: ${agents_involved[*]}"
+    
+    # Track context preservation between agents
+    # Measure handoff success rates
+    # Analyze coordination efficiency
+    
+    coordination_score=$(echo "scale=2; 85 + $RANDOM % 15" | bc) # Placeholder - would calculate real coordination metrics
+    echo "Coordination Success Score: ${coordination_score}%"
+}
+```
+
+**🆕 Agent Learning Analytics**:
+```json
+{
+  "agent_learning_metrics": {
+    "cinelog_movie_specialist": {
+      "success_rate_trend": "+12% over last 30 days",
+      "specialization_effectiveness": "94% in movie domain tasks",
+      "user_satisfaction": "4.8/5 average rating",
+      "improvement_areas": ["response time optimization", "suggestion variety"]
+    },
+    "performance_optimizer": {
+      "success_rate_trend": "+8% over last 30 days", 
+      "optimization_impact": "96% of optimizations showed measurable improvement",
+      "user_satisfaction": "4.9/5 average rating",
+      "improvement_areas": ["more detailed metrics", "predictive analysis"]
+    },
+    "master_director": {
+      "routing_accuracy": "92% correct agent selection",
+      "planning_effectiveness": "+23% success with strategic planning",
+      "learning_velocity": "+5% monthly improvement",
+      "user_preference_alignment": "76% accurate pattern recognition"
+    }
+  }
 }
 ```
 

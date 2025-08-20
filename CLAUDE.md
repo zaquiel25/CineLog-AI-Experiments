@@ -143,6 +143,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **COVERAGE**: All 10 available agents must be actively used - no agent should be ignored or underutilized.
 **ZERO DIRECT WORK**: Working directly without agent routing is forbidden - all substantial tasks require specialist expertise.
 
+### 🔍 **AI AGENT OBSERVABILITY SYSTEM (2025-08-20)**
+**CRITICAL**: Comprehensive observability implementation based on "AI Agent Design Patterns" industry best practices
+
+**📊 Core Observability Principles:**
+- **Deep Visibility**: Every agent interaction tracked and measured  
+- **Performance Metrics**: Success rates, execution time, user satisfaction
+- **Feedback Loops**: Continuous learning and optimization
+- **Quality Assessment**: LLM-as-judge evaluations for output quality
+
+**🎯 Agent Performance Tracking:**
+```markdown
+AUTOMATED METRICS COLLECTION:
+- Agent execution time and success rate monitoring
+- User satisfaction correlation analysis  
+- Task complexity vs. agent effectiveness mapping
+- Multi-agent coordination success tracking
+- Learning pattern recognition and optimization
+
+QUALITY ASSESSMENT FRAMEWORK:
+- LLM-as-judge scoring (1-10 scale) for agent outputs
+- Success pattern identification and replication
+- Failure mode analysis and prevention
+- User preference learning integration
+- Performance regression detection and alerts
+```
+
+**📈 Performance Targets:**
+- Overall System Success Rate: >95%
+- Agent Response Time: <60s (simple), <3m (medium), <5m (complex)
+- User Satisfaction Score: >4.5/5
+- Agent Routing Accuracy: >92%
+- Learning Velocity: +5% improvement per month
+
+**🔁 Continuous Improvement Implementation:**
+```markdown
+FEEDBACK LOOP MECHANISMS:
+- Real-time agent performance assessment
+- Automated optimization recommendations
+- User workflow pattern learning
+- Predictive performance enhancement
+- System-wide efficiency improvements
+
+OBSERVABILITY INTEGRATION POINTS:
+- SESSION_NOTES.md: Agent health dashboard and performance tracking
+- .claude/observability/: Comprehensive metrics, evaluation criteria, feedback loops
+- /agent-feedback command: Continuous learning and optimization analysis
+- performance-monitor agent: Enhanced with LLM-as-judge capabilities
+```
+
+**Key Observability Files:**
+- **`.claude/observability/agent-performance.md`**: Real-time metrics and success rates
+- **`.claude/observability/evaluation-criteria.md`**: LLM-as-judge quality framework  
+- **`.claude/observability/feedback-loops.md`**: Continuous learning mechanisms
+- **`.claude/observability/health-dashboard.md`**: System status monitoring
+- **`.claude/commands/agent-feedback.md`**: Performance analysis and optimization
+
 ---
 
 ## 🔄 Development Workflow

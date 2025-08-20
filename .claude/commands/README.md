@@ -1,6 +1,6 @@
-# Documentation Update Slash Commands
+# Claude Code Slash Commands
 
-This directory contains Claude Code slash commands for automatically updating project documentation.
+This directory contains Claude Code slash commands for automatically updating project documentation and managing AI agent performance optimization.
 
 ## Available Commands
 
@@ -52,6 +52,26 @@ This directory contains Claude Code slash commands for automatically updating pr
 - Preserves essential architecture patterns and production status information
 - Ensures focused day-to-day context for development continuity
 
+### `/agent-feedback [specific agent or aspect]`
+**Purpose**: **🆕 AI Agent Observability** - Analyzes agent performance patterns and implements continuous learning feedback loops  
+**Tools**: Read, Edit, MultiEdit, Grep, Glob, LS  
+**Usage**: `/agent-feedback` or `/agent-feedback cinelog-movie-specialist`
+
+**What it does**:
+- **Performance Data Collection**: Reviews SESSION_NOTES.md agent performance metrics and success rates
+- **Pattern Recognition**: Identifies successful agent routing patterns and failure modes
+- **User Preference Learning**: Detects user working style adaptations and preferences  
+- **Optimization Recommendations**: Generates agent capability improvements and routing optimizations
+- **Continuous Learning Implementation**: Updates performance baselines and integrates successful patterns
+- **Predictive Enhancement**: Creates optimization recommendations for future sessions
+
+**Key Capabilities**:
+- Analyzes agent success rates, execution times, and quality scores
+- Implements LLM-as-judge evaluation principles for automated quality assessment
+- Tracks multi-agent coordination effectiveness and context preservation
+- Identifies user satisfaction patterns and workflow optimizations
+- Generates data-driven recommendations for agent system improvements
+
 ## Documentation Files Managed
 
 1. **README.md** - Main project documentation, features, setup
@@ -60,11 +80,19 @@ This directory contains Claude Code slash commands for automatically updating pr
 4. **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Performance improvements and metrics
 5. **SESSION_NOTES.md** - Day-to-day context and session continuity (via `/session`)
 
+### 🆕 **AI Agent Observability Files**
+6. **`.claude/observability/agent-performance.md`** - Real-time agent metrics and success rates
+7. **`.claude/observability/evaluation-criteria.md`** - LLM-as-judge quality assessment framework
+8. **`.claude/observability/feedback-loops.md`** - Continuous learning mechanisms and pattern recognition
+9. **`.claude/observability/health-dashboard.md`** - System status monitoring and performance trends
+10. **`.claude/observability/optimization-insights.md`** - Data-driven improvement recommendations
+
 ## Usage Workflow
 
 1. **After making code changes**: Use `/update-docs "description of changes"`
 2. **For quick updates**: Use `/docs "brief description"`
 3. **For comprehensive releases**: Use `/sync-docs feature "detailed description"`
+4. **🆕 For agent performance optimization**: Use `/agent-feedback` to analyze and improve agent effectiveness
 
 ## Command Design Principles
 
@@ -73,6 +101,8 @@ This directory contains Claude Code slash commands for automatically updating pr
 - **Consistency**: Maintains existing formatting and documentation style
 - **Non-Destructive**: Preserves existing content while adding new information
 - **Quality Focused**: Ensures technical accuracy and proper cross-references
+- **🆕 Observability-Driven**: Agent performance tracking and continuous improvement integration
+- **🆕 Learning-Enabled**: Feedback loops for system optimization and evolution
 
 ## Installation
 
