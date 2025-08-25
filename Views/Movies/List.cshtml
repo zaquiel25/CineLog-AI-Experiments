@@ -7,15 +7,19 @@
     var posterSize = "w185";
 }
 
-<div class="d-flex align-items-center mb-2">
-    <h1 class="mb-0">My Movies</h1>
-    @if (ViewData["MovieCount"] is int movieCount)
-    {
-        @* Display the total movie count in a badge next to the title *@
-        <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount</span>
-    }
+<div class="professional-title-section">
+    <div class="title-container-professional">
+        <h1 class="page-title-professional">My Movies</h1>
+        @if (ViewData["MovieCount"] is int movieCount)
+        {
+            @* Display the total movie count in a badge next to the title *@
+            <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount</span>
+        }
+    </div>
+    <hr />
+    
+    <p class="text-muted mb-4">Your cinematic journey so far</p>
 </div>
-<hr />
 
 
 <div class="row mb-4">

@@ -1302,3 +1302,55 @@ fieldset:hover {
     }
 }
 /* ===== END ENHANCED SEARCH INPUT ===== */
+
+/* ===== PROFESSIONAL PAGE TITLES ===== */
+.page-title-professional {
+    font-weight: 600;
+    font-size: 2.5rem;
+    position: relative;
+    padding-bottom: 12px;
+    margin-bottom: 0;
+    font-family: 'Outfit', sans-serif;
+    color: #ffffff;
+}
+
+.page-title-professional::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: var(--cinelog-gold);
+    border-radius: 2px;
+}
+
+/* Ensure proper spacing with badges and other elements */
+.title-container-professional {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.title-container-professional .badge {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+/* Remove the old HR since we have the gold underline now */
+.professional-title-section + hr {
+    display: none;
+}
+
+/* Mobile responsiveness for professional titles */
+@media (max-width: 768px) {
+    .page-title-professional {
+        font-size: 2rem;
+    }
+    
+    .page-title-professional::after {
+        width: 60px;
+        height: 3px;
+    }
+}
+/* ===== END PROFESSIONAL PAGE TITLES ===== */
