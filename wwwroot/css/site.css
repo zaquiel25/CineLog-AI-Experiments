@@ -1114,3 +1114,191 @@ body:has(.nav-pills) .nav-link:focus,
 }
 
 /* ===== END IDENTITY MANAGE PAGES STYLING ===== */
+
+/* ===== HOW IT WORKS SECTION - HOMEPAGE ===== */
+.how-it-works-section {
+    margin-top: 3rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.process-steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 160px;
+    transition: transform 0.3s ease;
+}
+
+.step:hover {
+    transform: translateY(-5px);
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cinelog-gold), var(--cinelog-gold-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 16px rgba(var(--cinelog-gold-rgb), 0.3);
+    transition: all 0.3s ease;
+}
+
+.step:hover .step-icon {
+    box-shadow: 0 6px 24px rgba(var(--cinelog-gold-rgb), 0.5);
+    transform: scale(1.1);
+}
+
+.step-icon i {
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.step-text {
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 120px;
+    text-align: center;
+}
+
+.step-arrow {
+    color: var(--cinelog-gold);
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin: 0 0.5rem;
+}
+
+.step-arrow i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .process-steps {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .step-arrow {
+        transform: rotate(90deg);
+        margin: 0;
+    }
+    
+    .step {
+        min-width: auto;
+    }
+    
+    .step-text {
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    .how-it-works-section {
+        margin-top: 2rem;
+        padding: 1.5rem 0.5rem;
+    }
+    
+    .step-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .step-icon i {
+        font-size: 1.3rem;
+    }
+    
+    .step-text {
+        font-size: 0.9rem;
+    }
+}
+/* ===== END HOW IT WORKS SECTION ===== */
+
+/* ===== ENHANCED SEARCH INPUT - ADD PAGE ===== */
+.enhanced-search-input {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 2px solid rgba(var(--cinelog-gold-rgb), 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-search-input:focus {
+    border-color: var(--cinelog-gold);
+    box-shadow: 0 0 0 0.2rem rgba(var(--cinelog-gold-rgb), 0.25);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.enhanced-search-input::placeholder {
+    color: #6c757d;
+    font-style: italic;
+    transition: opacity 0.3s ease;
+}
+
+.enhanced-search-input:focus::placeholder {
+    opacity: 0.7;
+}
+
+/* Search help text styling */
+.search-help-text {
+    transition: opacity 0.3s ease;
+}
+
+.search-help-text small {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+
+/* Enhanced fieldset styling */
+fieldset {
+    background: rgba(var(--cinelog-gold-rgb), 0.02);
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.1) !important;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+fieldset:hover {
+    background: rgba(var(--cinelog-gold-rgb), 0.04);
+    border-color: rgba(var(--cinelog-gold-rgb), 0.2) !important;
+    box-shadow: 0 8px 32px rgba(var(--cinelog-gold-rgb), 0.1);
+}
+
+/* Mobile responsiveness for enhanced search */
+@media (max-width: 768px) {
+    .enhanced-search-input {
+        font-size: 1rem;
+        padding: 0.875rem 1.25rem;
+    }
+    
+    .search-help-text small {
+        font-size: 0.8rem;
+    }
+}
+/* ===== END ENHANCED SEARCH INPUT ===== */

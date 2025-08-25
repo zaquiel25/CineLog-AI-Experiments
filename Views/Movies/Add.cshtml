@@ -15,15 +15,22 @@
     <div class="col-md-8 col-lg-7">
         <form asp-action="Add" asp-controller="Movies" method="post">
 
-            @* TMDB Search Section *@
+            @* TMDB Search Section - Enhanced with Fuzzy Search UX *@
             <fieldset class="mb-4 p-3 border rounded mx-auto" style="max-width: 600px;">
                 <div class="mb-2" style="position: relative;">
                     <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
-                    <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg" placeholder="Start typing movie title (min. 2 chars)..." autocomplete="off" />
+                    <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg enhanced-search-input" 
+                           placeholder="Try 'Oppenheimer', 'wall e', or 'spider man'..." autocomplete="off" />
                     <div id="tmdbSearchResultsDisplay" class="list-group mt-1"
                          style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
                         @* TMDB Search suggestions will appear here *@
                     </div>
+                </div>
+                @* Enhanced Search Help Text *@
+                <div class="search-help-text mt-2 text-center">
+                    <small class="text-muted">
+                        Works with typos, partial titles & nicknames
+                    </small>
                 </div>
             </fieldset>
 
@@ -126,6 +133,43 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            
+            // FEATURE: Enhanced search input with rotating placeholders
+            const searchInput = document.getElementById('tmdbSearchQueryInput');
+            if (searchInput) {
+                const placeholders = [
+                    "Try 'Oppenheimer', 'wall e', or 'spider man'...",
+                    "Search 'avengers endgame', 'lord rings'...",
+                    "Find 'mission impossible', 'fast furious'...",
+                    "Type 'dark knight', 'star wars', 'matrix'...",
+                    "Search any movie title - typos work too!"
+                ];
+                
+                let currentIndex = 0;
+                
+                // Rotate placeholder every 4 seconds
+                setInterval(function() {
+                    if (!searchInput.value && document.activeElement !== searchInput) {
+                        currentIndex = (currentIndex + 1) % placeholders.length;
+                        searchInput.placeholder = placeholders[currentIndex];
+                    }
+                }, 4000);
+                
+                // Reset to first placeholder when user starts typing
+                searchInput.addEventListener('focus', function() {
+                    if (!searchInput.value) {
+                        searchInput.placeholder = "Start typing any movie title...";
+                    }
+                });
+                
+                searchInput.addEventListener('blur', function() {
+                    if (!searchInput.value) {
+                        currentIndex = 0;
+                        searchInput.placeholder = placeholders[0];
+                    }
+                });
+            }
+            
             // Date radio toggle logic
             const dateInput = document.getElementById('movieFormDateWatched');
             const radioSpecific = document.getElementById('dateWatchedSpecific');

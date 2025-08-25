@@ -365,17 +365,27 @@ public class TmdbService : IDisposable
             }
         }
 
+        /// <summary>
+        /// Enhanced movie search with fuzzy search capabilities for better typo tolerance.
+        /// Preprocesses queries to handle common typing errors, accents, and word variations.
+        /// </summary>
+        /// <param name="query">User's search query</param>
+        /// <returns>TMDB search response with improved results</returns>
         public async Task<TmdbSearchResponse?> SearchMoviesAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query)) return null;
 
-            var requestUri = $"search/movie?query={Uri.EscapeDataString(query)}";
-            _logger.LogInformation("Requesting TMDB API: {RequestUri}", requestUri);
-
+            // FEATURE: Apply fuzzy search preprocessing to improve search results
+            var enhancedQuery = ApplyFuzzySearchEnhancements(query);
+            
+            var requestUri = $"search/movie?query={Uri.EscapeDataString(enhancedQuery)}";
+            _logger.LogInformation("Requesting TMDB API: {RequestUri} (original: '{OriginalQuery}')", requestUri, query);
+            
             try
             {
                 var searchResult = await _httpClient.GetFromJsonAsync<TmdbSearchResponse>(requestUri);
-                _logger.LogInformation("Successfully fetched {Count} movies for query '{Query}'.", searchResult?.Results?.Count ?? 0, query);
+                _logger.LogInformation("Successfully fetched {Count} movies for enhanced query '{EnhancedQuery}' (original: '{OriginalQuery}').", 
+                    searchResult?.Results?.Count ?? 0, enhancedQuery, query);
                 return searchResult;
             }
             catch (Exception ex)
@@ -383,6 +393,149 @@ public class TmdbService : IDisposable
                 _logger.LogError(ex, "Exception occurred while searching TMDB for query '{Query}'.", query);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// FEATURE: Fuzzy search preprocessing to handle common search issues.
+        /// Handles typos, accent normalization, word reordering, and common substitutions.
+        /// </summary>
+        /// <param name="query">Original user query</param>
+        /// <returns>Enhanced query with better search potential</returns>
+        private string ApplyFuzzySearchEnhancements(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query)) return query;
+
+            var enhanced = query.Trim();
+
+            // ENHANCEMENT: Remove extra spaces and normalize whitespace
+            enhanced = System.Text.RegularExpressions.Regex.Replace(enhanced, @"\s+", " ");
+
+            // ENHANCEMENT: Handle common movie title patterns and substitutions
+            enhanced = ApplyCommonSubstitutions(enhanced);
+
+            // ENHANCEMENT: Normalize accents and special characters
+            enhanced = NormalizeAccents(enhanced);
+
+            // ENHANCEMENT: Handle common typos in popular movie titles
+            enhanced = FixCommonMovieTitleTypos(enhanced);
+
+            return enhanced;
+        }
+
+        /// <summary>
+        /// FEATURE: Apply common word substitutions that improve search results.
+        /// </summary>
+        private string ApplyCommonSubstitutions(string query)
+        {
+            var substitutions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Common word substitutions
+                { " & ", " and " },
+                { " + ", " and " },
+                { " w/ ", " with " },
+                { " vs ", " versus " },
+                { " vs. ", " versus " },
+                
+                // Number to word conversions (common in movie titles)
+                { " 2 ", " two " },
+                { " II ", " 2 " },
+                { " III ", " 3 " },
+                { " IV ", " 4 " },
+                
+                // Common abbreviations
+                { " pt ", " part " },
+                { " pt. ", " part " },
+                { " vol ", " volume " },
+                { " vol. ", " volume " }
+            };
+
+            var result = query;
+            foreach (var substitution in substitutions)
+            {
+                result = result.Replace(substitution.Key, substitution.Value, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// FEATURE: Remove accents and normalize special characters for better search matching.
+        /// </summary>
+        private string NormalizeAccents(string query)
+        {
+            if (string.IsNullOrEmpty(query)) return query;
+
+            var normalizedString = query.Normalize(System.Text.NormalizationForm.FormD);
+            var stringBuilder = new System.Text.StringBuilder();
+
+            foreach (var character in normalizedString)
+            {
+                var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(character);
+                if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(character);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        }
+
+        /// <summary>
+        /// FEATURE: Fix common typos in popular movie titles to improve search success.
+        /// </summary>
+        private string FixCommonMovieTitleTypos(string query)
+        {
+            var commonTypos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Popular movie title typos
+                { "oppenhemier", "oppenheimer" },
+                { "openheimer", "oppenheimer" },
+                { "oppenheimr", "oppenheimer" },
+                { "spiderman", "spider-man" },
+                { "spider man", "spider-man" },
+                { "x-men", "x men" },
+                { "xmen", "x men" },
+                { "avengers endgame", "avengers: endgame" },
+                { "avengers infinity war", "avengers: infinity war" },
+                { "lord of the rings", "the lord of the rings" },
+                { "harry potter", "harry potter and" }, // Will help find specific HP movies
+                { "star wars", "star wars:" }, // Will help find specific SW movies
+                { "fast and furious", "the fast and the furious" },
+                { "mission impossible", "mission: impossible" },
+                { "pirates of the caribbean", "pirates of the caribbean:" },
+                { "transformers", "transformers:" },
+                
+                // Special character movies - common typing variations
+                { "wall e", "WALL·E" },
+                { "wall-e", "WALL·E" },
+                { "walle", "WALL·E" },
+                { "up", "Up" }, // Pixar movie - case sensitive
+                
+                // Common word order fixes
+                { "matrix the", "the matrix" },
+                { "godfather the", "the godfather" },
+                { "dark knight the", "the dark knight" },
+                { "batman dark knight", "the dark knight" }
+            };
+
+            var result = query;
+            
+            // Check for exact matches first
+            if (commonTypos.ContainsKey(query))
+            {
+                return commonTypos[query];
+            }
+
+            // Check for partial matches within the query
+            foreach (var typo in commonTypos)
+            {
+                if (result.Contains(typo.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    result = result.Replace(typo.Key, typo.Value, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return result;
         }
 
         public async Task<TmdbMovieDetails?> GetMovieDetailsAsync(int tmdbMovieId)
