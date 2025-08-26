@@ -1,4 +1,5 @@
 ﻿@using Ezequiel_Movies.Helpers
+@using Ezequiel_Movies.Models
 @model PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>
 
 @{
@@ -11,6 +12,9 @@
     var currentView = ViewData["CurrentView"]?.ToString() ?? "journal";
     var isJournalView = currentView == "journal";
     var isCollectionView = currentView == "collection";
+    var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
+    var isGridMode = currentDisplayMode == "grid";
+    var isListMode = currentDisplayMode == "list";
 }
 
 <div class="professional-title-section">
@@ -118,8 +122,10 @@
                        placeholder="@(isJournalView ? "Search by Title, Director, or Year..." : "Search by Title, Director, or Year... (collection will search all watches)")" />
                 <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
                 <input type="hidden" name="view" value="@(currentView)" />
+                <input type="hidden" name="displayMode" value="@(currentDisplayMode)" />
+                <input type="hidden" name="monthFilter" value="@ViewData["CurrentMonthFilter"]" />
                 <button type="submit" class="btn btn-primary">Search</button>
-                <a href="@Url.Action("List", new { view = currentView })" class="btn btn-secondary">Clear Search</a>
+                <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })" class="btn btn-secondary">Clear Search</a>
             </div>
             
             @* ENHANCEMENT: Journal-specific search options *@
@@ -152,7 +158,7 @@
                 <!-- Date Watched -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                         <i class="fas fa-calendar me-2"></i>Date Watched
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("date") == true)
                         {
@@ -165,7 +171,7 @@
                 <!-- Title -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                         <i class="fas fa-font me-2"></i>Title
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("title") == true)
                         {
@@ -178,7 +184,7 @@
                 <!-- Director -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                         <i class="fas fa-user-tie me-2"></i>Director
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("director") == true)
                         {
@@ -191,7 +197,7 @@
                 <!-- Released Year -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                         <i class="fas fa-clock me-2"></i>Released Year
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("year") == true)
                         {
@@ -204,7 +210,7 @@
                 <!-- Rating -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                         <i class="fas fa-star me-2"></i>Rating
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("rating") == true)
                         {
@@ -217,7 +223,7 @@
                 <!-- Watched At (Location) -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["WatchedAtSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["WatchedAtSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })">
                         <i class="fas fa-map-marker-alt me-2"></i>Watched At
                         @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("watchedat") == true)
                         {
@@ -236,7 +242,7 @@
                     <!-- Most Watched -->
                     <li>
                         <a class="dropdown-item" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                           href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                             <i class="fas fa-trophy me-2 text-warning"></i>Most Watched
                             @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("most_watched") == true)
                             {
@@ -249,7 +255,7 @@
                     <!-- Recently Added -->
                     <li>
                         <a class="dropdown-item" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                           href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
                             <i class="fas fa-plus-circle me-2 text-warning"></i>Recently Added
                             @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("recently_added") == true)
                             {
@@ -261,6 +267,74 @@
                     </li>
                 }
             </ul>
+        </div>
+    </div>
+    
+    @* FEATURE: Smart Timeline Navigator *@
+    @if (ViewData["TimelineNavigator"] is TimelineNavigatorViewModel timelineNavigator && timelineNavigator.AvailableMonths.Any())
+    {
+        <div class="col-md-4">
+            <div class="dropdown">
+                <button class="btn dropdown-toggle w-100 cinelog-timeline-button" 
+                        type="button" 
+                        id="timelineDropdown" 
+                        data-bs-toggle="dropdown" 
+                        aria-expanded="false">
+                    <i class="fas fa-calendar-alt me-2"></i>@timelineNavigator.SelectedMonthDisplayName
+                </button>
+                <ul class="dropdown-menu w-100 cinelog-timeline-dropdown" 
+                    aria-labelledby="timelineDropdown">
+                    @* All Months option *@
+                    <li>
+                        <a class="dropdown-item timeline-filter" 
+                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
+                           data-month-filter="">
+                            <i class="fas fa-globe me-2 cinelog-gold-title"></i>All Months
+                            @if (string.IsNullOrEmpty(ViewData["CurrentMonthFilter"]?.ToString()))
+                            {
+                                <span class="float-end cinelog-gold-title">✓</span>
+                            }
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    @* Available months with movie counts *@
+                    @foreach (var month in timelineNavigator.AvailableMonths)
+                    {
+                        <li>
+                            <a class="dropdown-item timeline-filter" 
+                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = month.MonthKey })"
+                               data-month-filter="@month.MonthKey">
+                                <i class="fas fa-calendar me-2"></i>@month.DisplayName
+                                @if (ViewData["CurrentMonthFilter"]?.ToString() == month.MonthKey)
+                                {
+                                    <span class="float-end cinelog-gold-title">✓</span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+    
+    @* FEATURE: Grid/List Display Mode Toggle *@
+    <div class="col-12">
+        <div class="d-flex justify-content-end align-items-center mt-3">
+            <span class="text-muted me-2" style="font-size: 0.9rem;">
+                <i class="fas fa-eye me-1"></i>Display:
+            </span>
+            <div class="btn-group" role="group" aria-label="Display mode toggle">
+                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = "grid", firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })"
+                   class="btn btn-sm @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
+                   title="Grid View">
+                    <i class="fas fa-th me-1"></i>Grid
+                </a>
+                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = "list", firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })"
+                   class="btn btn-sm @(isListMode ? "btn-warning" : "btn-outline-secondary")"
+                   title="List View">
+                    <i class="fas fa-list me-1"></i>List
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -309,10 +383,11 @@
 }
 else
 {
-    @* VVVV THIS IS THE CORRECTED GRID STRUCTURE VVVV *@
-
-    @* 1. This 'div' with the 'row' class is the main grid container *@
-<div id="movies-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    @* FEATURE: Conditional rendering for Grid vs List display modes *@
+    @if (isGridMode)
+    {
+        @* GRID VIEW - Original card-based layout *@
+        <div id="movies-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
 
     @* ENHANCEMENT: Timeline markers for journal view *@
     @{
@@ -434,7 +509,121 @@ else
             </div>
         </div>
     }
-</div>
+        </div>
+    }
+    else
+    {
+        @* LIST VIEW - Hybrid horizontal layout with Cinema Gold styling *@
+        <div id="movies-list" class="movies-list-container">
+            @* ENHANCEMENT: Timeline markers for journal view *@
+            @{
+                string currentYearMonth = "";
+                var sortedByDate = ViewData["CurrentSort"]?.ToString()?.Contains("datewatched") == true;
+            }
+            
+            @foreach (var movie in Model)
+            {
+                @* FEATURE: Timeline markers for journal list view *@
+                @if (isJournalView && sortedByDate && movie.DateWatched.HasValue)
+                {
+                    var movieYearMonth = movie.DateWatched.Value.ToString("yyyy-MM");
+                    if (currentYearMonth != movieYearMonth)
+                    {
+                        currentYearMonth = movieYearMonth;
+                        var displayDate = movie.DateWatched.Value.ToString("MMMM yyyy");
+                        <div class="list-timeline-marker mb-3 mt-4">
+                            <div class="timeline-marker-line"></div>
+                            <div class="timeline-marker-content">
+                                <i class="fas fa-calendar-alt me-2"></i>@displayDate
+                            </div>
+                        </div>
+                    }
+                }
+                
+                @* FEATURE: Hybrid list item with Cinema Gold styling *@
+                <div class="movie-list-item d-flex align-items-center p-3 mb-2">
+                    @* Small poster thumbnail *@
+                    <div class="list-poster-container me-3 position-relative">
+                        @if (!string.IsNullOrEmpty(movie.PosterPath))
+                        {
+                            <img src="@(tmdbImageBaseUrl + "w92" + movie.PosterPath)"
+                                 alt="@(movie.Title ?? "Movie Poster")"
+                                 class="list-poster-image">
+                        }
+                        else
+                        {
+                            <div class="list-poster-placeholder d-flex align-items-center justify-content-center">
+                                <i class="fas fa-film text-muted"></i>
+                            </div>
+                        }
+                        
+                        @* Rewatch badge for journal view *@
+                        @if (movie.IsRewatch && isJournalView)
+                        {
+                            <span class="badge list-rewatch-badge position-absolute">
+                                <i class="fas fa-redo"></i>
+                            </span>
+                        }
+                    </div>
+                    
+                    @* Movie information *@
+                    <div class="list-movie-info flex-grow-1">
+                        <div class="list-title-row d-flex align-items-center justify-content-between">
+                            <h5 class="list-movie-title mb-1">
+                                <a asp-action="Details" asp-route-id="@movie.Id" class="link-as-text">
+                                    @(movie.Title ?? "Untitled")
+                                </a>
+                            </h5>
+                            
+                            @* Rating stars *@
+                            @if (movie.UserRating.HasValue && movie.UserRating > 0)
+                            {
+                                <div class="list-rating-stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (movie.UserRating >= i)
+                                        {<i class="bi bi-star-fill"></i>}
+                                        else if (movie.UserRating >= (i - 0.5m))
+                                        {<i class="bi bi-star-half"></i>}
+                                        else
+                                        {<i class="bi bi-star"></i>}
+                                    }
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="list-movie-details text-muted mb-2">
+                            <span class="me-3">
+                                <i class="fas fa-user-tie me-1"></i>@(movie.Director ?? "Unknown")
+                            </span>
+                            <span class="me-3">
+                                <i class="fas fa-calendar me-1"></i>@(movie.ReleasedYear?.ToString() ?? "Unknown")
+                            </span>
+                            <span class="me-3">
+                                <i class="fas fa-clock me-1"></i>@(movie.DateWatched.HasValue ? movie.DateWatched.Value.ToString("dd/MM/yyyy") : "-")
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(movie.WatchedLocation?.ToString()) && movie.WatchedLocation?.ToString() != "Unknown")
+                            {
+                                <span>
+                                    <i class="fas fa-map-marker-alt me-1"></i>@(movie.WatchedLocation?.ToString() ?? "Unknown")
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    
+                    @* Action buttons *@
+                    <div class="list-actions ms-3">
+                        <a class="btn btn-warning btn-sm me-2" asp-action="Edit" asp-route-id="@movie.Id">Edit</a>
+                        <button type="button" class="btn btn-danger btn-sm delete-movie-btn" 
+                                data-movie-id="@movie.Id" 
+                                data-movie-title="@(movie.Title ?? "")">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 
     @* ... (Your working Pagination control block goes here) ... *@
 }
@@ -451,6 +640,8 @@ else
                        asp-route-pageNumber="@(Model.PageIndex - 1)"
                        asp-route-searchString="@ViewData["CurrentFilter"]"
                        asp-route-view="@(currentView)"
+                       asp-route-displayMode="@(currentDisplayMode)"
+                       asp-route-firstWatchOnly="@Context.Request.Query["firstWatchOnly"]"
                        class="page-link">
                         Previous
                     </a>
@@ -472,6 +663,8 @@ else
                        asp-route-pageNumber="@(Model.PageIndex + 1)"
                        asp-route-searchString="@ViewData["CurrentFilter"]"
                        asp-route-view="@(currentView)"
+                       asp-route-displayMode="@(currentDisplayMode)"
+                       asp-route-firstWatchOnly="@Context.Request.Query["firstWatchOnly"]"
                        class="page-link">
                         Next
                     </a>
@@ -502,6 +695,286 @@ else
 .fade-out {
     opacity: 0;
     transition: opacity 0.3s ease-out;
+}
+
+/* FEATURE: Cinema Gold List View Styling */
+.movies-list-container {
+    background: rgba(33, 37, 41, 0.5);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.movie-list-item {
+    background: #2c3034;
+    border: 1px solid #495057;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.movie-list-item:hover {
+    background: #343a40;
+    border-color: var(--cinelog-gold);
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.2);
+    transform: translateX(2px);
+}
+
+.list-poster-container {
+    width: 60px;
+    height: 90px;
+}
+
+.list-poster-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.list-poster-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #495057;
+    border-radius: 4px;
+}
+
+.list-rewatch-badge {
+    background: linear-gradient(45deg, var(--cinelog-gold), #ffd700);
+    color: #000;
+    font-size: 0.7rem;
+    top: -5px;
+    right: -5px;
+    padding: 2px 4px;
+    border-radius: 50%;
+}
+
+.list-movie-title {
+    font-size: 1.1rem;
+    color: #fff;
+    margin: 0;
+}
+
+.list-movie-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.list-movie-title a:hover {
+    color: var(--cinelog-gold);
+}
+
+.list-rating-stars {
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+.list-movie-details {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.list-movie-details i {
+    color: var(--cinelog-gold);
+    width: 12px;
+    text-align: center;
+}
+
+.list-actions .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* List Timeline Markers */
+.list-timeline-marker {
+    position: relative;
+    text-align: center;
+}
+
+.timeline-marker-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cinelog-gold), transparent);
+    margin: 0.5rem 0;
+}
+
+.timeline-marker-content {
+    background: var(--cinelog-gold);
+    color: #000;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-top: -1rem;
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .movie-list-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .list-poster-container {
+        margin-bottom: 1rem;
+        margin-right: 0 !important;
+    }
+    
+    .list-actions {
+        margin-top: 1rem;
+        margin-left: 0 !important;
+    }
+    
+    .list-title-row {
+        flex-direction: column;
+        align-items: center !important;
+    }
+    
+    .list-rating-stars {
+        margin-top: 0.5rem;
+    }
+}
+
+@@media (max-width: 576px) {
+    .movies-list-container {
+        padding: 0.5rem;
+    }
+    
+    .movie-list-item {
+        padding: 1rem !important;
+    }
+    
+    .list-movie-details span {
+        display: block;
+        margin-bottom: 0.3rem;
+        margin-right: 0 !important;
+    }
+}
+
+/* FEATURE: Sophisticated Cinema Timeline Navigator */
+.cinelog-timeline-button {
+    background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%) !important;
+    border: 2px solid #d4af37 !important;
+    color: #ffffff !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    min-height: 42px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.cinelog-timeline-button:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.cinelog-timeline-button:hover {
+    background: linear-gradient(145deg, #34495e 0%, #2c3e50 100%) !important;
+    border-color: #f4d03f !important;
+    color: #f4d03f !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-1px) !important;
+}
+
+.cinelog-timeline-button:hover:before {
+    left: 100%;
+}
+
+.cinelog-timeline-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3) !important;
+}
+
+.cinelog-timeline-dropdown {
+    background: #ffffff !important;
+    border: 2px solid #d4af37 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 4px 15px rgba(212, 175, 55, 0.2) !important;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 4px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.cinelog-timeline-dropdown .dropdown-item {
+    color: #2c3e50 !important;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 4px 12px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    background: transparent;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.cinelog-timeline-dropdown .dropdown-item:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+    transition: left 0.4s ease;
+}
+
+.cinelog-timeline-dropdown .dropdown-item:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    color: #2c3e50 !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.cinelog-timeline-dropdown .dropdown-item:hover:before {
+    left: 100%;
+}
+
+.cinelog-timeline-dropdown .dropdown-item:active {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%) !important;
+    color: #2c3e50 !important;
+    transform: translateX(2px);
+}
+
+.cinelog-timeline-dropdown .cinelog-gold-title {
+    color: #d4af37 !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.cinelog-timeline-dropdown .dropdown-divider {
+    border-color: rgba(212, 175, 55, 0.3) !important;
+    margin: 8px 20px;
+    border-width: 1px;
+}
+
+/* Elegant scrollbar styling */
+.cinelog-timeline-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cinelog-timeline-dropdown::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.cinelog-timeline-dropdown::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #d4af37, #b8941f);
+    border-radius: 3px;
+}
+
+.cinelog-timeline-dropdown::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #f4d03f, #d4af37);
 }
 </style>
 
@@ -602,11 +1075,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetView = this.dataset.view;
             const currentSort = '@ViewData["CurrentSort"]';
             const currentSearch = '@Html.Raw(ViewData["CurrentFilter"]?.ToString() ?? "")';
+            const currentDisplayMode = '@ViewData["CurrentDisplayMode"]';
+            const firstWatchOnly = '@Context.Request.Query["firstWatchOnly"]';
             
             // Build URL with current parameters
             const params = new URLSearchParams();
             if (currentSort) params.set('sortOrder', currentSort);
             if (currentSearch) params.set('searchString', currentSearch);
+            if (currentDisplayMode && currentDisplayMode !== 'grid') params.set('displayMode', currentDisplayMode);
+            if (firstWatchOnly === 'true') params.set('firstWatchOnly', 'true');
             if (targetView !== 'journal') params.set('view', targetView);
             
             const url = '@Url.Action("List")' + (params.toString() ? '?' + params.toString() : '');
@@ -634,4 +1111,97 @@ function showTempAlert(message, type) {
     document.body.appendChild(alert);
     setTimeout(() => alert.remove(), 2200);
 }
+
+// FEATURE: Smart Timeline Navigator AJAX functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add AJAX handling for timeline filter links
+    const timelineLinks = document.querySelectorAll('.timeline-filter');
+    
+    timelineLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const monthFilter = this.getAttribute('data-month-filter');
+            const currentParams = new URLSearchParams(window.location.search);
+            
+            // Show loading state in timeline dropdown
+            const timelineButton = document.getElementById('timelineDropdown');
+            if (timelineButton) {
+                timelineButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            }
+            
+            // Prepare form data for AJAX request
+            const formData = new FormData();
+            formData.append('monthFilter', monthFilter || '');
+            formData.append('sortOrder', currentParams.get('sortOrder') || '');
+            formData.append('searchString', currentParams.get('searchString') || '');
+            formData.append('pageNumber', '1'); // Reset to first page when filtering
+            formData.append('view', '@currentView');
+            formData.append('displayMode', '@currentDisplayMode');
+            formData.append('firstWatchOnly', currentParams.get('firstWatchOnly') || 'false');
+            
+            // AJAX request to filter by month
+            fetch('@Url.Action("FilterByMonth")', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error('Network response was not ok');
+            })
+            .then(html => {
+                // Replace the entire main content with the filtered results
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                const newContent = newDoc.querySelector('main') || newDoc.querySelector('body');
+                
+                if (newContent) {
+                    const currentMain = document.querySelector('main') || document.querySelector('body');
+                    if (currentMain) {
+                        currentMain.innerHTML = newContent.innerHTML;
+                        
+                        // Update URL to reflect the filter change
+                        const newUrl = new URL(window.location);
+                        if (monthFilter) {
+                            newUrl.searchParams.set('monthFilter', monthFilter);
+                        } else {
+                            newUrl.searchParams.delete('monthFilter');
+                        }
+                        newUrl.searchParams.set('pageNumber', '1');
+                        window.history.pushState(null, '', newUrl.toString());
+                        
+                        // Show success message
+                        showAlert(monthFilter ? 
+                            `Timeline filtered to ${this.textContent.trim().replace(/✓$/, '').trim()}` : 
+                            'Timeline filter cleared - showing all months', 
+                            'success');
+                        
+                        // Scroll to top to see filtered results
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                } else {
+                    throw new Error('Unable to parse filtered content');
+                }
+            })
+            .catch(error => {
+                console.error('Timeline filter error:', error);
+                showAlert('Unable to filter timeline. Please try again.', 'danger');
+                
+                // Reset button state on error
+                if (timelineButton) {
+                    timelineButton.innerHTML = '<i class="fas fa-calendar-alt me-2"></i>@(ViewData["TimelineNavigator"] is TimelineNavigatorViewModel tl ? tl.SelectedMonthDisplayName : "All Months")';
+                }
+                
+                // FALLBACK: Use standard navigation on AJAX failure
+                window.location.href = this.href;
+            });
+        });
+    });
+});
 </script>
