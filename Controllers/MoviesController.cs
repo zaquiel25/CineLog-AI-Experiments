@@ -3647,7 +3647,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
         }
 
         [HttpGet]
-        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber, string view)
+        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber, string view, bool firstWatchOnly = false)
         {
             // FEATURE: Hybrid journal-collection viewing system implementation
             // Supports both chronological journal view (default) and deduplicated collection view
@@ -3676,6 +3676,10 @@ return (bucket3x3, bucket2x3, bucket1x3);
             ViewData["WatchedAtSortParm"] = actualSortToApply == "watchedat_asc" ? "watchedat_desc" : "watchedat_asc";
             ViewData["DateWatchedSortParm"] = actualSortToApply == "datewatched_desc" ? "datewatched_asc" : "datewatched_desc";
             ViewData["RatingSortParm"] = actualSortToApply == "rating_desc" ? "rating_asc" : "rating_desc";
+            
+            // ENHANCEMENT: Collection-specific sort options
+            ViewData["MostWatchedSortParm"] = actualSortToApply == "most_watched_desc" ? "most_watched_asc" : "most_watched_desc";
+            ViewData["RecentlyAddedSortParm"] = actualSortToApply == "recently_added_desc" ? "recently_added_asc" : "recently_added_desc";
 
             if (viewMode == "collection")
             {
@@ -3685,7 +3689,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
             else
             {
                 // JOURNAL VIEW: Keep existing chronological behavior (default)
-                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber);
+                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber, firstWatchOnly);
             }
         }
 
@@ -3695,13 +3699,19 @@ return (bucket3x3, bucket2x3, bucket1x3);
         /// FEATURE: Preserves existing journal functionality as the default view.
         /// Maintains user data isolation and existing sorting/search behavior.
         /// </summary>
-        private async Task<IActionResult> GetJournalView(string userId, string searchString, string sortOrder, int? pageNumber)
+        private async Task<IActionResult> GetJournalView(string userId, string searchString, string sortOrder, int? pageNumber, bool firstWatchOnly = false)
         {
             var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
 
             // Get the total movie count for this user and store it in ViewData
             ViewData["MovieCount"] = await moviesQuery.CountAsync();
 
+            // ENHANCEMENT: Apply first watch only filter for journal view
+            if (firstWatchOnly)
+            {
+                moviesQuery = moviesQuery.Where(m => !m.IsRewatch);
+            }
+            
             // Apply search filtering
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -3772,10 +3782,19 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 .AsNoTracking()
                 .ToListAsync();
 
-            // Store collection count for display
+            // ENHANCEMENT: Calculate comprehensive collection statistics
+            var totalWatches = collectionData.Sum(c => c.WatchCount);
+            var mostWatchedMovie = collectionData.OrderByDescending(c => c.WatchCount).FirstOrDefault();
+            var averageWatchesPerMovie = collectionData.Count > 0 ? Math.Round((double)totalWatches / collectionData.Count, 1) : 0;
+            
+            // Store enhanced statistics for view display
             ViewData["MovieCount"] = collectionData.Count;
+            ViewData["TotalWatches"] = totalWatches;
+            ViewData["MostWatchedMovie"] = mostWatchedMovie?.Movie.Title ?? "N/A";
+            ViewData["MostWatchedCount"] = mostWatchedMovie?.WatchCount ?? 0;
+            ViewData["AverageWatchesPerMovie"] = averageWatchesPerMovie;
 
-            // Apply sorting to collection data
+            // ENHANCEMENT: Apply sorting to collection data with new collection-specific options
             var sortedCollection = actualSortToApply switch
             {
                 "title_asc" => collectionData.OrderBy(c => c.Movie.Title),
@@ -3789,6 +3808,11 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 "watchedat_desc" => collectionData.OrderByDescending(c => c.Movie.WatchedLocation),
                 "rating_desc" => collectionData.OrderByDescending(c => c.Movie.UserRating),
                 "rating_asc" => collectionData.OrderBy(c => c.Movie.UserRating),
+                // NEW: Collection-specific sorting options
+                "most_watched_desc" => collectionData.OrderByDescending(c => c.WatchCount).ThenByDescending(c => c.LastWatched),
+                "most_watched_asc" => collectionData.OrderBy(c => c.WatchCount).ThenBy(c => c.LastWatched),
+                "recently_added_desc" => collectionData.OrderByDescending(c => c.FirstWatched),
+                "recently_added_asc" => collectionData.OrderBy(c => c.FirstWatched),
                 "datewatched_desc" or _ => collectionData.OrderByDescending(c => c.LastWatched)
             };
 

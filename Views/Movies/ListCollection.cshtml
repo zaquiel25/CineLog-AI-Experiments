@@ -10,9 +10,9 @@
 <div class="professional-title-section">
     <div class="title-container-professional">
         <h1 class="page-title-professional">My Movies</h1>
-        @if (ViewData["MovieCount"] is int movieCount)
+        @if (ViewData["MovieCount"] is int movieCount && ViewData["TotalWatches"] is int totalWatches)
         {
-            <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount unique</span>
+            <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount unique movies, @totalWatches total watches</span>
         }
     </div>
     <hr />
@@ -53,7 +53,56 @@
         </li>
     </ul>
     
-    <p class="text-muted mb-4">Your movie collection with watch counts</p>
+    <p class="text-muted mb-3">Your movie collection with watch counts</p>
+    
+    @* FEATURE: Professional Collection Dashboard - Sophisticated Stats Panel *@
+    @if (ViewData["MovieCount"] is int statsMovieCount && statsMovieCount > 0)
+    {
+        <div class="collection-dashboard mb-4">
+            <div class="dashboard-header mb-3">
+                <h3 class="dashboard-title">Collection Analytics</h3>
+                <p class="dashboard-subtitle">Your movie watching insights at a glance</p>
+            </div>
+            
+            <div class="stats-grid">
+                @* Most Watched Movie Card *@
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@ViewData["MostWatchedMovie"]</div>
+                        <div class="stat-label">Most Watched</div>
+                        <div class="stat-detail">@ViewData["MostWatchedCount"] times</div>
+                    </div>
+                </div>
+
+                @* Average Watches Card *@
+                <div class="stat-card stat-card-secondary">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@ViewData["AverageWatchesPerMovie"]</div>
+                        <div class="stat-label">Avg per Movie</div>
+                        <div class="stat-detail">watches average</div>
+                    </div>
+                </div>
+
+                @* Collection Size Card *@
+                <div class="stat-card stat-card-accent">
+                    <div class="stat-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@ViewData["MovieCount"]</div>
+                        <div class="stat-label">Total Movies</div>
+                        <div class="stat-detail">in collection</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 <div class="row mb-4">
@@ -149,6 +198,36 @@
                         }
                     </a>
                 </li>
+                
+                @* ENHANCEMENT: Collection-specific sorting options *@
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-warning"><i class="fas fa-layer-group me-2"></i>Collection Sorting</h6></li>
+                <!-- Most Watched -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection" })">
+                        <i class="fas fa-trophy me-2 text-warning"></i>Most Watched
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("most_watched") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "most_watched_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
+                <!-- Recently Added -->
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection" })">
+                        <i class="fas fa-plus-circle me-2 text-warning"></i>Recently Added
+                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("recently_added") == true)
+                        {
+                            <span class="float-end">
+                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "recently_added_desc" ? "↓" : "↑")
+                            </span>
+                        }
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
@@ -171,6 +250,11 @@
         "year_desc" => "Released Year (Newest First)",
         "rating_asc" => "Rating (Lowest First)",
         "rating_desc" => "Rating (Highest First)",
+        // ENHANCEMENT: Collection-specific sort display names
+        "most_watched_desc" => "Most Watched (High to Low)",
+        "most_watched_asc" => "Most Watched (Low to High)",
+        "recently_added_desc" => "Recently Added (Newest First)",
+        "recently_added_asc" => "Recently Added (Oldest First)",
         _ => "Last Watched (Newest First)"
     };
 }

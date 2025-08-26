@@ -7,22 +7,29 @@
     var posterSize = "w185";
 }
 
+@{
+    var currentView = ViewData["CurrentView"]?.ToString() ?? "journal";
+    var isJournalView = currentView == "journal";
+    var isCollectionView = currentView == "collection";
+}
+
 <div class="professional-title-section">
     <div class="title-container-professional">
         <h1 class="page-title-professional">My Movies</h1>
         @if (ViewData["MovieCount"] is int movieCount)
         {
-            @* Display the total movie count in a badge next to the title *@
-            <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount</span>
+            @* ENHANCEMENT: Display enhanced statistics based on view mode *@
+            @if (isCollectionView && ViewData["TotalWatches"] is int totalWatches)
+            {
+                <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount unique movies, @totalWatches total watches</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount</span>
+            }
         }
     </div>
     <hr />
-    
-    @{
-        var currentView = ViewData["CurrentView"]?.ToString() ?? "journal";
-        var isJournalView = currentView == "journal";
-        var isCollectionView = currentView == "collection";
-    }
     
     @* FEATURE: Tab navigation for hybrid journal-collection viewing system *@
     <ul class="nav nav-tabs mb-4" id="viewTabs" role="tablist">
@@ -54,7 +61,7 @@
         </li>
     </ul>
     
-    <p class="text-muted mb-4">
+    <p class="text-muted mb-3">
         @if (isJournalView)
         {
             <span>Your cinematic journey so far</span>
@@ -64,6 +71,39 @@
             <span>Your movie collection with watch counts</span>
         }
     </p>
+    
+    @* ENHANCEMENT: Collection View Quick Stats Summary Panel *@
+    @if (isCollectionView && ViewData["MovieCount"] is int statsMovieCount && statsMovieCount > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body py-3">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="d-flex flex-column">
+                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["MostWatchedMovie"]</span>
+                                    <small class="text-muted">Most Watched (@ViewData["MostWatchedCount"] times)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex flex-column">
+                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["AverageWatchesPerMovie"]</span>
+                                    <small class="text-muted">Average watches per movie</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex flex-column">
+                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["MovieCount"]</span>
+                                    <small class="text-muted">Unique movies in collection</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 
@@ -75,12 +115,26 @@
                        name="searchString" 
                        value="@ViewData["CurrentFilter"]" 
                        class="form-control" 
-                       placeholder="Search by Title, Director, or Year..." />
+                       placeholder="@(isJournalView ? "Search by Title, Director, or Year..." : "Search by Title, Director, or Year... (collection will search all watches)")" />
                 <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
                 <input type="hidden" name="view" value="@(currentView)" />
                 <button type="submit" class="btn btn-primary">Search</button>
                 <a href="@Url.Action("List", new { view = currentView })" class="btn btn-secondary">Clear Search</a>
             </div>
+            
+            @* ENHANCEMENT: Journal-specific search options *@
+            @if (isJournalView)
+            {
+                <div class="mt-2">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="firstWatchOnly" name="firstWatchOnly" 
+                               value="true" @(Context.Request.Query["firstWatchOnly"].ToString() == "true" ? "checked" : "")>
+                        <label class="form-check-label text-muted" for="firstWatchOnly">
+                            <i class="fas fa-filter me-1"></i>Show first watches only (exclude rewatches)
+                        </label>
+                    </div>
+                </div>
+            }
         </form>
     </div>
     <div class="col-md-4">
@@ -173,6 +227,39 @@
                         }
                     </a>
                 </li>
+                
+                @* ENHANCEMENT: Collection-specific sorting options (only show in collection view) *@
+                @if (isCollectionView)
+                {
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header text-warning"><i class="fas fa-layer-group me-2"></i>Collection Sorting</h6></li>
+                    <!-- Most Watched -->
+                    <li>
+                        <a class="dropdown-item" 
+                           href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                            <i class="fas fa-trophy me-2 text-warning"></i>Most Watched
+                            @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("most_watched") == true)
+                            {
+                                <span class="float-end">
+                                    @((ViewData["CurrentSort"]?.ToString() ?? "") == "most_watched_desc" ? "↓" : "↑")
+                                </span>
+                            }
+                        </a>
+                    </li>
+                    <!-- Recently Added -->
+                    <li>
+                        <a class="dropdown-item" 
+                           href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView })">
+                            <i class="fas fa-plus-circle me-2 text-warning"></i>Recently Added
+                            @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("recently_added") == true)
+                            {
+                                <span class="float-end">
+                                    @((ViewData["CurrentSort"]?.ToString() ?? "") == "recently_added_desc" ? "↓" : "↑")
+                                </span>
+                            }
+                        </a>
+                    </li>
+                }
             </ul>
         </div>
     </div>
@@ -197,6 +284,11 @@
         "rating_desc" => "Rating (Highest First)",
         "location_asc" => "Watched At (A-Z)",
         "location_desc" => "Watched At (Z-A)",
+        // ENHANCEMENT: Collection-specific sort display names
+        "most_watched_desc" => "Most Watched (High to Low)",
+        "most_watched_asc" => "Most Watched (Low to High)",
+        "recently_added_desc" => "Recently Added (Newest First)",
+        "recently_added_asc" => "Recently Added (Oldest First)",
         _ => "Date Watched (Newest First)"
     };
 }
@@ -222,8 +314,35 @@ else
     @* 1. This 'div' with the 'row' class is the main grid container *@
 <div id="movies-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
 
+    @* ENHANCEMENT: Timeline markers for journal view *@
+    @{
+        string currentYearMonth = "";
+        var sortedByDate = ViewData["CurrentSort"]?.ToString()?.Contains("datewatched") == true;
+    }
+    
     @foreach (var movie in Model)
     {
+        @* FEATURE: Elegant Cinema Gold timeline markers for journal view chronological navigation *@
+        @if (isJournalView && sortedByDate && movie.DateWatched.HasValue)
+        {
+            var movieYearMonth = movie.DateWatched.Value.ToString("yyyy-MM");
+            if (currentYearMonth != movieYearMonth)
+            {
+                currentYearMonth = movieYearMonth;
+                var displayDate = movie.DateWatched.Value.ToString("MMMM yyyy");
+                <div class="col-12 mb-4">
+                    <div class="cinelog-timeline-marker">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-badge">
+                            <i class="fas fa-film"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <i class="fas fa-calendar-alt me-2"></i>@displayDate
+                        </div>
+                    </div>
+                </div>
+            }
+        }
         <div class="col">
             <div class="card h-100 shadow-sm">
                 @* Poster image *@
@@ -262,9 +381,21 @@ else
                         <li class="mb-1"><strong>Released:</strong> @year</li>
                         <li class="mb-1"><strong>Watched:</strong> @(movie.DateWatched.HasValue ? movie.DateWatched.Value.ToString("dd/MM/yyyy") : "-")</li>
                         <li class="mb-1"><strong>At:</strong> @(string.IsNullOrWhiteSpace(location) || location == "Unknown" ? "-" : location)</li>
+                        @* ENHANCEMENT: Enhanced rewatch indicator for journal view *@
                         @if (movie.IsRewatch)
                         {
-                            <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>
+                            @if (isJournalView)
+                            {
+                                <li class="mt-1">
+                                    <span class="badge rounded-pill" style="background: linear-gradient(45deg, var(--cinelog-gold), #ffd700); color: #000; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                        <i class="fas fa-redo me-1"></i>Rewatch
+                                    </span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="mt-1"><span class="badge rounded-pill bg-primary">Rewatched</span></li>
+                            }
                         }
                         @if (rating > 0)
                         {
