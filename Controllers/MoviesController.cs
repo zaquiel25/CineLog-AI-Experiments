@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Ezequiel_Movies.Extensions;
 using Microsoft.AspNetCore.Authorization;
+using Ezequiel_Movies1.Models;
 using Microsoft.AspNetCore.Identity;
 using Ezequiel_Movies1.Models.Entities;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -3646,47 +3647,63 @@ return (bucket3x3, bucket2x3, bucket1x3);
         }
 
         [HttpGet]
-        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber)
+        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber, string view)
         {
+            // FEATURE: Hybrid journal-collection viewing system implementation
+            // Supports both chronological journal view (default) and deduplicated collection view
 
             // 1. Get the current logged-in user's ID
             var userId = _userManager.GetUserId(User);
 
-            // 2. Start the query AND immediately filter it to only include movies where the UserId matches.
-            var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
-
-            // Get the total movie count for this user and store it in ViewData.
-            ViewData["MovieCount"] = await moviesQuery.CountAsync();
-            // The rest of your existing logic for sorting and searching will now
-            // automatically apply only to this filtered list of the user's own movies.
-
-            _logger.LogInformation("Fetching movie list for User ID: {UserId}", userId);
-
-            _logger.LogDebug("List action invoked with SortOrder: {SortOrder}, SearchString: {SearchString}, PageNumber: {PageNumber}", sortOrder, searchString, pageNumber);
+            // 2. Determine view mode - default to journal to preserve existing UX
+            var viewMode = string.IsNullOrEmpty(view) || view.ToLower() != "collection" ? "journal" : "collection";
+            ViewData["CurrentView"] = viewMode;
+            
+            _logger.LogInformation("Fetching movie list for User ID: {UserId} in {ViewMode} view", userId, viewMode);
+            _logger.LogDebug("List action invoked with SortOrder: {SortOrder}, SearchString: {SearchString}, PageNumber: {PageNumber}, View: {View}", 
+                sortOrder, searchString, pageNumber, view);
 
             ViewData["CurrentFilter"] = searchString;
 
             // Determine the actual sort order to apply
-            // If no sort order is specified from the URL, default to our preferred sort
             string actualSortToApply = string.IsNullOrEmpty(sortOrder) ? "datewatched_desc" : sortOrder;
-            ViewData["CurrentSort"] = actualSortToApply; // Store the sort order that is actually being applied
+            ViewData["CurrentSort"] = actualSortToApply;
 
-            // --- VVVV REVISED & SIMPLIFIED LOGIC FOR SORT LINK PARAMETERS VVVV ---
-            // The link for each column should point to the opposite of its own current state,
-            // or to its primary sort direction if another column is active.
+            // Set up sort parameters for view links
             ViewData["TitleSortParm"] = actualSortToApply == "title_asc" ? "title_desc" : "title_asc";
             ViewData["DirectorSortParm"] = actualSortToApply == "director_asc" ? "director_desc" : "director_asc";
             ViewData["YearSortParm"] = actualSortToApply == "year_asc" ? "year_desc" : "year_asc";
             ViewData["WatchedAtSortParm"] = actualSortToApply == "watchedat_asc" ? "watchedat_desc" : "watchedat_asc";
-
-            // For these two, the logic correctly handles toggling from their preferred descending state.
             ViewData["DateWatchedSortParm"] = actualSortToApply == "datewatched_desc" ? "datewatched_asc" : "datewatched_desc";
             ViewData["RatingSortParm"] = actualSortToApply == "rating_desc" ? "rating_asc" : "rating_desc";
-            // --- ^^^^ END OF REVISED LOGIC ^^^^ ---
 
+            if (viewMode == "collection")
+            {
+                // COLLECTION VIEW: Show deduplicated movies with watch counts
+                return await GetCollectionView(userId!, searchString, actualSortToApply, pageNumber);
+            }
+            else
+            {
+                // JOURNAL VIEW: Keep existing chronological behavior (default)
+                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber);
+            }
+        }
 
+        /// <summary>
+        /// Handles the traditional journal view showing all movie entries chronologically.
+        /// 
+        /// FEATURE: Preserves existing journal functionality as the default view.
+        /// Maintains user data isolation and existing sorting/search behavior.
+        /// </summary>
+        private async Task<IActionResult> GetJournalView(string userId, string searchString, string sortOrder, int? pageNumber)
+        {
+            var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
 
-            if (!String.IsNullOrEmpty(searchString))
+            // Get the total movie count for this user and store it in ViewData
+            ViewData["MovieCount"] = await moviesQuery.CountAsync();
+
+            // Apply search filtering
+            if (!string.IsNullOrEmpty(searchString))
             {
                 moviesQuery = moviesQuery.Where(m =>
                     (!string.IsNullOrEmpty(m.Title) && m.Title.Contains(searchString)) ||
@@ -3695,24 +3712,22 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 );
             }
 
-            switch (actualSortToApply)
+            // Apply sorting
+            moviesQuery = sortOrder switch
             {
-                case "title_asc": moviesQuery = moviesQuery.OrderBy(m => m.Title); break;
-                case "title_desc": moviesQuery = moviesQuery.OrderByDescending(m => m.Title); break;
-                case "director_asc": moviesQuery = moviesQuery.OrderBy(m => m.Director); break;
-                case "director_desc": moviesQuery = moviesQuery.OrderByDescending(m => m.Director); break;
-                case "year_asc": moviesQuery = moviesQuery.OrderBy(m => m.ReleasedYear); break;
-                case "year_desc": moviesQuery = moviesQuery.OrderByDescending(m => m.ReleasedYear); break;
-                case "datewatched_asc": moviesQuery = moviesQuery.OrderBy(m => m.DateWatched); break;
-                case "watchedat_asc": moviesQuery = moviesQuery.OrderBy(m => m.WatchedLocation); break;
-                case "watchedat_desc": moviesQuery = moviesQuery.OrderByDescending(m => m.WatchedLocation); break;
-                case "rating_desc": moviesQuery = moviesQuery.OrderByDescending(m => m.UserRating); break;
-                case "rating_asc": moviesQuery = moviesQuery.OrderBy(m => m.UserRating); break;
-                case "datewatched_desc":
-                default: // Default case
-                    moviesQuery = moviesQuery.OrderByDescending(m => m.DateWatched);
-                    break;
-            }
+                "title_asc" => moviesQuery.OrderBy(m => m.Title),
+                "title_desc" => moviesQuery.OrderByDescending(m => m.Title),
+                "director_asc" => moviesQuery.OrderBy(m => m.Director),
+                "director_desc" => moviesQuery.OrderByDescending(m => m.Director),
+                "year_asc" => moviesQuery.OrderBy(m => m.ReleasedYear),
+                "year_desc" => moviesQuery.OrderByDescending(m => m.ReleasedYear),
+                "datewatched_asc" => moviesQuery.OrderBy(m => m.DateWatched),
+                "watchedat_asc" => moviesQuery.OrderBy(m => m.WatchedLocation),
+                "watchedat_desc" => moviesQuery.OrderByDescending(m => m.WatchedLocation),
+                "rating_desc" => moviesQuery.OrderByDescending(m => m.UserRating),
+                "rating_asc" => moviesQuery.OrderBy(m => m.UserRating),
+                "datewatched_desc" or _ => moviesQuery.OrderByDescending(m => m.DateWatched)
+            };
 
             int pageSize = 8;
             var paginatedMovies = await PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>.CreateAsync(
@@ -3721,6 +3736,73 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 pageSize);
 
             return View(paginatedMovies);
+        }
+
+        /// <summary>
+        /// Handles the collection view showing deduplicated movies with watch count statistics.
+        /// 
+        /// FEATURE: Groups movies by TmdbId and calculates watch statistics.
+        /// Shows latest movie details with watch count badges for multiple viewings.
+        /// </summary>
+        private async Task<IActionResult> GetCollectionView(string userId, string searchString, string actualSortToApply, int? pageNumber)
+        {
+            var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
+
+            // Apply search filtering before grouping
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                moviesQuery = moviesQuery.Where(m =>
+                    (!string.IsNullOrEmpty(m.Title) && m.Title.Contains(searchString)) ||
+                    (!string.IsNullOrEmpty(m.Director) && m.Director.Contains(searchString)) ||
+                    (m.ReleasedYear != null && m.ReleasedYear.Value.ToString().Contains(searchString))
+                );
+            }
+
+            // Group by TmdbId to create collection view with watch counts
+            var collectionData = await moviesQuery
+                .GroupBy(m => m.TmdbId ?? 0) // Use 0 for movies without TmdbId
+                .Select(g => new CollectionMovieViewModel
+                {
+                    // Use the most recent movie entry for display details
+                    Movie = g.OrderByDescending(m => m.DateWatched ?? m.DateCreated).First(),
+                    WatchCount = g.Count(),
+                    FirstWatched = g.Min(m => m.DateWatched),
+                    LastWatched = g.Max(m => m.DateWatched)
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Store collection count for display
+            ViewData["MovieCount"] = collectionData.Count;
+
+            // Apply sorting to collection data
+            var sortedCollection = actualSortToApply switch
+            {
+                "title_asc" => collectionData.OrderBy(c => c.Movie.Title),
+                "title_desc" => collectionData.OrderByDescending(c => c.Movie.Title),
+                "director_asc" => collectionData.OrderBy(c => c.Movie.Director),
+                "director_desc" => collectionData.OrderByDescending(c => c.Movie.Director),
+                "year_asc" => collectionData.OrderBy(c => c.Movie.ReleasedYear),
+                "year_desc" => collectionData.OrderByDescending(c => c.Movie.ReleasedYear),
+                "datewatched_asc" => collectionData.OrderBy(c => c.LastWatched),
+                "watchedat_asc" => collectionData.OrderBy(c => c.Movie.WatchedLocation),
+                "watchedat_desc" => collectionData.OrderByDescending(c => c.Movie.WatchedLocation),
+                "rating_desc" => collectionData.OrderByDescending(c => c.Movie.UserRating),
+                "rating_asc" => collectionData.OrderBy(c => c.Movie.UserRating),
+                "datewatched_desc" or _ => collectionData.OrderByDescending(c => c.LastWatched)
+            };
+
+            // Apply pagination to sorted collection
+            int pageSize = 8;
+            var collectionList = sortedCollection.ToList();
+            var totalCount = collectionList.Count;
+            var pageIndex = pageNumber ?? 1;
+            var pagedItems = collectionList.Skip((pageIndex - 1) * pageSize)
+                                          .Take(pageSize)
+                                          .ToList();
+            var paginatedCollection = new PaginatedList<CollectionMovieViewModel>(pagedItems, totalCount, pageIndex, pageSize);
+
+            return View("ListCollection", paginatedCollection);
         }
 
 
