@@ -3646,8 +3646,112 @@ return (bucket3x3, bucket2x3, bucket1x3);
             }
         }
 
+        /// <summary>
+        /// Generates timeline navigation data by aggregating movies by month with counts.
+        /// 
+        /// FEATURE: Smart Timeline Navigator - provides month-based filtering with movie counts.
+        /// Creates dropdown options showing available months in user's movie timeline.
+        /// </summary>
+        /// <param name="userId">Current user ID for data isolation</param>
+        /// <returns>Timeline navigator data with available months and movie counts</returns>
+        private async Task<TimelineNavigatorViewModel> GetTimelineNavigatorDataAsync(string userId)
+        {
+            try
+            {
+                // PERFORMANCE: Aggregate movies by month directly in database query
+                var monthlyData = await _dbContext.Movies
+                    .Where(m => m.UserId == userId && m.DateWatched.HasValue)
+                    .GroupBy(m => new { 
+                        Year = m.DateWatched!.Value.Year,
+                        Month = m.DateWatched!.Value.Month
+                    })
+                    .Select(g => new TimelineMonth
+                    {
+                        Year = g.Key.Year,
+                        Month = g.Key.Month,
+                        MovieCount = g.Count(),
+                        MonthKey = $"{g.Key.Year:0000}-{g.Key.Month:00}",
+                        DisplayName = $"{GetMonthName(g.Key.Month)} {g.Key.Year} ({g.Count()} {(g.Count() == 1 ? "movie" : "movies")})"
+                    })
+                    .OrderByDescending(m => m.Year)
+                    .ThenByDescending(m => m.Month)
+                    .ToListAsync();
+
+                return new TimelineNavigatorViewModel
+                {
+                    AvailableMonths = monthlyData
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating timeline navigator data for user {UserId}", userId);
+                // FALLBACK: Return empty timeline data on error
+                return new TimelineNavigatorViewModel();
+            }
+        }
+
+        /// <summary>
+        /// Converts month number to localized month name for timeline display.
+        /// 
+        /// ENHANCEMENT: Provides user-friendly month names for timeline navigator dropdown.
+        /// </summary>
+        /// <param name="month">Month number (1-12)</param>
+        /// <returns>Month name in English</returns>
+        private static string GetMonthName(int month)
+        {
+            return month switch
+            {
+                1 => "January",
+                2 => "February", 
+                3 => "March",
+                4 => "April",
+                5 => "May",
+                6 => "June",
+                7 => "July",
+                8 => "August",
+                9 => "September",
+                10 => "October",
+                11 => "November",
+                12 => "December",
+                _ => "Unknown"
+            };
+        }
+
+        /// <summary>
+        /// Applies month-based filtering to movie queries for timeline navigation.
+        /// 
+        /// FEATURE: Smart Timeline Navigator month filtering implementation.
+        /// Filters movies to show only those watched in the selected month.
+        /// </summary>
+        /// <param name="query">Base movie query to filter</param>
+        /// <param name="monthFilter">Month filter in YYYY-MM format (null for no filter)</param>
+        /// <returns>Filtered query for the specified month</returns>
+        private static IQueryable<Ezequiel_Movies1.Models.Entities.Movies> ApplyMonthFilter(
+            IQueryable<Ezequiel_Movies1.Models.Entities.Movies> query, 
+            string? monthFilter)
+        {
+            if (string.IsNullOrEmpty(monthFilter))
+                return query;
+
+            // Parse month filter (YYYY-MM format)
+            if (monthFilter.Length == 7 && monthFilter[4] == '-')
+            {
+                if (int.TryParse(monthFilter.Substring(0, 4), out int year) &&
+                    int.TryParse(monthFilter.Substring(5, 2), out int month))
+                {
+                    // FILTER: Apply month and year filter to DateWatched
+                    return query.Where(m => m.DateWatched.HasValue &&
+                                          m.DateWatched.Value.Year == year &&
+                                          m.DateWatched.Value.Month == month);
+                }
+            }
+
+            // FALLBACK: Return original query if month filter is invalid
+            return query;
+        }
+
         [HttpGet]
-        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber, string view, bool firstWatchOnly = false)
+        public async Task<IActionResult> List(string sortOrder, string searchString, int? pageNumber, string view, bool firstWatchOnly = false, string displayMode = "grid", string? monthFilter = null)
         {
             // FEATURE: Hybrid journal-collection viewing system implementation
             // Supports both chronological journal view (default) and deduplicated collection view
@@ -3659,9 +3763,14 @@ return (bucket3x3, bucket2x3, bucket1x3);
             var viewMode = string.IsNullOrEmpty(view) || view.ToLower() != "collection" ? "journal" : "collection";
             ViewData["CurrentView"] = viewMode;
             
-            _logger.LogInformation("Fetching movie list for User ID: {UserId} in {ViewMode} view", userId, viewMode);
-            _logger.LogDebug("List action invoked with SortOrder: {SortOrder}, SearchString: {SearchString}, PageNumber: {PageNumber}, View: {View}", 
-                sortOrder, searchString, pageNumber, view);
+            // FEATURE: Display mode support for Grid/List toggle functionality
+            // Supports "grid" (default) and "list" display modes with state preservation
+            var actualDisplayMode = string.IsNullOrEmpty(displayMode) || (displayMode.ToLower() != "list") ? "grid" : "list";
+            ViewData["CurrentDisplayMode"] = actualDisplayMode;
+            
+            _logger.LogInformation("Fetching movie list for User ID: {UserId} in {ViewMode} view with {DisplayMode} display mode", userId, viewMode, actualDisplayMode);
+            _logger.LogDebug("List action invoked with SortOrder: {SortOrder}, SearchString: {SearchString}, PageNumber: {PageNumber}, View: {View}, DisplayMode: {DisplayMode}", 
+                sortOrder, searchString, pageNumber, view, actualDisplayMode);
 
             ViewData["CurrentFilter"] = searchString;
 
@@ -3681,15 +3790,30 @@ return (bucket3x3, bucket2x3, bucket1x3);
             ViewData["MostWatchedSortParm"] = actualSortToApply == "most_watched_desc" ? "most_watched_asc" : "most_watched_desc";
             ViewData["RecentlyAddedSortParm"] = actualSortToApply == "recently_added_desc" ? "recently_added_asc" : "recently_added_desc";
 
+            // FEATURE: Smart Timeline Navigator - generate timeline data for month filtering
+            var timelineData = await GetTimelineNavigatorDataAsync(userId!);
+            timelineData.SelectedMonth = monthFilter;
+            
+            // Set display name for selected month filter
+            if (!string.IsNullOrEmpty(monthFilter))
+            {
+                var selectedMonth = timelineData.AvailableMonths.FirstOrDefault(m => m.MonthKey == monthFilter);
+                timelineData.SelectedMonthDisplayName = selectedMonth?.DisplayName.Replace($" ({selectedMonth.MovieCount} ", " (").Replace(")", ")")
+                    ?? "Unknown Month";
+            }
+            
+            ViewData["TimelineNavigator"] = timelineData;
+            ViewData["CurrentMonthFilter"] = monthFilter;
+
             if (viewMode == "collection")
             {
                 // COLLECTION VIEW: Show deduplicated movies with watch counts
-                return await GetCollectionView(userId!, searchString, actualSortToApply, pageNumber);
+                return await GetCollectionView(userId!, searchString, actualSortToApply, pageNumber, monthFilter);
             }
             else
             {
                 // JOURNAL VIEW: Keep existing chronological behavior (default)
-                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber, firstWatchOnly);
+                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber, firstWatchOnly, monthFilter);
             }
         }
 
@@ -3698,8 +3822,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
         /// 
         /// FEATURE: Preserves existing journal functionality as the default view.
         /// Maintains user data isolation and existing sorting/search behavior.
+        /// ENHANCEMENT: Added Smart Timeline Navigator month filtering support.
         /// </summary>
-        private async Task<IActionResult> GetJournalView(string userId, string searchString, string sortOrder, int? pageNumber, bool firstWatchOnly = false)
+        private async Task<IActionResult> GetJournalView(string userId, string searchString, string sortOrder, int? pageNumber, bool firstWatchOnly = false, string? monthFilter = null)
         {
             var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
 
@@ -3711,6 +3836,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
             {
                 moviesQuery = moviesQuery.Where(m => !m.IsRewatch);
             }
+            
+            // FEATURE: Smart Timeline Navigator - apply month filtering
+            moviesQuery = ApplyMonthFilter(moviesQuery, monthFilter);
             
             // Apply search filtering
             if (!string.IsNullOrEmpty(searchString))
@@ -3754,7 +3882,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
         /// FEATURE: Groups movies by TmdbId and calculates watch statistics.
         /// Shows latest movie details with watch count badges for multiple viewings.
         /// </summary>
-        private async Task<IActionResult> GetCollectionView(string userId, string searchString, string actualSortToApply, int? pageNumber)
+        private async Task<IActionResult> GetCollectionView(string userId, string searchString, string actualSortToApply, int? pageNumber, string? monthFilter = null)
         {
             var moviesQuery = _dbContext.Movies.Where(m => m.UserId == userId);
 
@@ -3767,6 +3895,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     (m.ReleasedYear != null && m.ReleasedYear.Value.ToString().Contains(searchString))
                 );
             }
+
+            // FEATURE: Smart Timeline Navigator - apply month filtering to collection view
+            moviesQuery = ApplyMonthFilter(moviesQuery, monthFilter);
 
             // Group by TmdbId to create collection view with watch counts
             var collectionData = await moviesQuery
@@ -3827,6 +3958,68 @@ return (bucket3x3, bucket2x3, bucket1x3);
             var paginatedCollection = new PaginatedList<CollectionMovieViewModel>(pagedItems, totalCount, pageIndex, pageSize);
 
             return View("ListCollection", paginatedCollection);
+        }
+
+        /// <summary>
+        /// AJAX endpoint for Smart Timeline Navigator month selection.
+        /// 
+        /// FEATURE: Provides seamless month filtering with AJAX support.
+        /// Returns either JSON response for AJAX calls or redirects for direct navigation.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> FilterByMonth(string? monthFilter, string sortOrder, string searchString, 
+            int? pageNumber, string view, bool firstWatchOnly = false, string displayMode = "grid")
+        {
+            try
+            {
+                // Check if this is an AJAX request
+                bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+                
+                if (isAjax)
+                {
+                    // AJAX: Return partial view with filtered content
+                    var result = await List(sortOrder, searchString, pageNumber, view, firstWatchOnly, displayMode, monthFilter);
+                    
+                    if (result is ViewResult viewResult)
+                    {
+                        // Return the same view but indicate it's for AJAX
+                        return PartialView(viewResult.ViewName ?? "List", viewResult.Model);
+                    }
+                    
+                    // FALLBACK: Return error for AJAX
+                    return Json(new { success = false, message = "Unable to filter timeline" });
+                }
+                else
+                {
+                    // NON-AJAX: Standard redirect to preserve existing functionality
+                    return RedirectToAction("List", new 
+                    { 
+                        sortOrder = sortOrder,
+                        searchString = searchString,
+                        pageNumber = pageNumber,
+                        view = view,
+                        firstWatchOnly = firstWatchOnly,
+                        displayMode = displayMode,
+                        monthFilter = monthFilter
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error filtering timeline by month {MonthFilter}", monthFilter);
+                
+                // Return appropriate error response based on request type
+                bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+                if (isAjax)
+                {
+                    return Json(new { success = false, message = "Unable to filter timeline" });
+                }
+                else
+                {
+                    // Redirect to unfiltered list on error
+                    return RedirectToAction("List", new { view = view, displayMode = displayMode });
+                }
+            }
         }
 
 
