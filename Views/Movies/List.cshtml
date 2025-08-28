@@ -6,6 +6,34 @@
     ViewData["Title"] = "My Movies - CineLog";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
     var posterSize = "w185";
+    
+    // FEATURE: Current sort display mapping for button text
+    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    {
+        // Date/Recent sorting
+        "datewatched_desc" => "Recent ↓",
+        "datewatched_asc" => "Recent ↑",
+        "date_desc" => "Recent ↓", 
+        "date_asc" => "Recent ↑",
+        
+        // Title sorting  
+        "title_asc" => "Title A-Z",
+        "title_desc" => "Title Z-A",
+        
+        // Director sorting
+        "director_asc" => "Director A-Z", 
+        "director_desc" => "Director Z-A",
+        
+        // Year sorting
+        "year_asc" => "Year ↑",
+        "year_desc" => "Year ↓",
+        
+        // Rating sorting
+        "rating_asc" => "Rating ↑",
+        "rating_desc" => "Rating ↓",
+        
+        _ => "Recent ↓"
+    };
 }
 
 @{
@@ -76,32 +104,101 @@
         }
     </p>
     
-    @* ENHANCEMENT: Collection View Quick Stats Summary Panel *@
+    @* ENHANCEMENT: Advanced Collection Analytics Dashboard *@
     @if (isCollectionView && ViewData["MovieCount"] is int statsMovieCount && statsMovieCount > 0)
     {
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card bg-dark border-secondary">
-                    <div class="card-body py-3">
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <div class="d-flex flex-column">
-                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["MostWatchedMovie"]</span>
-                                    <small class="text-muted">Most Watched (@ViewData["MostWatchedCount"] times)</small>
+        <div class="collection-analytics-dashboard mb-4">
+            @* Primary Stats Row *@
+            <div class="row mb-3">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card primary-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-film"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["MovieCount"]</div>
+                            <div class="analytics-label">Unique Movies</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card secondary-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["TotalWatches"]</div>
+                            <div class="analytics-label">Total Watches</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card accent-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["AverageWatchesPerMovie"]</div>
+                            <div class="analytics-label">Avg per Movie</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card highlight-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["MostWatchedCount"]</div>
+                            <div class="analytics-label">Most Rewatched</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            @* Featured Movie & Insights Row *@
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <div class="analytics-card featured-movie">
+                        <div class="featured-header">
+                            <i class="fas fa-trophy me-2"></i>Most Watched Movie
+                        </div>
+                        <div class="featured-content">
+                            <div class="featured-title">@ViewData["MostWatchedMovie"]</div>
+                            <div class="featured-subtitle">Watched @ViewData["MostWatchedCount"] times</div>
+                            <div class="featured-progress">
+                                @{
+                                    var maxWatches = (int)(ViewData["MostWatchedCount"] ?? 1);
+                                    var progressWidth = Math.Min(100, (maxWatches * 20)); // Scale for visual appeal
+                                }
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: @progressWidth%"></div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="d-flex flex-column">
-                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["AverageWatchesPerMovie"]</span>
-                                    <small class="text-muted">Average watches per movie</small>
-                                </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="analytics-card collection-insights">
+                        <div class="insights-header">
+                            <i class="fas fa-lightbulb me-2"></i>Quick Insights
+                        </div>
+                        <div class="insights-content">
+                            <div class="insight-item">
+                                <i class="fas fa-heart text-danger me-2"></i>
+                                <span>@ViewData["AverageWatchesPerMovie"] rewatches per movie</span>
                             </div>
-                            <div class="col-md-4">
-                                <div class="d-flex flex-column">
-                                    <span class="cinelog-gold-title fs-4 fw-bold">@ViewData["MovieCount"]</span>
-                                    <small class="text-muted">Unique movies in collection</small>
-                                </div>
+                            <div class="insight-item">
+                                <i class="fas fa-calendar-check text-info me-2"></i>
+                                <span>@ViewData["MovieCount"] unique films tracked</span>
                             </div>
+                            @if ((int)(ViewData["TotalWatches"] ?? 0) > (int)(ViewData["MovieCount"] ?? 1))
+                            {
+                                <div class="insight-item">
+                                    <i class="fas fa-sync text-warning me-2"></i>
+                                    <span>@((int)(ViewData["TotalWatches"] ?? 0) - (int)(ViewData["MovieCount"] ?? 0)) rewatches total</span>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -111,188 +208,207 @@
 </div>
 
 
+<!-- HUMANIZED: Simplified primary search interface -->
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <form method="get" action="@Url.Action("List")">
             <div class="input-group">
                 <input type="text" 
                        name="searchString" 
                        value="@ViewData["CurrentFilter"]" 
                        class="form-control" 
-                       placeholder="@(isJournalView ? "Search by Title, Director, or Year..." : "Search by Title, Director, or Year... (collection will search all watches)")" />
-                <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
+                       placeholder="Search your movies..." />
                 <input type="hidden" name="view" value="@(currentView)" />
                 <input type="hidden" name="displayMode" value="@(currentDisplayMode)" />
-                <input type="hidden" name="monthFilter" value="@ViewData["CurrentMonthFilter"]" />
                 <button type="submit" class="btn btn-primary">Search</button>
-                <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })" class="btn btn-secondary">Clear Search</a>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+                {
+                    <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode })" class="btn btn-outline-secondary">Clear</a>
+                }
             </div>
             
-            @* ENHANCEMENT: Journal-specific search options *@
-            @if (isJournalView)
-            {
-                <div class="mt-2">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="firstWatchOnly" name="firstWatchOnly" 
-                               value="true" @(Context.Request.Query["firstWatchOnly"].ToString() == "true" ? "checked" : "")>
-                        <label class="form-check-label text-muted" for="firstWatchOnly">
-                            <i class="fas fa-filter me-1"></i>Show first watches only (exclude rewatches)
-                        </label>
-                    </div>
+            @* Advanced options collapsed by default - humanized approach *@
+            <div class="mt-2">
+                <button class="btn btn-link btn-sm p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="false">
+                    <i class="fas fa-cog me-1"></i>Advanced options
+                </button>
+                <div class="collapse mt-2" id="advancedOptions">
+                    @if (isJournalView)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="firstWatchOnly" name="firstWatchOnly" 
+                                   value="true" @(Context.Request.Query["firstWatchOnly"].ToString() == "true" ? "checked" : "")>
+                            <label class="form-check-label text-muted" for="firstWatchOnly">
+                                Show first watches only
+                            </label>
+                        </div>
+                    }
                 </div>
-            }
+            </div>
         </form>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <!-- HUMANIZED: Simplified sort with only essential options -->
         <div class="dropdown">
-            <button class="btn dropdown-toggle w-100" 
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
                     type="button" 
                     id="sortDropdown" 
                     data-bs-toggle="dropdown" 
                     aria-expanded="false"
-                    style="background-color: #6c757d; color: white; border: 1px solid #5a6268; padding: 8px 12px; font-size: 14px; min-height: 38px; box-shadow: none;">
-                <i class="fas fa-sort me-2"></i>Sort By
+                    title="Sort movies"
+                    style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                <i class="fas fa-sort me-2"></i>@currentSortDisplay
             </button>
-            <ul class="dropdown-menu dropdown-menu-dark w-100" 
+            <ul class="dropdown-menu w-100 shadow" 
                 aria-labelledby="sortDropdown">
-                <!-- Date Watched -->
+                <!-- COMPLETE: Full sort options with both directions -->
+                
+                <!-- Recent/Date sorting -->
                 <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-calendar me-2"></i>Date Watched
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("date") == true)
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "datewatched_desc" || ViewData["CurrentSort"]?.ToString() == "date_desc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "datewatched_desc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-clock me-2"></i>Recent ↓
+                        @if (ViewData["CurrentSort"]?.ToString() == "datewatched_desc" || ViewData["CurrentSort"]?.ToString() == "date_desc")
                         {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "date_desc" ? "↓" : "↑")
-                            </span>
+                            <span class="float-end text-warning">✓</span>
                         }
                     </a>
                 </li>
-                <!-- Title -->
                 <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-font me-2"></i>Title
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("title") == true)
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "datewatched_asc" || ViewData["CurrentSort"]?.ToString() == "date_asc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "datewatched_asc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-clock me-2"></i>Recent ↑
+                        @if (ViewData["CurrentSort"]?.ToString() == "datewatched_asc" || ViewData["CurrentSort"]?.ToString() == "date_asc")
                         {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "title_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Director -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-user-tie me-2"></i>Director
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("director") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "director_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Released Year -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-clock me-2"></i>Released Year
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("year") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "year_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Rating -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-star me-2"></i>Rating
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("rating") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "rating_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Watched At (Location) -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["WatchedAtSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })">
-                        <i class="fas fa-map-marker-alt me-2"></i>Watched At
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("watchedat") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "watchedat_desc" ? "↓" : "↑")
-                            </span>
+                            <span class="float-end text-warning">✓</span>
                         }
                     </a>
                 </li>
                 
-                @* ENHANCEMENT: Collection-specific sorting options (only show in collection view) *@
-                @if (isCollectionView)
-                {
-                    <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header text-warning"><i class="fas fa-layer-group me-2"></i>Collection Sorting</h6></li>
-                    <!-- Most Watched -->
-                    <li>
-                        <a class="dropdown-item" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                            <i class="fas fa-trophy me-2 text-warning"></i>Most Watched
-                            @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("most_watched") == true)
-                            {
-                                <span class="float-end">
-                                    @((ViewData["CurrentSort"]?.ToString() ?? "") == "most_watched_desc" ? "↓" : "↑")
-                                </span>
-                            }
-                        </a>
-                    </li>
-                    <!-- Recently Added -->
-                    <li>
-                        <a class="dropdown-item" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })">
-                            <i class="fas fa-plus-circle me-2 text-warning"></i>Recently Added
-                            @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("recently_added") == true)
-                            {
-                                <span class="float-end">
-                                    @((ViewData["CurrentSort"]?.ToString() ?? "") == "recently_added_desc" ? "↓" : "↑")
-                                </span>
-                            }
-                        </a>
-                    </li>
-                }
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- Title sorting -->
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "title_asc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "title_asc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-font me-2"></i>Title A-Z
+                        @if (ViewData["CurrentSort"]?.ToString() == "title_asc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "title_desc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "title_desc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-font me-2"></i>Title Z-A
+                        @if (ViewData["CurrentSort"]?.ToString() == "title_desc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- Director sorting -->
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "director_asc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "director_asc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-user-tie me-2"></i>Director A-Z
+                        @if (ViewData["CurrentSort"]?.ToString() == "director_asc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "director_desc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "director_desc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-user-tie me-2"></i>Director Z-A
+                        @if (ViewData["CurrentSort"]?.ToString() == "director_desc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- Year sorting -->
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "year_desc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "year_desc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-calendar-alt me-2"></i>Year ↓
+                        @if (ViewData["CurrentSort"]?.ToString() == "year_desc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "year_asc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "year_asc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-calendar-alt me-2"></i>Year ↑
+                        @if (ViewData["CurrentSort"]?.ToString() == "year_asc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- Rating sorting -->
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "rating_desc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "rating_desc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-star me-2"></i>Rating ↓
+                        @if (ViewData["CurrentSort"]?.ToString() == "rating_desc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item @(ViewData["CurrentSort"]?.ToString() == "rating_asc" ? "active" : "")" 
+                       href="@Url.Action("List", new { sortOrder = "rating_asc", searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                        <i class="fas fa-star me-2"></i>Rating ↑
+                        @if (ViewData["CurrentSort"]?.ToString() == "rating_asc")
+                        {
+                            <span class="float-end text-warning">✓</span>
+                        }
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
     
-    @* FEATURE: Smart Timeline Navigator *@
+    @* RESTORED: Timeline Navigator for month filtering - SEPARATE COLUMN WITH PROPER SPACING *@
     @if (ViewData["TimelineNavigator"] is TimelineNavigatorViewModel timelineNavigator && timelineNavigator.AvailableMonths.Any())
     {
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="dropdown">
-                <button class="btn dropdown-toggle w-100 cinelog-timeline-button" 
+                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
                         type="button" 
-                        id="timelineDropdown" 
+                        id="monthFilterDropdown" 
                         data-bs-toggle="dropdown" 
-                        aria-expanded="false">
-                    <i class="fas fa-calendar-alt me-2"></i>@timelineNavigator.SelectedMonthDisplayName
+                        aria-expanded="false"
+                        title="Filter by month"
+                        style="min-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <i class="fas fa-calendar me-2"></i>@timelineNavigator.SelectedMonthDisplayName
                 </button>
-                <ul class="dropdown-menu w-100 cinelog-timeline-dropdown" 
-                    aria-labelledby="timelineDropdown">
+                <ul class="dropdown-menu w-100 shadow" 
+                    aria-labelledby="monthFilterDropdown"
+                    style="min-width: 220px; max-height: 300px; overflow-y: auto;">
                     @* All Months option *@
                     <li>
-                        <a class="dropdown-item timeline-filter" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
-                           data-month-filter="">
-                            <i class="fas fa-globe me-2 cinelog-gold-title"></i>All Months
+                        <a class="dropdown-item" 
+                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })">
+                            <i class="fas fa-globe me-2"></i>All Months
                             @if (string.IsNullOrEmpty(ViewData["CurrentMonthFilter"]?.ToString()))
                             {
-                                <span class="float-end cinelog-gold-title">✓</span>
+                                <span class="float-end text-warning">✓</span>
                             }
                         </a>
                     </li>
@@ -301,13 +417,12 @@
                     @foreach (var month in timelineNavigator.AvailableMonths)
                     {
                         <li>
-                            <a class="dropdown-item timeline-filter" 
-                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = month.MonthKey })"
-                               data-month-filter="@month.MonthKey">
+                            <a class="dropdown-item" 
+                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, monthFilter = month.MonthKey })">
                                 <i class="fas fa-calendar me-2"></i>@month.DisplayName
                                 @if (ViewData["CurrentMonthFilter"]?.ToString() == month.MonthKey)
                                 {
-                                    <span class="float-end cinelog-gold-title">✓</span>
+                                    <span class="float-end text-warning">✓</span>
                                 }
                             </a>
                         </li>
@@ -316,62 +431,37 @@
             </div>
         </div>
     }
-    
-    @* FEATURE: Grid/List Display Mode Toggle *@
-    <div class="col-12">
-        <div class="d-flex justify-content-end align-items-center mt-3">
-            <span class="text-muted me-2" style="font-size: 0.9rem;">
-                <i class="fas fa-eye me-1"></i>Display:
-            </span>
-            <div class="btn-group" role="group" aria-label="Display mode toggle">
-                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = "grid", firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })"
-                   class="btn btn-sm @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
-                   title="Grid View">
-                    <i class="fas fa-th me-1"></i>Grid
-                </a>
-                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = "list", firstWatchOnly = Context.Request.Query["firstWatchOnly"], monthFilter = ViewData["CurrentMonthFilter"] })"
-                   class="btn btn-sm @(isListMode ? "btn-warning" : "btn-outline-secondary")"
-                   title="List View">
-                    <i class="fas fa-list me-1"></i>List
-                </a>
-            </div>
-        </div>
+</div>
+
+<!-- HUMANIZED: Clean primary action section -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-controller="Movies" asp-action="Add" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i>Add Movie
+        </a>
+    </div>
+    <!-- Simple display mode toggle -->
+    <div class="btn-group btn-group-sm" role="group">
+        <a href="@Url.Action("List", new { view = currentView, displayMode = "grid" })"
+           class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
+           title="Grid View">
+            <i class="fas fa-th"></i>
+        </a>
+        <a href="@Url.Action("List", new { view = currentView, displayMode = "list" })"
+           class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
+           title="List View">
+            <i class="fas fa-list"></i>
+        </a>
     </div>
 </div>
-<div class="text-start mb-3">
-    <a asp-controller="Movies" asp-action="Add" class="btn btn-success">Add New Movie</a>
-</div>
 
-
-@{
-    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
-    {
-        "title_asc" => "Title (A-Z)",
-        "title_desc" => "Title (Z-A)",
-        "date_asc" => "Date Watched (Oldest First)",
-        "date_desc" => "Date Watched (Newest First)",
-        "director_asc" => "Director (A-Z)",
-        "director_desc" => "Director (Z-A)",
-        "year_asc" => "Released Year (Oldest First)",
-        "year_desc" => "Released Year (Newest First)",
-        "rating_asc" => "Rating (Lowest First)",
-        "rating_desc" => "Rating (Highest First)",
-        "location_asc" => "Watched At (A-Z)",
-        "location_desc" => "Watched At (Z-A)",
-        // ENHANCEMENT: Collection-specific sort display names
-        "most_watched_desc" => "Most Watched (High to Low)",
-        "most_watched_asc" => "Most Watched (Low to High)",
-        "recently_added_desc" => "Recently Added (Newest First)",
-        "recently_added_asc" => "Recently Added (Oldest First)",
-        _ => "Date Watched (Newest First)"
-    };
-}
+<!-- HUMANIZED: Simple current status display -->
 <div class="mb-3">
     <small class="text-muted">
-        <i class="fas fa-sort me-1"></i>Currently sorted by: <strong>@currentSortDisplay</strong>
+        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
         @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
         {
-            <span class="ms-2">| <i class="fas fa-search me-1"></i>Filtered by: "@ViewData["CurrentFilter"]"</span>
+            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
         }
     </small>
 </div>
@@ -419,9 +509,9 @@ else
             }
         }
         <div class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm journal-movie-card">
                 @* Poster image *@
-                <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
+                <div class="card-img-top text-center" style="background-color: #1a1a1a; height: 285px;">
                     @if (!string.IsNullOrEmpty(movie.PosterPath))
                     {
                         <a asp-action="Details" asp-route-id="@movie.Id">
@@ -976,6 +1066,297 @@ else
 .cinelog-timeline-dropdown::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #f4d03f, #d4af37);
 }
+
+/* FEATURE: Advanced Collection Analytics Dashboard Styling */
+.collection-analytics-dashboard {
+    background: linear-gradient(135deg, rgba(33, 37, 41, 0.95) 0%, rgba(44, 48, 52, 0.95) 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.collection-analytics-dashboard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Analytics Cards */
+.analytics-card {
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transition: left 0.6s ease;
+}
+
+.analytics-card:hover::before {
+    left: 100%;
+}
+
+.analytics-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(212, 175, 55, 0.3);
+    border-color: rgba(212, 175, 55, 0.6);
+}
+
+/* Card Type Specific Styling */
+.primary-stat {
+    border-left: 4px solid #d4af37;
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%), linear-gradient(90deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
+}
+
+.secondary-stat {
+    border-left: 4px solid #17a2b8;
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%), linear-gradient(90deg, rgba(23, 162, 184, 0.1) 0%, transparent 100%);
+}
+
+.accent-stat {
+    border-left: 4px solid #28a745;
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%), linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, transparent 100%);
+}
+
+.highlight-stat {
+    border-left: 4px solid #e74c3c;
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%), linear-gradient(90deg, rgba(231, 76, 60, 0.1) 0%, transparent 100%);
+}
+
+/* Analytics Icon */
+.analytics-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+    color: #d4af37;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.secondary-stat .analytics-icon {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.2) 0%, rgba(23, 162, 184, 0.1) 100%);
+    color: #17a2b8;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.2);
+}
+
+.accent-stat .analytics-icon {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.1) 100%);
+    color: #28a745;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.highlight-stat .analytics-icon {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.2) 0%, rgba(231, 76, 60, 0.1) 100%);
+    color: #e74c3c;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+
+/* Analytics Content */
+.analytics-content {
+    flex: 1;
+}
+
+.analytics-number {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-label {
+    font-size: 0.875rem;
+    color: #adb5bd;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Featured Movie Card */
+.featured-movie {
+    background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+    color: #000;
+    padding: 2rem;
+    text-align: left;
+}
+
+.featured-movie .analytics-content {
+    width: 100%;
+}
+
+.featured-header {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.featured-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.featured-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.featured-progress {
+    margin-top: 1rem;
+}
+
+.progress-bar-container {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%);
+    transition: width 1.5s ease-in-out;
+    border-radius: 3px;
+}
+
+/* Collection Insights Card */
+.collection-insights {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+}
+
+.insights-header {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insights-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.insight-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+    border-left-color: #d4af37;
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .collection-analytics-dashboard {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .analytics-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .analytics-number {
+        font-size: 1.75rem;
+    }
+    
+    .analytics-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .featured-title {
+        font-size: 1.5rem;
+    }
+}
+
+@@media (max-width: 576px) {
+    .analytics-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .analytics-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Smooth animation for dashboard reveal */
+@@keyframes dashboardSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.collection-analytics-dashboard {
+    animation: dashboardSlideIn 0.8s ease-out;
+}
+
+.analytics-card {
+    animation: dashboardSlideIn 0.8s ease-out;
+    animation-delay: 0.1s;
+    animation-fill-mode: both;
+}
+
+.analytics-card:nth-child(2) { animation-delay: 0.2s; }
+.analytics-card:nth-child(3) { animation-delay: 0.3s; }
+.analytics-card:nth-child(4) { animation-delay: 0.4s; }
 </style>
 
 <script>
@@ -1204,4 +1585,88 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// FEATURE: Enhanced Collection Analytics Dashboard Interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Only run if we're on collection view with analytics
+    if (!document.querySelector('.collection-analytics-dashboard')) return;
+    
+    // Animate progress bars on load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach((bar, index) => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500 + (index * 200));
+    });
+    
+    // FEATURE: Dashboard number counter animation
+    const animateNumbers = () => {
+        const numberElements = document.querySelectorAll('.analytics-number');
+        numberElements.forEach(element => {
+            const originalText = element.textContent;
+            const finalNumber = parseFloat(originalText) || 0;
+            let currentNumber = 0;
+            const increment = finalNumber / 50; // 50 steps for smooth animation
+            
+            const timer = setInterval(() => {
+                currentNumber += increment;
+                if (currentNumber >= finalNumber) {
+                    currentNumber = finalNumber;
+                    clearInterval(timer);
+                    element.textContent = originalText; // Restore original formatting
+                    return;
+                }
+                
+                if (Number.isInteger(finalNumber)) {
+                    element.textContent = Math.floor(currentNumber);
+                } else {
+                    element.textContent = currentNumber.toFixed(1);
+                }
+            }, 30);
+        });
+    };
+    
+    // Add click interactions to analytics cards
+    const analyticsCards = document.querySelectorAll('.analytics-card');
+    analyticsCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Add subtle click feedback
+            const originalTransform = this.style.transform;
+            this.style.transform = 'translateY(-2px) scale(1.01)';
+            setTimeout(() => {
+                this.style.transform = originalTransform;
+            }, 150);
+        });
+        
+        // Add keyboard accessibility
+        card.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                this.click();
+            }
+        });
+        
+        // Make cards focusable
+        card.setAttribute('tabindex', '0');
+    });
+    
+    // Enhanced hover effects for insight items
+    const insightItems = document.querySelectorAll('.insight-item');
+    insightItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(212, 175, 55, 0.15)';
+            this.style.borderLeftColor = '#d4af37';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.05)';
+            this.style.borderLeftColor = 'transparent';
+        });
+    });
+    
+    // Start animations after a short delay for better visual flow
+    setTimeout(animateNumbers, 800);
+});
+
 </script>

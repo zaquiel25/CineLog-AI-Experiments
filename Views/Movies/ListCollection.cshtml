@@ -57,51 +57,99 @@
         </li>
     </ul>
     
-    <p class="text-muted mb-3">Your movie collection with watch counts</p>
+    <p class="text-muted mb-3">Every film you've discovered, organized and tracked</p> @* HUMANIZED: Authentic movie language instead of technical "collection with watch counts" *@
     
-    @* FEATURE: Professional Collection Dashboard - Sophisticated Stats Panel *@
+    @* ENHANCEMENT: Advanced Collection Analytics Dashboard *@
     @if (ViewData["MovieCount"] is int statsMovieCount && statsMovieCount > 0)
     {
-        <div class="collection-dashboard mb-4">
-            <div class="dashboard-header mb-3">
-                <h3 class="dashboard-title">Collection Analytics</h3>
-                <p class="dashboard-subtitle">Your movie watching insights at a glance</p>
+        <div class="collection-analytics-dashboard mb-4">
+            @* Primary Stats Row *@
+            <div class="row mb-3">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card primary-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-film"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["MovieCount"]</div>
+                            <div class="analytics-label">Films Discovered</div> @* HUMANIZED: Movie-focused language *@
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card secondary-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["TotalWatches"]</div>
+                            <div class="analytics-label">Viewing Sessions</div> @* HUMANIZED: More cinematic language *@
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card accent-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["AverageWatchesPerMovie"]</div>
+                            <div class="analytics-label">Rewatch Frequency</div> @* HUMANIZED: Natural movie language *@
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="analytics-card highlight-stat">
+                        <div class="analytics-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="analytics-content">
+                            <div class="analytics-number">@ViewData["MostWatchedCount"]</div>
+                            <div class="analytics-label">Most Revisited</div> @* HUMANIZED: Elegant cinematic language *@
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="stats-grid">
-                @* Most Watched Movie Card *@
-                <div class="stat-card stat-card-primary">
-                    <div class="stat-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">@ViewData["MostWatchedMovie"]</div>
-                        <div class="stat-label">Most Watched</div>
-                        <div class="stat-detail">@ViewData["MostWatchedCount"] times</div>
+
+            @* Interactive Stats Section *@
+            <div class="analytics-insights mb-3">
+                <div class="insight-card">
+                    <div class="insight-content">
+                        <div class="insight-icon">
+                            <i class="fas fa-trophy text-warning"></i>
+                        </div>
+                        <div class="insight-text">
+                            <span class="insight-title">Favourite Film</span> @* HUMANIZED: Clear, straightforward language *@
+                            <span class="insight-detail">@ViewData["MostWatchedMovie"] · @ViewData["MostWatchedCount"] times</span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                @* Average Watches Card *@
-                <div class="stat-card stat-card-secondary">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-bar"></i>
+            @* Progress Indicators *@
+            <div class="analytics-progress">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span>Discovery Journey</span> @* HUMANIZED: Personal movie exploration language *@
+                                <span class="progress-value">@ViewData["MovieCount"] movies</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: 75%;"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <div class="stat-value">@ViewData["AverageWatchesPerMovie"]</div>
-                        <div class="stat-label">Avg per Movie</div>
-                        <div class="stat-detail">watches average</div>
-                    </div>
-                </div>
-
-                @* Collection Size Card *@
-                <div class="stat-card stat-card-accent">
-                    <div class="stat-icon">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">@ViewData["MovieCount"]</div>
-                        <div class="stat-label">Total Movies</div>
-                        <div class="stat-detail">in collection</div>
+                    <div class="col-md-6">
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span>Repeat Viewing</span> @* HUMANIZED: Natural movie terminology *@
+                                <span class="progress-value">@ViewData["AverageWatchesPerMovie"]x avg</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill accent" style="width: 60%;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,14 +158,14 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-10">
         <form method="get" action="@Url.Action("List")">
             <div class="input-group">
                 <input type="text" 
                        name="searchString" 
                        value="@ViewData["CurrentFilter"]" 
                        class="form-control" 
-                       placeholder="Search by Title, Director, or Year..." />
+                       placeholder="Find a film in your collection..." /> @* HUMANIZED: Natural movie discovery language *@
                 <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
                 <input type="hidden" name="view" value="collection" />
                 <input type="hidden" name="displayMode" value="@(currentDisplayMode)" />
@@ -127,225 +175,88 @@
             </div>
         </form>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-2">
+        <!-- HUMANIZED: Simple sort with essential options only -->
         <div class="dropdown">
-            <button class="btn dropdown-toggle w-100" 
+            <button class="btn btn-outline-secondary dropdown-toggle w-100" 
                     type="button" 
                     id="sortDropdown" 
                     data-bs-toggle="dropdown" 
-                    aria-expanded="false"
-                    style="background-color: #6c757d; color: white; border: 1px solid #5a6268; padding: 8px 12px; font-size: 14px; min-height: 38px; box-shadow: none;">
-                <i class="fas fa-sort me-2"></i>Sort By
+                    aria-expanded="false">
+                <i class="fas fa-sort me-1"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-dark w-100" 
+            <ul class="dropdown-menu w-100" 
                 aria-labelledby="sortDropdown">
-                <!-- Last Watched -->
+                <!-- Essential sort options only -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-calendar me-2"></i>Last Watched
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("datewatched") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "datewatched_desc" ? "↓" : "↑")
-                            </span>
-                        }
+                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                        Recent
                     </a>
                 </li>
-                <!-- Title -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-font me-2"></i>Title
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("title") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "title_desc" ? "↓" : "↑")
-                            </span>
-                        }
+                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                        Title
                     </a>
                 </li>
-                <!-- Director -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-user-tie me-2"></i>Director
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("director") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "director_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Released Year -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-clock me-2"></i>Released Year
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("year") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "year_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Rating -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
-                        <i class="fas fa-star me-2"></i>Rating
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("rating") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "rating_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                
-                @* ENHANCEMENT: Collection-specific sorting options *@
-                <li><hr class="dropdown-divider"></li>
-                <li><h6 class="dropdown-header text-warning"><i class="fas fa-layer-group me-2"></i>Collection Sorting</h6></li>
-                <!-- Most Watched -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-trophy me-2 text-warning"></i>Most Watched
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("most_watched") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "most_watched_desc" ? "↓" : "↑")
-                            </span>
-                        }
-                    </a>
-                </li>
-                <!-- Recently Added -->
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RecentlyAddedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })">
-                        <i class="fas fa-plus-circle me-2 text-warning"></i>Recently Added
-                        @if (ViewData["CurrentSort"]?.ToString()?.StartsWith("recently_added") == true)
-                        {
-                            <span class="float-end">
-                                @((ViewData["CurrentSort"]?.ToString() ?? "") == "recently_added_desc" ? "↓" : "↑")
-                            </span>
-                        }
+                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                        Most Watched
                     </a>
                 </li>
             </ul>
         </div>
     </div>
     
-    @* FEATURE: Smart Timeline Navigator *@
-    @if (ViewData["TimelineNavigator"] is TimelineNavigatorViewModel timelineNavigator && timelineNavigator.AvailableMonths.Any())
-    {
-        <div class="col-md-4">
-            <div class="dropdown">
-                <button class="btn dropdown-toggle w-100 cinelog-timeline-button" 
-                        type="button" 
-                        id="timelineDropdown" 
-                        data-bs-toggle="dropdown" 
-                        aria-expanded="false">
-                    <i class="fas fa-calendar-alt me-2"></i>@timelineNavigator.SelectedMonthDisplayName
-                </button>
-                <ul class="dropdown-menu w-100 cinelog-timeline-dropdown" 
-                    aria-labelledby="timelineDropdown">
-                    @* All Months option *@
-                    <li>
-                        <a class="dropdown-item timeline-filter" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
-                           data-month-filter="">
-                            <i class="fas fa-globe me-2 cinelog-gold-title"></i>All Months
-                            @if (string.IsNullOrEmpty(ViewData["CurrentMonthFilter"]?.ToString()))
-                            {
-                                <span class="float-end cinelog-gold-title">✓</span>
-                            }
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    @* Available months with movie counts *@
-                    @foreach (var month in timelineNavigator.AvailableMonths)
-                    {
-                        <li>
-                            <a class="dropdown-item timeline-filter" 
-                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode, monthFilter = month.MonthKey })"
-                               data-month-filter="@month.MonthKey">
-                                <i class="fas fa-calendar me-2"></i>@month.DisplayName
-                                @if (ViewData["CurrentMonthFilter"]?.ToString() == month.MonthKey)
-                                {
-                                    <span class="float-end cinelog-gold-title">✓</span>
-                                }
-                            </a>
-                        </li>
-                    }
-                </ul>
-            </div>
-        </div>
-    }
-    
-    @* FEATURE: Grid/List Display Mode Toggle *@
-    <div class="col-12">
-        <div class="d-flex justify-content-end align-items-center mt-3">
-            <span class="text-muted me-2" style="font-size: 0.9rem;">
-                <i class="fas fa-eye me-1"></i>Display:
-            </span>
-            <div class="btn-group" role="group" aria-label="Display mode toggle">
-                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = "grid", monthFilter = ViewData["CurrentMonthFilter"] })"
-                   class="btn btn-sm @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
-                   title="Grid View">
-                    <i class="fas fa-th me-1"></i>Grid
-                </a>
-                <a href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = "list", monthFilter = ViewData["CurrentMonthFilter"] })"
-                   class="btn btn-sm @(isListMode ? "btn-warning" : "btn-outline-secondary")"
-                   title="List View">
-                    <i class="fas fa-list me-1"></i>List
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
 
-<div class="text-start mb-3">
-    <a asp-controller="Movies" asp-action="Add" class="btn btn-success">Add New Movie</a>
+<!-- HUMANIZED: Clean action section with display toggle -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-controller="Movies" asp-action="Add" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i>Add Movie
+        </a>
+    </div>
+    <!-- Simple display mode toggle -->
+    <div class="btn-group btn-group-sm" role="group">
+        <a href="@Url.Action("List", new { view = "collection", displayMode = "grid" })"
+           class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
+           title="Grid View">
+            <i class="fas fa-th"></i>
+        </a>
+        <a href="@Url.Action("List", new { view = "collection", displayMode = "list" })"
+           class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
+           title="List View">
+            <i class="fas fa-list"></i>
+        </a>
+    </div>
 </div>
 
 @{
     var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
     {
-        "title_asc" => "Title (A-Z)",
         "title_desc" => "Title (Z-A)",
-        "datewatched_asc" => "Last Watched (Oldest First)",
-        "datewatched_desc" => "Last Watched (Newest First)",
-        "director_asc" => "Director (A-Z)",
-        "director_desc" => "Director (Z-A)",
-        "year_asc" => "Released Year (Oldest First)",
-        "year_desc" => "Released Year (Newest First)",
-        "rating_asc" => "Rating (Lowest First)",
-        "rating_desc" => "Rating (Highest First)",
-        // ENHANCEMENT: Collection-specific sort display names
-        "most_watched_desc" => "Most Watched (High to Low)",
-        "most_watched_asc" => "Most Watched (Low to High)",
-        "recently_added_desc" => "Recently Added (Newest First)",
-        "recently_added_asc" => "Recently Added (Oldest First)",
-        _ => "Last Watched (Newest First)"
+        "most_watched_desc" => "Most Watched",
+        "most_watched_asc" => "Least Watched", 
+        _ => "Recent"
     };
 }
 
 <div class="mb-3">
     <small class="text-muted">
-        <i class="fas fa-sort me-1"></i>Currently sorted by: <strong>@currentSortDisplay</strong>
+        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
         @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
         {
-            <span class="ms-2">| <i class="fas fa-search me-1"></i>Filtered by: "@ViewData["CurrentFilter"]"</span>
+            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
         }
     </small>
 </div>
 
 @if (!Model.Any())
 {
-    <p>No movies found in your collection yet. Why not <a asp-action="Add">add one</a>?</p>
+    <p>Your film journey is just beginning! Ready to <a asp-action="Add">discover your first movie</a>?</p> @* HUMANIZED: Encouraging, personal language instead of technical "no movies found" *@
 }
 else
 {
@@ -358,9 +269,9 @@ else
             {
                 var movie = collection.Movie;
                 <div class="col">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 shadow-sm collection-movie-card">
                         @* Poster image with watch count badge *@
-                        <div class="card-img-top text-center position-relative" style="background-color: #212529; height: 275px;">
+                        <div class="card-img-top text-center position-relative" style="background-color: #191919; height: 290px;">
                             @* Watch count badge - positioned prominently *@
                             @if (collection.WatchCount > 1)
                             {

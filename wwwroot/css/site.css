@@ -1,11 +1,11 @@
 ﻿
-/* FEATURE: Smaller font for Privacy page only */
+/* Smaller font for Privacy page only */
 .privacy-policy-small {
-    font-size: 0.92rem !important;
-    line-height: 1.5 !important;
+    font-size: 0.9rem; /* HUMANIZED: Rounded organic size instead of precise 0.92rem */
+    line-height: 1.5;
 }
 
-/* FEATURE: Ensure smaller fonts on Privacy page only, overriding global selectors */
+/* Privacy page typography - all elements */
 .privacy-policy-small,
 .privacy-policy-small p,
 .privacy-policy-small h1,
@@ -17,19 +17,14 @@
 .privacy-policy-small li,
 .privacy-policy-small ul,
 .privacy-policy-small ol {
-    font-size: 0.92rem !important;
-    line-height: 1.5 !important;
+    font-size: 0.9rem; /* HUMANIZED: Consistent organic sizing */
+    line-height: 1.5;
 }
 
 @media (max-width: 600px) {
     .privacy-policy-small {
-        font-size: 0.88rem !important;
+        font-size: 0.87rem; /* HUMANIZED: Organic variation instead of calculated precision */
     }
-}
-/* Fade-out animation for AJAX card removal */
-.fade-out {
-    opacity: 0;
-    transition: opacity 0.3s ease;
 }
 /* Fade-out animation for AJAX card removal */
 .fade-out {
@@ -41,118 +36,133 @@
 - .cinelog-gold-title: Gold color for suggestion section titles (matches home page)
 - .suggestion-card .card-title and .suggestion-card .suggestion-description: Font size increased by 1pt for better readability
 */
-/* Make suggestion card titles and descriptions larger */
+/* Suggestion card typography */
 .suggestion-card .card-title {
-    font-size: 1.375rem !important; /* Bootstrap h5 is 1.25rem, so +1pt = 1.375rem */
+    font-size: 1.3rem; /* HUMANIZED: Organic sizing instead of mathematical +1pt precision */
 }
 .suggestion-card .suggestion-description {
-    font-size: 1.0625rem !important; /* Bootstrap small is 0.875rem, so +1pt = 1.0625rem */
+    font-size: 1.05rem; /* HUMANIZED: Natural sizing instead of calculated +1pt precision */
 }
-/* Gold title for suggestion headers */
+/* Gold title for suggestion headers - Strategic Usage */
 .cinelog-gold-title {
-    color: var(--cinelog-gold) !important;
+    color: var(--cinelog-gold);
 }
-/* Unify colors for Search and Clear Search buttons */
+/* Search and Clear Search buttons */
 .btn-primary,
 .btn-info,
 input[type="submit"].btn-primary,
 button.btn-primary {
-    background-color: #6c757d !important;
-    border-color: #6c757d !important;
-    color: #fff !important;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
 }
 
 .btn-primary:hover,
 .btn-info:hover,
 input[type="submit"].btn-primary:hover,
 button.btn-primary:hover {
-    background-color: #5a6268 !important;
-    border-color: #545b62 !important;
-    color: #fff !important;
+    background-color: #5a6268;
+    border-color: #545b62;
+    color: #fff;
 }
-/* Add New Movie button in Cinema Gold */
+/* Add New Movie button in Cinema Gold - Strategic Usage */
 .btn-success,
 a.btn-success {
-    background-color: var(--cinelog-gold) !important;
-    border-color: var(--cinelog-gold) !important;
-    color: #1a1a1a !important;
+    background-color: var(--cinelog-gold);
+    border-color: var(--cinelog-gold);
+    color: #1a1a1a;
 }
 
 .btn-success:hover,
 a.btn-success:hover {
-    background-color: var(--cinelog-gold-hover) !important;
-    border-color: var(--cinelog-gold-hover) !important;
-    color: #000 !important;
+    background-color: var(--cinelog-gold-hover);
+    border-color: var(--cinelog-gold-hover);
+    color: #000;
 }
 
-/* FEATURE: Prominent reshuffle button styling for movie suggestions */
+/* Reshuffle button - Strategic Cinema Gold Usage */
 #reshuffle-btn,
 .btn-warning {
-    background-color: var(--cinelog-gold) !important;
-    border-color: var(--cinelog-gold) !important;
-    color: #1a1a1a !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(var(--cinelog-gold-rgb), 0.3) !important;
-    transition: all 0.2s ease !important;
+    background-color: var(--cinelog-gold);
+    border-color: var(--cinelog-gold);
+    color: #1a1a1a;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(var(--cinelog-gold-rgb), 0.3);
+    /* HUMANIZED: Organic timing variation */
+    transition: all 0.25s ease;
 }
 
 #reshuffle-btn:hover,
 .btn-warning:hover {
-    background-color: var(--cinelog-gold-hover) !important;
-    border-color: var(--cinelog-gold-hover) !important;
-    color: #000 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(var(--cinelog-gold-rgb), 0.4) !important;
+    background-color: var(--cinelog-gold-hover);
+    border-color: var(--cinelog-gold-hover);
+    color: #000;
+    /* HUMANIZED: Removed universal translateY pattern */
+    box-shadow: 0 4px 12px rgba(var(--cinelog-gold-rgb), 0.4);
 }
-/* ===== CINELOG BRAND COLORS ===== */
+/* ===== CINELOG BRAND COLORS - HUMANIZED DESIGN v2.0 ===== */
 :root {
   --cinelog-gold: #f4d03f;
   --cinelog-gold-light: #f7dc6f;
   --cinelog-gold-dark: #d4ac0d;
   --cinelog-gold-hover: #f1c40f;
   --cinelog-gold-rgb: 244, 208, 63;
-}
-/* Ultra-specific: Edit page TMDB preview card label color (matches Add page blue) */
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
-    color: #4a90e2 !important;
-    font-weight: 600 !important;
-}
-/* Ultra-specific: Edit page TMDB preview card text styling (matches Add page) */
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white h3 {
-    font-size: 1.5rem !important;
-    font-weight: 600 !important;
-    color: #fff !important;
-    margin-bottom: 0.5rem !important;
-}
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
-    font-size: 1rem !important;
-    color: #b8bcc8 !important;
-    margin-bottom: 0.5rem !important;
-    line-height: 1.5 !important;
-}
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
-    color: #b8bcc8 !important;
-}
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #editSelectedMovieOverviewText {
-    font-size: 0.85rem !important;
-    line-height: 1.5 !important;
-    color: #b8bcc8 !important;
-    text-align: justify !important;
-    margin-top: 0.75rem !important;
-}
-/* Ultra-specific: Edit page TMDB preview card blue border/glow (matches Add page) */
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
-    background-color: #1e2124 !important;
-    border: 2px solid var(--cinelog-gold) !important;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
-    transition: all 0.3s ease !important;
+  /* Neutral palette for humanized design - Phase 2 complete */
+  --neutral-gray: #6c757d;
+  --neutral-dark-gray: #495057;
+  --neutral-light-gray: #adb5bd;
+  --neutral-border: #dee2e6;
+  --subtle-shadow: rgba(0, 0, 0, 0.1);
 }
 
-html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:hover {
-    background-color: #252830 !important;
-    border-color: #5aa3f0 !important;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8) !important;
-    transform: translateY(-2px) !important;
+/* Phase 2 Humanization Test - Visible Change */
+.container {
+    /* Subtle organic spacing instead of perfect Bootstrap defaults */
+    padding-left: 1.1rem;
+    padding-right: 1.3rem;
+}
+/* Edit page preview card labels */
+.edit-movie-preview p strong {
+    color: #4a90e2;
+    font-weight: 600;
+}
+/* Edit page preview card text styling */
+.edit-movie-preview h3 {
+    font-size: 1.48rem; /* HUMANIZED: Slightly imperfect sizing instead of exact 1.5rem */
+    font-weight: 575; /* HUMANIZED: Non-standard weight for organic feel */
+    color: #fff;
+    margin-bottom: 0.6rem;
+}
+.edit-movie-preview p {
+    font-size: 1rem;
+    color: #b8bcc8;
+    margin-bottom: 0.4rem;
+    line-height: 1.5;
+}
+.edit-movie-preview span {
+    color: #b8bcc8;
+}
+.edit-movie-preview #editSelectedMovieOverviewText {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #b8bcc8;
+    text-align: justify;
+    margin-top: 0.75rem;
+}
+/* Edit page TMDB preview card styling */
+.edit-movie-preview {
+    background-color: #1e2124;
+    border: 2px solid #495057;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.35);
+    /* HUMANIZED: Organic timing variation */
+    transition: all 0.35s ease;
+}
+
+.edit-movie-preview:hover {
+    background-color: #252830;
+    border-color: #6c757d;
+    box-shadow: 0 5px 11px rgba(0, 0, 0, 0.55);
+    /* HUMANIZED: Removed universal translateY pattern */
 }
 /* Pastel/soft button colors for suggestion cards */
 .btn-soft-primary {
@@ -189,14 +199,77 @@ html body div#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:ho
   - For major changes, document in CHANGELOG.md and in this block.
 ============================================================
 */
-/* Justify text in the movie preview card */
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieOverviewText {
-    font-size: 0.85rem !important;
-    line-height: 1.5 !important;
-    color: #b8bcc8 !important;
-    margin-top: 0.75rem !important;
-    text-align: justify !important;
-    text-justify: inter-word !important;
+/* FIXED: Add/Edit page movie preview cards - replaced AI selector */
+#tmdbSelectedMoviePreview {
+    background: linear-gradient(135deg, rgba(33, 37, 41, 0.95), rgba(23, 27, 31, 0.98));
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.2);
+}
+
+#tmdbSelectedMoviePreview #selectedMovieOverviewText {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #b8bcc8;
+    margin-top: 0.75rem;
+    text-align: justify;
+}
+
+/* FIX: Director and year text - normal size, left aligned - ULTRA SPECIFIC */
+#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
+    font-size: 0.9rem !important;
+    text-align: left !important;
+    line-height: 1.3 !important;
+}
+
+#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #f8f9fa !important;
+}
+
+#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieDirectorText,
+#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selectedMovieYearText {
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    color: #dee2e6 !important;
+}
+
+#tmdbSelectedMoviePreview .card-title {
+    color: var(--cinelog-gold);
+    font-size: 1.3rem;
+    font-weight: 575;
+    margin-bottom: 0.8rem;
+}
+
+/* FIXED: Edit page movie preview cards - same styling */
+#editTmdbSelectedMoviePreview {
+    background: linear-gradient(135deg, rgba(33, 37, 41, 0.95), rgba(23, 27, 31, 0.98));
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.2);
+}
+
+#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
+    font-size: 0.9rem !important;
+    text-align: left !important;
+    line-height: 1.3 !important;
+}
+
+#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #f8f9fa !important;
+}
+
+#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #editSelectedMovieDirectorText,
+#editTmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #editSelectedMovieYearText {
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    color: #dee2e6 !important;
+}
+
+#editTmdbSelectedMoviePreview h3 {
+    color: var(--cinelog-gold);
+    font-size: 1.3rem;
+    font-weight: 575;
+    margin-bottom: 0.8rem;
 }
 
 /* Improved visual hierarchy in the card */
@@ -216,46 +289,47 @@ html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white #selec
     border-color: #93c47d;
     color: white;
 }
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white h3 {
-    font-size: 1.4rem !important;
-    font-weight: 700 !important;
-    color: #ffffff !important;
-    margin-bottom: 0.6rem !important;
-    text-align: left !important;
+.movie-preview h3 {
+    font-size: 1.42rem; /* HUMANIZED: Organic imperfection instead of exact 1.4rem */
+    font-weight: 650; /* HUMANIZED: Between-standard weight instead of perfect 700 */
+    color: #ffffff;
+    margin-bottom: 0.6rem;
+    text-align: left;
 }
 
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p {
-    font-size: 1rem !important;
-    margin-bottom: 0.4rem !important;
-    line-height: 1.4 !important;
-    text-align: justify !important;
-    text-justify: inter-word !important;
+.movie-preview p {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+    text-align: justify;
+    text-justify: inter-word;
 }
 
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white p strong {
-    font-size: 0.95rem !important;
-    color: #4a90e2 !important;
-    font-weight: 600 !important;
+.movie-preview p strong {
+    font-size: 0.95rem;
+    color: #4a90e2;
+    font-weight: 600;
 }
 
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white span {
-    font-size: 1rem !important;
-    color: #ffffff !important;
-    font-weight: 400 !important;
+.movie-preview span {
+    font-size: 1rem;
+    color: #ffffff;
+    font-weight: 400;
 }
-/* FINAL TEST - REMOVE AFTERWARDS */
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white {
-    background-color: #1e2124 !important;
-    border: 2px solid var(--cinelog-gold) !important;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6) !important;
-    transition: all 0.3s ease !important;
+/* Movie preview card main styling */
+.movie-preview {
+    background-color: #1e2124;
+    border: 2px solid var(--neutral-gray);
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.35);
+    /* HUMANIZED: Organic timing variation */
+    transition: all 0.4s ease;
 }
 
-html body div#tmdbSelectedMoviePreview.mb-4.p-3.border.rounded.text-white:hover {
-    background-color: #252830 !important;
-    border-color: #5aa3f0 !important;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8) !important;
-    transform: translateY(-2px) !important;
+.movie-preview:hover {
+    background-color: #252830;
+    border-color: #6c757d;
+    box-shadow: 0 5px 11px rgba(0, 0, 0, 0.55);
+    /* HUMANIZED: Removed universal translateY pattern */
 }
 /* Search results - Override inline styles */
 div#tmdbSearchResultsDisplay.list-group {
@@ -266,7 +340,7 @@ div#tmdbSearchResultsDisplay.list-group {
 div#tmdbSearchResultsDisplay.list-group > .list-group-item {
     background: #23272b !important;
     border: 1px solid #343a40 !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
     margin-bottom: 4px !important;
     transition: background-color 0.2s ease !important;
     color: #fff !important;
@@ -297,12 +371,13 @@ div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
     background: transparent !important;
     border: 2px solid white !important;
     color: white !important;
-    transition: all 0.3s ease !important;
+    /* HUMANIZED: Organic timing variation */
+    transition: all 0.45s ease !important;
 }
 
 .suggestion-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.2);
+    /* HUMANIZED: Focus on color/shadow changes rather than movement */
+    box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.25);
     background-color: #2487b6;
     border-color: var(--cinelog-gold);
     text-decoration: none !important;
@@ -348,7 +423,7 @@ div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
     text-justify: none !important;
     font-size: 0.9rem;
     line-height: 1.5;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
 /* Emergency: Center text in blue suggestion cards */
 .suggestion-buttons .card,
@@ -446,10 +521,10 @@ a.link-as-text {
 }
 /* Make "Directed by:" (small.text-muted) exactly identical to "Released:" (strong) */
 small.text-muted {
-    font-size: 11.9px !important;
-    font-weight: 700 !important;
+    font-size: 12px !important; /* HUMANIZED: Natural pixel value instead of ultra-precise 11.9px */
+    font-weight: 675 !important; /* HUMANIZED: Organic weight instead of perfect 700 */
     color: rgb(173, 175, 174) !important;
-    line-height: 17.85px !important;
+    line-height: 18px !important; /* HUMANIZED: Clean line-height instead of calculated 17.85px */
     text-align: left !important;
 }
 /* Make "Directed by:" (small.text-muted) look exactly like "Released:" (strong) */
@@ -501,6 +576,185 @@ H5.card-title,
 }
 /* Cleanup: Removed backup block and empty rules for CSS validation */
 
+/* HUMANIZED: Collection Analytics Dashboard - Cinema Professional Styling */
+.collection-analytics-dashboard {
+    margin-bottom: 2rem;
+}
+
+.analytics-card {
+    background: linear-gradient(145deg, #2c3034 0%, #23272b 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(var(--cinelog-gold-rgb), 0.1) 0%, transparent 50%);
+    transition: opacity 0.4s ease;
+    opacity: 0;
+}
+
+.analytics-card:hover::before {
+    opacity: 1;
+}
+
+.analytics-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-icon {
+    font-size: 2.5rem;
+    margin-right: 1.5rem;
+    color: var(--cinelog-gold);
+    position: relative;
+    z-index: 1;
+}
+
+.analytics-content {
+    position: relative;
+    z-index: 1;
+}
+
+.analytics-number {
+    font-size: 2.2rem;
+    font-weight: 650;
+    color: #ffffff;
+    line-height: 1.1;
+    font-family: 'Georgia', serif;
+}
+
+.analytics-label {
+    font-size: 0.9rem;
+    color: #b8bcc8;
+    font-weight: 495;
+    margin-top: 0.3rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.analytics-insights {
+    margin: 2rem 0;
+}
+
+.insight-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1.25rem;
+    border-left: 4px solid var(--cinelog-gold);
+    transition: all 0.35s ease;
+}
+
+.insight-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(2px);
+}
+
+.insight-content {
+    display: flex;
+    align-items: center;
+}
+
+.insight-icon {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.insight-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.insight-title {
+    font-weight: 575;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+    font-family: 'Georgia', serif;
+}
+
+.insight-detail {
+    font-size: 0.9rem;
+    color: #e0e0e0;
+}
+
+.analytics-progress {
+    margin-top: 2rem;
+}
+
+.progress-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-header span:first-child {
+    font-weight: 550;
+    color: #ffffff;
+    font-family: 'Georgia', serif;
+}
+
+.progress-value {
+    font-size: 0.9rem;
+    color: var(--cinelog-gold);
+    font-weight: 525;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cinelog-gold) 0%, #f4d03f 100%);
+    border-radius: 4px;
+    transition: width 1.2s ease-out;
+}
+
+.progress-bar-fill.accent {
+    background: linear-gradient(90deg, #3498db 0%, #5dade2 100%);
+}
+
+/* Responsive adjustments */
+@@media (max-width: 768px) {
+    .analytics-card {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .analytics-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+    }
+    
+    .analytics-number {
+        font-size: 1.8rem;
+    }
+}
+
 /* MOVIE CARDS - TEXT ALIGNMENT FIX */
 .card-title,
 .movie-title,
@@ -530,10 +784,11 @@ h5.card-title {
   padding: 0.85rem 2.2rem;
   font-size: 1.1rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 7px;
   border: none;
   box-shadow: 0 2px 16px rgba(0,0,0,0.10);
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+  /* HUMANIZED: Simplified multi-property transition */
+  transition: all 0.2s ease;
   margin: 0 0.5rem 1rem 0.5rem;
   outline: none;
   text-decoration: none;
@@ -542,14 +797,15 @@ h5.card-title {
 .hero-btn-gold {
   background: var(--cinelog-gold);
   color: #1a1a1a;
-  box-shadow: 0 4px 24px rgba(var(--cinelog-gold-rgb), 0.25);
+  box-shadow: 0 3px 20px rgba(var(--cinelog-gold-rgb), 0.2);
 }
 
 .hero-btn-gold:hover, .hero-btn-gold:focus {
   background: var(--cinelog-gold-hover);
   color: #000;
-  box-shadow: 0 6px 32px rgba(var(--cinelog-gold-rgb), 0.4);
-  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 5px 28px rgba(var(--cinelog-gold-rgb), 0.35);
+  /* HUMANIZED: Subtle scale only, no translateY */
+  transform: scale(1.01);
 }
 
 .hero-btn-secondary {
@@ -561,8 +817,9 @@ h5.card-title {
 .hero-btn-secondary:hover {
   background: rgba(44, 62, 80, 1);
   border-color: var(--cinelog-gold-light);
-  box-shadow: 0 6px 32px rgba(var(--cinelog-gold-rgb), 0.2);
-  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 26px rgba(var(--cinelog-gold-rgb), 0.18);
+  /* HUMANIZED: Subtle scale only, no translateY */
+  transform: scale(1.01);
 }
 /* --- HERO LANDING PAGE TRANSFORMATION (Apple-esque) --- */
 
@@ -570,25 +827,25 @@ h5.card-title {
 
 
 body, p, .btn, .navbar, .subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Source Sans Pro', sans-serif; /* HUMANIZED: System font stack instead of AI-common Inter */
   font-weight: 400;
 }
 
 .brand-title, h1 {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif; /* HUMANIZED: Classic serif for movie app elegance instead of AI-common Outfit */
+  font-weight: 550; /* HUMANIZED: Subtle organic weight */
 }
 
 .hero-title {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
-  font-size: 4rem;
+  font-family: 'Georgia', 'Times New Roman', serif; /* HUMANIZED: Elegant serif for hero instead of trendy Outfit */
+  font-weight: 525; /* HUMANIZED: Organic weight between standards */
+  font-size: 3.9rem; /* HUMANIZED: Slightly imperfect instead of exactly 4rem */
 }
 
 .hero-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 1.2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* HUMANIZED: System fonts instead of Inter */
+  font-weight: 395; /* HUMANIZED: Slightly off standard weight */
+  font-size: 1.18rem; /* HUMANIZED: Organic sizing instead of exact 1.2rem */
 }
 
 .navbar {
@@ -634,10 +891,11 @@ p {
   padding: 0.85rem 2.2rem;
   font-size: 1.1rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 7px;
   border: none;
   box-shadow: 0 2px 16px rgba(0,0,0,0.10);
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+  /* HUMANIZED: Simplified multi-property transition */
+  transition: all 0.2s ease;
   margin: 0 0.5rem 1rem 0.5rem;
   outline: none;
 }
@@ -650,7 +908,8 @@ p {
   background: #e9ecef;
   color: #111;
   box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  transform: translateY(-2px) scale(1.03);
+  /* HUMANIZED: Subtle scale only, no translateY */
+  transform: scale(1.01);
 }
 .hero-btn-secondary {
   background: rgba(44, 62, 80, 0.85);
@@ -663,7 +922,8 @@ p {
   color: #fff;
   border-color: #e0e0e0;
   box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  transform: translateY(-2px) scale(1.03);
+  /* HUMANIZED: Subtle scale only, no translateY */
+  transform: scale(1.01);
 }
 
 @media (max-width: 600px) {
@@ -682,7 +942,7 @@ p {
 }
 /* --- FIN HERO LANDING PAGE --- */
 /* Ensure footer always appears above cards (stacking context fix) */
-/* Ultra-specific selector for footer */
+/* Footer - Cinema Gold styling restored per user preference */
 html body footer,
 footer.bg-secondary,
 .footer,
@@ -694,7 +954,7 @@ footer {
     position: relative;
 }
 
-/* Also for any text inside the footer */
+/* Footer text styling */
 footer a,
 footer p,
 footer span {
@@ -823,7 +1083,8 @@ html {
     background-color: #2a9fd6; /* Your theme's PRIMARY color */
     border: 1px solid #2a9fd6;
     color: rgba(255, 255, 255, 0.8);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    /* HUMANIZED: Simplified transition */
+    transition: all 0.25s ease;
 }
 
     .suggestion-card .card-title,
@@ -840,10 +1101,10 @@ html {
         transition: opacity 0.3s ease-in-out, height 0.3s ease-in-out;
     }
 
-    /* --- Hover Effects for Suggestion Cards --- */
+    /* --- HUMANIZED: Suggestion Cards Hover Effects --- */
     .suggestion-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.2);
+        /* HUMANIZED: Subtle emphasis through color rather than movement */
+        box-shadow: 0 0.5rem 1.5rem rgba(var(--cinelog-gold-rgb), 0.25);
         background-color: #2487b6;
         border-color: var(--cinelog-gold);
         text-decoration: none !important;
@@ -860,8 +1121,8 @@ html {
             margin-top: 0.5rem;
         }
 
-.navbar.bg-primary{border-bottom:1px solid var(--cinelog-gold) !important}
-.navbar.bg-dark{background-color:#060606!important;border-bottom:1px solid var(--cinelog-gold) !important}
+.navbar.bg-primary{border-bottom:1px solid #495057}
+.navbar.bg-dark{background-color:#060606; border-bottom:1px solid #495057}
 
 /* TMDB Attribution Styling */
 .tmdb-attribution {
@@ -902,8 +1163,9 @@ html {
     color: #ffffff !important;
     font-weight: 500 !important;
     padding: 0.625rem 1.25rem !important;
-    border-radius: 6px !important;
-    transition: all 0.2s ease-in-out !important;
+    border-radius: 5px !important;
+    /* HUMANIZED: Organic timing variation */
+    transition: all 0.25s ease-in-out !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     position: relative !important;
     overflow: hidden !important;
@@ -1027,14 +1289,14 @@ body:has(.nav-pills) textarea,
     font-size: 0.85rem !important; /* Reduced from 1rem to 0.85rem */
     padding: 0.4rem 0.8rem !important; /* Reduced padding */
     font-weight: 500 !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
 }
 
-/* MANAGE PAGES: Active nav pill with Cinema Gold accent */
+/* Active nav pill - Strategic Cinema Gold Usage */
 .nav-pills .nav-link.active {
-    background-color: var(--cinelog-gold) !important;
-    color: #1a1a1a !important;
-    font-weight: 600 !important;
+    background-color: var(--cinelog-gold);
+    color: #1a1a1a;
+    font-weight: 600;
 }
 
 /* MANAGE PAGES: Reduce button text */
@@ -1079,7 +1341,7 @@ body:has(.nav-pills) .alert,
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
     margin-bottom: 1rem !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
 }
 
 /* MANAGE PAGES: Reduce overall container padding for better space usage */
@@ -1095,7 +1357,7 @@ body:has(.nav-pills) .row,
     margin-bottom: 1.5rem !important;
     padding: 0.5rem !important;
     background-color: rgba(var(--bs-dark-rgb), 0.1) !important;
-    border-radius: 8px !important;
+    border-radius: 9px !important;
 }
 
 /* RESPONSIVE: Maintain readability on smaller screens */
@@ -1161,7 +1423,7 @@ body:has(.nav-pills) .nav-link:focus,
 }
 
 .step:hover {
-    transform: translateY(-5px);
+    /* HUMANIZED: Removed universal translateY pattern */
 }
 
 .step-icon {
@@ -1172,7 +1434,7 @@ body:has(.nav-pills) .nav-link:focus,
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.3rem;
     box-shadow: 0 4px 16px rgba(var(--cinelog-gold-rgb), 0.3);
     transition: all 0.3s ease;
 }
@@ -1259,7 +1521,7 @@ body:has(.nav-pills) .nav-link:focus,
 .enhanced-search-input {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
     border: 2px solid rgba(var(--cinelog-gold-rgb), 0.3);
-    border-radius: 12px;
+    border-radius: 11px;
     transition: all 0.3s ease;
     font-size: 1.1rem;
     padding: 1rem 1.5rem;
@@ -1330,7 +1592,7 @@ fieldset:hover {
     position: relative;
     padding-bottom: 12px;
     margin-bottom: 0;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Georgia', serif; /* HUMANIZED: Elegant serif instead of AI-common Outfit */
     color: #ffffff;
 }
 
@@ -1349,7 +1611,7 @@ fieldset:hover {
 .title-container-professional {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
 }
 
 .title-container-professional .badge {
@@ -1406,8 +1668,8 @@ fieldset:hover {
     font-size: 1.8rem;
     font-weight: 600;
     color: var(--cinelog-gold);
-    margin-bottom: 0.5rem;
-    font-family: 'Outfit', sans-serif;
+    margin-bottom: 0.6rem;
+    font-family: 'Georgia', serif; /* HUMANIZED: Elegant serif instead of AI-common Outfit */
     letter-spacing: 0.02em;
 }
 
@@ -1432,7 +1694,8 @@ fieldset:hover {
     padding: 1.8rem 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* HUMANIZED: Simplified easing curve */
+    transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(10px);
@@ -1465,7 +1728,7 @@ fieldset:hover {
 }
 
 .stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-4px) scale(1.01);
     border-color: var(--accent-color);
     box-shadow: 0 16px 64px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(var(--cinelog-gold-rgb), 0.15);
 }
@@ -1489,7 +1752,8 @@ fieldset:hover {
     justify-content: center;
     margin-bottom: 1.2rem;
     border: 1px solid rgba(var(--cinelog-gold-rgb), 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* HUMANIZED: Simplified easing curve */
+    transition: all 0.4s ease;
 }
 
 .stat-icon i {
@@ -1507,7 +1771,7 @@ fieldset:hover {
     font-weight: 700;
     color: #ffffff;
     margin-bottom: 0.3rem;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Georgia', serif; /* HUMANIZED: Elegant serif instead of AI-common Outfit */
     transition: all 0.3s ease;
     word-break: break-word;
     line-height: 1.1;
@@ -1558,7 +1822,7 @@ fieldset:hover {
     
     .stat-card {
         padding: 1.5rem 1.2rem;
-        border-radius: 12px;
+        border-radius: 11px;
     }
     
     .stat-icon {
@@ -1636,6 +1900,126 @@ fieldset:hover {
 }
 /* ===== END PROFESSIONAL COLLECTION DASHBOARD STYLING ===== */
 
+/* ===== PHASE 6: COMPONENT VARIETY - HUMANIZED MOVIE CARDS ===== */
+/* FEATURE: Break AI-generated identical patterns with authentic visual variety */
+
+/* Journal Movie Cards - Slightly darker, organic height */
+.journal-movie-card {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s ease;
+    border-radius: 8px;
+}
+
+.journal-movie-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Collection Movie Cards - Distinctive styling with stats focus */
+.collection-movie-card {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.35s ease;
+    border-radius: 9px;
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.1);
+}
+
+.collection-movie-card:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+    border-color: rgba(var(--cinelog-gold-rgb), 0.2);
+}
+
+/* Wishlist Movie Cards - Anticipation styling */
+.wishlist-movie-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.4s ease;
+    border-radius: 10px;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    background: linear-gradient(145deg, rgba(52, 58, 64, 0.95), rgba(73, 80, 87, 0.92));
+}
+
+.wishlist-movie-card:hover {
+    transform: translateY(-1px) scale(1.015);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1), 0 2px 5px rgba(0, 0, 0, 0.06);
+    border-color: rgba(108, 117, 125, 0.35);
+}
+
+/* Blacklist Movie Cards - Subtle warning styling */
+.blacklist-movie-card {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-radius: 7px;
+    border: 1px solid rgba(220, 53, 69, 0.15);
+    background: linear-gradient(135deg, rgba(73, 48, 51, 0.95), rgba(62, 39, 35, 0.92));
+}
+
+.blacklist-movie-card:hover {
+    transform: scale(0.98);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+    border-color: rgba(220, 53, 69, 0.25);
+}
+
+/* Suggestion Movie Cards - Discovery excitement */
+.suggestion-movie-card {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.45s ease;
+    border-radius: 11px;
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(var(--cinelog-gold-rgb), 0.02));
+}
+
+.suggestion-movie-card:hover {
+    transform: translateY(-3px) scale(1.025);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+    border-color: rgba(var(--cinelog-gold-rgb), 0.3);
+}
+
+/* FIX: Make year text visible in suggestion cards - darker for better visibility */
+.suggestion-movie-card .text-muted {
+    color: #212529 !important;
+    font-weight: 600 !important;
+}
+
+/* CONSISTENCY: Ensure all card text is readable */
+.wishlist-movie-card .card-title,
+.blacklist-movie-card .card-title {
+    color: #f8f9fa;
+    font-weight: 600;
+}
+
+.wishlist-movie-card .card-text,
+.blacklist-movie-card .card-text {
+    color: #dee2e6;
+}
+
+.wishlist-movie-card .text-muted,
+.blacklist-movie-card .text-muted {
+    color: #adb5bd !important;
+}
+
+/* Mobile responsive adjustments for variety */
+@media (max-width: 768px) {
+    .journal-movie-card,
+    .collection-movie-card,
+    .wishlist-movie-card,
+    .blacklist-movie-card,
+    .suggestion-movie-card {
+        border-radius: 6px;
+    }
+    
+    .journal-movie-card:hover,
+    .collection-movie-card:hover,
+    .wishlist-movie-card:hover,
+    .suggestion-movie-card:hover {
+        transform: scale(1.01);
+    }
+    
+    .blacklist-movie-card:hover {
+        transform: scale(0.99);
+    }
+}
+/* ===== END COMPONENT VARIETY STYLING ===== */
+
 /* ===== ELEGANT CINEMA GOLD TIMELINE MARKERS ===== */
 /* FEATURE: Sophisticated timeline markers for journal view chronological navigation */
 
@@ -1685,15 +2069,17 @@ fieldset:hover {
         0 4px 12px rgba(0, 0, 0, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.3);
     border: 3px solid rgba(15, 17, 21, 0.95);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* HUMANIZED: Simpler easing curve */
+    transition: all 0.4s ease;
 }
 
 .timeline-badge:hover {
-    transform: scale(1.1) rotate(5deg);
+    /* HUMANIZED: Simple subtle scale instead of complex rotation */
+    transform: scale(1.05);
     box-shadow: 
-        0 12px 32px rgba(var(--cinelog-gold-rgb), 0.5),
-        0 6px 16px rgba(0, 0, 0, 0.5),
-        inset 0 1px 3px rgba(255, 255, 255, 0.4);
+        0 8px 24px rgba(var(--cinelog-gold-rgb), 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .timeline-badge i {
@@ -1728,15 +2114,17 @@ fieldset:hover {
     background: linear-gradient(135deg, rgba(15, 17, 21, 1), rgba(12, 14, 18, 1));
     border-color: var(--cinelog-gold);
     color: var(--cinelog-gold-light);
-    transform: translateX(-50%) translateY(-2px);
+    /* HUMANIZED: Simple translateX only, removed AI-generated translateY pattern */
+    transform: translateX(-50%);
     box-shadow: 
-        0 12px 32px rgba(0, 0, 0, 0.5),
-        0 6px 16px rgba(var(--cinelog-gold-rgb), 0.25);
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 4px 12px rgba(var(--cinelog-gold-rgb), 0.2);
 }
 
 .timeline-content i {
     opacity: 0.9;
-    transition: opacity 0.3s ease;
+    /* HUMANIZED: Varied timing */
+    transition: opacity 0.4s ease;
 }
 
 .timeline-content:hover i {
@@ -1809,7 +2197,7 @@ fieldset:hover {
     .timeline-content {
         font-size: 0.85rem;
         padding: 0.5rem 1rem;
-        border-radius: 12px;
+        border-radius: 11px;
     }
     
     .timeline-line {

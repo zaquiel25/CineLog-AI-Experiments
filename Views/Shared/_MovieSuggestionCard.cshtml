@@ -5,16 +5,16 @@
 }
 
 <div class="col">
-    <div class="card h-100 shadow-sm movie-suggestion-card" id="movie-card-@Model.Id">
+    <div class="card h-100 suggestion-movie-card" id="movie-card-@Model.Id">
         @* The link is now wrapped around the image *@
         <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">
             @if (!string.IsNullOrEmpty(Model.PosterPath))
             {
-                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="height: 300px; width: 100%; object-fit: contain;">
+                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="height: 295px; width: 100%; object-fit: contain;">
             }
             else
             {
-                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 300px; font-size:0.8rem; color: #6c757d;">
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 295px; font-size:0.8rem; color: #6c757d;">
                     <span>No Poster Available</span>
                 </div>
             }
@@ -49,7 +49,6 @@
                                 <form class="wishlist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToWishlist">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="tmdbId" value="@Model.Id" />
-                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
                                     <button type="submit" class="btn btn-soft-primary btn-sm w-100 wishlist-btn">Add to Wishlist</button>
                                 </form>
                             </div>
@@ -63,7 +62,6 @@
 <form class="blacklist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToBlacklist">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="tmdbId" value="@Model.Id" />
-                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
                                 <button type="submit" class="btn btn-soft-danger btn-sm w-100 blacklist-btn">Add to Blacklist</button>
                             </form>
                         }

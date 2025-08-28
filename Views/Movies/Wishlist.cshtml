@@ -46,9 +46,9 @@ else
         @foreach (var wishlistItem in Model)
         {
             <div class="col">
-                <div class="card h-100 mb-3 shadow-sm border-secondary movie-card">
+                <div class="card h-100 mb-3 wishlist-movie-card">
                     <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@wishlistItem.TmdbId" class="text-decoration-none" style="display:block; height:100%;">
-                        <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
+                        <div class="card-img-top text-center" style="background-color: #1c1c1c; height: 270px;">
                             @if (!string.IsNullOrEmpty(wishlistItem.PosterPath))
                             {
                                 <img src="@(tmdbImageBaseUrl + wishlistItem.PosterPath)" alt="@wishlistItem.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">

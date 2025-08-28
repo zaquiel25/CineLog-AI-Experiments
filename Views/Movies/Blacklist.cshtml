@@ -44,8 +44,8 @@ else
         @foreach (var item in Model)
         {
             <div class="col">
-                <div class="card h-100 shadow-sm movie-card">
-                    <div class="card-img-top text-center" style="background-color: #212529; height: 275px;">
+                <div class="card h-100 blacklist-movie-card">
+                    <div class="card-img-top text-center" style="background-color: #2a1f1f; height: 265px;">
                         @if (!string.IsNullOrEmpty(item.PosterUrl))
                         {
                             <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">
