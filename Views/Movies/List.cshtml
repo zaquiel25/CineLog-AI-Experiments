@@ -384,10 +384,10 @@
         </div>
     </div>
     
-    @* RESTORED: Timeline Navigator for month filtering - SEPARATE COLUMN WITH PROPER SPACING *@
+    @* RESTORED: Timeline Navigator for month filtering - FIXED WIDTH TO PREVENT LAYOUT SHIFTS *@
+    <div class="col-md-3">
     @if (ViewData["TimelineNavigator"] is TimelineNavigatorViewModel timelineNavigator && timelineNavigator.AvailableMonths.Any())
     {
-        <div class="col-md-3">
             <div class="dropdown">
                 <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
                         type="button" 
@@ -429,8 +429,15 @@
                     }
                 </ul>
             </div>
+    }
+    else
+    {
+        @* FEATURE: Invisible placeholder to maintain consistent layout width *@
+        <div class="btn btn-outline-secondary w-100" style="visibility: hidden; min-height: 38px;">
+            <i class="fas fa-calendar me-2"></i>Timeline Filter
         </div>
     }
+    </div>
 </div>
 
 <!-- HUMANIZED: Clean primary action section -->
@@ -782,6 +789,10 @@ else
 </form>
 
 <style>
+/* FIXED: Prevent width jumps during AJAX operations */
+html { overflow-y: scroll; } /* prevents page width from changing when content height toggles */
+.timeline-container { min-height: 48px; } /* reserve space even when empty */
+
 .fade-out {
     opacity: 0;
     transition: opacity 0.3s ease-out;
@@ -1458,24 +1469,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentSearch = '@Html.Raw(ViewData["CurrentFilter"]?.ToString() ?? "")';
             const currentDisplayMode = '@ViewData["CurrentDisplayMode"]';
             const firstWatchOnly = '@Context.Request.Query["firstWatchOnly"]';
+            const currentMonthFilter = '@ViewData["CurrentMonthFilter"]';
             
-            // Build URL with current parameters
+            // FEATURE: Enhanced tab switching - preserve all current parameters including displayMode
             const params = new URLSearchParams();
             if (currentSort) params.set('sortOrder', currentSort);
             if (currentSearch) params.set('searchString', currentSearch);
-            if (currentDisplayMode && currentDisplayMode !== 'grid') params.set('displayMode', currentDisplayMode);
+            if (currentDisplayMode) params.set('displayMode', currentDisplayMode); // Always preserve displayMode
             if (firstWatchOnly === 'true') params.set('firstWatchOnly', 'true');
+            if (currentMonthFilter) params.set('monthFilter', currentMonthFilter);
             if (targetView !== 'journal') params.set('view', targetView);
             
             const url = '@Url.Action("List")' + (params.toString() ? '?' + params.toString() : '');
             
-            try {
-                // Use navigation to switch views and maintain state
-                window.location.href = url;
-            } catch (error) {
-                // Fallback to navigation
-                window.location.href = url;
-            }
+            // FEATURE: Smooth view transition with preserved state
+            window.location.href = url;
         });
     });
 });
@@ -1667,6 +1675,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start animations after a short delay for better visual flow
     setTimeout(animateNumbers, 800);
+});
+
+// FEATURE: First Watch Only checkbox handler - triggers form submission on change
+document.addEventListener('DOMContentLoaded', function() {
+    const firstWatchCheckbox = document.getElementById('firstWatchOnly');
+    if (firstWatchCheckbox) {
+        firstWatchCheckbox.addEventListener('change', function() {
+            // Submit the main form when checkbox state changes
+            const mainForm = this.closest('form');
+            if (mainForm) {
+                mainForm.submit();
+            }
+        });
+    }
+});
+
+// FIXED: Simple event delegation for sorting - no DOM replacement needed
+document.addEventListener('click', function(e) {
+    const sortLink = e.target.closest('[data-sort-link]');
+    if (!sortLink) return;
+    
+    e.preventDefault();
+    // Use normal navigation - this preserves all Bootstrap state and prevents issues
+    window.location.href = sortLink.href;
 });
 
 </script>

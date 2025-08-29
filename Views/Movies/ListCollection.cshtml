@@ -206,6 +206,18 @@
                         Most Watched
                     </a>
                 </li>
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                        Director
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                        Rating
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
@@ -238,8 +250,13 @@
     var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
     {
         "title_desc" => "Title (Z-A)",
+        "title_asc" => "Title (A-Z)",
         "most_watched_desc" => "Most Watched",
-        "most_watched_asc" => "Least Watched", 
+        "most_watched_asc" => "Least Watched",
+        "director_asc" => "Director (A-Z)",
+        "director_desc" => "Director (Z-A)",
+        "rating_desc" => "Rating (High to Low)",
+        "rating_asc" => "Rating (Low to High)",
         _ => "Recent"
     };
 }
@@ -532,6 +549,10 @@ else
 </form>
 
 <style>
+/* FIXED: Prevent width jumps during AJAX operations */
+html { overflow-y: scroll; } /* prevents page width from changing when content height toggles */
+.timeline-container { min-height: 48px; } /* reserve space even when empty */
+
 .fade-out {
     opacity: 0;
     transition: opacity 0.3s ease-out;
@@ -816,36 +837,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentSort = '@ViewData["CurrentSort"]';
             const currentSearch = '@Html.Raw(ViewData["CurrentFilter"]?.ToString() ?? "")';
             const currentDisplayMode = '@ViewData["CurrentDisplayMode"]';
-            const currentPage = @(Model.PageIndex);
+            const currentMonthFilter = '@ViewData["CurrentMonthFilter"]';
             
-            // Build URL with current parameters
+            // FEATURE: Enhanced tab switching - preserve all current parameters including displayMode
             const params = new URLSearchParams();
             if (currentSort) params.set('sortOrder', currentSort);
             if (currentSearch) params.set('searchString', currentSearch);
-            if (currentDisplayMode && currentDisplayMode !== 'grid') params.set('displayMode', currentDisplayMode);
+            if (currentDisplayMode) params.set('displayMode', currentDisplayMode); // Always preserve displayMode
+            if (currentMonthFilter) params.set('monthFilter', currentMonthFilter);
             if (targetView !== 'journal') params.set('view', targetView);
             
             const url = '@Url.Action("List")' + (params.toString() ? '?' + params.toString() : '');
             
-            try {
-                // Use AJAX to switch views seamlessly
-                const response = await fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                if (response.ok) {
-                    // For now, use simple navigation to maintain state
-                    window.location.href = url;
-                } else {
-                    // Fallback to navigation
-                    window.location.href = url;
-                }
-            } catch (error) {
-                // Fallback to navigation
-                window.location.href = url;
-            }
+            // FEATURE: Smooth view transition with preserved state
+            window.location.href = url;
         });
     });
 });
@@ -1018,4 +1023,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// FIXED: Removed AJAX sorting complexity - using normal navigation preserves all Bootstrap state
 </script>

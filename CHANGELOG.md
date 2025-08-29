@@ -1,4 +1,46 @@
+## 2025-08-29
+
+### 🔧 **AJAX SYSTEM STABILITY FIXES** - Layout & Navigation Reliability
+
+**🎯 CRITICAL UX FIXES**: Resolved two major AJAX-related issues that were causing layout disruption and broken navigation after sorting operations.
+
+#### Issues Resolved
+- **📏 Layout Stability**: Fixed page width jumping during sorting operations by implementing invisible placeholder for Timeline Navigator
+- **🔗 Tab Navigation Persistence**: Fixed tab switching breaking after AJAX operations by preserving Bootstrap structure
+- **🎨 Visual Consistency**: Eliminated layout shifts when Timeline Navigator appears/disappears during filtering
+
+#### Technical Solutions
+- **Container-Level Replacement**: Target `.container` elements instead of `main` to preserve Bootstrap structure
+- **Invisible Placeholder**: Added hidden Timeline Navigator placeholder to maintain consistent column width
+- **CSS Stability Fixes**: Added `html { overflow-y: scroll; }` to prevent horizontal scrollbar-related width changes
+- **Timeline Container**: Reserved minimum height space to prevent content shifting
+
+**User Impact**: Seamless movie browsing experience with stable layouts and reliable tab navigation across all sorting operations.
+
+---
+
 ## 2025-08-28
+
+### 🚀 **AJAX SORTING SYSTEM** - Seamless Movie Browsing UX
+
+**🎯 USER EXPERIENCE ENHANCEMENT**: Implemented clean, bulletproof AJAX sorting that eliminates page reloads when organizing movies in both Journal and Collection views.
+
+#### Key Features
+- **⚡ Zero Page Reloads**: Sorting now uses smooth AJAX requests instead of full page refreshes for seamless user experience
+- **🎯 Bulletproof Event Delegation**: Revolutionary document-level event handling catches ALL dropdown sort clicks reliably
+- **🎨 Layout Preservation**: Prevents card width jumping and layout shifts during content replacement
+- **🔄 URL History Support**: Maintains browser navigation compatibility with proper history state management
+- **🛠️ Graceful Degradation**: Falls back to normal navigation if AJAX fails, ensuring reliability
+
+#### Technical Implementation
+- **Clean & Simple Approach**: No loading spinners or success notifications per user preference for minimal UI interference  
+- **Server-Side AJAX Detection**: Added `X-Requested-With` header recognition for JSON responses
+- **Step-by-Step Methodology**: Systematic 5-step implementation with TodoWrite task tracking
+- **Universal Coverage**: Single implementation works for both Journal and Collection views
+
+**User Impact**: Major friction point eliminated - users can now sort their movie collection instantly without disruptive page reloads.
+
+---
 
 ### 🏆 **DESIGN HUMANIZATION COMPLETE** - AI-to-Human Interface Transformation
 

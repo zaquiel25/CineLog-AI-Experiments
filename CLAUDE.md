@@ -448,7 +448,7 @@ var searchResults = await _tmdbService.SearchMoviesAsync(query);
 - Use `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
 - Rate limiting with SemaphoreSlim protection
 
-### 🎭 AJAX-Enhanced Suggestion System
+### 🎭 AJAX-Enhanced System Patterns
 **Critical AI Pattern - X-Requested-With Header:**
 ```javascript
 // REQUIRED for JSON response
@@ -462,6 +462,22 @@ headers: {
 - Graceful fallback to page navigation if AJAX fails
 - Server-side rendering for all AJAX responses
 - State preservation with `PopulateMovieProperties()`
+
+**AJAX Layout Stability Patterns:**
+```javascript
+// CRITICAL: Preserve Bootstrap structure during AJAX replacement
+const currentContainer = currentMain.querySelector('.container');
+const newContainer = newMain.querySelector('.container');
+if (currentContainer && newContainer) {
+    currentContainer.innerHTML = newContainer.innerHTML; // Preserves main element classes
+}
+```
+
+**Layout Stability Requirements:**
+- Target `.container` elements, never replace `main` element completely
+- Use invisible placeholders to maintain consistent column widths
+- Add `html { overflow-y: scroll; }` to prevent scrollbar-related width changes
+- Reserve minimum height for dynamic components (Timeline Navigator)
 
 ### 📄 Critical Implementation Patterns
 ```csharp

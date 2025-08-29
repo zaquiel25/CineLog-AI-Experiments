@@ -261,17 +261,26 @@ namespace Ezequiel_Movies.Controllers
         public async Task<IActionResult> AddToBlacklist(int tmdbId, string returnUrl = "/")
         {
             var userId = GetCurrentUserId();
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            
             if (userId == null)
             {
+                if (isAjax)
+                    return Json(new { success = false, message = "Please log in to add movies to your blacklist." });
                 return RedirectToAction("Login", "Account");
             }
+            
             if (await MovieExistsInBlacklistAsync(userId, tmdbId))
             {
+                if (isAjax)
+                    return Json(new { success = false, message = "Movie is already in your blacklist." });
                 return RedirectToAction(nameof(Blacklist));
             }
 
             if (await MovieExistsInWishlistAsync(userId, tmdbId))
             {
+                if (isAjax)
+                    return Json(new { success = false, message = "Movie is in your wishlist. Cannot add to blacklist." });
                 return LocalRedirect(returnUrl);
             }
             try
@@ -279,6 +288,8 @@ namespace Ezequiel_Movies.Controllers
                 var movieDetails = await GetMovieDetailsWithLoggingAsync(tmdbId);
                 if (movieDetails == null)
                 {
+                    if (isAjax)
+                        return Json(new { success = false, message = "Movie not found." });
                     return NotFound();
                 }
                 string? director = null;
@@ -314,10 +325,15 @@ namespace Ezequiel_Movies.Controllers
                 
                 // Invalidate cache to ensure fresh data
                 _cacheService.InvalidateUserBlacklistCache(userId);
+                
+                if (isAjax)
+                    return Json(new { success = true });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding movie {TmdbId} to blacklist for user {UserId}", tmdbId, userId);
+                if (isAjax)
+                    return Json(new { success = false, message = "An error occurred while adding the movie to your blacklist." });
                 throw;
             }
             return RedirectToAction(nameof(Blacklist));
@@ -3805,16 +3821,25 @@ return (bucket3x3, bucket2x3, bucket1x3);
             ViewData["TimelineNavigator"] = timelineData;
             ViewData["CurrentMonthFilter"] = monthFilter;
 
+            IActionResult result;
             if (viewMode == "collection")
             {
                 // COLLECTION VIEW: Show deduplicated movies with watch counts
-                return await GetCollectionView(userId!, searchString, actualSortToApply, pageNumber, monthFilter);
+                result = await GetCollectionView(userId!, searchString, actualSortToApply, pageNumber, monthFilter);
             }
             else
             {
                 // JOURNAL VIEW: Keep existing chronological behavior (default)
-                return await GetJournalView(userId!, searchString, actualSortToApply, pageNumber, firstWatchOnly, monthFilter);
+                result = await GetJournalView(userId!, searchString, actualSortToApply, pageNumber, firstWatchOnly, monthFilter);
             }
+            
+            // FEATURE: Simple AJAX support for sorting - return partial view for smooth UX
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" && result is ViewResult viewResult)
+            {
+                return PartialView(viewResult.ViewName, viewResult.Model);
+            }
+            
+            return result;
         }
 
         /// <summary>
@@ -4021,7 +4046,6 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 }
             }
         }
-
 
 
 

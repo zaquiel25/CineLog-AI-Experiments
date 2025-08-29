@@ -349,7 +349,7 @@
                     const btn = newForm.querySelector('.blacklist-btn');
                     btn.disabled = true;
                     btn.textContent = 'Adding...';
-                    const card = newForm.closest('.movie-suggestion-card');
+                    const card = newForm.closest('.suggestion-movie-card');
                     fetch(newForm.action, {
                         method: 'POST',
                         body: new FormData(newForm),
@@ -391,7 +391,7 @@
                         btn.classList.remove('btn-soft-primary');
                         btn.classList.add('btn-success');
                         btn.disabled = true;
-                        const card = newForm.closest('.movie-suggestion-card');
+                        const card = newForm.closest('.suggestion-movie-card');
                         if (card) {
                             const blacklistBtn = card.querySelector('.blacklist-btn');
                             if (blacklistBtn) {
