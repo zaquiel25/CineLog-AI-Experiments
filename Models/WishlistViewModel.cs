@@ -13,5 +13,6 @@ namespace Ezequiel_Movies.Models
         public string Director { get; set; } = string.Empty;
         public string MovieTitle { get; set; } = string.Empty;
         public int MovieTmdbId { get; set; }
+        public DateTime DateAdded { get; set; }
     }
 }

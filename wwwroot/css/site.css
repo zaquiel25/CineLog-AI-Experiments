@@ -158,6 +158,59 @@ a.btn-success:hover {
     transition: all 0.35s ease;
 }
 
+/* --- AJAX List View: Ensure compact list styling persists on partial swaps --- */
+/* Blacklist compact list card styling (matches grid background, overrides global rules) */
+div#blacklist-list div.movie-list-item.blacklist-movie-card {
+    padding: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    background: #2a1f1f !important;
+    border: 1px solid #495057 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    min-height: 65px !important;
+    max-height: 70px !important;
+}
+div#blacklist-list div.movie-list-item.blacklist-movie-card:hover {
+    background: #343a40 !important;
+    border-color: var(--cinelog-gold) !important;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.2) !important;
+    transform: translateX(2px) !important;
+}
+@media (max-width: 768px) {
+    div#blacklist-list div.movie-list-item.blacklist-movie-card { padding: 0.3rem !important; }
+}
+#blacklist-list .list-poster-container { width: 45px !important; height: 65px !important; flex-shrink: 0 !important; }
+#blacklist-list .list-poster-image { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 4px !important; }
+#blacklist-list .list-poster-placeholder { width: 100% !important; height: 100% !important; background: #2a1f1f !important; border-radius: 4px !important; }
+#blacklist-list .list-movie-details { margin-bottom: 0.2rem !important; font-size: 0.85rem !important; line-height: 1.3 !important; }
+#blacklist-list .list-movie-title { font-size: 1rem !important; line-height: 1.2 !important; margin-bottom: 0.3rem !important; }
+
+/* Wishlist compact list card styling (matches grid background, overrides global rules) */
+div#wishlist-list div.movie-list-item.wishlist-movie-card {
+    padding: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    background: #1c1c1c !important;
+    border: 1px solid #495057 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    min-height: 65px !important;
+    max-height: 70px !important;
+}
+div#wishlist-list div.movie-list-item.wishlist-movie-card:hover {
+    background: #343a40 !important;
+    border-color: var(--cinelog-gold) !important;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.2) !important;
+    transform: translateX(2px) !important;
+}
+@media (max-width: 768px) {
+    div#wishlist-list div.movie-list-item.wishlist-movie-card { padding: 0.3rem !important; }
+}
+#wishlist-list .list-poster-container { width: 45px !important; height: 65px !important; flex-shrink: 0 !important; }
+#wishlist-list .list-poster-image { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 4px !important; }
+#wishlist-list .list-poster-placeholder { width: 100% !important; height: 100% !important; background: #1c1c1c !important; border-radius: 4px !important; }
+#wishlist-list .list-movie-details { margin-bottom: 0.2rem !important; font-size: 0.85rem !important; line-height: 1.3 !important; }
+#wishlist-list .list-movie-title { font-size: 1rem !important; line-height: 1.2 !important; margin-bottom: 0.3rem !important; }
+
 .edit-movie-preview:hover {
     background-color: #252830;
     border-color: #6c757d;

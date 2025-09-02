@@ -1,0 +1,275 @@
+@using Ezequiel_Movies.Helpers
+@using Ezequiel_Movies.Models
+@model PaginatedList<BlacklistViewModel>
+@{
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
+    
+    // FEATURE: Display mode support for grid/list view switching
+    var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
+    var isGridMode = currentDisplayMode == "grid";
+    var isListMode = currentDisplayMode == "list";
+    
+    // FEATURE: Current sort display mapping for legend
+    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "director_asc" => "Director A-Z",
+        "director_desc" => "Director Z-A", 
+        "title_asc" => "Title A-Z",
+        "title_desc" => "Title Z-A",
+        "year_asc" => "Released Year (Oldest First)",
+        "year_desc" => "Released Year (Newest First)",
+        "Date" => "Date Added (Oldest First)",
+        "date_desc" => "Date Added (Newest First)",
+        _ => "Date Added (Newest First)"
+    };
+}
+
+<div class="professional-title-section">
+    <div class="title-container-professional">
+        <h1 class="page-title-professional">My Blacklist</h1>
+    </div>
+    <hr />
+    
+    <p class="text-muted mb-4">Your 'no thanks' list</p>
+</div>
+
+@* List view CSS is now in wwwroot/css/site.css to survive AJAX partial swaps *@
+
+<div class="row mb-3">
+    <div class="col-lg-6 col-md-8">
+        <form asp-controller="Movies" asp-action="Blacklist" method="get">
+            <div class="input-group">
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" 
+                       class="form-control" placeholder="Search by Title..." />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a asp-action="Blacklist" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
+<div class="mb-3 d-flex justify-content-end align-items-center">
+    <!-- Display mode toggle -->
+    <div class="btn-group btn-group-sm me-2" role="group">
+        <a href="@Url.Action("Blacklist", new { displayMode = "grid", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+           class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
+           title="Grid View"
+           data-display-toggle="grid">
+            <i class="fas fa-th"></i>
+        </a>
+        <a href="@Url.Action("Blacklist", new { displayMode = "list", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+           class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
+           title="List View"
+           data-display-toggle="list">
+            <i class="fas fa-list"></i>
+        </a>
+    </div>
+    
+    <div class="dropdown me-2">
+        <button class="btn btn-outline-secondary dropdown-toggle" 
+                type="button" 
+                id="sortDropdown" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false">
+            <i class="fas fa-sort me-1"></i>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+            @* FIX: Toggle pattern like Journal/Collection - click same option to change order *@
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   data-sort-link="true">
+                    Director
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   data-sort-link="true">
+                    Date Added
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   data-sort-link="true">
+                    Released Year
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   data-sort-link="true">
+                    Title
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@* FEATURE: Sort indicator legend like Journal/Collection views *@
+<div class="mb-3">
+    <small class="text-muted">
+        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
+        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+        {
+            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
+        }
+    </small>
+</div>
+
+@if (!Model.Any())
+{
+    <p>Your blacklist is empty. Movies you add here will not appear in your suggestions.</p>
+}
+else
+{
+    @* FEATURE: Conditional rendering for Grid vs List display modes *@
+    @if (isGridMode)
+    {
+        @* GRID VIEW - Original card-based layout *@
+        <div id="blacklist-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var item in Model)
+            {
+            <div class="col">
+                <div class="card h-100 mb-3 blacklist-movie-card">
+                    <div class="card-img-top text-center" style="background-color: #2a1f1f; height: 270px;">
+                        @if (!string.IsNullOrEmpty(item.PosterUrl))
+                        {
+                            <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">
+                                <img src="@(tmdbImageBaseUrl + item.PosterUrl)" alt="@item.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@item.Title</h5>
+                        @if (!string.IsNullOrEmpty(item.Director))
+                        {
+                            <p class="card-text"><strong>Director:</strong> @item.Director</p>
+                        }
+                        @if (item.ReleasedYear > 0)
+                        {
+                            <p class="card-text"><strong>Year:</strong> @item.ReleasedYear</p>
+                        }
+                        <p class="card-text"><small class="text-muted">Blacklisted: @item.DateAdded.ToString("MMM d, yyyy")</small></p>
+                        <div class="mt-auto">
+                            <button type="button" class="btn btn-danger btn-sm remove-from-blacklist" data-tmdb-id="@item.TmdbId">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    }
+    else
+    {
+        @* LIST VIEW - Cinema Gold styled horizontal layout matching Journal design *@
+        <div id="blacklist-list" class="movies-list-container">
+            @foreach (var item in Model)
+            {
+                @* FEATURE: Improved list item with Cinema Gold styling *@
+                <div class="movie-list-item d-flex align-items-center p-2 mb-2 blacklist-movie-card">
+                    @* Small poster thumbnail *@
+                    <div class="list-poster-container me-3 position-relative">
+                        @if (!string.IsNullOrEmpty(item.PosterUrl))
+                        {
+                            <img src="@(tmdbImageBaseUrl + item.PosterUrl)"
+                                 alt="@item.Title Poster"
+                                 class="list-poster-image">
+                        }
+                        else
+                        {
+                            <div class="list-poster-placeholder d-flex align-items-center justify-content-center">
+                                <i class="fas fa-film text-muted"></i>
+                            </div>
+                        }
+                    </div>
+                    
+                    @* Movie information *@
+                    <div class="list-movie-info flex-grow-1">
+                        <div class="list-title-row d-flex align-items-center justify-content-between">
+                            <h5 class="list-movie-title mb-1">
+                                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" class="link-as-text">@item.Title</a>
+                            </h5>
+                        </div>
+                        <div class="list-movie-details text-muted mb-1">
+                            <span class="me-3"><i class="fas fa-user-tie me-1"></i>@item.Director</span>
+                            <span class="me-3"><i class="fas fa-calendar me-1"></i>@item.ReleasedYear</span>
+                            <span class="me-3"><i class="fas fa-ban me-1"></i>@item.DateAdded.ToString("MMM d, yyyy")</span>
+                        </div>
+                    </div>
+                    
+                    @* Action buttons *@
+                    <div class="list-actions ms-3">
+                        <button type="button" class="btn btn-danger btn-sm remove-from-blacklist" 
+                                data-tmdb-id="@item.TmdbId">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Previous</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">@i</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Blacklist"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Next</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            }
+        </ul>
+    </nav>
+}

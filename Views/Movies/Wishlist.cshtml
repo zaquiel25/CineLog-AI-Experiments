@@ -5,6 +5,11 @@
     ViewData["Title"] = "My Wishlist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
     
+    // FEATURE: Display mode support for grid/list view switching
+    var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
+    var isGridMode = currentDisplayMode == "grid";
+    var isListMode = currentDisplayMode == "list";
+    
     // FEATURE: Current sort display mapping for legend
     var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
     {
@@ -12,6 +17,8 @@
         "director_desc" => "Director Z-A", 
         "title_asc" => "Title A-Z",
         "title_desc" => "Title Z-A",
+        "year_asc" => "Released Year (Oldest First)",
+        "year_desc" => "Released Year (Newest First)",
         "Date" => "Date Added (Oldest First)",
         "date_desc" => "Date Added (Newest First)",
         _ => "Date Added (Newest First)"
@@ -29,16 +36,41 @@
     <p class="text-muted mb-4">Your curated list of films to watch</p>
 </div>
 
-<form asp-controller="Movies" asp-action="Wishlist" method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by Title..." />
-        <button type="submit" class="btn btn-info">Search</button>
-        <a asp-action="Wishlist" class="btn btn-secondary ms-1">Clear Search</a>
+<div class="row mb-3">
+    <div class="col-lg-6 col-md-8">
+        <form asp-controller="Movies" asp-action="Wishlist" method="get">
+            <div class="input-group">
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" 
+                       class="form-control" placeholder="Search by Title..." />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a asp-action="Wishlist" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 @* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
 <div class="mb-3 d-flex justify-content-end align-items-center">
-    <div class="dropdown me-2">
+    <!-- Display mode toggle -->
+    <div id="wishlist-view-toggle" class="btn-group btn-group-sm me-2" role="group">
+        <a href="@Url.Action("Wishlist", new { displayMode = "grid", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+           class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
+           title="Grid View"
+           data-display-toggle="grid">
+            <i class="fas fa-th"></i>
+        </a>
+        <a href="@Url.Action("Wishlist", new { displayMode = "list", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+           class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
+           title="List View"
+           data-display-toggle="list">
+            <i class="fas fa-list"></i>
+        </a>
+    </div>
+    
+    <div id="wishlist-sort" class="dropdown me-2">
         <button class="btn btn-outline-secondary dropdown-toggle" 
                 type="button" 
                 id="sortDropdown" 
@@ -50,21 +82,28 @@
             @* FIX: Toggle pattern like Journal/Collection - click same option to change order *@
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Director
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Date Added
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   data-sort-link="true">
+                    Released Year
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Title
                 </a>
@@ -82,7 +121,9 @@
             <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
         }
     </small>
-</div>
+ </div>
+
+<div id="wishlist-content">
 
 @if (!Model.Any())
 {
@@ -90,9 +131,13 @@
 }
 else
 {
-    <div id="wishlist-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var wishlistItem in Model)
-        {
+    @* FEATURE: Conditional rendering for Grid vs List display modes *@
+    @if (isGridMode)
+    {
+        @* GRID VIEW - Original card-based layout *@
+        <div id="wishlist-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var wishlistItem in Model)
+            {
             <div class="col">
                 <div class="card h-100 mb-3 wishlist-movie-card">
                     <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@wishlistItem.TmdbId" class="text-decoration-none" style="display:block; height:100%;">
@@ -135,21 +180,162 @@ else
                 </div>
             </div>
 
-        }
-    </div>
+            }
+        </div>
+    }
+    else
+    {
+        @* LIST VIEW - Cinema Gold styled horizontal layout matching Journal design - UPDATED *@
+        <div id="wishlist-list" class="movies-list-container">
+            @foreach (var wishlistItem in Model)
+            {
+                @* FEATURE: Improved list item with Cinema Gold styling *@
+                <div class="movie-list-item d-flex align-items-center p-2 mb-2 wishlist-movie-card">
+                    @* Small poster thumbnail *@
+                    <div class="list-poster-container me-3 position-relative">
+                        @if (!string.IsNullOrEmpty(wishlistItem.PosterPath))
+                        {
+                            <img src="@(tmdbImageBaseUrl + wishlistItem.PosterPath)"
+                                 alt="@wishlistItem.Title Poster"
+                                 class="list-poster-image">
+                        }
+                        else
+                        {
+                            <div class="list-poster-placeholder d-flex align-items-center justify-content-center">
+                                <i class="fas fa-film text-muted"></i>
+                            </div>
+                        }
+                    </div>
+                    
+                    @* Movie information *@
+                    <div class="list-movie-info flex-grow-1">
+                        <div class="list-title-row d-flex align-items-center justify-content-between">
+                            <h5 class="list-movie-title mb-1">
+                                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@wishlistItem.TmdbId" class="link-as-text">
+                                    @wishlistItem.Title
+                                </a>
+                            </h5>
+                        </div>
+                        
+                        <div class="list-movie-details text-muted mb-1">
+                            @if (!string.IsNullOrEmpty(wishlistItem.Director) && wishlistItem.Director != "Director TBD")
+                            {
+                                <span class="me-3">
+                                    <i class="fas fa-user-tie me-1"></i>@wishlistItem.Director
+                                </span>
+                            }
+                            @if (wishlistItem.ReleasedYear != 0)
+                            {
+                                <span class="me-3">
+                                    <i class="fas fa-calendar me-1"></i>@wishlistItem.ReleasedYear
+                                </span>
+                            }
+                            <span class="me-3">
+                                <i class="fas fa-plus-circle me-1"></i>@wishlistItem.DateAdded.ToString("MMM d, yyyy")
+                            </span>
+                        </div>
+                    </div>
+                    
+                    @* Action buttons *@
+                    <div class="list-actions ms-3">
+                        <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@wishlistItem.TmdbId" 
+                           class="btn btn-success btn-sm me-2">
+                            <i class="bi bi-check-lg"></i> Watched
+                        </a>
+                        <button type="button" class="btn btn-danger btn-sm remove-from-wishlist" 
+                                data-tmdb-id="@wishlistItem.TmdbId">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Wishlist"
+                       asp-route-pageNumber="@(Model.PageIndex - 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Previous</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-action="Wishlist"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">@i</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Wishlist"
+                       asp-route-pageNumber="@(Model.PageIndex + 1)"
+                       asp-route-searchString="@ViewData["CurrentFilter"]"
+                       asp-route-sortOrder="@ViewData["CurrentSort"]"
+                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Next</a>
+                </li>
+            }
+            else
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+</div>
 
 <script>
-// Copilot AJAX Wishlist Removal
+/**
+ * FEATURE: AJAX-powered wishlist management system
+ * Provides seamless movie removal with optimistic UI updates and proper error handling
+ */
+
+// FEATURE: AJAX Wishlist Removal with comprehensive error handling
 document.addEventListener('click', async function (e) {
     if (e.target.closest('.remove-from-wishlist')) {
         const btn = e.target.closest('.remove-from-wishlist');
-        // FIX: Target correct CSS class for wishlist movie cards
         const card = btn.closest('.wishlist-movie-card');
         const tmdbId = btn.getAttribute('data-tmdb-id');
+        
+        // SECURITY: Validate required elements exist before proceeding
+        if (!card || !tmdbId) {
+            showTempAlert('Unable to remove movie - missing required data', 'danger');
+            return;
+        }
+        
         btn.disabled = true;
-        // Get anti-forgery token
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        
+        // SECURITY: Get anti-forgery token with fallback validation
+        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (!tokenElement) {
+            showTempAlert('Security token not found - please refresh the page', 'danger');
+            btn.disabled = false;
+            return;
+        }
+        const token = tokenElement.value;
         try {
+            // PERFORMANCE: Use optimized fetch with proper error boundaries
             const response = await fetch('/Movies/RemoveFromWishlist', {
                 method: 'POST',
                 headers: {
@@ -159,37 +345,48 @@ document.addEventListener('click', async function (e) {
                 body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
                 credentials: 'same-origin'
             });
+            
+            // SECURITY: Validate response and parse JSON safely
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const rawText = await response.text();
             let data;
             try {
                 data = JSON.parse(rawText);
             } catch (jsonErr) {
-                showTempAlert('Non-JSON response: ' + rawText, 'danger');
+                console.error('JSON parsing error:', jsonErr);
+                showTempAlert('Invalid server response format', 'danger');
                 btn.disabled = false;
                 return;
             }
-            if (!response.ok) {
-                showTempAlert('Server error: ' + (data.message || rawText), 'danger');
-                btn.disabled = false;
-                return;
-            }
+            
+            // FEATURE: Handle successful removal with smooth UI updates
             if (data.success) {
                 card.classList.add('fade-out');
                 setTimeout(() => {
                     card.remove();
-                    // Check if any cards remain
-                    const container = document.getElementById('wishlist-container');
-                    // FIX: Check for remaining wishlist cards using correct CSS class
-                    if (!container.querySelector('.wishlist-movie-card')) {
-                        container.innerHTML = '<div class="alert alert-info mt-4">Your wishlist is empty. Find a movie from the suggestions page!</div>';
+                    
+                    // ENHANCEMENT: Check for remaining cards with fallback for both grid and list views
+                    const gridContainer = document.getElementById('wishlist-container');
+                    const listContainer = document.getElementById('wishlist-list');
+                    const activeContainer = gridContainer || listContainer;
+                    
+                    if (activeContainer && !activeContainer.querySelector('.wishlist-movie-card')) {
+                        activeContainer.innerHTML = '<div class="alert alert-info mt-4"><p>Your wishlist is empty. Find a movie from the <a href="/Movies/Suggest">suggestions page</a>!</p></div>';
                     }
                 }, 300);
+                
+                showTempAlert('Movie removed from wishlist successfully', 'success');
             } else {
-                showTempAlert(data.message || 'Failed to remove movie.', 'danger');
+                showTempAlert(data.message || 'Failed to remove movie from wishlist', 'danger');
                 btn.disabled = false;
             }
         } catch (err) {
-            showTempAlert('Network/JS error: ' + (err && err.message ? err.message : err), 'danger');
+            // SECURITY: Log errors safely and provide user-friendly messages
+            console.error('Wishlist removal error:', err);
+            showTempAlert('Network error occurred. Please try again.', 'danger');
             btn.disabled = false;
         }
     }
@@ -225,24 +422,25 @@ document.addEventListener('click', async function(e) {
         }
         
         const html = await response.text();
-        console.log('AJAX response received, updating container');
-        
-        // PERFORMANCE: Target container specifically to preserve main element classes
-        const currentMain = document.querySelector('main');
+        console.log('AJAX response received, updating wishlist content + controls');
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
-        const newMain = tempDiv.querySelector('main');
-        
-        if (currentMain && newMain) {
-            const currentContainer = currentMain.querySelector('.container');
-            const newContainer = newMain.querySelector('.container');
-            if (currentContainer && newContainer) {
-                currentContainer.innerHTML = newContainer.innerHTML;
-                console.log('AJAX content replacement successful');
-            }
+        const newContent = tempDiv.querySelector('#wishlist-content');
+        const currentContent = document.querySelector('#wishlist-content');
+        const newSort = tempDiv.querySelector('#wishlist-sort');
+        const newToggle = tempDiv.querySelector('#wishlist-view-toggle');
+        const currentSort = document.querySelector('#wishlist-sort');
+        const currentToggle = document.querySelector('#wishlist-view-toggle');
+        if (currentContent && newContent) {
+            currentContent.replaceWith(newContent);
         }
-        
-        // FIX: Update URL without page refresh for proper browser navigation
+        if (currentSort && newSort) {
+            currentSort.replaceWith(newSort);
+        }
+        if (currentToggle && newToggle) {
+            currentToggle.replaceWith(newToggle);
+        }
+        // Update URL without page refresh for proper browser navigation
         history.pushState(null, '', clickedLink.href);
         
     } catch (error) {
@@ -250,53 +448,66 @@ document.addEventListener('click', async function(e) {
         showTempAlert('Sorting failed. Please try again.', 'danger');
     }
 });
+
+// FEATURE: AJAX Display Mode Toggle - No Page Reload for Wishlist
+document.addEventListener('click', function(e) {
+    const displayToggle = e.target.closest('[data-display-toggle]');
+    if (!displayToggle) return;
+    
+    e.preventDefault();
+    console.log('Wishlist display mode toggle initiated:', displayToggle.getAttribute('data-display-toggle'));
+    
+    // Show loading state
+    const originalText = displayToggle.innerHTML;
+    displayToggle.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    displayToggle.style.pointerEvents = 'none';
+    
+    // Make AJAX request
+    fetch(displayToggle.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.text();
+    })
+    .then(html => {
+        console.log('AJAX wishlist display mode toggle response received, processing...');
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const newContent = tempDiv.querySelector('#wishlist-content');
+        const newSort = tempDiv.querySelector('#wishlist-sort');
+        const newToggle = tempDiv.querySelector('#wishlist-view-toggle');
+        const currentContent = document.querySelector('#wishlist-content');
+        const currentSort = document.querySelector('#wishlist-sort');
+        const currentToggle = document.querySelector('#wishlist-view-toggle');
+        if (currentContent && newContent) currentContent.replaceWith(newContent);
+        if (currentSort && newSort) currentSort.replaceWith(newSort);
+        if (currentToggle && newToggle) currentToggle.replaceWith(newToggle);
+        const newUrl = new URL(displayToggle.href);
+        window.history.pushState({}, '', newUrl);
+        console.log('Wishlist display mode toggle completed successfully');
+    })
+    .finally(() => {
+        // Restore toggle button state so user can switch again
+        displayToggle.innerHTML = originalText;
+        displayToggle.style.pointerEvents = 'auto';
+    })
+    .catch(error => {
+        console.error('AJAX wishlist display mode toggle failed:', error);
+        
+        // Reset button state on error
+        displayToggle.innerHTML = originalText;
+        displayToggle.style.pointerEvents = 'auto';
+        
+        // FALLBACK: Use standard navigation on AJAX failure
+        window.location.href = displayToggle.href;
+    });
+});
 </script>
 
-
-    <!-- Pagination -->
-    <nav aria-label="Page navigation" class="mt-4">
-        <ul class="pagination justify-content-center">
-            @if (Model.HasPreviousPage)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Wishlist"
-                       asp-route-pageNumber="@(Model.PageIndex - 1)"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]">Previous</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <span class="page-link">Previous</span>
-                </li>
-            }
-
-            @for (int i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
-                    <a class="page-link" asp-action="Wishlist"
-                       asp-route-pageNumber="@i"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]">@i</a>
-                </li>
-            }
-
-            @if (Model.HasNextPage)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Wishlist"
-                       asp-route-pageNumber="@(Model.PageIndex + 1)"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]">Next</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <span class="page-link">Next</span>
-                </li>
-            }
-        </ul>
-    </nav>
-}
+@* List view CSS moved to wwwroot/css/site.css for AJAX persistence *@

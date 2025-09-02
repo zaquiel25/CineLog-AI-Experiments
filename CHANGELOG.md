@@ -1,3 +1,50 @@
+## 2025-09-02
+
+### 🔧 **ADVANCED OPTIONS FIX & CODE QUALITY ENHANCEMENT** - Professional Standards Update
+
+**🎯 BUG FIX**: Resolved advanced options "Show only first views" checkbox functionality that was losing event listeners after AJAX operations, plus comprehensive code quality improvements across Wishlist and Blacklist pages.
+
+#### Advanced Options Fix
+- **✅ Event Listener Persistence**: Fixed "Show only first views" checkbox losing functionality after AJAX operations (sorting, tab switching, display mode changes)
+- **🔄 Handler Reinitialization**: Implemented `initializeFirstWatchOnly()` function that properly reinitializes checkbox handlers after dynamic content updates
+- **🎯 Multi-Operation Support**: Checkbox now works correctly after tab switching, month filtering, display mode toggles, and sorting operations
+
+#### Code Quality Enhancements
+- **🛡️ Enhanced Security**: Added comprehensive input validation, CSRF token validation with fallbacks, and safe JSON parsing
+- **📝 Professional Documentation**: Upgraded all JavaScript code with JSDoc-style comments and clear FEATURE/SECURITY/PERFORMANCE annotations
+- **🔧 Error Handling**: Implemented enterprise-grade error boundaries with user-friendly messages and proper logging
+- **✨ UX Improvements**: Added success notifications, optimized loading states, and smooth fade-out animations for deletions
+
+#### Technical Improvements
+- **Memory Leak Prevention**: Proper event listener cleanup using element cloning technique
+- **Container Flexibility**: Enhanced deletion handling to work with both grid and list view containers
+- **Response Validation**: Comprehensive HTTP status and JSON parsing validation with fallback error handling
+- **Build Verification**: Maintained 0 warnings, 0 errors build status with full functionality testing
+
+**User Impact**: The advanced options checkbox now works reliably across all user interactions, and both Wishlist and Blacklist pages now meet enterprise-grade security and code quality standards with enhanced user feedback and error handling.
+
+---
+
+### 🎬 **RELEASED YEAR SORTING FEATURE** - Enhanced Movie Organization
+
+**🎯 FEATURE ADDITION**: Added released year sorting capability to all movie list views with proper alphabetical dropdown organization as requested by user.
+
+#### New Sorting Functionality
+- **🗓️ Released Year Option**: Added "Released Year" sorting to all four movie list views (Journal, Collection, Wishlist, Blacklist)
+- **📊 Alphabetical Organization**: Maintained proper dropdown ordering: Director → Most Watched → Rating → Recent → **Released Year** → Title
+- **🔄 Bidirectional Sorting**: Users can sort by oldest first (year_asc) or newest first (year_desc) with toggle functionality
+- **🎯 Consistent Implementation**: Unified user experience across all movie management interfaces
+
+#### Technical Implementation
+- **Backend Discovery**: Leveraged existing year sorting logic already present in controller methods
+- **Frontend Integration**: Added dropdown options and sort display mappings to all four view files
+- **AJAX Preservation**: Maintained seamless sorting without page refreshes across all implementations
+- **ViewData Consistency**: Added missing YearSortParm to Wishlist and Blacklist controllers for complete feature parity
+
+**User Impact**: Users can now organize their movie collections by release year across Journal, Collection, Wishlist, and Blacklist views, providing enhanced chronological browsing and organization capabilities.
+
+---
+
 ## 2025-09-01
 
 ### 🔧 **AJAX SYSTEM COMPLETION & UI DELETION FIXES** - Final Polish & Reliability

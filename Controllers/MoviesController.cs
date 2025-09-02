@@ -351,7 +351,7 @@ namespace Ezequiel_Movies.Controllers
         /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null, int? pageNumber = 1)
+        public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null, string? displayMode = null, int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
@@ -374,9 +374,11 @@ namespace Ezequiel_Movies.Controllers
             // Sorting - toggle logic like Journal/Collection views  
             ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
             ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
+            ViewData["YearSortParm"] = sortOrder == "year_asc" ? "year_desc" : "year_asc";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentSort"] = sortOrder;
+            ViewData["CurrentDisplayMode"] = displayMode ?? "grid";
 
             switch (sortOrder)
             {
@@ -391,6 +393,12 @@ namespace Ezequiel_Movies.Controllers
                     break;
                 case "title_desc":
                     blacklistQuery = blacklistQuery.OrderByDescending(b => b.Title);
+                    break;
+                case "year_asc":
+                    blacklistQuery = blacklistQuery.OrderBy(b => b.ReleasedYear ?? 0);
+                    break;
+                case "year_desc":
+                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.ReleasedYear ?? 0);
                     break;
                 case "Date":
                     blacklistQuery = blacklistQuery.OrderBy(b => b.BlacklistedDate);
@@ -456,11 +464,17 @@ namespace Ezequiel_Movies.Controllers
             _logger.LogInformation("Blacklist query completed for user {UserId} in {ElapsedMs}ms. Found {Count} items.",
                 userId, stopwatch.ElapsedMilliseconds, blacklistViewModels.Count);
 
-            return View(new PaginatedList<BlacklistViewModel>(
+            var paginatedResult = new PaginatedList<BlacklistViewModel>(
                 blacklistViewModels,
                 paginatedBlacklist.TotalCount,
                 paginatedBlacklist.PageIndex,
-                pageSize));
+                pageSize);
+
+            // TEMPORARY FIX: Disable AJAX partial views to fix navigation issue
+            // TODO: Re-implement AJAX with proper browser navigation detection
+            _logger.LogInformation("Blacklist request - AJAX temporarily disabled, returning full view");
+
+            return View(paginatedResult);
         }
 
         /// <summary>
@@ -538,7 +552,7 @@ namespace Ezequiel_Movies.Controllers
         /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null, int? pageNumber = 1)
+        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null, string? displayMode = null, int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
@@ -562,9 +576,11 @@ namespace Ezequiel_Movies.Controllers
             // Sorting - toggle logic like Journal/Collection views
             ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
             ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
+            ViewData["YearSortParm"] = sortOrder == "year_asc" ? "year_desc" : "year_asc";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentSort"] = sortOrder;
+            ViewData["CurrentDisplayMode"] = displayMode ?? "grid";
 
             switch (sortOrder)
             {
@@ -579,6 +595,12 @@ namespace Ezequiel_Movies.Controllers
                     break;
                 case "title_desc":
                     wishlistQuery = wishlistQuery.OrderByDescending(w => w.Title);
+                    break;
+                case "year_asc":
+                    wishlistQuery = wishlistQuery.OrderBy(w => w.ReleasedYear ?? 0);
+                    break;
+                case "year_desc":
+                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.ReleasedYear ?? 0);
                     break;
                 case "Date":
                     wishlistQuery = wishlistQuery.OrderBy(w => w.DateAdded);
@@ -625,7 +647,8 @@ namespace Ezequiel_Movies.Controllers
                     ReleasedYear = wishlistItem.ReleasedYear ?? 0,
                     Director = director,
                     MovieTitle = movieTitle,
-                    MovieTmdbId = movieTmdbId ?? 0
+                    MovieTmdbId = movieTmdbId ?? 0,
+                    DateAdded = wishlistItem.DateAdded
                 });
             }
 
@@ -633,11 +656,17 @@ namespace Ezequiel_Movies.Controllers
             _logger.LogInformation("Wishlist query completed for user {UserId} in {ElapsedMs}ms. Found {Count} items.",
                 userId, stopwatch.ElapsedMilliseconds, wishlistViewModels.Count);
 
-            return View(new PaginatedList<WishlistViewModel>(
+            var paginatedResult = new PaginatedList<WishlistViewModel>(
                 wishlistViewModels,
                 paginatedWishlist.TotalCount,
                 paginatedWishlist.PageIndex,
-                pageSize));
+                pageSize);
+
+            // TEMPORARY FIX: Disable AJAX partial views to fix navigation issue
+            // TODO: Re-implement AJAX with proper browser navigation detection
+            _logger.LogInformation("Wishlist request - AJAX temporarily disabled, returning full view");
+
+            return View(paginatedResult);
         }
 
 

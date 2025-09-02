@@ -218,6 +218,13 @@
                 </li>
                 <li>
                     <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
+                        Released Year
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
                        href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
                        data-sort-link="true">
                         Title
@@ -240,12 +247,14 @@
     <div class="btn-group btn-group-sm" role="group">
         <a href="@Url.Action("List", new { view = "collection", displayMode = "grid" })"
            class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
-           title="Grid View">
+           title="Grid View"
+           data-display-toggle="grid">
             <i class="fas fa-th"></i>
         </a>
         <a href="@Url.Action("List", new { view = "collection", displayMode = "list" })"
            class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
-           title="List View">
+           title="List View"
+           data-display-toggle="list">
             <i class="fas fa-list"></i>
         </a>
     </div>
@@ -262,6 +271,8 @@
         "director_desc" => "Director (Z-A)",
         "rating_desc" => "Rating (High to Low)",
         "rating_asc" => "Rating (Low to High)",
+        "year_asc" => "Released Year (Oldest First)",
+        "year_desc" => "Released Year (Newest First)",
         _ => "Recent"
     };
 }

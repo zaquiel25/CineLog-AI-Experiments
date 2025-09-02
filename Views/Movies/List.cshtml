@@ -290,6 +290,13 @@
                 </li>
                 <li>
                     <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       data-sort-link="true">
+                        Released Year
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
                        href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
                        data-sort-link="true">
                         Title
@@ -368,12 +375,14 @@
     <div class="btn-group btn-group-sm" role="group">
         <a href="@Url.Action("List", new { view = currentView, displayMode = "grid" })"
            class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
-           title="Grid View">
+           title="Grid View"
+           data-display-toggle="grid">
             <i class="fas fa-th"></i>
         </a>
         <a href="@Url.Action("List", new { view = currentView, displayMode = "list" })"
            class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
-           title="List View">
+           title="List View"
+           data-display-toggle="list">
             <i class="fas fa-list"></i>
         </a>
     </div>
@@ -1433,8 +1442,11 @@ function initializeTabSwitching() {
                         // Update URL
                         window.history.pushState({}, '', url);
                         
-                        // Re-initialize tab switching for new content
-                        setTimeout(initializeTabSwitching, 50);
+                        // Re-initialize all handlers for new content
+                        setTimeout(() => {
+                            initializeTabSwitching();
+                            initializeFirstWatchOnly();
+                        }, 50);
                         
                         console.log('Tab switching completed successfully');
                     } else {
@@ -1517,8 +1529,11 @@ document.addEventListener('click', function(e) {
             const newUrl = new URL(monthLink.href);
             window.history.pushState({}, '', newUrl);
             
-            // Re-initialize tab switching for new content
-            setTimeout(initializeTabSwitching, 50);
+            // Re-initialize all handlers for new content
+            setTimeout(() => {
+                initializeTabSwitching();
+                initializeFirstWatchOnly();
+            }, 50);
             
             console.log('Month filtering completed successfully');
         } else {
@@ -1625,10 +1640,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // FEATURE: First Watch Only checkbox handler - AJAX implementation for seamless filtering
-document.addEventListener('DOMContentLoaded', function() {
+function initializeFirstWatchOnly() {
     const firstWatchCheckbox = document.getElementById('firstWatchOnly');
     if (firstWatchCheckbox) {
-        firstWatchCheckbox.addEventListener('change', async function() {
+        // Remove existing listeners by cloning the element
+        const newCheckbox = firstWatchCheckbox.cloneNode(true);
+        firstWatchCheckbox.parentNode?.replaceChild(newCheckbox, firstWatchCheckbox);
+        
+        newCheckbox.addEventListener('change', async function() {
             console.log('First Watch Only checkbox changed:', this.checked);
             
             // Get current URL parameters
@@ -1674,6 +1693,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Update URL without page reload
                         window.history.pushState(null, '', url);
                         
+                        // Re-initialize all handlers after AJAX update
+                        setTimeout(() => {
+                            initializeTabSwitching();
+                            initializeFirstWatchOnly();
+                        }, 50);
+                        
                         console.log('First Watch Only - AJAX update completed successfully');
                     }
                 } else {
@@ -1687,7 +1712,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = url;
             }
         });
+        console.log('First Watch Only checkbox handler initialized');
     }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFirstWatchOnly();
+});
+
+// FEATURE: AJAX Display Mode Toggle - No Page Reload
+document.addEventListener('click', function(e) {
+    const displayToggle = e.target.closest('[data-display-toggle]');
+    if (!displayToggle) return;
+    
+    e.preventDefault();
+    console.log('Display mode toggle initiated:', displayToggle.getAttribute('data-display-toggle'));
+    
+    // Show loading state
+    const originalText = displayToggle.innerHTML;
+    displayToggle.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    displayToggle.style.pointerEvents = 'none';
+    
+    // Make AJAX request
+    fetch(displayToggle.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.text();
+    })
+    .then(html => {
+        console.log('AJAX display mode toggle response received, processing...');
+        
+        // Update container content (same approach as sorting and tab switching)
+        const currentContainer = document.querySelector('main .container');
+        if (currentContainer) {
+            console.log('Replacing container content with display mode toggle results...');
+            currentContainer.innerHTML = html;
+            
+            // Update URL without page reload
+            const newUrl = new URL(displayToggle.href);
+            window.history.pushState({}, '', newUrl);
+            
+            // Re-initialize all handlers for new content
+            setTimeout(() => {
+                initializeTabSwitching();
+                initializeFirstWatchOnly();
+            }, 50);
+            
+            console.log('Display mode toggle completed successfully');
+        } else {
+            console.error('Could not find container element for display mode toggle');
+        }
+    })
+    .catch(error => {
+        console.error('AJAX display mode toggle failed:', error);
+        
+        // Reset button state on error
+        displayToggle.innerHTML = originalText;
+        displayToggle.style.pointerEvents = 'auto';
+        
+        // FALLBACK: Use standard navigation on AJAX failure
+        window.location.href = displayToggle.href;
+    });
 });
 
 // FEATURE: Bulletproof AJAX sorting with container-level replacement
@@ -1750,8 +1842,11 @@ document.addEventListener('click', function(e) {
         sortLink.innerHTML = originalText;
         sortLink.style.pointerEvents = 'auto';
         
-        // Re-initialize tab switching after content replacement
-        initializeTabSwitching();
+        // Re-initialize all handlers after content replacement
+        setTimeout(() => {
+            initializeTabSwitching();
+            initializeFirstWatchOnly();
+        }, 50);
         
         console.log('AJAX sorting completed successfully');
     })
