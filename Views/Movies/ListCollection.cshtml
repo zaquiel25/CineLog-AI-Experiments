@@ -187,35 +187,40 @@
             </button>
             <ul class="dropdown-menu w-100" 
                 aria-labelledby="sortDropdown">
-                <!-- Essential sort options only -->
+                <!-- Essential sort options only - alphabetical order -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
-                        Recent
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
-                        Title
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
-                        Most Watched
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
                         Director
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })">
+                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
+                        Most Watched
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
                         Rating
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
+                        Recent
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" 
+                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = "collection", displayMode = currentDisplayMode })"
+                       data-sort-link="true">
+                        Title
                     </a>
                 </li>
             </ul>
@@ -825,34 +830,93 @@ html { overflow-y: scroll; } /* prevents page width from changing when content h
 </style>
 
 <script>
-// FEATURE: AJAX tab switching for seamless view transitions
-document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('#viewTabs button[data-view]');
+// FEATURE: Tab switching with AJAX support
+function initializeTabSwitching() {
+    const tabButtons = document.querySelectorAll('#viewTabs button[data-view]');
     
-    tabs.forEach(tab => {
+    tabButtons.forEach(tab => {
+        // Remove any existing event listeners by cloning
+        const newTab = tab.cloneNode(true);
+        tab.parentNode.replaceChild(newTab, tab);
+    });
+    
+    // Add fresh event listeners to all tab buttons
+    document.querySelectorAll('#viewTabs button[data-view]').forEach(tab => {
         tab.addEventListener('click', async function(e) {
             e.preventDefault();
+            console.log('Tab switching initiated:', this.dataset.view);
             
             const targetView = this.dataset.view;
-            const currentSort = '@ViewData["CurrentSort"]';
-            const currentSearch = '@Html.Raw(ViewData["CurrentFilter"]?.ToString() ?? "")';
-            const currentDisplayMode = '@ViewData["CurrentDisplayMode"]';
-            const currentMonthFilter = '@ViewData["CurrentMonthFilter"]';
             
-            // FEATURE: Enhanced tab switching - preserve all current parameters including displayMode
+            // Get current parameters from URL dynamically
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentSort = currentParams.get('sortOrder') || 'datewatched_desc';
+            const currentSearch = currentParams.get('searchString') || '';
+            const currentDisplayMode = currentParams.get('displayMode') || 'grid';
+            const firstWatchOnly = currentParams.get('firstWatchOnly') || 'false';
+            const currentMonthFilter = currentParams.get('monthFilter') || '';
+            
+            // Build parameters for tab switch
             const params = new URLSearchParams();
             if (currentSort) params.set('sortOrder', currentSort);
             if (currentSearch) params.set('searchString', currentSearch);
-            if (currentDisplayMode) params.set('displayMode', currentDisplayMode); // Always preserve displayMode
+            if (currentDisplayMode) params.set('displayMode', currentDisplayMode);
+            if (firstWatchOnly === 'true') params.set('firstWatchOnly', 'true');
             if (currentMonthFilter) params.set('monthFilter', currentMonthFilter);
             if (targetView !== 'journal') params.set('view', targetView);
             
-            const url = '@Url.Action("List")' + (params.toString() ? '?' + params.toString() : '');
+            const url = `/Movies/List?${params.toString()}`;
             
-            // FEATURE: Smooth view transition with preserved state
-            window.location.href = url;
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            this.disabled = true;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    // Use same container replacement approach as sorting
+                    const currentContainer = document.querySelector('main .container');
+                    if (currentContainer) {
+                        currentContainer.innerHTML = html;
+                        
+                        // Update URL
+                        window.history.pushState({}, '', url);
+                        
+                        // Re-initialize tab switching for new content
+                        setTimeout(initializeTabSwitching, 50);
+                        
+                        console.log('Tab switching completed successfully');
+                    } else {
+                        console.error('Could not find container element for tab switching');
+                        throw new Error('Container element not found');
+                    }
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Tab switching failed:', error);
+                // Reset button and fallback to page navigation
+                this.innerHTML = originalText;
+                this.disabled = false;
+                window.location.href = url;
+            }
         });
     });
+    
+    console.log('Tab switching initialized for', document.querySelectorAll('#viewTabs button[data-view]').length, 'tabs');
+}
+
+// Initialize tab switching on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTabSwitching();
 });
 
 // AJAX Movie Deletion (same as journal view)
@@ -931,98 +995,147 @@ function showTempAlert(message, type) {
     setTimeout(() => alert.remove(), 3000);
 }
 
-// FEATURE: Smart Timeline Navigator AJAX functionality for Collection View
-document.addEventListener('DOMContentLoaded', function() {
-    // Add AJAX handling for timeline filter links
-    const timelineLinks = document.querySelectorAll('.timeline-filter');
+// FEATURE: AJAX month filtering using same approach as sorting
+document.addEventListener('click', function(e) {
+    const monthLink = e.target.closest('[data-month-filter]');
+    if (!monthLink) return;
     
-    timelineLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
+    e.preventDefault();
+    console.log('Month filtering initiated:', monthLink.getAttribute('data-month-filter'));
+    
+    // Show loading state in the clicked month link
+    const originalText = monthLink.innerHTML;
+    monthLink.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+    monthLink.style.pointerEvents = 'none';
+    
+    // Make AJAX request using the link's href
+    fetch(monthLink.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.text();
+    })
+    .then(html => {
+        console.log('AJAX month filtering response received, processing...');
+        
+        // Use same container replacement approach as sorting and tab switching
+        const currentContainer = document.querySelector('main .container');
+        
+        if (currentContainer) {
+            console.log('Replacing container content with month filtered results...');
             
-            const monthFilter = this.getAttribute('data-month-filter');
-            const currentParams = new URLSearchParams(window.location.search);
+            // Replace container content with AJAX response
+            currentContainer.innerHTML = html;
             
-            // Show loading state in timeline dropdown
-            const timelineButton = document.getElementById('timelineDropdown');
-            if (timelineButton) {
-                timelineButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
-            }
+            // Update URL without page reload
+            const newUrl = new URL(monthLink.href);
+            window.history.pushState({}, '', newUrl);
             
-            // Prepare form data for AJAX request
-            const formData = new FormData();
-            formData.append('monthFilter', monthFilter || '');
-            formData.append('sortOrder', currentParams.get('sortOrder') || '');
-            formData.append('searchString', currentParams.get('searchString') || '');
-            formData.append('pageNumber', '1'); // Reset to first page when filtering
-            formData.append('view', 'collection');
-            formData.append('displayMode', '@currentDisplayMode');
-            formData.append('firstWatchOnly', 'false');
+            // Re-initialize tab switching for new content
+            setTimeout(initializeTabSwitching, 50);
             
-            // AJAX request to filter by month
-            fetch('@Url.Action("FilterByMonth")', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                },
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.text();
-                }
-                throw new Error('Network response was not ok');
-            })
-            .then(html => {
-                // Replace the entire main content with the filtered results
-                const parser = new DOMParser();
-                const newDoc = parser.parseFromString(html, 'text/html');
-                const newContent = newDoc.querySelector('main') || newDoc.querySelector('body');
-                
-                if (newContent) {
-                    const currentMain = document.querySelector('main') || document.querySelector('body');
-                    if (currentMain) {
-                        currentMain.innerHTML = newContent.innerHTML;
-                        
-                        // Update URL to reflect the filter change
-                        const newUrl = new URL(window.location);
-                        if (monthFilter) {
-                            newUrl.searchParams.set('monthFilter', monthFilter);
-                        } else {
-                            newUrl.searchParams.delete('monthFilter');
-                        }
-                        newUrl.searchParams.set('pageNumber', '1');
-                        window.history.pushState(null, '', newUrl.toString());
-                        
-                        // Show success message
-                        showAlert(monthFilter ? 
-                            `Collection timeline filtered to ${this.textContent.trim().replace(/✓$/, '').trim()}` : 
-                            'Collection timeline filter cleared - showing all months', 
-                            'success');
-                        
-                        // Scroll to top to see filtered results
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                } else {
-                    throw new Error('Unable to parse filtered content');
-                }
-            })
-            .catch(error => {
-                console.error('Timeline filter error:', error);
-                showAlert('Unable to filter collection timeline. Please try again.', 'danger');
-                
-                // Reset button state on error
-                if (timelineButton) {
-                    timelineButton.innerHTML = '<i class="fas fa-calendar-alt me-2"></i>@(ViewData["TimelineNavigator"] is TimelineNavigatorViewModel tl ? tl.SelectedMonthDisplayName : "All Months")';
-                }
-                
-                // FALLBACK: Use standard navigation on AJAX failure
-                window.location.href = this.href;
-            });
-        });
+            console.log('Month filtering completed successfully');
+        } else {
+            console.error('Could not find container element for month filtering');
+        }
+        
+        // Always reset loading state
+        monthLink.innerHTML = originalText;
+        monthLink.style.pointerEvents = 'auto';
+    })
+    .catch(error => {
+        console.error('AJAX month filtering failed:', error);
+        
+        // Reset link state on error
+        monthLink.innerHTML = originalText;
+        monthLink.style.pointerEvents = 'auto';
+        
+        // FALLBACK: Use standard navigation on AJAX failure
+        window.location.href = monthLink.href;
     });
 });
 
-// FIXED: Removed AJAX sorting complexity - using normal navigation preserves all Bootstrap state
+// FEATURE: Bulletproof AJAX sorting with container-level replacement
+document.addEventListener('click', function(e) {
+    const sortLink = e.target.closest('[data-sort-link]');
+    if (!sortLink) return;
+    
+    e.preventDefault();
+    
+    // Get current URL parameters dynamically (not from stale server variables)
+    const currentParams = new URLSearchParams(window.location.search);
+    const url = new URL(sortLink.href);
+    const newParams = new URLSearchParams(url.search);
+    
+    // Show loading state in the clicked sort link
+    const originalText = sortLink.innerHTML;
+    sortLink.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sorting...';
+    sortLink.style.pointerEvents = 'none';
+    
+    // Make AJAX request
+    fetch(sortLink.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.text();
+    })
+    .then(html => {
+        console.log('AJAX sorting response received, processing...');
+        
+        // Parse the response
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, 'text/html');
+        
+        // FIXED: Target the container div inside main, since AJAX response is just the view content
+        const currentContainer = document.querySelector('main .container');
+        
+        if (currentContainer) {
+            console.log('Replacing container content with AJAX response...');
+            
+            // The AJAX response should be the complete view content, just replace the container
+            currentContainer.innerHTML = html;
+            
+            // Update URL without page reload
+            const newUrl = new URL(window.location);
+            newUrl.search = url.search;
+            window.history.pushState({}, '', newUrl);
+            
+            console.log('Content replaced successfully');
+        } else {
+            console.error('Could not find container element');
+        }
+        
+        // Always reset loading state
+        sortLink.innerHTML = originalText;
+        sortLink.style.pointerEvents = 'auto';
+        
+        // Re-initialize tab switching after content replacement
+        initializeTabSwitching();
+        
+        console.log('AJAX sorting completed successfully');
+    })
+    .catch(error => {
+        console.error('AJAX sorting failed:', error);
+        
+        // Reset link state on error
+        sortLink.innerHTML = originalText;
+        sortLink.style.pointerEvents = 'auto';
+        
+        // FALLBACK: Use standard navigation on AJAX failure
+        window.location.href = sortLink.href;
+    });
+});
+
 </script>

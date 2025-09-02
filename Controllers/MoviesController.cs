@@ -371,13 +371,21 @@ namespace Ezequiel_Movies.Controllers
                 blacklistQuery = blacklistQuery.Where(b => b.Title.ToLower().Contains(searchString.ToLower()));
             }
 
-            ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            // Sorting - toggle logic like Journal/Collection views  
+            ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
+            ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentSort"] = sortOrder;
 
             switch (sortOrder)
             {
+                case "director_asc":
+                    blacklistQuery = blacklistQuery.OrderBy(b => b.Director ?? "zzz");
+                    break;
+                case "director_desc":
+                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.Director ?? "");
+                    break;
                 case "title_asc":
                     blacklistQuery = blacklistQuery.OrderBy(b => b.Title);
                     break;
@@ -551,14 +559,21 @@ namespace Ezequiel_Movies.Controllers
                 wishlistQuery = wishlistQuery.Where(w => w.Title.ToLower().Contains(searchString.ToLower()));
             }
 
-            // Sorting
-            ViewData["TitleSortParm"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            // Sorting - toggle logic like Journal/Collection views
+            ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
+            ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
             ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentSort"] = sortOrder;
 
             switch (sortOrder)
             {
+                case "director_asc":
+                    wishlistQuery = wishlistQuery.OrderBy(w => w.Director ?? "zzz");
+                    break;
+                case "director_desc":
+                    wishlistQuery = wishlistQuery.OrderByDescending(w => w.Director ?? "");
+                    break;
                 case "title_asc":
                     wishlistQuery = wishlistQuery.OrderBy(w => w.Title);
                     break;
@@ -664,6 +679,18 @@ namespace Ezequiel_Movies.Controllers
                 var movieDetails = await GetMovieDetailsWithLoggingAsync(tmdbId);
                 if (movieDetails != null)
                 {
+                    // FIX: Extract director information for consistent data storage with blacklist
+                    // This ensures wishlist items have director data for proper sorting functionality
+                    string? director = null;
+                    try
+                    {
+                        director = movieDetails.GetDirector();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not extract director for TMDB {TmdbId}", tmdbId);
+                    }
+                    
                     var wishlistItem = new WishlistItem
                     {
                         TmdbId = tmdbId,
@@ -673,7 +700,8 @@ namespace Ezequiel_Movies.Controllers
                         ReleasedYear = !string.IsNullOrEmpty(movieDetails.ReleaseDate) && movieDetails.ReleaseDate.Length >= 4
                                          ? int.Parse(movieDetails.ReleaseDate.Substring(0, 4))
                                          : null,
-                        DateAdded = DateTime.UtcNow
+                        DateAdded = DateTime.UtcNow,
+                        Director = director
                     };
 
                     _dbContext.WishlistItems.Add(wishlistItem);
@@ -3940,7 +3968,16 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
             // ENHANCEMENT: Calculate comprehensive collection statistics
             var totalWatches = collectionData.Sum(c => c.WatchCount);
-            var mostWatchedMovie = collectionData.OrderByDescending(c => c.WatchCount).FirstOrDefault();
+            
+            // FEATURE: Intelligent favorite movie selection with multi-criteria fallback
+            // When multiple movies have the same watch count, use additional criteria for meaningful selection
+            var mostWatchedMovie = collectionData
+                .OrderByDescending(c => c.WatchCount)                    // Primary: Most watched
+                .ThenByDescending(c => c.Movie.UserRating ?? 0)          // Fallback 1: Highest rated
+                .ThenByDescending(c => c.LastWatched ?? c.Movie.DateWatched ?? c.Movie.DateCreated) // Fallback 2: Most recently watched
+                .ThenBy(c => c.Movie.Title)                              // Fallback 3: Alphabetical consistency
+                .FirstOrDefault();
+                
             var averageWatchesPerMovie = collectionData.Count > 0 ? Math.Round((double)totalWatches / collectionData.Count, 1) : 0;
             
             // Store enhanced statistics for view display

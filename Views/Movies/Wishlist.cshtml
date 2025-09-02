@@ -4,6 +4,18 @@
 @{
     ViewData["Title"] = "My Wishlist";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
+    
+    // FEATURE: Current sort display mapping for legend
+    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "director_asc" => "Director A-Z",
+        "director_desc" => "Director Z-A", 
+        "title_asc" => "Title A-Z",
+        "title_desc" => "Title Z-A",
+        "Date" => "Date Added (Oldest First)",
+        "date_desc" => "Date Added (Newest First)",
+        _ => "Date Added (Newest First)"
+    };
 }
 
 
@@ -24,16 +36,52 @@
         <a asp-action="Wishlist" class="btn btn-secondary ms-1">Clear Search</a>
     </div>
 </form>
-<div class="mb-3 d-flex justify-content-end">
-    <form asp-controller="Movies" asp-action="Wishlist" method="get" class="d-inline">
-        <input type="hidden" name="searchString" value="@ViewData["CurrentFilter"]" />
-        <select name="sortOrder" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
-            <option value="title_asc" selected="@(ViewData["CurrentSort"] as string == "title_asc" ? "selected" : null)">Sort by Title (A-Z)</option>
-            <option value="title_desc" selected="@(ViewData["CurrentSort"] as string == "title_desc" ? "selected" : null)">Sort by Title (Z-A)</option>
-            <option value="Date" selected="@(ViewData["CurrentSort"] as string == "Date" ? "selected" : null)">Sort by Date Added (Oldest)</option>
-            <option value="date_desc" selected="@(ViewData["CurrentSort"] == null || ViewData["CurrentSort"] as string == "date_desc" ? "selected" : null)">Sort by Date Added (Newest)</option>
-        </select>
-    </form>
+@* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
+<div class="mb-3 d-flex justify-content-end align-items-center">
+    <div class="dropdown me-2">
+        <button class="btn btn-outline-secondary dropdown-toggle" 
+                type="button" 
+                id="sortDropdown" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false">
+            <i class="fas fa-sort me-1"></i>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+            @* FIX: Toggle pattern like Journal/Collection - click same option to change order *@
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   data-sort-link="true">
+                    Director
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   data-sort-link="true">
+                    Date Added
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" 
+                   href="@Url.Action("Wishlist", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"] })"
+                   data-sort-link="true">
+                    Title
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@* FEATURE: Sort indicator legend like Journal/Collection views *@
+<div class="mb-3">
+    <small class="text-muted">
+        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
+        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+        {
+            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
+        }
+    </small>
 </div>
 
 @if (!Model.Any())
@@ -95,7 +143,8 @@ else
 document.addEventListener('click', async function (e) {
     if (e.target.closest('.remove-from-wishlist')) {
         const btn = e.target.closest('.remove-from-wishlist');
-        const card = btn.closest('.movie-card');
+        // FIX: Target correct CSS class for wishlist movie cards
+        const card = btn.closest('.wishlist-movie-card');
         const tmdbId = btn.getAttribute('data-tmdb-id');
         btn.disabled = true;
         // Get anti-forgery token
@@ -130,7 +179,8 @@ document.addEventListener('click', async function (e) {
                     card.remove();
                     // Check if any cards remain
                     const container = document.getElementById('wishlist-container');
-                    if (!container.querySelector('.movie-card')) {
+                    // FIX: Check for remaining wishlist cards using correct CSS class
+                    if (!container.querySelector('.wishlist-movie-card')) {
                         container.innerHTML = '<div class="alert alert-info mt-4">Your wishlist is empty. Find a movie from the suggestions page!</div>';
                     }
                 }, 300);
@@ -153,6 +203,53 @@ function showTempAlert(message, type) {
     document.body.appendChild(alert);
     setTimeout(() => alert.remove(), 2200);
 }
+
+// FEATURE: AJAX sorting functionality for Wishlist page - unified with Collection/Journal pattern
+document.addEventListener('click', async function(e) {
+    const clickedLink = e.target.closest('.dropdown-item');
+    if (!clickedLink || !clickedLink.hasAttribute('data-sort-link')) return;
+    
+    e.preventDefault();
+    console.log('AJAX sort request initiated for:', clickedLink.href);
+    
+    try {
+        const response = await fetch(clickedLink.href, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('AJAX response error:', response.status);
+            return;
+        }
+        
+        const html = await response.text();
+        console.log('AJAX response received, updating container');
+        
+        // PERFORMANCE: Target container specifically to preserve main element classes
+        const currentMain = document.querySelector('main');
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const newMain = tempDiv.querySelector('main');
+        
+        if (currentMain && newMain) {
+            const currentContainer = currentMain.querySelector('.container');
+            const newContainer = newMain.querySelector('.container');
+            if (currentContainer && newContainer) {
+                currentContainer.innerHTML = newContainer.innerHTML;
+                console.log('AJAX content replacement successful');
+            }
+        }
+        
+        // FIX: Update URL without page refresh for proper browser navigation
+        history.pushState(null, '', clickedLink.href);
+        
+    } catch (error) {
+        console.error('AJAX sorting error:', error);
+        showTempAlert('Sorting failed. Please try again.', 'danger');
+    }
+});
 </script>
 
 
