@@ -1,5 +1,21 @@
-﻿@using Ezequiel_Movies.Helpers
+﻿@*
+    FEATURE: My Movies List View with Advanced Search Parameter Preservation
+    
+    CRITICAL PATTERN: This view implements comprehensive URL parameter preservation across
+    all interface interactions to maintain advanced filter states (especially firstWatchOnly).
+    
+    IMPLEMENTATION STRATEGY:
+    - All navigation links (sorting, month filtering, display modes, search clear) include:
+      firstWatchOnly = Context.Request.Query["firstWatchOnly"]
+    - This preserves the "Show first watches only" checkbox state across all operations
+    - JavaScript AJAX handlers also preserve all parameters during dynamic updates
+    
+    TECHNICAL LESSON: Simple parameter pass-through is more reliable than complex
+    conditional logic that can cause state mismatches between UI and URL parameters.
+*@
+@using Ezequiel_Movies.Helpers
 @using Ezequiel_Movies.Models
+@using Microsoft.AspNetCore.Routing
 @model PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>
 
 @{
@@ -223,7 +239,7 @@
                 <button type="submit" class="btn btn-primary">Search</button>
                 @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
                 {
-                    <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode })" class="btn btn-outline-secondary">Clear</a>
+                    <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"], firstWatchOnly = Context.Request.Query["firstWatchOnly"] })" class="btn btn-outline-secondary">Clear</a>
                 }
             </div>
             
@@ -259,45 +275,46 @@
             </button>
             <ul class="dropdown-menu w-100" 
                 aria-labelledby="sortDropdown">
-                <!-- Essential sort options only - alphabetical order -->
+                <!-- FEATURE: Essential sort options with parameter preservation -->
+                <!-- CRITICAL: All sorting links preserve firstWatchOnly parameter to maintain advanced filter state -->
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Director
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["MostWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Most Watched
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["RatingSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Rating
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["DateWatchedSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Recent
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Released Year
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item" 
-                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                       href="@Url.Action("List", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                        data-sort-link="true">
                         Title
                     </a>
@@ -323,10 +340,10 @@
                 <ul class="dropdown-menu w-100 shadow" 
                     aria-labelledby="monthFilterDropdown"
                     style="min-width: 220px; max-height: 300px; overflow-y: auto;">
-                    @* All Months option *@
+                    @* FEATURE: Timeline Navigator month filtering with parameter preservation *@
                     <li>
                         <a class="dropdown-item" 
-                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode })"
+                           href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                            data-month-filter="">
                             <i class="fas fa-globe me-2"></i>All Months
                             @if (string.IsNullOrEmpty(ViewData["CurrentMonthFilter"]?.ToString()))
@@ -341,7 +358,7 @@
                     {
                         <li>
                             <a class="dropdown-item" 
-                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, monthFilter = month.MonthKey })"
+                               href="@Url.Action("List", new { sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], view = currentView, displayMode = currentDisplayMode, monthFilter = month.MonthKey, firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
                                data-month-filter="@month.MonthKey">
                                 <i class="fas fa-calendar me-2"></i>@month.DisplayName
                                 @if (ViewData["CurrentMonthFilter"]?.ToString() == month.MonthKey)
@@ -371,15 +388,16 @@
             <i class="fas fa-plus me-2"></i>Add Movie
         </a>
     </div>
-    <!-- Simple display mode toggle -->
+    <!-- FEATURE: Display mode toggle with comprehensive parameter preservation -->
+    <!-- CRITICAL: Both grid and list toggles preserve all URL parameters including firstWatchOnly -->
     <div class="btn-group btn-group-sm" role="group">
-        <a href="@Url.Action("List", new { view = currentView, displayMode = "grid" })"
+        <a href="@Url.Action("List", new { view = currentView, displayMode = "grid", sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], monthFilter = ViewData["CurrentMonthFilter"], firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
            class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
            title="Grid View"
            data-display-toggle="grid">
             <i class="fas fa-th"></i>
         </a>
-        <a href="@Url.Action("List", new { view = currentView, displayMode = "list" })"
+        <a href="@Url.Action("List", new { view = currentView, displayMode = "list", sortOrder = ViewData["CurrentSort"], searchString = ViewData["CurrentFilter"], monthFilter = ViewData["CurrentMonthFilter"], firstWatchOnly = Context.Request.Query["firstWatchOnly"] })"
            class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
            title="List View"
            data-display-toggle="list">
@@ -1639,18 +1657,26 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(animateNumbers, 800);
 });
 
-// FEATURE: First Watch Only checkbox handler - AJAX implementation for seamless filtering
+/**
+ * FEATURE: First Watch Only checkbox handler - AJAX implementation for seamless filtering
+ * 
+ * This function handles the advanced search "Show first watches only" checkbox functionality.
+ * It preserves all current URL parameters while toggling the firstWatchOnly filter state.
+ * 
+ * CRITICAL: This function gets re-initialized after every AJAX operation to prevent
+ * event handler loss during dynamic content updates.
+ */
 function initializeFirstWatchOnly() {
     const firstWatchCheckbox = document.getElementById('firstWatchOnly');
     if (firstWatchCheckbox) {
-        // Remove existing listeners by cloning the element
+        // SECURITY: Remove existing listeners by cloning to prevent memory leaks
         const newCheckbox = firstWatchCheckbox.cloneNode(true);
         firstWatchCheckbox.parentNode?.replaceChild(newCheckbox, firstWatchCheckbox);
         
         newCheckbox.addEventListener('change', async function() {
             console.log('First Watch Only checkbox changed:', this.checked);
             
-            // Get current URL parameters
+            // FEATURE: Preserve all current URL parameters during filter toggle
             const currentParams = new URLSearchParams(window.location.search);
             const currentSort = currentParams.get('sortOrder') || 'datewatched_desc';
             const currentSearch = currentParams.get('searchString') || '';
@@ -1658,7 +1684,7 @@ function initializeFirstWatchOnly() {
             const currentDisplayMode = currentParams.get('displayMode') || 'grid';
             const currentMonthFilter = currentParams.get('monthFilter') || '';
             
-            // Build new URL with firstWatchOnly parameter
+            // ENHANCEMENT: Build new URL with conditional firstWatchOnly parameter
             const params = new URLSearchParams();
             if (currentSort) params.set('sortOrder', currentSort);
             if (currentSearch) params.set('searchString', currentSearch);

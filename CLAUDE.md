@@ -231,6 +231,29 @@ OBSERVABILITY INTEGRATION POINTS:
 - Test edge cases rigorously
 - **Verify user data isolation** and proper filtering by UserId
 
+### 6. 🔍 Systematic Debugging Methodology
+**CRITICAL AI Pattern - Root Cause Analysis Protocol**
+
+**Essential Debugging Steps:**
+1. **User Workflow Verification**: Always consider user behavior before assuming technical bugs
+2. **Parameter Tracking**: Trace parameter flow through the entire request pipeline
+3. **Environment Comparison**: Test identical scenarios in development vs. production
+4. **Simplest Explanation First**: Often user workflow issues masquerade as complex technical problems
+
+**Debugging Pattern Example:**
+```csharp
+// DEBUGGING: Add comprehensive logging at each step
+_logger.LogInformation("FirstWatchOnly parameter received: {FirstWatchOnly}", firstWatchOnly);
+_logger.LogInformation("Query built with filter: {HasFilter}", query.Contains("WHERE"));
+_logger.LogInformation("Results returned: {Count} movies", movies.Count());
+```
+
+**Key Learning Points:**
+- **User Education vs. Technical Fixes**: Distinguish between actual bugs and user workflow confusion
+- **Parameter Preservation**: Verify that parameters maintain their values throughout the request lifecycle
+- **Systematic Investigation**: Follow the data flow from UI input through controller to database query
+- **False Positive Recognition**: Stop debugging when evidence points to user behavior, not code issues
+
 ---
 
 ## 🤖 Claude Code Subagents System
@@ -448,6 +471,38 @@ var searchResults = await _tmdbService.SearchMoviesAsync(query);
 - Use `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
 - Rate limiting with SemaphoreSlim protection
 
+### 🔗 URL Parameter Handling Pattern
+**CRITICAL AI Pattern - RouteValueDictionary for Clean Parameter Management**
+
+**Enhanced Technical Implementation:**
+```csharp
+/// <summary>
+/// Creates route values with conditional parameter inclusion for clean URL generation.
+/// FIX: Prevents empty string parameters that cause controller signature mismatches.
+/// </summary>
+object CreateRouteValues(object baseValues, bool includeFirstWatch = true) 
+{
+    var routeDict = new RouteValueDictionary(baseValues);
+    if (includeFirstWatch && isFirstWatchOnly) 
+    {
+        routeDict["firstWatchOnly"] = "true";
+    }
+    return routeDict;
+}
+```
+
+**Key Technical Benefits:**
+- **Parameter Cleanliness**: Only includes parameters when they have meaningful values
+- **Controller Compatibility**: Matches controller `bool parameter = false` signatures perfectly
+- **Production Stability**: Eliminates empty string vs. null parameter interpretation issues
+- **Reusable Pattern**: Establishes enterprise-grade parameter handling for future features
+
+**Critical Rules:**
+- **NEVER** include boolean parameters as empty strings - omit them entirely when false
+- **ALWAYS** use RouteValueDictionary for complex parameter scenarios
+- **VERIFY** parameter behavior in both development and production environments
+- **DOCUMENT** parameter handling logic for maintenance clarity
+
 ### 🎭 AJAX-Enhanced System Patterns
 **Critical AI Pattern - X-Requested-With Header:**
 ```javascript
@@ -532,6 +587,46 @@ if (await HasAvailableMoviesForDirector(trimmed, userId))
 // PERFORMANCE: Use batch API calls to prevent N+1 queries
 var movieDetails = await _tmdbService.GetMultipleMovieDetailsAsync(tmdbIds);
 ```
+
+#### 📋 Comprehensive Code Review Protocol
+**CRITICAL AI Pattern - Enterprise-Grade Code Review Standards**
+
+**Mandatory Review Areas:**
+1. **Parameter Consistency**: Verify parameter handling patterns across all implementations
+2. **Documentation Coverage**: Ensure all functions have professional JSDoc-style comments
+3. **Pattern Compliance**: Check adherence to established architectural patterns
+4. **Performance Considerations**: Review for potential optimization opportunities
+
+**JavaScript Documentation Standards:**
+```javascript
+/**
+ * Initializes event handlers for first watch only functionality.
+ * 
+ * TECHNICAL: Handles checkbox state changes and preserves user preferences
+ * during dynamic content updates (AJAX operations, tab switching).
+ * This function should be called after any DOM manipulation that might
+ * affect the checkbox elements.
+ * 
+ * @description Ensures first watch only checkbox maintains proper event
+ * listeners after AJAX operations that rebuild page sections
+ */
+function initializeFirstWatchOnly() {
+    // Implementation details...
+}
+```
+
+**Code Review Checklist:**
+- ✅ **Consistent Implementation**: All similar functions follow identical patterns
+- ✅ **Professional Documentation**: Every function has comprehensive comments
+- ✅ **English-Only Comments**: No Spanish or other language comments remain
+- ✅ **Technical Accuracy**: Comments accurately describe implementation details
+- ✅ **Future Maintenance**: Code is self-documenting for future developers
+
+**Post-Debugging Enhancement Protocol:**
+- After resolving any "false positive" bugs, conduct comprehensive code review
+- Add professional documentation to all related functionality
+- Establish consistent patterns that prevent future confusion
+- Document lessons learned for similar scenarios
 
 ### 🚨 Error Handling
 - **Structured logging** using `_logger` throughout
