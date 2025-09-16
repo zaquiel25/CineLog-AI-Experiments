@@ -426,7 +426,7 @@ else
                                     const movieItem = document.createElement('a');
                                     movieItem.href = '#';
                                     movieItem.classList.add('list-group-item', 'list-group-item-action');
-                                    movieItem.innerHTML = `<strong>${movie.title}</strong> (${releaseYear})<br><small class="text-muted">${(movie.overview || '').substring(0,100)}...</small>`;
+                                    movieItem.innerHTML = `<div class="border-bottom pb-2 mb-2"><div class="fw-bold">${movie.title}</div><div class="text-muted small">${releaseYear} • ${(movie.overview || '').substring(0, 60)}...</div></div>`;
                                     movieItem.setAttribute('data-tmdb-id', movie.id); // movie.id is the TMDB ID from search results
 
                                     movieItem.addEventListener('click', async function(e) {

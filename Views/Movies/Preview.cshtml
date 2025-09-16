@@ -82,16 +82,13 @@
                 var watchProviders = ViewData["WatchProviders"] as Dictionary<string, List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>>;
                 bool hasProviders = watchProviders != null && watchProviders.Any(kvp => kvp.Value != null && kvp.Value.Any());
             }
-            <h5 class="mt-4">Where to Watch</h5>
-            <div class="alert alert-info py-2 mb-2" style="background:#222; color:#fff; border:none;">
-                Click any provider below to see all streaming, rental, and purchase options for <strong>@Model.Title</strong> on TMDB. You’ll see prices, regions, and official links.
-            </div>
+            <div class="mt-4">
             @if (hasProviders && watchProviders != null)
             {
                 if (watchProviders.ContainsKey("Streaming"))
                 {
                     <div class="provider-category mb-2">
-                        <h6>🎬 Stream</h6>
+                        <h6>Stream</h6>
                         <div class="d-flex flex-wrap">
                             @foreach (var provider in watchProviders["Streaming"])
                             {
@@ -109,7 +106,7 @@
                 if (watchProviders.ContainsKey("Buy"))
                 {
                     <div class="provider-category mb-2">
-                        <h6>💰 Buy</h6>
+                        <h6>Buy</h6>
                         <div class="d-flex flex-wrap">
                             @foreach (var provider in watchProviders["Buy"])
                             {
@@ -127,7 +124,7 @@
                 if (watchProviders.ContainsKey("Rent"))
                 {
                     <div class="provider-category mb-2">
-                        <h6>📱 Rent</h6>
+                        <h6>Rent</h6>
                         <div class="d-flex flex-wrap">
                             @foreach (var provider in watchProviders["Rent"])
                             {
@@ -149,6 +146,7 @@
                     <p class="text-muted">Not currently available in your region</p>
                 </div>
             }
+            </div>
         </div>
     </div>
 </div>
