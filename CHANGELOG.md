@@ -1,3 +1,42 @@
+## 2025-09-16
+
+### 🎨 **MAJOR UI/UX OVERHAUL** - Letterboxd-Style Design + User Guidance + AJAX System Fixes
+
+**🎯 COMPREHENSIVE USER EXPERIENCE TRANSFORMATION**: Major design improvements, enhanced user guidance, and critical AJAX system restoration.
+
+#### 🎨 Letterboxd-Style Design System
+- **Vertical Centering System**: Created `/wwwroot/css/vertical-centering.css` with comprehensive flexbox centering patterns
+- **Navbar Width Constraint**: Fixed navbar from spanning full browser width with `max-width: 1200px` constraint
+- **Movie Search UI Enhancement**: Letterboxd-inspired layout for TMDB search results
+  - **Problem**: Movie title and year too close together, inconsistent bio spacing
+  - **Solution**: Clean bordered layout with proper title separation and truncated overview text
+- **Provider Section Cleanup**: Streamlined movie details "Where to Watch" sections
+  - Removed excessive explanatory text and "AI-looking" emoji icons
+  - Maintained streaming provider logos and functionality
+  - Added proper spacing between cast and provider sections
+
+#### 🧭 User Guidance Enhancements  
+- **Enhanced Subtitles**: Added contextual help to guide users to the suggestion workflow
+  - Wishlist: "Discover new movies - use [Suggestions] to find movies to add to your wishlist"
+  - Blacklist: "Curate your preferences - movies added here won't appear in your [Suggestions]"
+- **Workflow Clarity**: Users now understand how to populate these lists through the Suggestions feature
+- **Clean Integration**: Guidance integrated into existing subtitle areas without additional UI clutter
+
+#### 🚨 Critical AJAX System Restoration
+- **Duplicate UI Elements Fix**: Resolved duplicate navbar/footer appearing during grid/list view switching
+- **Root Cause**: Both Wishlist and Blacklist controllers had AJAX functionality temporarily disabled
+- **Technical Solution**: Restored proper AJAX detection with `Request.Headers["X-Requested-With"] == "XMLHttpRequest"` pattern
+- **Result**: Seamless display mode switching without page reloads or duplicate UI elements
+
+#### 🔧 Technical Implementation Excellence
+- **Bootstrap Integration**: All changes work seamlessly with existing responsive structure
+- **Pattern Consistency**: Applied proven AJAX partial view patterns across controllers
+- **Link Corrections**: Fixed action references from "Suggestions" to "Suggest" for proper routing
+- **CSS Architecture**: Professional gradient designs and ultra-specific selector patterns
+- **Build Quality**: 0 warnings, 0 errors maintained throughout comprehensive changes
+
+---
+
 ## 2025-09-04
 
 ### 🔧 **FIRST WATCH ONLY PARAMETER PERSISTENCE FIX** - Enhanced Technical Implementation

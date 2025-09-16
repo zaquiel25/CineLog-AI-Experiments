@@ -31,36 +31,22 @@
     </div>
     <hr />
     
-    <p class="text-muted mb-4">Your 'no thanks' list</p>
+    <p class="text-muted mb-4">Curate your preferences - movies added here won't appear in your <a asp-action="Suggest" class="text-decoration-none">Suggestions</a></p>
 </div>
 
 <div class="row mb-3">
-    <div class="col-lg-6 col-md-8">
-        <form asp-controller="Movies" asp-action="Blacklist" method="get">
-            <div class="input-group">
-                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" 
-                       class="form-control" placeholder="Search by Title..." />
-                <button type="submit" class="btn btn-outline-secondary">
-                    <i class="fas fa-search"></i>
-                </button>
-                <a asp-action="Blacklist" class="btn btn-outline-secondary">
-                    <i class="fas fa-times"></i>
-                </a>
-            </div>
-        </form>
-    </div>
 </div>
 @* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
 <div class="mb-3 d-flex justify-content-end align-items-center">
     <!-- Display mode toggle -->
     <div class="btn-group btn-group-sm me-2" role="group">
-        <a href="@Url.Action("Blacklist", new { displayMode = "grid", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+        <a href="@Url.Action("Blacklist", new { displayMode = "grid", sortOrder = ViewData["CurrentSort"] })"
            class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
            title="Grid View"
            data-display-toggle="grid">
             <i class="fas fa-th"></i>
         </a>
-        <a href="@Url.Action("Blacklist", new { displayMode = "list", searchString = ViewData["CurrentFilter"], sortOrder = ViewData["CurrentSort"] })"
+        <a href="@Url.Action("Blacklist", new { displayMode = "list", sortOrder = ViewData["CurrentSort"] })"
            class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
            title="List View"
            data-display-toggle="list">
@@ -80,28 +66,28 @@
             @* FIX: Toggle pattern like Journal/Collection - click same option to change order *@
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DirectorSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DirectorSortParm"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Director
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DateSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DateSortParm"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Date Added
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["YearSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["YearSortParm"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Released Year
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["TitleSortParm"], searchString = ViewData["CurrentFilter"], displayMode = currentDisplayMode })"
+                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["TitleSortParm"], displayMode = currentDisplayMode })"
                    data-sort-link="true">
                     Title
                 </a>
@@ -114,10 +100,6 @@
 <div class="mb-3">
     <small class="text-muted">
         <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
-        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
-        {
-            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
-        }
     </small>
 </div>
 
@@ -260,7 +242,6 @@ else
                 <li class="page-item">
                     <a class="page-link" asp-action="Blacklist"
                        asp-route-pageNumber="@(Model.PageIndex - 1)"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
                        asp-route-sortOrder="@ViewData["CurrentSort"]"
                        asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Previous</a>
                 </li>
@@ -277,7 +258,6 @@ else
                 <li class="page-item @(i == Model.PageIndex ? "active" : "")">
                     <a class="page-link" asp-action="Blacklist"
                        asp-route-pageNumber="@i"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
                        asp-route-sortOrder="@ViewData["CurrentSort"]"
                        asp-route-displayMode="@ViewData["CurrentDisplayMode"]">@i</a>
                 </li>
@@ -288,7 +268,6 @@ else
                 <li class="page-item">
                     <a class="page-link" asp-action="Blacklist"
                        asp-route-pageNumber="@(Model.PageIndex + 1)"
-                       asp-route-searchString="@ViewData["CurrentFilter"]"
                        asp-route-sortOrder="@ViewData["CurrentSort"]"
                        asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Next</a>
                 </li>

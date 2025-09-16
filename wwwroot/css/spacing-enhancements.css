@@ -1,0 +1,177 @@
+/* ===== SPACING ENHANCEMENTS ===== */
+/* Improves spacing and margins while keeping the original Bootstrap design */
+
+:root {
+  /* Swiss Precision Spacing System */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-2xl: 3rem;      /* 48px */
+  --spacing-3xl: 4rem;      /* 64px */
+}
+
+/* Better Container Spacing */
+.container,
+.container-fluid {
+  padding-left: var(--spacing-lg);   /* 24px instead of Bootstrap's 15px */
+  padding-right: var(--spacing-lg);  /* 24px instead of Bootstrap's 15px */
+}
+
+/* Improve main content top spacing */
+main.pb-5 {
+  padding-top: var(--spacing-xl);    /* 32px top spacing for breathing room */
+}
+
+/* Better spacing for cards and components */
+.card {
+  margin-bottom: var(--spacing-lg);  /* 24px between cards */
+}
+
+.card-body {
+  padding: var(--spacing-lg);        /* 24px internal padding */
+}
+
+.card-header,
+.card-footer {
+  padding: var(--spacing-md) var(--spacing-lg); /* 16px vertical, 24px horizontal */
+}
+
+/* Improve alert spacing */
+.alert {
+  margin-bottom: var(--spacing-lg);  /* 24px space after alerts */
+}
+
+/* Better form spacing */
+.form-group,
+.mb-3 {
+  margin-bottom: var(--spacing-lg);  /* 24px between form elements */
+}
+
+/* Improve button group spacing */
+.btn {
+  margin-right: var(--spacing-sm);   /* 8px between buttons */
+  margin-bottom: var(--spacing-sm);  /* 8px vertical spacing for wrapping */
+}
+
+.btn:last-child {
+  margin-right: 0;                   /* Remove margin from last button */
+}
+
+/* Better hero section spacing (if exists) */
+.hero-btn {
+  margin: var(--spacing-sm);         /* 8px around hero buttons */
+}
+
+/* Improve list spacing */
+.list-group-item {
+  padding: var(--spacing-md) var(--spacing-lg); /* 16px vertical, 24px horizontal */
+}
+
+/* Better table spacing */
+.table td,
+.table th {
+  padding: var(--spacing-md);        /* 16px cell padding */
+}
+
+/* Improve navigation spacing */
+.navbar {
+  padding: var(--spacing-md) 0;      /* 16px vertical padding */
+}
+
+.nav-link {
+  padding: var(--spacing-sm) var(--spacing-md); /* 8px vertical, 16px horizontal */
+}
+
+/* Better footer spacing */
+.footer {
+  padding: var(--spacing-xl) 0;      /* 32px vertical padding */
+}
+
+/* Process steps spacing (for your homepage) */
+.process-steps {
+  padding: var(--spacing-2xl) 0;     /* 48px vertical padding */
+  gap: var(--spacing-lg);            /* 24px between steps */
+}
+
+.step {
+  padding: var(--spacing-lg);        /* 24px internal padding */
+}
+
+.step-icon {
+  margin-bottom: var(--spacing-md);  /* 16px below icons */
+}
+
+/* How it works section spacing */
+.how-it-works-section {
+  margin: var(--spacing-3xl) 0;      /* 64px vertical margin */
+}
+
+/* Better responsive spacing */
+@media (max-width: 768px) {
+  .container,
+  .container-fluid {
+    padding-left: var(--spacing-md);  /* 16px on mobile */
+    padding-right: var(--spacing-md); /* 16px on mobile */
+  }
+  
+  main.pb-5 {
+    padding-top: var(--spacing-lg);   /* 24px on mobile */
+  }
+  
+  .card-body {
+    padding: var(--spacing-md);       /* 16px on mobile */
+  }
+  
+  .process-steps {
+    padding: var(--spacing-xl) 0;     /* 32px on mobile */
+    gap: var(--spacing-md);           /* 16px between steps on mobile */
+  }
+  
+  .how-it-works-section {
+    margin: var(--spacing-2xl) 0;     /* 48px on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .container,
+  .container-fluid {
+    padding-left: var(--spacing-sm);  /* 8px on small mobile */
+    padding-right: var(--spacing-sm); /* 8px on small mobile */
+  }
+}
+
+/* Utility classes for consistent spacing */
+.spacing-xs { margin: var(--spacing-xs); }
+.spacing-sm { margin: var(--spacing-sm); }
+.spacing-md { margin: var(--spacing-md); }
+.spacing-lg { margin: var(--spacing-lg); }
+.spacing-xl { margin: var(--spacing-xl); }
+.spacing-2xl { margin: var(--spacing-2xl); }
+
+.spacing-t-xs { margin-top: var(--spacing-xs); }
+.spacing-t-sm { margin-top: var(--spacing-sm); }
+.spacing-t-md { margin-top: var(--spacing-md); }
+.spacing-t-lg { margin-top: var(--spacing-lg); }
+.spacing-t-xl { margin-top: var(--spacing-xl); }
+.spacing-t-2xl { margin-top: var(--spacing-2xl); }
+
+.spacing-b-xs { margin-bottom: var(--spacing-xs); }
+.spacing-b-sm { margin-bottom: var(--spacing-sm); }
+.spacing-b-md { margin-bottom: var(--spacing-md); }
+.spacing-b-lg { margin-bottom: var(--spacing-lg); }
+.spacing-b-xl { margin-bottom: var(--spacing-xl); }
+.spacing-b-2xl { margin-bottom: var(--spacing-2xl); }
+
+.spacing-x-xs { margin-left: var(--spacing-xs); margin-right: var(--spacing-xs); }
+.spacing-x-sm { margin-left: var(--spacing-sm); margin-right: var(--spacing-sm); }
+.spacing-x-md { margin-left: var(--spacing-md); margin-right: var(--spacing-md); }
+.spacing-x-lg { margin-left: var(--spacing-lg); margin-right: var(--spacing-lg); }
+.spacing-x-xl { margin-left: var(--spacing-xl); margin-right: var(--spacing-xl); }
+
+.spacing-y-xs { margin-top: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
+.spacing-y-sm { margin-top: var(--spacing-sm); margin-bottom: var(--spacing-sm); }
+.spacing-y-md { margin-top: var(--spacing-md); margin-bottom: var(--spacing-md); }
+.spacing-y-lg { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+.spacing-y-xl { margin-top: var(--spacing-xl); margin-bottom: var(--spacing-xl); }

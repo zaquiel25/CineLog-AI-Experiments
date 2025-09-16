@@ -470,14 +470,16 @@ namespace Ezequiel_Movies.Controllers
                 paginatedBlacklist.PageIndex,
                 pageSize);
 
-            // TEMPORARY FIX: Disable AJAX partial views to fix navigation issue
-            // TODO: Re-implement AJAX with proper browser navigation detection
-            _logger.LogInformation("Blacklist request - AJAX temporarily disabled, returning full view");
+            // FEATURE: Handle AJAX requests for display mode and sorting to eliminate page reloads  
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                _logger.LogInformation("Blacklist AJAX request - returning partial view");
+                return PartialView(paginatedResult);
+            }
 
             return View(paginatedResult);
         }
 
-        /// <summary>
         /// <summary>
         /// Removes a movie from the user's blacklist by TMDB ID.
         /// </summary>
@@ -662,9 +664,12 @@ namespace Ezequiel_Movies.Controllers
                 paginatedWishlist.PageIndex,
                 pageSize);
 
-            // TEMPORARY FIX: Disable AJAX partial views to fix navigation issue
-            // TODO: Re-implement AJAX with proper browser navigation detection
-            _logger.LogInformation("Wishlist request - AJAX temporarily disabled, returning full view");
+            // FEATURE: Handle AJAX requests for display mode and sorting to eliminate page reloads  
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                _logger.LogInformation("Wishlist AJAX request - returning partial view");
+                return PartialView(paginatedResult);
+            }
 
             return View(paginatedResult);
         }

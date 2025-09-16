@@ -1,0 +1,333 @@
+/* ===== VERTICAL CENTERING ENHANCEMENTS ===== */
+/* Inspired by Letterboxd's centered design approach */
+
+/* IMMEDIATE VISIBLE TEST - Homepage title centering */
+body h1 {
+  text-align: center !important;
+  margin: 2rem auto !important;
+  max-width: 600px !important;
+}
+
+/* IMMEDIATE VISIBLE TEST - Homepage paragraph centering */
+body p {
+  text-align: center !important;
+}
+
+/* Letterboxd-style navbar width constraint */
+.navbar .container-fluid {
+  max-width: 1200px; /* Constrain navbar width like Letterboxd */
+  margin: 0 auto; /* Center the navbar content */
+}
+
+/* Better vertical alignment for navigation items */
+.navbar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 40px; /* Ensures consistent height for better alignment */
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Center content within cards */
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  text-align: center; /* Center text within cards like Letterboxd */
+}
+
+.card-title {
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  margin-bottom: auto;
+}
+
+/* Better vertical centering for buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px; /* Consistent button height */
+  text-align: center;
+}
+
+/* Center hero buttons like Letterboxd */
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 24px;
+  text-align: center;
+}
+
+/* Vertical centering for process steps */
+.process-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 120px; /* Consistent height for visual balance */
+}
+
+.step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+.step-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+
+/* Center form elements */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-control,
+.form-select {
+  text-align: left; /* Keep form inputs left-aligned for usability */
+}
+
+/* Center alert content */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+/* Better vertical alignment for lists */
+.list-group-item {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+}
+
+/* Center table cell content */
+.table td,
+.table th {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.table th {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Main content centering like Letterboxd */
+main {
+  min-height: calc(100vh - 200px); /* Account for header/footer */
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Start from top but allow centering of content */
+}
+
+/* Homepage specific centering */
+.how-it-works-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 0;
+}
+
+/* Center pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+}
+
+.page-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  min-width: 40px;
+}
+
+/* Center movie grid items like Letterboxd */
+.row {
+  display: flex;
+  align-items: stretch; /* Ensure equal height cards */
+}
+
+.col,
+.col-1, .col-2, .col-3, .col-4, .col-5, .col-6,
+.col-7, .col-8, .col-9, .col-10, .col-11, .col-12,
+.col-auto, .col-sm, .col-md, .col-lg, .col-xl {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Footer centering */
+.footer {
+  display: flex;
+  align-items: center;
+  min-height: 80px;
+}
+
+.footer .row {
+  align-items: center;
+  width: 100%;
+}
+
+/* Breadcrumb centering */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 1rem 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Modal centering improvements */
+.modal-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Form button groups */
+.btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Search form centering */
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-form .form-control {
+  flex-grow: 1;
+}
+
+/* Tab navigation centering */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+
+/* Loading state centering */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  text-align: center;
+}
+
+/* Empty state centering */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .process-steps {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .step-arrow {
+    transform: rotate(90deg);
+    margin: 1rem 0;
+  }
+  
+  .navbar-nav {
+    text-align: center;
+  }
+  
+  .navbar-nav .nav-link {
+    justify-content: center;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .search-form {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .card-body {
+    text-align: center;
+  }
+}
