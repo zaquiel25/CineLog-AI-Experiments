@@ -9,14 +9,38 @@
     var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
     var isGridMode = currentDisplayMode == "grid";
     var isListMode = currentDisplayMode == "list";
+
+    // REDESIGN: Current sort display mapping for consolidated dropdown button
+    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    {
+        "title_desc" => "Title (Z-A)",
+        "title_asc" => "Title (A-Z)",
+        "most_watched_desc" => "Most Watched",
+        "most_watched_asc" => "Least Watched",
+        "director_asc" => "Director (A-Z)",
+        "director_desc" => "Director (Z-A)",
+        "rating_desc" => "Rating (High to Low)",
+        "rating_asc" => "Rating (Low to High)",
+        "year_asc" => "Released Year (Oldest First)",
+        "year_desc" => "Released Year (Newest First)",
+        _ => "Recent"
+    };
 }
 
 <div class="professional-title-section">
     <div class="title-container-professional">
         <h1 class="page-title-professional">My Movies</h1>
-        @if (ViewData["MovieCount"] is int movieCount && ViewData["TotalWatches"] is int totalWatches)
+        @if (ViewData["MovieCount"] is int movieCount)
         {
-            <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount unique movies, @totalWatches total watches</span>
+            @* ENHANCEMENT: Display enhanced statistics based on view mode *@
+            @if (ViewData["TotalWatches"] is int totalWatches)
+            {
+                <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount unique movies, @totalWatches total watches</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary ms-3" style="font-size: 1rem;">@movieCount</span>
+            }
         }
     </div>
     <hr />
@@ -159,8 +183,8 @@
 
 <div class="row mb-4">
     <div class="col-md-10">
-        <form method="get" action="@Url.Action("List")">
-            <div class="input-group">
+        <form method="get" action="@Url.Action("List")" id="searchForm">
+            <div class="input-group input-group-sm">
                 <input type="text" 
                        name="searchString" 
                        value="@ViewData["CurrentFilter"]" 
@@ -170,20 +194,23 @@
                 <input type="hidden" name="view" value="collection" />
                 <input type="hidden" name="displayMode" value="@(currentDisplayMode)" />
                 <input type="hidden" name="monthFilter" value="@ViewData["CurrentMonthFilter"]" />
-                <button type="submit" class="btn btn-primary">Search</button>
-                <a href="@Url.Action("List", new { view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })" class="btn btn-secondary">Clear Search</a>
+                <button type="submit" class="btn btn-primary" id="searchButton">Search</button>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+                {
+                    <a href="@Url.Action("List", new { view = "collection", displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"] })" class="btn btn-outline-secondary" id="clearSearchButton">Clear</a>
+                }
             </div>
         </form>
     </div>
     <div class="col-md-2">
-        <!-- HUMANIZED: Simple sort with essential options only -->
+        <!-- REDESIGN: Consolidated sort interface - dropdown shows current status and provides selection -->
         <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle w-100" 
-                    type="button" 
-                    id="sortDropdown" 
-                    data-bs-toggle="dropdown" 
+            <button class="btn btn-outline-secondary dropdown-toggle w-100"
+                    type="button"
+                    id="sortDropdown"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false">
-                <i class="fas fa-sort me-1"></i>
+                <i class="fas fa-sort me-1"></i>Sort: @currentSortDisplay
             </button>
             <ul class="dropdown-menu w-100" 
                 aria-labelledby="sortDropdown">
@@ -260,32 +287,16 @@
     </div>
 </div>
 
-@{
-    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
-    {
-        "title_desc" => "Title (Z-A)",
-        "title_asc" => "Title (A-Z)",
-        "most_watched_desc" => "Most Watched",
-        "most_watched_asc" => "Least Watched",
-        "director_asc" => "Director (A-Z)",
-        "director_desc" => "Director (Z-A)",
-        "rating_desc" => "Rating (High to Low)",
-        "rating_asc" => "Rating (Low to High)",
-        "year_asc" => "Released Year (Oldest First)",
-        "year_desc" => "Released Year (Newest First)",
-        _ => "Recent"
-    };
-}
 
-<div class="mb-3">
-    <small class="text-muted">
-        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
-        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
-        {
-            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
-        }
-    </small>
-</div>
+@* FEATURE: Search status display (if active search filter) *@
+@if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+{
+    <div class="mb-3">
+        <small class="text-muted">
+            <i class="fas fa-search me-1"></i>Searching for: "<strong>@ViewData["CurrentFilter"]</strong>"
+        </small>
+    </div>
+}
 
 @if (!Model.Any())
 {
@@ -574,10 +585,8 @@ html { overflow-y: scroll; } /* prevents page width from changing when content h
     transition: opacity 0.3s ease-out;
 }
 
-/* FEATURE: Cinema Gold branding for watch count badges */
-:root {
-    --cinelog-gold: #b8860b;
-}
+/* REMOVED: Collection-specific color override to ensure consistency with Journal view
+   All views now use the global --cinelog-gold: #f4d03f from site.css */
 
 /* FEATURE: Collection-specific Cinema Gold List View Styling */
 .movies-list-container {
@@ -901,8 +910,11 @@ function initializeTabSwitching() {
                         // Update URL
                         window.history.pushState({}, '', url);
                         
-                        // Re-initialize tab switching for new content
-                        setTimeout(initializeTabSwitching, 50);
+                        // Re-initialize all handlers for new content
+                        setTimeout(() => {
+                            initializeTabSwitching();
+                            initializeSearchHandlers();
+                        }, 50);
                         
                         console.log('Tab switching completed successfully');
                     } else {
@@ -1048,8 +1060,11 @@ document.addEventListener('click', function(e) {
             const newUrl = new URL(monthLink.href);
             window.history.pushState({}, '', newUrl);
             
-            // Re-initialize tab switching for new content
-            setTimeout(initializeTabSwitching, 50);
+            // Re-initialize all handlers for new content
+            setTimeout(() => {
+                initializeTabSwitching();
+                initializeSearchHandlers();
+            }, 50);
             
             console.log('Month filtering completed successfully');
         } else {
@@ -1132,8 +1147,11 @@ document.addEventListener('click', function(e) {
         sortLink.innerHTML = originalText;
         sortLink.style.pointerEvents = 'auto';
         
-        // Re-initialize tab switching after content replacement
-        initializeTabSwitching();
+        // Re-initialize all handlers after content replacement
+        setTimeout(() => {
+            initializeTabSwitching();
+            initializeSearchHandlers();
+        }, 50);
         
         console.log('AJAX sorting completed successfully');
     })
@@ -1147,6 +1165,161 @@ document.addEventListener('click', function(e) {
         // FALLBACK: Use standard navigation on AJAX failure
         window.location.href = sortLink.href;
     });
+});
+
+/**
+ * FEATURE: AJAX Search Form Handler for Collection View - Prevents Page Reload During Search Operations
+ *
+ * This function handles search form submission and search clearing without page reloads.
+ * It preserves all current URL parameters and maintains collection view state during search operations.
+ *
+ * CRITICAL: Re-initialized after every AJAX content update to prevent event handler loss.
+ */
+function initializeSearchHandlers() {
+    const searchForm = document.getElementById('searchForm');
+    const clearSearchButton = document.getElementById('clearSearchButton');
+
+    // FEATURE: AJAX form submission for search
+    if (searchForm) {
+        // Remove existing listeners by cloning to prevent memory leaks
+        const newSearchForm = searchForm.cloneNode(true);
+        searchForm.parentNode?.replaceChild(newSearchForm, searchForm);
+
+        newSearchForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const searchButton = this.querySelector('#searchButton');
+            const searchInput = this.querySelector('input[name="searchString"]');
+            const searchTerm = searchInput?.value?.trim() || '';
+
+            console.log('AJAX collection search initiated:', searchTerm);
+
+            // Get current URL parameters to preserve state
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentDisplayMode = currentParams.get('displayMode') || 'grid';
+            const currentSort = currentParams.get('sortOrder') || 'datewatched_desc';
+            const currentMonthFilter = currentParams.get('monthFilter') || '';
+
+            // Build search URL with preserved parameters for collection view
+            const params = new URLSearchParams();
+            if (currentSort) params.set('sortOrder', currentSort);
+            if (searchTerm) params.set('searchString', searchTerm);
+            params.set('view', 'collection'); // Always maintain collection view
+            if (currentDisplayMode !== 'grid') params.set('displayMode', currentDisplayMode);
+            if (currentMonthFilter) params.set('monthFilter', currentMonthFilter);
+
+            const searchUrl = `/Movies/List?${params.toString()}`;
+
+            // Show loading state
+            const originalButtonText = searchButton.innerHTML;
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Searching...';
+            searchButton.disabled = true;
+
+            try {
+                const response = await fetch(searchUrl, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+
+                    // Update container content using established pattern
+                    const currentContainer = document.querySelector('main .container');
+                    if (currentContainer) {
+                        currentContainer.innerHTML = html;
+
+                        // Update URL without page reload
+                        window.history.pushState(null, '', searchUrl);
+
+                        // Re-initialize all handlers after AJAX update
+                        setTimeout(() => {
+                            initializeTabSwitching();
+                            initializeSearchHandlers();
+                        }, 50);
+
+                        console.log('AJAX collection search completed successfully');
+                    }
+                } else {
+                    console.error('AJAX collection search request failed:', response.status);
+                    // Fallback to standard form submission
+                    searchButton.innerHTML = originalButtonText;
+                    searchButton.disabled = false;
+                    this.submit();
+                }
+            } catch (error) {
+                console.error('AJAX collection search error:', error);
+                // Fallback to standard form submission
+                searchButton.innerHTML = originalButtonText;
+                searchButton.disabled = false;
+                this.submit();
+            }
+        });
+
+        console.log('Collection search form AJAX handler initialized');
+    }
+}
+
+// FEATURE: Event delegation for clear search button in collection view (handles dynamically shown/hidden buttons)
+document.addEventListener('click', async function(e) {
+    const clearButton = e.target.closest('#clearSearchButton');
+    if (!clearButton) return;
+
+    e.preventDefault();
+    console.log('AJAX collection clear search initiated via event delegation');
+
+    // Show loading state
+    const originalButtonText = clearButton.innerHTML;
+    clearButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
+    clearButton.style.pointerEvents = 'none';
+
+    try {
+        const response = await fetch(clearButton.href, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+
+        if (response.ok) {
+            const html = await response.text();
+
+            // Update container content using established pattern
+            const currentContainer = document.querySelector('main .container');
+            if (currentContainer) {
+                currentContainer.innerHTML = html;
+
+                // Update URL without page reload
+                const newUrl = new URL(clearButton.href);
+                window.history.pushState(null, '', newUrl);
+
+                // Re-initialize all handlers after AJAX update
+                setTimeout(() => {
+                    initializeTabSwitching();
+                    initializeSearchHandlers();
+                }, 50);
+
+                console.log('AJAX collection clear search completed successfully via event delegation');
+            }
+        } else {
+            console.error('AJAX collection clear search request failed:', response.status);
+            // Fallback to standard navigation
+            clearButton.innerHTML = originalButtonText;
+            clearButton.style.pointerEvents = 'auto';
+            window.location.href = clearButton.href;
+        }
+    } catch (error) {
+        console.error('AJAX collection clear search error:', error);
+        // Fallback to standard navigation
+        clearButton.innerHTML = originalButtonText;
+        clearButton.style.pointerEvents = 'auto';
+        window.location.href = clearButton.href;
+    }
+});
+
+// Initialize search handlers on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSearchHandlers();
 });
 
 </script>

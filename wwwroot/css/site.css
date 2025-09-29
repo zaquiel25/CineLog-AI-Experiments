@@ -2290,3 +2290,269 @@ fieldset:hover {
     }
 }
 /* ===== END ELEGANT CINEMA GOLD TIMELINE MARKERS ===== */
+
+/* ===== ELEGANT SEARCH BAR STYLING - CINEMA PROFESSIONAL ===== */
+/* Modern, visually appealing search bars that match the Cinema Gold aesthetic */
+
+form[id="searchForm"] .input-group {
+    max-width: 350px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
+    border-radius: 25px !important;
+    padding: 3px !important;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 2px 6px rgba(var(--cinelog-gold-rgb), 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(var(--cinelog-gold-rgb), 0.3) !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+}
+
+form[id="searchForm"] .input-group:hover {
+    border-color: rgba(var(--cinelog-gold-rgb), 0.5) !important;
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.2),
+        0 4px 8px rgba(var(--cinelog-gold-rgb), 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+
+form[id="searchForm"] .input-group:focus-within {
+    border-color: var(--cinelog-gold) !important;
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.25),
+        0 4px 12px rgba(var(--cinelog-gold-rgb), 0.25),
+        0 0 0 3px rgba(var(--cinelog-gold-rgb), 0.15) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Input field styling */
+form[id="searchForm"] .input-group input.form-control {
+    background: transparent !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    color: #ffffff !important;
+    border-radius: 22px 0 0 22px !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+    flex: 1 !important;
+    height: 36px !important;
+    margin: 0 !important;
+}
+
+form[id="searchForm"] .input-group input.form-control:focus {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: #ffffff !important;
+}
+
+form[id="searchForm"] .input-group input.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+form[id="searchForm"] .input-group input.form-control:focus::placeholder {
+    opacity: 0.4 !important;
+}
+
+/* Search button styling */
+form[id="searchForm"] .input-group button.btn {
+    background: linear-gradient(135deg, var(--cinelog-gold), var(--cinelog-gold-light)) !important;
+    border: none !important;
+    color: #1a1a1a !important;
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 0 22px 22px 0 !important;
+    transition: all 0.3s ease !important;
+    min-width: 80px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow:
+        0 2px 6px rgba(var(--cinelog-gold-rgb), 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+form[id="searchForm"] .input-group button.btn:hover {
+    background: linear-gradient(135deg, var(--cinelog-gold-hover), var(--cinelog-gold)) !important;
+    color: #000000 !important;
+    transform: scale(1.02) !important;
+    box-shadow:
+        0 4px 8px rgba(var(--cinelog-gold-rgb), 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+}
+
+form[id="searchForm"] .input-group button.btn:active {
+    transform: scale(0.98) !important;
+    box-shadow:
+        0 2px 4px rgba(var(--cinelog-gold-rgb), 0.3),
+        inset 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure proper spacing for multiple buttons (Search + Clear) - for both button and anchor elements */
+form[id="searchForm"] .input-group button.btn:not(:last-child),
+form[id="searchForm"] .input-group a.btn:not(:last-child) {
+    border-radius: 0 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+form[id="searchForm"] .input-group button.btn:last-child,
+form[id="searchForm"] .input-group a.btn:last-child {
+    border-radius: 0 22px 22px 0 !important;
+}
+
+/* Handle single button scenarios */
+form[id="searchForm"] .input-group button.btn:only-child,
+form[id="searchForm"] .input-group a.btn:only-child {
+    border-radius: 0 22px 22px 0 !important;
+    border-right: none !important;
+}
+
+/* Clear button styling (if exists) - for both button and anchor elements */
+form[id="searchForm"] .input-group button.btn.btn-secondary,
+form[id="searchForm"] .input-group button.btn.btn-outline-secondary,
+form[id="searchForm"] .input-group a.btn.btn-secondary,
+form[id="searchForm"] .input-group a.btn.btn-outline-secondary {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.8), rgba(73, 80, 87, 0.9)) !important;
+    color: #ffffff !important;
+    border: none !important;
+    height: 36px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    padding: 8px 16px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    box-shadow:
+        0 2px 6px rgba(108, 117, 125, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+form[id="searchForm"] .input-group a.btn.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 1), rgba(73, 80, 87, 1)) !important;
+    color: #ffffff !important;
+    transform: scale(1.02) !important;
+    text-decoration: none !important;
+    box-shadow:
+        0 4px 8px rgba(108, 117, 125, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Icon styling for search button */
+form[id="searchForm"] .input-group button.btn i {
+    font-size: 0.9rem !important;
+    margin-right: 4px !important;
+    opacity: 0.9 !important;
+}
+
+/* Responsive design for search bars */
+@media (max-width: 768px) {
+    form[id="searchForm"] .input-group {
+        max-width: 100% !important;
+        margin: 0 auto !important;
+    }
+
+    form[id="searchForm"] .input-group input.form-control {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+    }
+
+    form[id="searchForm"] .input-group button.btn {
+        padding: 6px 10px !important;
+        font-size: 0.8rem !important;
+        min-width: 70px !important;
+    }
+
+    /* FIX: Collection view mobile spacing - add gap between search bar and sort dropdown */
+    .row.mb-4 .col-md-10 {
+        margin-bottom: 1rem !important;
+    }
+
+    /* Ensure sort dropdown has proper spacing in mobile */
+    .row.mb-4 .col-md-2 .dropdown {
+        margin-top: 0.5rem !important;
+    }
+}
+
+/* FIX: Prevent title movement when switching between views - ensure consistent title section height */
+.title-container-professional {
+    min-height: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+
+.title-container-professional h1 {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.title-container-professional .badge {
+    margin-left: 1rem !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 480px) {
+    form[id="searchForm"] .input-group {
+        border-radius: 20px !important;
+        padding: 1px !important;
+    }
+
+    form[id="searchForm"] .input-group input.form-control {
+        border-radius: 20px 0 0 20px !important;
+        padding: 5px 10px !important;
+    }
+
+    form[id="searchForm"] .input-group button.btn {
+        border-radius: 0 20px 20px 0 !important;
+        padding: 5px 8px !important;
+        min-width: 60px !important;
+    }
+}
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+    form[id="searchForm"] .input-group,
+    form[id="searchForm"] .input-group button.btn {
+        transition: none !important;
+    }
+
+    form[id="searchForm"] .input-group:hover,
+    form[id="searchForm"] .input-group:focus-within {
+        transform: none !important;
+    }
+
+    form[id="searchForm"] .input-group button.btn:hover {
+        transform: none !important;
+    }
+}
+
+/* Dark theme compatibility */
+@media (prefers-color-scheme: dark) {
+    form[id="searchForm"] .input-group {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)) !important;
+        border-color: rgba(var(--cinelog-gold-rgb), 0.4) !important;
+    }
+
+    form[id="searchForm"] .input-group input.form-control:focus {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+}
+/* ===== END ELEGANT SEARCH BAR STYLING ===== */

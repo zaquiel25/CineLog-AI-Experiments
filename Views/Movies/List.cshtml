@@ -227,8 +227,8 @@
 <!-- HUMANIZED: Simplified primary search interface -->
 <div class="row mb-4">
     <div class="col-md-6">
-        <form method="get" action="@Url.Action("List")">
-            <div class="input-group">
+        <form method="get" action="@Url.Action("List")" id="searchForm">
+            <div class="input-group input-group-sm">
                 <input type="text" 
                        name="searchString" 
                        value="@ViewData["CurrentFilter"]" 
@@ -236,10 +236,10 @@
                        placeholder="Search your movies..." />
                 <input type="hidden" name="view" value="@(currentView)" />
                 <input type="hidden" name="displayMode" value="@(currentDisplayMode)" />
-                <button type="submit" class="btn btn-primary">Search</button>
+                <button type="submit" class="btn btn-primary" id="searchButton">Search</button>
                 @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
                 {
-                    <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"], firstWatchOnly = Context.Request.Query["firstWatchOnly"] })" class="btn btn-outline-secondary">Clear</a>
+                    <a href="@Url.Action("List", new { view = currentView, displayMode = currentDisplayMode, monthFilter = ViewData["CurrentMonthFilter"], firstWatchOnly = Context.Request.Query["firstWatchOnly"] })" class="btn btn-outline-secondary" id="clearSearchButton">Clear</a>
                 }
             </div>
             
@@ -264,14 +264,14 @@
         </form>
     </div>
     <div class="col-md-3">
-        <!-- HUMANIZED: Simplified sort with only essential options -->
+        <!-- REDESIGN: Consolidated sort interface - dropdown shows current status and provides selection -->
         <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle w-100" 
-                    type="button" 
-                    id="sortDropdown" 
-                    data-bs-toggle="dropdown" 
+            <button class="btn btn-outline-secondary dropdown-toggle w-100"
+                    type="button"
+                    id="sortDropdown"
+                    data-bs-toggle="dropdown"
                     aria-expanded="false">
-                <i class="fas fa-sort me-1"></i>
+                <i class="fas fa-sort me-1"></i>Sort: @currentSortDisplay
             </button>
             <ul class="dropdown-menu w-100" 
                 aria-labelledby="sortDropdown">
@@ -406,16 +406,15 @@
     </div>
 </div>
 
-<!-- HUMANIZED: Simple current status display -->
-<div class="mb-3">
-    <small class="text-muted">
-        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
-        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
-        {
-            <span class="ms-2">| <i class="fas fa-search me-1"></i>"@ViewData["CurrentFilter"]"</span>
-        }
-    </small>
-</div>
+@* FEATURE: Search status display (if active search filter) *@
+@if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+{
+    <div class="mb-3">
+        <small class="text-muted">
+            <i class="fas fa-search me-1"></i>Searching for: "<strong>@ViewData["CurrentFilter"]</strong>"
+        </small>
+    </div>
+}
 
 
 @if (!Model.Any())
@@ -1464,6 +1463,7 @@ function initializeTabSwitching() {
                         setTimeout(() => {
                             initializeTabSwitching();
                             initializeFirstWatchOnly();
+                            initializeSearchHandlers();
                         }, 50);
                         
                         console.log('Tab switching completed successfully');
@@ -1551,6 +1551,7 @@ document.addEventListener('click', function(e) {
             setTimeout(() => {
                 initializeTabSwitching();
                 initializeFirstWatchOnly();
+                initializeSearchHandlers();
             }, 50);
             
             console.log('Month filtering completed successfully');
@@ -1723,6 +1724,7 @@ function initializeFirstWatchOnly() {
                         setTimeout(() => {
                             initializeTabSwitching();
                             initializeFirstWatchOnly();
+                            initializeSearchHandlers();
                         }, 50);
                         
                         console.log('First Watch Only - AJAX update completed successfully');
@@ -1789,6 +1791,7 @@ document.addEventListener('click', function(e) {
             setTimeout(() => {
                 initializeTabSwitching();
                 initializeFirstWatchOnly();
+                initializeSearchHandlers();
             }, 50);
             
             console.log('Display mode toggle completed successfully');
@@ -1872,6 +1875,7 @@ document.addEventListener('click', function(e) {
         setTimeout(() => {
             initializeTabSwitching();
             initializeFirstWatchOnly();
+            initializeSearchHandlers();
         }, 50);
         
         console.log('AJAX sorting completed successfully');
@@ -1888,5 +1892,164 @@ document.addEventListener('click', function(e) {
     });
 });
 
+/**
+ * FEATURE: AJAX Search Form Handler - Prevents Page Reload During Search Operations
+ *
+ * This function handles search form submission and search clearing without page reloads.
+ * It preserves all current URL parameters (view, display mode, sorting, filters) during search operations.
+ *
+ * CRITICAL: Re-initialized after every AJAX content update to prevent event handler loss.
+ */
+function initializeSearchHandlers() {
+    const searchForm = document.getElementById('searchForm');
+    const clearSearchButton = document.getElementById('clearSearchButton');
+
+    // FEATURE: AJAX form submission for search
+    if (searchForm) {
+        // Remove existing listeners by cloning to prevent memory leaks
+        const newSearchForm = searchForm.cloneNode(true);
+        searchForm.parentNode?.replaceChild(newSearchForm, searchForm);
+
+        newSearchForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const searchButton = this.querySelector('#searchButton');
+            const searchInput = this.querySelector('input[name="searchString"]');
+            const searchTerm = searchInput?.value?.trim() || '';
+
+            console.log('AJAX search initiated:', searchTerm);
+
+            // Get current URL parameters to preserve state
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentView = currentParams.get('view') || 'journal';
+            const currentDisplayMode = currentParams.get('displayMode') || 'grid';
+            const currentSort = currentParams.get('sortOrder') || 'datewatched_desc';
+            const firstWatchOnly = currentParams.get('firstWatchOnly') || '';
+            const currentMonthFilter = currentParams.get('monthFilter') || '';
+
+            // Build search URL with preserved parameters
+            const params = new URLSearchParams();
+            if (currentSort) params.set('sortOrder', currentSort);
+            if (searchTerm) params.set('searchString', searchTerm);
+            if (currentView !== 'journal') params.set('view', currentView);
+            if (currentDisplayMode !== 'grid') params.set('displayMode', currentDisplayMode);
+            if (firstWatchOnly === 'true') params.set('firstWatchOnly', 'true');
+            if (currentMonthFilter) params.set('monthFilter', currentMonthFilter);
+
+            const searchUrl = `/Movies/List?${params.toString()}`;
+
+            // Show loading state
+            const originalButtonText = searchButton.innerHTML;
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Searching...';
+            searchButton.disabled = true;
+
+            try {
+                const response = await fetch(searchUrl, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+
+                    // Update container content using established pattern
+                    const currentContainer = document.querySelector('main .container');
+                    if (currentContainer) {
+                        currentContainer.innerHTML = html;
+
+                        // Update URL without page reload
+                        window.history.pushState(null, '', searchUrl);
+
+                        // Re-initialize all handlers after AJAX update
+                        setTimeout(() => {
+                            initializeTabSwitching();
+                            initializeFirstWatchOnly();
+                            initializeSearchHandlers();
+                        }, 50);
+
+                        console.log('AJAX search completed successfully');
+                    }
+                } else {
+                    console.error('AJAX search request failed:', response.status);
+                    // Fallback to standard form submission
+                    searchButton.innerHTML = originalButtonText;
+                    searchButton.disabled = false;
+                    this.submit();
+                }
+            } catch (error) {
+                console.error('AJAX search error:', error);
+                // Fallback to standard form submission
+                searchButton.innerHTML = originalButtonText;
+                searchButton.disabled = false;
+                this.submit();
+            }
+        });
+
+        console.log('Search form AJAX handler initialized');
+    }
+}
+
+// FEATURE: Event delegation for clear search button (handles dynamically shown/hidden buttons)
+document.addEventListener('click', async function(e) {
+    const clearButton = e.target.closest('#clearSearchButton');
+    if (!clearButton) return;
+
+    e.preventDefault();
+    console.log('AJAX clear search initiated via event delegation');
+
+    // Show loading state
+    const originalButtonText = clearButton.innerHTML;
+    clearButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
+    clearButton.style.pointerEvents = 'none';
+
+    try {
+        const response = await fetch(clearButton.href, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+
+        if (response.ok) {
+            const html = await response.text();
+
+            // Update container content using established pattern
+            const currentContainer = document.querySelector('main .container');
+            if (currentContainer) {
+                currentContainer.innerHTML = html;
+
+                // Update URL without page reload
+                const newUrl = new URL(clearButton.href);
+                window.history.pushState(null, '', newUrl);
+
+                // Re-initialize all handlers after AJAX update
+                setTimeout(() => {
+                    initializeTabSwitching();
+                    initializeFirstWatchOnly();
+                    initializeSearchHandlers();
+                }, 50);
+
+                console.log('AJAX clear search completed successfully via event delegation');
+            }
+        } else {
+            console.error('AJAX clear search request failed:', response.status);
+            // Fallback to standard navigation
+            clearButton.innerHTML = originalButtonText;
+            clearButton.style.pointerEvents = 'auto';
+            window.location.href = clearButton.href;
+        }
+    } catch (error) {
+        console.error('AJAX clear search error:', error);
+        // Fallback to standard navigation
+        clearButton.innerHTML = originalButtonText;
+        clearButton.style.pointerEvents = 'auto';
+        window.location.href = clearButton.href;
+    }
+});
+
+// Initialize search handlers on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSearchHandlers();
+});
 
 </script>
