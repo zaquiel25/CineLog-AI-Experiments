@@ -110,6 +110,9 @@ publish/
 # Azure deployment files and local settings
 .claude/settings.local.json
 
+# Codex AI tool configuration (personal development environment)
+.codex/
+
 # SQLite database files (if using SQLite for development)
 *.db
 *.db-*
