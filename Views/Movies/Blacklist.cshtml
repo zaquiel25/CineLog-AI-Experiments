@@ -3,7 +3,8 @@
 @Html.AntiForgeryToken()
 @{
     ViewData["Title"] = "My Blacklist";
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w185";
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
+    var posterSize = "w342";
     
     // FEATURE: Display mode support for grid/list view switching
     var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
@@ -118,11 +119,11 @@ else
             {
                 <div class="col">
                     <div class="card h-100 blacklist-movie-card">
-                        <div class="card-img-top text-center" style="background-color: #2a1f1f; height: 265px;">
+                        <div class="card-img-top text-center" style="background-color: #2a1f1f;">
                             @if (!string.IsNullOrEmpty(item.PosterUrl))
                             {
                                 <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">
-                                    <img src="@(tmdbImageBaseUrl + item.PosterUrl)" alt="@item.Title Poster" style="height: 100%; width: 100%; object-fit: contain;">
+                                    <img src="@(tmdbImageBaseUrl + posterSize + item.PosterUrl)" alt="@item.Title Poster" style="width: 100%; height: 100%; object-fit: contain;">
                                 </a>
                             }
                             else
@@ -181,7 +182,7 @@ else
                     <div class="list-poster-container me-3 position-relative">
                         @if (!string.IsNullOrEmpty(item.PosterUrl))
                         {
-                            <img src="@(tmdbImageBaseUrl + item.PosterUrl)"
+                            <img src="@(tmdbImageBaseUrl + posterSize + item.PosterUrl)"
                                  alt="@item.Title Poster"
                                  class="list-poster-image">
                         }

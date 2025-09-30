@@ -21,7 +21,7 @@
 @{
     ViewData["Title"] = "My Movies - CineLog";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
-    var posterSize = "w185";
+    var posterSize = "w342";
     
     // FEATURE: Current sort display mapping for button text
     var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
@@ -461,13 +461,13 @@ else
         <div class="col">
             <div class="card h-100 shadow-sm journal-movie-card">
                 @* Poster image *@
-                <div class="card-img-top text-center" style="background-color: #1a1a1a; height: 285px;">
+                <div class="card-img-top text-center" style="background-color: #1a1a1a;">
                     @if (!string.IsNullOrEmpty(movie.PosterPath))
                     {
                         <a asp-action="Details" asp-route-id="@movie.Id">
                             <img src="@(tmdbImageBaseUrl + posterSize + movie.PosterPath)"
                                  alt="@(movie.Title ?? "Movie Poster")"
-                                 style="height: 100%; width: 100%; object-fit: contain;">
+                                 style="width: 100%; height: 100%; object-fit: contain;">
                         </a>
                     }
                     else

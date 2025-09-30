@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = "My Movies - Collection View - CineLog";
     var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
-    var posterSize = "w185";
+    var posterSize = "w342";
     var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
     var isGridMode = currentDisplayMode == "grid";
     var isListMode = currentDisplayMode == "list";
@@ -315,7 +315,7 @@ else
                 <div class="col">
                     <div class="card h-100 shadow-sm collection-movie-card">
                         @* Poster image with watch count badge *@
-                        <div class="card-img-top text-center position-relative" style="background-color: #191919; height: 290px;">
+                        <div class="card-img-top text-center position-relative" style="background-color: #191919;">
                             @* Watch count badge - positioned prominently *@
                             @if (collection.WatchCount > 1)
                             {
@@ -330,7 +330,7 @@ else
                                 <a asp-action="Details" asp-route-id="@movie.Id">
                                     <img src="@(tmdbImageBaseUrl + posterSize + movie.PosterPath)"
                                          alt="@(movie.Title ?? "Movie Poster")"
-                                         style="height: 100%; width: 100%; object-fit: contain;">
+                                         style="width: 100%; height: 100%; object-fit: contain;">
                                 </a>
                             }
                             else

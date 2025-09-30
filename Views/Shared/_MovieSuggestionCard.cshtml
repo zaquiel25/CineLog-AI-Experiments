@@ -1,7 +1,8 @@
 ﻿@model Ezequiel_Movies.Models.TmdbApi.TmdbMovieBrief
 
 @{
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
+    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
+    var posterSize = "w342";
 }
 
 <div class="col">
@@ -10,7 +11,7 @@
         <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">
             @if (!string.IsNullOrEmpty(Model.PosterPath))
             {
-                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="height: 295px; width: 100%; object-fit: contain;">
+                <img src="@(tmdbImageBaseUrl + posterSize + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="width: 100%; height: 100%; object-fit: contain;">
             }
             else
             {
