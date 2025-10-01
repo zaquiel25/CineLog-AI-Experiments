@@ -2,9 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies1.Models.Entities; // Assuming this is the correct namespace for your Movies entity
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Ezequiel_Movies.Models;
 
 namespace Ezequiel_Movies.Data
 {
+    /// <summary>
+    /// Application database context with Identity support.
+    /// TECHNICAL: Uses base IdentityDbContext to avoid key configuration conflicts.
+    /// DisplayName is accessed directly via AspNetUsers table extension.
+    /// </summary>
     public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)

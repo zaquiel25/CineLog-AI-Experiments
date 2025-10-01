@@ -5,23 +5,57 @@
     ViewData["ActivePage"] = ManageNavPages.Index;
 }
 
-<h3>@ViewData["Title"]</h3>
+<div class="manage-section-header mb-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+        <div>
+            <h3 class="manage-section-title mb-2">Profile settings</h3>
+            <p class="manage-section-subtitle text-muted mb-0">Update how your name appears across CineLog and keep your account details current.</p>
+        </div>
+    </div>
+</div>
+
 <partial name="_StatusMessage" for="StatusMessage" />
-<div class="row">
-    <div class="col-md-6">
-        <form id="profile-form" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
-                <label asp-for="Username" class="form-label"></label>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
-            </div>
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </form>
+
+<div class="row g-4 align-items-start">
+    <div class="col-12 col-xl-7">
+        <section class="manage-form-panel">
+            <form id="profile-form" method="post" class="manage-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <div class="form-floating mb-4">
+                    <input asp-for="Username" class="form-control" placeholder="Your username" disabled />
+                    <label asp-for="Username" class="form-label"></label>
+                    <small class="text-muted">Your sign-in username. This value is fixed for security purposes.</small>
+                </div>
+                <div class="form-floating mb-4">
+                    <input asp-for="Input.DisplayName" class="form-control" placeholder="Enter a display name" />
+                    <label asp-for="Input.DisplayName" class="form-label"></label>
+                    <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+                    <small class="text-muted">Shown on shared lists, recommendations, and any collaborative spaces. Leave blank to fall back to your username.</small>
+                </div>
+                <button id="update-profile-button" type="submit" class="btn btn-primary manage-submit">Save changes</button>
+            </form>
+        </section>
+    </div>
+    <div class="col-12 col-xl-5">
+        <aside class="manage-summary-panel">
+            <h4 class="manage-summary-title">Account snapshot</h4>
+            <dl class="manage-summary-list">
+                <div class="manage-summary-item">
+                    <dt>Username</dt>
+                    <dd>@Model.Username</dd>
+                </div>
+                <div class="manage-summary-item">
+                    <dt>Display name</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Input?.DisplayName) ? "Not set" : Model.Input.DisplayName)</dd>
+                </div>
+            </dl>
+            <hr class="manage-summary-divider" />
+            <p class="manage-summary-hint text-muted">Looking to tighten security? Try these quick actions:</p>
+            <ul class="manage-quick-links list-unstyled mb-0">
+                <li><a asp-page="./ChangePassword" class="manage-quick-link">Update your password</a></li>
+                <li><a asp-page="./ExternalLogins" class="manage-quick-link">Manage external logins</a></li>
+            </ul>
+        </aside>
     </div>
 </div>
 

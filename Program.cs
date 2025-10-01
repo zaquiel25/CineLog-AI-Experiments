@@ -4,6 +4,7 @@ using System.Net.Http.Headers; // <<< ADD THIS IF YOUR IDE DOESN'T ADD IT AUTOMA
 using Ezequiel_Movies;
 using Microsoft.AspNetCore.Identity;
 using Ezequiel_Movies.Services;
+using Ezequiel_Movies.Models;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using System.Collections;
@@ -217,6 +218,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register CacheService for performance optimization
 builder.Services.AddScoped<CacheService>();
 
+// Register UserDisplayNameService for DisplayName retrieval
+builder.Services.AddScoped<UserDisplayNameService>();
+
 /// <summary>
 /// PRODUCTION MONITORING: Configure health checks for comprehensive system monitoring.
 /// Provides endpoints for Application Insights and Azure monitoring to track
@@ -247,6 +251,7 @@ builder.Services.AddSession(options =>
 /// FEATURE: Configure ASP.NET Identity with Google OAuth external authentication support.
 /// Identity remains the DEFAULT authentication scheme for MoviesController [Authorize] attributes.
 /// Integrates with Azure Key Vault for secure credential management in production.
+/// FEATURE: DisplayName column added to AspNetUsers via migration (access via direct SQL queries).
 /// </summary>
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<ApplicationDbContext>();

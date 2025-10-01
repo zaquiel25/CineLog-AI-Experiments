@@ -1,0 +1,122 @@
+﻿@*
+    FEATURE: External Logins Management - Identity Account Management
+
+    This page allows users to connect and manage third-party authentication providers
+    (e.g., Google OAuth) for convenient passwordless login.
+
+    IMPLEMENTATION:
+    - Two-column layout: login management form (left) + benefits sidebar (right)
+    - Dynamic display of connected and available authentication providers
+    - Compact Google button design with inline SVG per Google Identity branding guidelines
+    - Disconnect functionality with confirmation requirement
+
+    SECURITY:
+    - Users cannot remove their last authentication method (enforced by ShowRemoveButton)
+    - OAuth tokens managed securely by ASP.NET Identity
+    - HTTPS required for all OAuth operations
+*@
+@page
+@model ExternalLoginsModel
+@{
+    ViewData["Title"] = "External logins";
+    ViewData["ActivePage"] = ManageNavPages.ExternalLogins;
+}
+
+<div class="manage-section-header mb-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+        <div>
+            <h3 class="manage-section-title mb-2">External logins</h3>
+            <p class="manage-section-subtitle text-muted mb-0">Connect third-party services to sign in faster without entering your password.</p>
+        </div>
+    </div>
+</div>
+
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<div class="row g-4 align-items-start">
+    <div class="col-12 col-xl-7">
+        <section class="manage-form-panel">
+            @if (Model.CurrentLogins?.Count > 0)
+            {
+                <h4 class="mb-3" style="color: #ffffff; font-size: 1.1rem; font-weight: 600;">Connected accounts</h4>
+                <div class="manage-external-logins-list mb-4">
+                    @foreach (var login in Model.CurrentLogins)
+                    {
+                        <div class="manage-login-provider d-flex align-items-center justify-content-between p-3" style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div class="d-flex align-items-center gap-3">
+                                @if (login.LoginProvider == "Google")
+                                {
+                                    <i class="fa-brands fa-google" style="font-size: 1.5rem; color: var(--cinelog-gold);"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-solid fa-right-left" style="font-size: 1.5rem; color: var(--cinelog-gold);"></i>
+                                }
+                                <span id="@($"login-provider-{login.LoginProvider}")" style="color: #ffffff; font-weight: 500;">@login.ProviderDisplayName</span>
+                            </div>
+                            @if (Model.ShowRemoveButton)
+                            {
+                                <form id="@($"remove-login-{login.LoginProvider}")" asp-page-handler="RemoveLogin" method="post" class="d-inline">
+                                    <input asp-for="@login.LoginProvider" name="LoginProvider" type="hidden" />
+                                    <input asp-for="@login.ProviderKey" name="ProviderKey" type="hidden" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove this @login.ProviderDisplayName login from your account" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Disconnect</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (Model.OtherLogins?.Count > 0)
+            {
+                <h4 class="mb-3 mt-4" style="color: #ffffff; font-size: 1.1rem; font-weight: 600;">Add another service</h4>
+                <form id="link-login-form" asp-page-handler="LinkLogin" method="post">
+                    <div id="socialLoginList" class="d-flex flex-column gap-3">
+                        @foreach (var provider in Model.OtherLogins)
+                        {
+                            @if (provider.Name == "Google")
+                            {
+                                <button id="@($"link-login-button-{provider.Name}")" type="submit" name="provider" value="@provider.Name"
+                                        class="btn btn-google d-inline-flex align-items-center justify-content-center gap-2"
+                                        title="Log in using your @provider.DisplayName account"
+                                        style="background: #fff; color: #111; border: none; border-radius: 8px; padding: 0.7rem 1.2rem; font-weight: 500; width: fit-content; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                                        <path fill="#34A853" d="M9.003 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.438 15.983 5.482 18 9.003 18z"/>
+                                        <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9.001c0 1.452.348 2.827.957 4.041l3.007-2.332z"/>
+                                        <path fill="#EA4335" d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.482 0 2.438 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z"/>
+                                    </svg>
+                                    Connect with Google
+                                </button>
+                            }
+                            else
+                            {
+                                <button id="@($"link-login-button-{provider.Name}")" type="submit" name="provider" value="@provider.Name"
+                                        class="btn btn-primary" title="Log in using your @provider.DisplayName account"
+                                        style="width: fit-content;">
+                                    Connect with @provider.DisplayName
+                                </button>
+                            }
+                        }
+                    </div>
+                </form>
+            }
+        </section>
+    </div>
+    <div class="col-12 col-xl-5">
+        <aside class="manage-summary-panel">
+            <h4 class="manage-summary-title">Why connect external accounts?</h4>
+            <p class="manage-summary-hint text-muted mb-3">External logins provide convenient and secure access:</p>
+            <ul class="manage-quick-links list-unstyled mb-0">
+                <li><i class="fa-solid fa-bolt me-2" style="color: var(--cinelog-gold);"></i>Sign in faster without typing passwords</li>
+                <li><i class="fa-solid fa-shield-halved me-2" style="color: var(--cinelog-gold);"></i>Leverage trusted authentication providers</li>
+                <li><i class="fa-solid fa-key me-2" style="color: var(--cinelog-gold);"></i>Reduce password fatigue across services</li>
+            </ul>
+            <hr class="manage-summary-divider mt-3" />
+            <p class="manage-summary-hint text-muted mb-2">Keep your account secure:</p>
+            <ul class="manage-quick-links list-unstyled mb-0">
+                <li><a asp-page="./ChangePassword" class="manage-quick-link">Update your password regularly</a></li>
+                <li><a asp-page="./Index" class="manage-quick-link">Review your profile settings</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>

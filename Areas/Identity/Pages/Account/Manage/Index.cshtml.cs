@@ -6,9 +6,13 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Ezequiel_Movies.Models;
+using Ezequiel_Movies.Data;
 
 namespace Ezequiel_Movies.Areas.Identity.Pages.Account.Manage
 {
@@ -16,13 +20,16 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly ApplicationDbContext _dbContext;
 
         public IndexModel(
             UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager)
+            SignInManager<IdentityUser> signInManager,
+            ApplicationDbContext dbContext)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -52,24 +59,33 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account.Manage
         public class InputModel
         {
             /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
+            /// User-friendly display name shown throughout the site.
+            /// Optional - if empty, username will be displayed instead.
             /// </summary>
-            [Phone]
-            [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; }
+            [StringLength(100, ErrorMessage = "The {0} must be at most {1} characters long.")]
+            [Display(Name = "Display Name")]
+            public string DisplayName { get; set; }
         }
 
         private async Task LoadAsync(IdentityUser user)
         {
             var userName = await _userManager.GetUserNameAsync(user);
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
             Username = userName;
 
+            // Access DisplayName from database via ADO.NET - column exists but not in IdentityUser model
+            using var command = _dbContext.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT DisplayName FROM AspNetUsers WHERE Id = @id";
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@id";
+            parameter.Value = user.Id;
+            command.Parameters.Add(parameter);
+            await _dbContext.Database.OpenConnectionAsync();
+            var displayName = await command.ExecuteScalarAsync() as string;
+
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                DisplayName = displayName
             };
         }
 
@@ -99,15 +115,23 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            if (Input.PhoneNumber != phoneNumber)
+            // Update DisplayName if changed - requires direct database access
+            using var readCommand = _dbContext.Database.GetDbConnection().CreateCommand();
+            readCommand.CommandText = "SELECT DisplayName FROM AspNetUsers WHERE Id = @id";
+            var readParameter = readCommand.CreateParameter();
+            readParameter.ParameterName = "@id";
+            readParameter.Value = user.Id;
+            readCommand.Parameters.Add(readParameter);
+            await _dbContext.Database.OpenConnectionAsync();
+            var currentDisplayName = await readCommand.ExecuteScalarAsync() as string;
+
+            if (Input.DisplayName != currentDisplayName)
             {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-                if (!setPhoneResult.Succeeded)
-                {
-                    StatusMessage = "Unexpected error when trying to set phone number.";
-                    return RedirectToPage();
-                }
+                // Update via SQL since DisplayName isn't in IdentityUser model
+                await _dbContext.Database.ExecuteSqlRawAsync(
+                    "UPDATE AspNetUsers SET DisplayName = {0} WHERE Id = {1}",
+                    Input.DisplayName ?? (object)DBNull.Value,
+                    user.Id);
             }
 
             await _signInManager.RefreshSignInAsync(user);
