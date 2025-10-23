@@ -459,6 +459,20 @@ div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
     height: 100% !important;
 }
 
+/* MOBILE FIX: Limit suggestion card height on mobile devices */
+@media (max-width: 767px) {
+    .suggestion-card .card-body {
+        min-height: 160px !important;
+        height: auto !important;
+        padding: 1.5rem 1rem !important;
+    }
+
+    .suggestion-card {
+        min-height: 160px !important;
+        height: auto !important;
+    }
+}
+
 .suggestion-card .card-title,
 .suggestion-card .suggestion-description {
     text-align: center !important;
@@ -1393,6 +1407,37 @@ html {
 
 .navbar.bg-primary{border-bottom:1px solid #495057}
 .navbar.bg-dark{background-color:#060606; border-bottom:1px solid #495057}
+
+/* MOBILE FIX: Center logo in navbar on mobile devices */
+@media (max-width: 575px) {
+    .navbar {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        min-height: 70px;
+    }
+
+    .navbar .container-fluid {
+        justify-content: center;
+        position: relative;
+        min-height: 56px;
+    }
+
+    .navbar-brand {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem 0;
+    }
+
+    .navbar-brand img {
+        height: 35px !important;
+    }
+
+    .navbar-toggler {
+        position: absolute;
+        right: 1rem;
+    }
+}
 
 /* TMDB Attribution Styling */
 .tmdb-attribution {
