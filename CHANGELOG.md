@@ -1,5 +1,116 @@
 ## 2025-10-30
 
+### 🎨 **Suggestion Card Button Style Unification**
+
+**🎯 UI ENHANCEMENT**: Unified button styles in movie suggestion cards with improved mobile layout and consistent visual design.
+
+#### Problem Identification
+
+**Symptoms**:
+- Inconsistent button styles across suggestion card buttons
+- Duplicate CSS rules causing potential conflicts
+- Mobile layout showing vertical button stacking instead of two-column grid
+- Buttons appearing with different sizes, borders, and padding
+
+**Root Cause**:
+- Duplicate `.btn-soft-*` CSS classes defined twice (lines 306-320 and 494-509)
+- Missing mobile-specific layout enforcement for col-6 grid system
+- No hover/active/disabled states defined for better UX
+- Bootstrap defaults overriding intended two-column mobile layout
+
+#### Solution Implemented
+
+**1. Unified Button Styles** (`site.css` lines 305-400):
+```css
+/* Scoped to .suggestion-movie-card to avoid affecting other buttons */
+.suggestion-movie-card .btn-soft-primary {
+    background-color: #6fa8dc;
+    border-color: #6fa8dc;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Added hover states with elevation */
+.suggestion-movie-card .btn-soft-primary:hover {
+    background-color: #5a96cc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(111, 168, 220, 0.3);
+}
+```
+
+**2. Mobile Two-Column Layout Fix** (`site.css` lines 402-438):
+```css
+@media (max-width: 575px) {
+    /* Force two-column layout */
+    .suggestion-movie-card .row.g-1 {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* Ensure col-6 stays at 50% width */
+    .suggestion-movie-card .row.g-1 > .col-6 {
+        flex: 0 0 calc(50% - 0.125rem) !important;
+        max-width: calc(50% - 0.125rem) !important;
+    }
+
+    /* Smaller buttons on mobile */
+    .suggestion-movie-card .btn-soft-primary,
+    .suggestion-movie-card .btn-soft-danger,
+    .suggestion-movie-card .btn-soft-success {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+}
+```
+
+**3. Removed Duplicate CSS**:
+- Eliminated duplicate button definitions (formerly lines 494-509)
+- Single source of truth for all `.btn-soft-*` styles
+
+#### Key Features
+
+**Button States**:
+- ✅ **Default**: Consistent colors, padding, borders across all three button types
+- ✅ **Hover**: Darker shade + subtle elevation (translateY) + shadow
+- ✅ **Active**: Even darker shade + no elevation for pressed feeling
+- ✅ **Disabled**: Reduced opacity + not-allowed cursor
+
+**Mobile Optimizations**:
+- ✅ Two-column layout preserved (Wishlist + Blacklist side-by-side)
+- ✅ Smaller font-size (0.75rem) for better mobile fit
+- ✅ Reduced padding for compact appearance
+- ✅ Text ellipsis for overflow protection
+- ✅ No transform effects on mobile for stability
+
+**Scoped Selectors**:
+- All styles scoped to `.suggestion-movie-card` to prevent affecting other buttons
+- Won't interfere with navbar buttons, form buttons, or other UI elements
+
+#### Testing Methodology
+
+- Tested on Chrome DevTools mobile emulator (498px width)
+- Verified horizontal two-column layout on mobile
+- Confirmed hover states work correctly on desktop
+- Hard refresh (Cmd+Shift+R) to bypass CSS cache
+- Visual inspection on real mobile device via localhost
+
+#### Files Modified
+
+- `wwwroot/css/site.css`: Lines 305-438 (unified styles + mobile fixes)
+
+#### Impact
+
+- **Visual Consistency**: All suggestion card buttons now have identical styling
+- **Mobile UX**: Proper two-column layout on mobile devices
+- **Code Quality**: Eliminated CSS duplication and potential conflicts
+- **Future Maintainability**: Single source of truth for button styles
+- **User Experience**: Hover/active states provide better interaction feedback
+
+---
+
 ### 📱 **Mobile UI Button Alignment Fixes**
 
 **🎯 UI FIX**: Resolved button alignment issues on mobile affecting Wishlist, Blacklist, and all pages with view toggle controls.

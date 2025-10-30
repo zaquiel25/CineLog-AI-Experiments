@@ -302,22 +302,141 @@ div#wishlist-list div.movie-list-item.wishlist-movie-card:hover {
     box-shadow: 0 5px 11px rgba(0, 0, 0, 0.55);
     /* HUMANIZED: Removed universal translateY pattern */
 }
-/* Pastel/soft button colors for suggestion cards */
-.btn-soft-primary {
+/*
+============================================================
+  FEATURE: Unified Soft Button Styles for Suggestion Cards
+  Created: 2025-10-30
+
+  Consistent button styling for movie suggestion cards:
+  - btn-soft-primary: "Add to Wishlist" (blue)
+  - btn-soft-danger: "Add to Blacklist" (red)
+  - btn-soft-success: "Add to My Movies" (green)
+
+  IMPORTANT: These styles are scoped to .suggestion-movie-card
+  to avoid affecting other buttons in the application.
+============================================================
+*/
+
+/* Base styles for all soft buttons inside suggestion cards */
+.suggestion-movie-card .btn-soft-primary,
+.suggestion-movie-card .btn-soft-danger,
+.suggestion-movie-card .btn-soft-success {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 0.25rem;
+    transition: all 0.15s ease-in-out;
+    color: white;
+    text-align: center;
+}
+
+/* Primary button (Wishlist) */
+.suggestion-movie-card .btn-soft-primary {
     background-color: #6fa8dc;
     border-color: #6fa8dc;
-    color: white;
 }
-.btn-soft-danger {
+
+.suggestion-movie-card .btn-soft-primary:hover {
+    background-color: #5a96cc;
+    border-color: #5a96cc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(111, 168, 220, 0.3);
+}
+
+.suggestion-movie-card .btn-soft-primary:active {
+    background-color: #4a86bc;
+    border-color: #4a86bc;
+    transform: translateY(0);
+}
+
+/* Danger button (Blacklist) */
+.suggestion-movie-card .btn-soft-danger {
     background-color: #ea9999;
     border-color: #ea9999;
-    color: white;
 }
-.btn-soft-success {
+
+.suggestion-movie-card .btn-soft-danger:hover {
+    background-color: #e37979;
+    border-color: #e37979;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(234, 153, 153, 0.3);
+}
+
+.suggestion-movie-card .btn-soft-danger:active {
+    background-color: #dc6969;
+    border-color: #dc6969;
+    transform: translateY(0);
+}
+
+/* Success button (Add to Movies) */
+.suggestion-movie-card .btn-soft-success {
     background-color: #93c47d;
     border-color: #93c47d;
-    color: white;
 }
+
+.suggestion-movie-card .btn-soft-success:hover {
+    background-color: #7db469;
+    border-color: #7db469;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(147, 196, 125, 0.3);
+}
+
+.suggestion-movie-card .btn-soft-success:active {
+    background-color: #6da459;
+    border-color: #6da459;
+    transform: translateY(0);
+}
+
+/* Disabled state for buttons (e.g., "In Wishlist") */
+.suggestion-movie-card .btn-soft-primary:disabled,
+.suggestion-movie-card .btn-soft-danger:disabled,
+.suggestion-movie-card .btn-soft-success:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* FIX: Mobile-specific adjustments for suggestion card buttons */
+@media (max-width: 575px) {
+    /* CRITICAL: Force two-column layout for Wishlist/Blacklist buttons */
+    .suggestion-movie-card .row.g-1 {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+        margin: 0 !important;
+    }
+
+    /* Ensure col-6 stays at 50% width on mobile */
+    .suggestion-movie-card .row.g-1 > .col-6 {
+        flex: 0 0 calc(50% - 0.125rem) !important;
+        max-width: calc(50% - 0.125rem) !important;
+        padding: 0 !important;
+    }
+
+    /* Reduce padding and font-size on mobile for better fit */
+    .suggestion-movie-card .btn-soft-primary,
+    .suggestion-movie-card .btn-soft-danger,
+    .suggestion-movie-card .btn-soft-success {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+        border-width: 1px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Remove any transform effects on mobile for stability */
+    .suggestion-movie-card .btn-soft-primary:hover,
+    .suggestion-movie-card .btn-soft-danger:hover,
+    .suggestion-movie-card .btn-soft-success:hover {
+        transform: none !important;
+    }
+}
+
 /*
 ============================================================
   CineLog - Movie Preview Card (Ultra Specific)
@@ -411,22 +530,6 @@ div#wishlist-list div.movie-list-item.wishlist-movie-card:hover {
 }
 
 /* Improved visual hierarchy in the card */
-/* Custom pastel button colors for suggestion cards */
-.btn-soft-primary {
-    background-color: #6fa8dc;
-    border-color: #6fa8dc;
-    color: white;
-}
-.btn-soft-danger {
-    background-color: #ea9999;
-    border-color: #ea9999;
-    color: white;
-}
-.btn-soft-success {
-    background-color: #93c47d;
-    border-color: #93c47d;
-    color: white;
-}
 .movie-preview h3 {
     font-size: 1.42rem; /* HUMANIZED: Organic imperfection instead of exact 1.4rem */
     font-weight: 650; /* HUMANIZED: Between-standard weight instead of perfect 700 */

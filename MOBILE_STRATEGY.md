@@ -52,6 +52,52 @@
 
 **Status**: ✅ Completed and tested on real devices. User confirmed: "ahora sí papá felicitaciones!"
 
+### Suggestion Card Button Style Unification - COMPLETED
+
+**Problem Solved**: Unified button styles in movie suggestion cards with improved mobile layout and consistent visual design across all button states.
+
+**Issues Addressed**:
+1. **Inconsistent Button Styles**: Different sizes, borders, and padding across suggestion card buttons
+2. **Duplicate CSS Rules**: `.btn-soft-*` classes defined twice causing potential conflicts
+3. **Mobile Vertical Stacking**: Buttons stacking vertically instead of maintaining two-column grid layout
+4. **Missing Interactive States**: No hover, active, or disabled states for better UX
+
+**Root Causes Identified**:
+- Duplicate CSS definitions at lines 306-320 and 494-509 in site.css
+- Missing mobile-specific flexbox enforcement for col-6 grid system
+- Bootstrap defaults overriding intended two-column mobile layout
+- No scoped selectors causing potential conflicts with other buttons
+
+**Solutions Implemented**:
+- Created unified button styles scoped to `.suggestion-movie-card` (lines 305-400)
+- Added comprehensive hover states with subtle elevation and shadows
+- Added active states for pressed button feedback
+- Added disabled states with proper opacity and cursor
+- Forced two-column mobile layout with explicit flexbox rules (lines 402-438)
+- Reduced font-size (0.75rem) and padding on mobile for better fit
+- Added text-overflow ellipsis for long button text protection
+- Removed transform effects on mobile for stability
+
+**Files Modified**:
+- `wwwroot/css/site.css` - Lines 305-438 (unified styles + mobile fixes)
+- `CHANGELOG.md` - Comprehensive documentation of changes
+
+**Button Colors Maintained**:
+- **Add to Wishlist** (btn-soft-primary): `#6fa8dc` (blue)
+- **Add to Blacklist** (btn-soft-danger): `#ea9999` (red pastel)
+- **Add to My Movies** (btn-soft-success): `#93c47d` (green)
+
+**Testing Methodology**:
+- Tested on Chrome DevTools mobile emulator (498px width)
+- Verified horizontal two-column layout on mobile
+- Confirmed hover states work correctly on desktop
+- Hard refresh (Cmd+Shift+R) to bypass CSS cache
+- Visual inspection on localhost with mobile view
+
+**Key Learning**: Scoped CSS selectors (`.suggestion-movie-card .btn-soft-*`) prevent unintended side effects on other UI elements while maintaining specific styling for target components.
+
+**Status**: ✅ Completed and tested. User confirmed: "perfecto todo ok"
+
 ---
 
 ## 🎯 Strategic Decision: Why PWA First?
