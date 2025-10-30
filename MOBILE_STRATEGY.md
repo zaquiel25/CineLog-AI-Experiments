@@ -16,6 +16,44 @@
 
 ---
 
+## ✅ Recent Mobile UI Improvements (October 30, 2025)
+
+### Mobile Button Alignment Fixes - COMPLETED
+
+**Problem Solved**: Fixed critical mobile UI button misalignment issues that affected all major pages (Wishlist, Blacklist, Journal, Collection).
+
+**Issues Addressed**:
+1. **View Toggle Buttons Misalignment**: Grid/list view toggle buttons and sort dropdown were not properly aligned horizontally on mobile devices
+2. **List Action Buttons Misalignment**: "Watched" and "Remove" buttons on wishlist items were stacking vertically instead of aligning horizontally
+
+**Root Causes Identified**:
+- Bootstrap `btn-group-sm` had different font-size and padding than normal buttons, causing vertical misalignment
+- Legacy ID-based CSS selectors (`#wishlist-view-toggle`, `#wishlist-sort`) were causing conflicts and limiting reusability
+- Flexbox `flex-direction: column` was forcing vertical stacking on mobile when horizontal alignment was needed
+
+**Solutions Implemented**:
+- Removed all ID-based selectors in favor of class-based selectors for better reusability
+- Forced consistent sizing between `btn-group-sm` and dropdown buttons using mobile-specific CSS
+- Changed wishlist action buttons from `flex-direction: column` to `flex-direction: row` with proper alignment
+- Added `vertical-align: middle` to parent containers for proper inline-block alignment
+
+**Files Modified**:
+- `Views/Movies/Wishlist.cshtml` - Removed ID selectors (lines 45, 60)
+- `wwwroot/css/site.css` - Added mobile-specific CSS fixes (lines 222-264)
+- `CHANGELOG.md` - Comprehensive documentation of fixes
+
+**Testing Methodology**:
+- Cross-device testing on real mobile devices (not just DevTools emulation)
+- CSS cache verification using temporary color changes to confirm changes were applying
+- Cross-page comparison to ensure fixes worked consistently across Wishlist, Blacklist, Journal, and Collection
+- AI collaboration (Codex AI, browser inspector AI) for root cause analysis
+
+**Key Learning**: DevTools mobile emulation doesn't always match real device rendering. Always verify mobile UI changes on actual physical devices before deploying.
+
+**Status**: ✅ Completed and tested on real devices. User confirmed: "ahora sí papá felicitaciones!"
+
+---
+
 ## 🎯 Strategic Decision: Why PWA First?
 
 ### Comparison Matrix

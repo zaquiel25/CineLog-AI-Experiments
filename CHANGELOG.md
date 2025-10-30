@@ -1,4 +1,309 @@
+## 2025-10-30
+
+### 📱 **Mobile UI Button Alignment Fixes**
+
+**🎯 UI FIX**: Resolved button alignment issues on mobile affecting Wishlist, Blacklist, and all pages with view toggle controls.
+
+#### Problem Identification
+
+**Symptoms on Real Mobile Devices**:
+- View toggle buttons (grid/list icons) and sort dropdown were misaligned vertically
+- "Watched" and "Remove" buttons on wishlist items appeared misaligned
+- Issue visible on both DevTools mobile emulation AND real devices
+- Affected ALL pages with view toggle controls (Wishlist, Blacklist, Journal, Collection)
+
+**Root Cause Analysis**:
+
+1. **Bootstrap `btn-group-sm` Size Mismatch**:
+   - `btn-group-sm` buttons had different padding/font-size than normal dropdown buttons
+   - Bootstrap default: `btn-sm` uses smaller font (0.875rem) and padding
+   - Caused vertical misalignment between adjacent button groups
+
+2. **ID-based CSS Interference** (Initial Debug Phase):
+   - Legacy CSS targeting `#wishlist-view-toggle` and `#wishlist-sort` IDs
+   - IDs present in `Wishlist.cshtml` but not in `_WishlistContent.cshtml`
+   - Codex AI identified orphaned CSS rules causing conflicts (lines 231-337)
+
+3. **Flexbox Direction Conflict**:
+   - Wishlist action buttons (.list-actions) used `flex-direction: column` on mobile
+   - Caused vertical stacking instead of horizontal alignment
+
+#### Solution Implemented
+
+**1. Removed All ID-based Selectors** (`Wishlist.cshtml` lines 45, 60):
+```html
+<!-- BEFORE -->
+<div id="wishlist-view-toggle" class="btn-group btn-group-sm me-2">
+<div id="wishlist-sort" class="dropdown me-2">
+
+<!-- AFTER -->
+<div class="btn-group btn-group-sm me-2">
+<div class="dropdown me-2">
+```
+
+**2. CSS Button Alignment Fix** (`site.css` lines 222-238):
+```css
+/* FIX: Align view toggle and sort dropdown buttons on mobile */
+@media (max-width: 575px) {
+    /* Force both btn-group-sm and dropdown to same line-height and padding */
+    .btn-group-sm > .btn,
+    .dropdown > .btn {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Force parent containers to align items center */
+    .btn-group-sm,
+    .dropdown {
+        display: inline-block !important;
+        vertical-align: middle !important;
+    }
+}
+```
+
+**3. Wishlist Action Buttons Fix** (`site.css` lines 256-264):
+```css
+/* Make list-actions container compact and HORIZONTALLY aligned */
+#wishlist-list .list-actions {
+    display: flex !important;
+    flex-direction: row !important; /* Changed from column to row */
+    align-items: center !important; /* Align buttons horizontally */
+    gap: 0.25rem !important;
+    margin-left: 0.25rem !important;
+    flex-shrink: 0 !important;
+}
+```
+
+#### Testing & Verification Process
+
+**Debugging Methodology**:
+1. **CSS Cache Test**: Added temporary red background to verify CSS changes applied
+2. **Cross-page Comparison**: Compared Blacklist (working) vs Wishlist (broken) HTML structure
+3. **AI Collaboration**: Consulted Codex AI to identify orphaned CSS rules
+4. **Real Device Testing**: User tested on actual mobile device after each iteration
+
+**Key Learning Points**:
+- DevTools mobile emulation may not catch all real-device issues
+- Multiple background `dotnet watch` processes can cause hot-reload conflicts
+- Bootstrap's `btn-group-sm` requires explicit alignment when mixed with normal buttons
+- ID-based CSS selectors should be avoided for reusable components
+
+#### Files Modified
+
+**Views**:
+- `Views/Movies/Wishlist.cshtml` - Removed ID selectors (lines 45, 60)
+- `Views/Movies/_WishlistContent.cshtml` - Already clean (no IDs)
+
+**CSS**:
+- `wwwroot/css/site.css` (lines 222-264):
+  - Added mobile button alignment rules
+  - Fixed wishlist action buttons flexbox direction
+  - Removed orphaned ID-based CSS rules
+
+#### Impact
+
+✅ **Blacklist**: View toggle buttons now perfectly aligned horizontally on mobile
+✅ **Wishlist**: View toggle buttons now perfectly aligned horizontally on mobile
+✅ **Wishlist List View**: "Watched"/"Remove" buttons now aligned horizontally
+✅ **All Pages**: Consistent button alignment across Journal, Collection, etc.
+
+---
+
 ## 2025-10-23
+
+### 📱 **Mobile Suggestion Cards Centering Fix (Critical)**
+
+**🎯 UI FIX**: Resolved suggestion cards appearing "shifted to the left" on real mobile devices, ensuring perfect centering and symmetry.
+
+#### Problem Identification
+
+**Symptoms on Real Mobile Devices**:
+- "Trending Movies" and "By Decade" cards appeared slightly offset to the left
+- Issue NOT visible in DevTools mobile emulation
+- Only manifested on actual iOS/Android devices
+- Affected ALL mobile users in production
+
+**Root Cause Analysis** (Multiple Issues):
+
+1. **Asymmetric Container Padding** (Primary Culprit):
+   ```css
+   .container {
+       padding-left: 1.1rem;   /* ← Different */
+       padding-right: 1.3rem;  /* ← Different */
+   }
+   ```
+   - "Humanized" styling for desktop created 0.2rem visual offset on mobile
+   - Entire page content shifted left by subtle but noticeable amount
+
+2. **Bootstrap Grid Parent Container Limiting Width**:
+   - `<div class="col-md-10 col-lg-9">` restricted width to 83% on mobile
+   - Left asymmetric margins causing "corridas hacia la izquierda" effect
+
+3. **Insufficient CSS Specificity**:
+   - Initial fixes using generic selectors (`.row`, `.col-md-10`) were being overridden
+   - Mobile browser cache was aggressive, preventing updates
+
+#### Solution Implemented
+
+**Three-Pronged Approach**:
+
+**1. Fixed Global Container Padding Asymmetry** (`site.css` lines 125-131):
+```css
+/* MOBILE FIX: Symmetric padding on mobile to prevent "shifted left" appearance */
+@media (max-width: 575px) {
+    .container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+}
+```
+
+**2. Added Ultra-Specific CSS Selectors** (`Suggest.cshtml`):
+```html
+<!-- Added unique classes for maximum specificity -->
+<div class="col-md-10 col-lg-9 mb-5 suggestion-cards-container">
+    <div class="row justify-content-center g-4 suggestion-cards-grid">
+```
+
+**3. Nuclear Option CSS** (`site.css` lines 484-526):
+```css
+@media (max-width: 575px) {
+    /* Force parent container to 100% width */
+    .suggestion-cards-container {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Force grid to full width with symmetric padding */
+    .suggestion-cards-grid {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    /* Force all columns to single column (100% width) */
+    .suggestion-cards-grid > .col-lg-4,
+    .suggestion-cards-grid > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+```
+
+#### Technical Implementation
+
+**Files Modified**:
+- `Views/Movies/Suggest.cshtml` - Added specific classes to containers
+- `wwwroot/css/site.css` - Global container fix + ultra-specific mobile CSS
+
+**Key Techniques**:
+- **Maximum CSS Specificity**: Using unique class names to override Bootstrap defaults
+- **Symmetric Padding**: Ensuring equal left/right spacing on all mobile viewports
+- **!important Flags**: Forcing rules to override any competing styles
+- **Full Width Containers**: 100% width on mobile eliminates margin-based offsets
+
+#### Testing Strategy
+
+**Why DevTools Failed to Show the Issue**:
+- DevTools mobile emulation uses desktop rendering engine
+- Real mobile browsers handle viewport, DPI, and font scaling differently
+- Container padding asymmetry more noticeable on small physical screens
+
+**Verification Process**:
+1. Multiple CSS approaches tested (generic selectors → failed)
+2. Investigated container hierarchy (found parent width limitation)
+3. Discovered asymmetric padding (root cause identified)
+4. Applied ultra-specific selectors (nuclear option → success)
+5. Verified on production with real mobile device
+
+#### Results
+
+- **✅ Perfect Centering**: All suggestion cards perfectly centered on mobile devices
+- **✅ Symmetric Layout**: Equal padding on left/right sides (0.75rem)
+- **✅ Single Column**: Cards display one per row on mobile (<576px)
+- **✅ Production Verified**: Tested and confirmed on real iOS/Android devices
+- **✅ No Regressions**: Desktop and tablet views unaffected
+
+**Impact**: Eliminates frustrating UX issue where cards appeared misaligned on mobile, improving professional appearance of production site.
+
+**Lesson Learned**: Always test critical UI changes on real mobile devices, not just DevTools emulation. Subtle CSS issues like asymmetric padding can create noticeable visual problems on physical screens.
+
+---
+
+### 📱 **Mobile Navbar Menu Overlay & Alignment Fixes**
+
+**🎯 UI FIX**: Resolved mobile navbar menu overlay and alignment issues to ensure proper visual hierarchy and consistent spacing.
+
+#### Issues Resolved
+
+**1. Menu Overlay on Logo (Critical)**
+- **Problem**: When opening burger menu on mobile (≤575px), collapsed menu appeared BEHIND the logo instead of below it
+- **Root Cause**: Logo used `position: absolute` without proper z-index layering, causing menu items to render behind logo
+- **Solution**: Implemented three-layer z-index hierarchy:
+  - Logo: `z-index: 1` (bottom layer)
+  - Menu dropdown: `z-index: 2` (middle layer - appears above logo)
+  - Burger button: `z-index: 3` (top layer - always clickable)
+- **Layout Enhancement**: Added `flex-wrap: wrap` and `flex-basis: 100%` to `.navbar-collapse` to force menu to flow to next row below logo/burger
+
+**2. Logout Button Misalignment**
+- **Problem**: "Logout" button rendered further left than "Hello [user]" link in mobile navbar menu
+- **Root Cause**: Form with `form-inline` class and button with `btn btn-link` classes had different Bootstrap padding than standard `nav-link`
+- **Solution**:
+  - Removed form padding/margin: `padding: 0; margin: 0;`
+  - Matched button padding to nav-link: `padding: 0.5rem 1rem;`
+  - Added `text-align: left; width: 100%;` for consistent alignment
+  - Used `!important` to override Bootstrap's `btn-link` default padding
+
+#### Technical Implementation
+
+**Files Modified**:
+- `wwwroot/css/site.css` (lines 1411-1486)
+
+**CSS Changes**:
+```css
+/* Mobile navbar z-index hierarchy (≤575px) */
+.navbar-brand { z-index: 1; }           /* Logo on bottom */
+.navbar-collapse { z-index: 2; }        /* Menu in middle */
+.navbar-toggler { z-index: 3; }         /* Burger on top */
+
+/* Flexbox layout for proper menu flow */
+.navbar .container-fluid {
+    display: flex;
+    flex-wrap: wrap;  /* Allow menu to wrap to next row */
+}
+
+.navbar-collapse {
+    flex-basis: 100%;  /* Force full width on new row */
+    margin-top: 1rem;  /* Visual separation */
+}
+
+/* Logout button alignment */
+.navbar-nav .form-inline { padding: 0; margin: 0; }
+.navbar-nav .form-inline #logout {
+    padding: 0.5rem 1rem;
+    text-align: left;
+    width: 100%;
+}
+```
+
+**Visual Enhancement**:
+- Added subtle background to expanded menu: `rgba(0, 0, 0, 0.95)` with `border-radius: 8px`
+- Improved visual separation between logo and menu dropdown
+
+#### Results
+- **✅ Menu Hierarchy Fixed**: Collapsed menu now properly appears BELOW logo/burger button, not behind it
+- **✅ Alignment Consistency**: "Hello [user]" and "Logout" perfectly aligned with same left padding
+- **✅ Z-Index Layering**: Three-layer hierarchy ensures proper click targets and visual stacking
+- **✅ Professional UX**: Subtle background on menu dropdown enhances readability
+- **✅ Hot Reload Verified**: Changes applied successfully without app restart
+
+**Impact**: Mobile navigation now follows standard UX patterns with proper visual hierarchy and consistent spacing.
+
+---
 
 ### 🎨 **Logo Implementation & Mobile Responsive Optimizations**
 

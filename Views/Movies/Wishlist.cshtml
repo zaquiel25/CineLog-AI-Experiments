@@ -42,7 +42,7 @@
 @* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
 <div class="mb-3 d-flex justify-content-end align-items-center">
     <!-- Display mode toggle -->
-    <div id="wishlist-view-toggle" class="btn-group btn-group-sm me-2" role="group">
+    <div class="btn-group btn-group-sm me-2" role="group">
         <a href="@Url.Action("Wishlist", new { displayMode = "grid", sortOrder = ViewData["CurrentSort"] })"
            class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
            title="Grid View"
@@ -56,8 +56,8 @@
             <i class="fas fa-list"></i>
         </a>
     </div>
-    
-    <div id="wishlist-sort" class="dropdown me-2">
+
+    <div class="dropdown me-2">
         <button class="btn btn-outline-secondary dropdown-toggle" 
                 type="button" 
                 id="sortDropdown" 

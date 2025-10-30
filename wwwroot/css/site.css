@@ -121,6 +121,14 @@ a.btn-success:hover {
     padding-left: 1.1rem;
     padding-right: 1.3rem;
 }
+
+/* MOBILE FIX: Symmetric padding on mobile to prevent "shifted left" appearance */
+@media (max-width: 575px) {
+    .container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+}
 /* Edit page preview card labels */
 .edit-movie-preview p strong {
     color: #4a90e2;
@@ -210,6 +218,83 @@ div#wishlist-list div.movie-list-item.wishlist-movie-card:hover {
 #wishlist-list .list-poster-placeholder { width: 100% !important; height: 100% !important; background: #1c1c1c !important; border-radius: 4px !important; }
 #wishlist-list .list-movie-details { margin-bottom: 0.2rem !important; font-size: 0.85rem !important; line-height: 1.3 !important; }
 #wishlist-list .list-movie-title { font-size: 1rem !important; line-height: 1.2 !important; margin-bottom: 0.3rem !important; }
+
+/* FIX: Align view toggle and sort dropdown buttons on mobile */
+@media (max-width: 575px) {
+    /* Force both btn-group-sm and dropdown to same line-height and padding */
+    .btn-group-sm > .btn,
+    .dropdown > .btn {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Force parent containers to align items center */
+    .btn-group-sm,
+    .dropdown {
+        display: inline-block !important;
+        vertical-align: middle !important;
+    }
+}
+
+/* FIX: Align wishlist action buttons horizontally on all screens */
+.list-actions {
+    display: flex !important;
+    align-items: center !important; /* This fixes the vertical alignment issue */
+    gap: 0.5rem !important;
+}
+
+/* MOBILE FIX: Prevent wishlist action buttons from overflowing on small screens */
+/* NUCLEAR OPTION: Hide text completely, show only icons */
+@media (max-width: 575px) {
+    /* Force movie list items to not overflow */
+    #wishlist-list .movie-list-item {
+        overflow: hidden !important;
+        max-width: 100% !important;
+    }
+
+    /* Make list-actions container compact and HORIZONTALLY aligned */
+    #wishlist-list .list-actions {
+        display: flex !important;
+        flex-direction: row !important; /* Changed from column to row */
+        align-items: center !important; /* Align buttons horizontally */
+        gap: 0.25rem !important;
+        margin-left: 0.25rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Hide ALL text inside buttons - show ONLY icons */
+    #wishlist-list .list-actions .btn {
+        padding: 0.35rem 0.5rem !important;
+        font-size: 0 !important; /* CRITICAL: Hide text */
+        min-width: 40px !important;
+        max-width: 40px !important;
+        border-radius: 6px !important;
+    }
+
+    /* Keep icons visible */
+    #wishlist-list .list-actions .btn i {
+        font-size: 1rem !important; /* Icon size */
+        margin: 0 !important;
+    }
+
+    /* Reduce movie info width to make space for buttons */
+    #wishlist-list .list-movie-info {
+        flex-shrink: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Make movie details smaller on mobile */
+    #wishlist-list .list-movie-details {
+        font-size: 0.75rem !important;
+    }
+
+    /* Hide some metadata on very small screens */
+    #wishlist-list .list-movie-details span:nth-child(3) {
+        display: none !important; /* Hide date added */
+    }
+}
 
 .edit-movie-preview:hover {
     background-color: #252830;
@@ -470,6 +555,50 @@ div#tmdbSearchResultsDisplay.list-group > .list-group-item .text-muted {
     .suggestion-card {
         min-height: 160px !important;
         height: auto !important;
+    }
+}
+
+/* MOBILE FIX: Force suggestion cards to single column on small mobile devices */
+/* ULTRA-SPECIFIC selectors to override everything and fix "corridas hacia la izquierda" */
+@media (max-width: 575px) {
+    /* NUCLEAR OPTION: Target the specific suggestion cards container */
+    .suggestion-cards-container {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Force the inner grid to full width with no margins */
+    .suggestion-cards-grid {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        width: 100% !important;
+    }
+
+    /* Force ALL columns in suggestion grid to full width (1 column) */
+    .suggestion-cards-grid > .col-lg-4,
+    .suggestion-cards-grid > .col-md-6,
+    .suggestion-cards-grid > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Ensure suggestion cards themselves are full width and centered */
+    .suggestion-cards-grid .suggestion-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 1rem !important;
     }
 }
 
@@ -1408,7 +1537,7 @@ html {
 .navbar.bg-primary{border-bottom:1px solid #495057}
 .navbar.bg-dark{background-color:#060606; border-bottom:1px solid #495057}
 
-/* MOBILE FIX: Center logo in navbar on mobile devices */
+/* MOBILE FIX: Center logo in navbar on mobile devices and prevent menu overlap */
 @media (max-width: 575px) {
     .navbar {
         padding-top: 0.75rem;
@@ -1417,16 +1546,23 @@ html {
     }
 
     .navbar .container-fluid {
+        /* FIX: Use flexbox to allow menu to flow below logo/burger */
+        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
+        align-items: center;
         position: relative;
         min-height: 56px;
     }
 
     .navbar-brand {
+        /* Center logo with absolute positioning */
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
         padding: 0.5rem 0;
+        /* CRITICAL: Lower z-index so menu appears above logo when expanded */
+        z-index: 1;
     }
 
     .navbar-brand img {
@@ -1434,8 +1570,47 @@ html {
     }
 
     .navbar-toggler {
+        /* Position burger button on the right */
         position: absolute;
         right: 1rem;
+        /* CRITICAL: Higher z-index to stay clickable above logo */
+        z-index: 3;
+    }
+
+    /* FIX: Make collapsed menu take full width and appear BELOW logo/burger */
+    .navbar-collapse {
+        /* CRITICAL: Highest z-index so menu appears on top of logo */
+        z-index: 2;
+        width: 100%;
+        /* Push menu to next row below logo/burger button */
+        flex-basis: 100%;
+        margin-top: 1rem;
+    }
+
+    /* Optional: Add subtle background to menu when expanded for better visual separation */
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing {
+        background-color: rgba(0, 0, 0, 0.95);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+
+    /* FIX: Align logout button with "Hello user" text in mobile navbar */
+    .navbar-nav .form-inline {
+        /* Remove Bootstrap's inline form padding/margin */
+        padding: 0;
+        margin: 0;
+    }
+
+    .navbar-nav .form-inline #logout {
+        /* Match nav-link styling exactly */
+        padding: 0.5rem 1rem;
+        text-align: left;
+        width: 100%;
+        /* Remove Bootstrap btn-link default padding */
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 }
 
