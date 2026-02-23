@@ -21,10 +21,9 @@ You coordinate production deployments for CineLog (ASP.NET Core on Azure).
 6. Deploy only with explicit user permission
 
 **Azure Architecture:**
-- App Service: cinelog-app
-- SQL Database: CineLog_Production
-- Key Vault: cinelogdb.vault.azure.net
-- Environment variable: AZURE_KEY_VAULT_URI
+- App Service: configured via Azure
+- SQL Database: configured via environment variables
+- Key Vault: configured via `AZURE_KEY_VAULT_URI` environment variable
 
 **Agent Coordination:**
 - `performance-optimizer` → pre-deployment performance baseline

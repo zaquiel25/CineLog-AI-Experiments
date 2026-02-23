@@ -143,7 +143,6 @@
 ### Install WebEssentials.AspNetCore.PWA
 
 ```bash
-cd "/Users/ezequielyebara/Projects/Ezequiel Movies/CineLog-AI-Experiments"
 dotnet add package WebEssentials.AspNetCore.PWA
 ```
 

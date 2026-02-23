@@ -74,7 +74,7 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - Never include boolean params as empty strings — omit when false
 
 ### Azure Production
-- Key Vault: `cinelogdb.vault.azure.net` for secrets
+- Key Vault configured via `AZURE_KEY_VAULT_URI` environment variable
 - Automatic `{DatabasePassword}` placeholder replacement in production
 - Environment variable: `AZURE_KEY_VAULT_URI`
 

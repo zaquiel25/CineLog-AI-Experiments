@@ -90,7 +90,7 @@ If a user requests information or actions related to an MCP server or extension,
 - **ALWAYS** work locally by default - production site must remain stable
 - **FORBIDDEN COMMANDS without explicit permission:**
   - `az webapp deployment`
-  - `curl -X POST "https://cinelog-app.scm.azurewebsites.net/api/zipdeploy"`
+  - `curl -X POST` to Azure SCM zipdeploy endpoint
   - `git push`
   - Any Azure deployment command
 - **REQUIRED**: User must explicitly say "deploy this to production" or "push to Azure"
@@ -529,7 +529,7 @@ ASPNETCORE_ENVIRONMENT=Production dotnet ef database update
 
 # Verify Azure authentication
 az account show
-az keyvault secret show --vault-name cinelogdb --name DatabasePassword --query attributes.updated
+az keyvault secret show --vault-name [YOUR-KEYVAULT] --name DatabasePassword --query attributes.updated
 ```
 
 ### 🔍 **Security Audit Lessons Learned (2025-08-07)**
@@ -706,7 +706,7 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 
 **Latest Update (2025-08-03): Azure Cloud Integration Complete**
 CineLog has achieved **9.5/10 production readiness** with full Azure cloud infrastructure:
-- ✅ **Azure SQL Database**: Production database "[YOUR-DATABASE]" on server "cinelog-sql-server" 
+- ✅ **Azure SQL Database**: Production database "[YOUR-DATABASE]" on server "[YOUR-SQL-SERVER]"
 - ✅ **Azure Key Vault**: Secure secret management with "[YOUR-KEYVAULT]" Key Vault using DefaultAzureCredential
 - ✅ **Connection Resilience**: Retry policies (3 attempts, 10s delay) and 60s timeouts for Azure SQL
 - ✅ **Zero Hardcoded Secrets**: All sensitive data managed through Azure Key Vault
@@ -2374,7 +2374,7 @@ public async Task<ValidationResult> ValidateAgentOutput(string agentName, object
 ```bash
 # 🚨 FORBIDDEN without explicit permission:
 az webapp deployment             # Deploy to Azure App Service
-curl -X POST "https://cinelog-app.scm.azurewebsites.net/api/zipdeploy"  # Deploy ZIP
+curl -X POST to Azure SCM zipdeploy endpoint  # Deploy ZIP
 git push origin main             # Push code to repository
 dotnet publish -c Release       # Build for production
 

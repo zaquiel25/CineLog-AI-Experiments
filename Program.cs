@@ -145,31 +145,31 @@ if (builder.Environment.IsProduction())
     if (!string.IsNullOrEmpty(databasePassword))
     {
         // Build connection string from Key Vault secrets and environment variables
-        var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER") ?? "cinelog-sql-server.database.windows.net";
-        var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE") ?? "CineLog_Production";
-        var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER") ?? "cinelogadmin";
+        var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER")
+            ?? throw new InvalidOperationException("AZURE_SQL_SERVER environment variable is required in production");
+        var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE")
+            ?? throw new InvalidOperationException("AZURE_SQL_DATABASE environment variable is required in production");
+        var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER")
+            ?? throw new InvalidOperationException("AZURE_SQL_USER environment variable is required in production");
         
         connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={databasePassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
     }
     else
     {
-        // Fallback when Key Vault is unavailable
-        var sqlServer = "cinelog-sql-server.database.windows.net";
-        var sqlDatabase = "CineLog_Production";  
-        var sqlUser = "cinelogadmin";
-        
+        // Fallback when Key Vault is unavailable — require all values from environment
+        var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER")
+            ?? throw new InvalidOperationException("AZURE_SQL_SERVER environment variable is required in production");
+        var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE")
+            ?? throw new InvalidOperationException("AZURE_SQL_DATABASE environment variable is required in production");
+        var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER")
+            ?? throw new InvalidOperationException("AZURE_SQL_USER environment variable is required in production");
+
         // Try to get fallback password from environment variable
-        var fallbackPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? 
-                              Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
-        
-        if (!string.IsNullOrEmpty(fallbackPassword))
-        {
-            connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={fallbackPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
-        }
-        else
-        {
-            throw new InvalidOperationException("No database password available - Key Vault failed and no fallback password configured");
-        }
+        var fallbackPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ??
+                              Environment.GetEnvironmentVariable("DATABASE_PASSWORD")
+                              ?? throw new InvalidOperationException("No database password available - Key Vault failed and no fallback password configured");
+
+        connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={fallbackPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
     }
 }
 else
