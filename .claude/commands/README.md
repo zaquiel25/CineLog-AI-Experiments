@@ -1,117 +1,37 @@
-# Claude Code Slash Commands
+# Claude Code Commands & Skills
 
-This directory contains Claude Code slash commands for automatically updating project documentation and managing AI agent performance optimization.
-
-## Available Commands
-
-### `/update-docs [description]`
-**Purpose**: Comprehensive documentation update after code changes  
-**Tools**: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, LS, WebFetch  
-**Usage**: `/update-docs Added new caching system for performance`
-
-**What it does**:
-- Analyzes recent git commits and file changes
-- Updates README.md with new features and setup instructions
-- Updates CLAUDE.md with new development patterns
-- Adds entries to CHANGELOG.md with proper categorization
-- Updates PERFORMANCE_OPTIMIZATION_SUMMARY.md if performance changes detected
+## Skills (`.claude/skills/`)
 
 ### `/docs [description]`
-**Purpose**: Quick documentation synchronization  
-**Tools**: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, LS  
-**Usage**: `/docs Fixed authentication bug`
+Smart documentation update. Analyzes recent changes and selectively updates only impacted files (README, CHANGELOG, CLAUDE.md, PERFORMANCE_OPTIMIZATION_SUMMARY).
+```
+/docs Added new filtering feature to collection page
+```
 
-**What it does**:
-- Quick check of recent changes via git
-- Fast update of core documentation files
-- Maintains existing formatting and style
-- Focuses on essential updates only
+### `/build`
+Build verification. Runs `dotnet build` and reports results. Can be auto-invoked by Claude after code changes.
+```
+/build
+```
 
-### `/sync-docs [type] [description]`
-**Purpose**: Advanced documentation sync with git integration  
-**Tools**: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, LS, TodoWrite  
-**Usage**: `/sync-docs feature Added user preferences system`
-
-**What it does**:
-- Comprehensive git history analysis (last 10 commits)
-- Categorized changelog updates with emojis (✨ Features, ⚡ Performance, 🐛 Bug Fixes)
-- Cross-reference validation between documents
-- Quality assurance phase to ensure accuracy
+## Commands (`.claude/commands/`)
 
 ### `/session`
-**Purpose**: Automatic session notes update and context management  
-**Tools**: Read, Edit, Grep  
-**Usage**: `/session` (automatically triggered at conversation start/end)
+Update SESSION_NOTES.md with current session context, accomplishments, and next priorities.
+```
+/session
+```
 
-**What it does**:
-- Analyzes current conversation for key accomplishments and technical decisions
-- Updates SESSION_NOTES.md with current session entry (2025-MM-DD format)
-- Documents session goals, accomplishments, and next priorities
-- Optimizes file context by removing outdated entries (older than 3-4 days)
-- Maintains user preferences and workflow patterns that affect current work
-- Preserves essential architecture patterns and production status information
-- Ensures focused day-to-day context for development continuity
-
-### `/agent-feedback [specific agent or aspect]`
-**Purpose**: **🆕 AI Agent Observability** - Analyzes agent performance patterns and implements continuous learning feedback loops  
-**Tools**: Read, Edit, MultiEdit, Grep, Glob, LS  
-**Usage**: `/agent-feedback` or `/agent-feedback cinelog-movie-specialist`
-
-**What it does**:
-- **Performance Data Collection**: Reviews SESSION_NOTES.md agent performance metrics and success rates
-- **Pattern Recognition**: Identifies successful agent routing patterns and failure modes
-- **User Preference Learning**: Detects user working style adaptations and preferences  
-- **Optimization Recommendations**: Generates agent capability improvements and routing optimizations
-- **Continuous Learning Implementation**: Updates performance baselines and integrates successful patterns
-- **Predictive Enhancement**: Creates optimization recommendations for future sessions
-
-**Key Capabilities**:
-- Analyzes agent success rates, execution times, and quality scores
-- Implements LLM-as-judge evaluation principles for automated quality assessment
-- Tracks multi-agent coordination effectiveness and context preservation
-- Identifies user satisfaction patterns and workflow optimizations
-- Generates data-driven recommendations for agent system improvements
+### `/agent-feedback [agent name]`
+Analyze agent performance patterns and generate improvement recommendations.
+```
+/agent-feedback cinelog-movie-specialist
+```
 
 ## Documentation Files Managed
 
-1. **README.md** - Main project documentation, features, setup
-2. **CLAUDE.md** - Claude Code development guidance and patterns
-3. **CHANGELOG.md** - Chronological change history
-4. **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Performance improvements and metrics
-5. **SESSION_NOTES.md** - Day-to-day context and session continuity (via `/session`)
-
-### 🆕 **AI Agent Observability Files**
-6. **`.claude/observability/agent-performance.md`** - Real-time agent metrics and success rates
-7. **`.claude/observability/evaluation-criteria.md`** - LLM-as-judge quality assessment framework
-8. **`.claude/observability/feedback-loops.md`** - Continuous learning mechanisms and pattern recognition
-9. **`.claude/observability/health-dashboard.md`** - System status monitoring and performance trends
-10. **`.claude/observability/optimization-insights.md`** - Data-driven improvement recommendations
-
-## Usage Workflow
-
-1. **After making code changes**: Use `/update-docs "description of changes"`
-2. **For quick updates**: Use `/docs "brief description"`
-3. **For comprehensive releases**: Use `/sync-docs feature "detailed description"`
-4. **🆕 For agent performance optimization**: Use `/agent-feedback` to analyze and improve agent effectiveness
-
-## Command Design Principles
-
-- **Automated Analysis**: Commands automatically detect what changed via git
-- **Smart Updates**: Only updates relevant sections based on change type
-- **Consistency**: Maintains existing formatting and documentation style
-- **Non-Destructive**: Preserves existing content while adding new information
-- **Quality Focused**: Ensures technical accuracy and proper cross-references
-- **🆕 Observability-Driven**: Agent performance tracking and continuous improvement integration
-- **🆕 Learning-Enabled**: Feedback loops for system optimization and evolution
-
-## Installation
-
-Commands are automatically available in this project through the `.claude/commands/` directory structure. Claude Code will detect and load them automatically.
-
-## Contributing
-
-When adding new slash commands:
-1. Use descriptive YAML frontmatter with `description` and `allowed-tools`
-2. Follow the established command structure and naming conventions
-3. Test commands thoroughly before committing
-4. Update this README when adding new commands
+- **README.md** - Features, setup, architecture
+- **CLAUDE.md** - Development guidance and patterns
+- **CHANGELOG.md** - Change history
+- **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Performance metrics
+- **SESSION_NOTES.md** - Session continuity (gitignored)

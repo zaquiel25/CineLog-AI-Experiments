@@ -1,3 +1,25 @@
+## 2026-02-23
+
+### Changed
+- **CLAUDE.md**: Rewritten from 667 to 121 lines for context efficiency. Detailed patterns moved to `.claude/patterns.md`
+- **Agent system**: Simplified 6 agent files (removed fictional metrics, kept actionable instructions)
+- **Commands**: Consolidated 3 redundant doc commands (`/docs`, `/sync-docs`, `/update-docs`) into single `/docs` skill
+- **Agent feedback**: Simplified `/agent-feedback` command to focus on real session data
+- **Settings**: Cleaned `.claude/settings.local.json` (removed invalid hook configurations)
+
+### Added
+- **`/docs` skill** (`.claude/skills/docs/`): Smart documentation update with selective file targeting
+- **`/build` skill** (`.claude/skills/build/`): Build verification, auto-invocable by Claude
+- **`.claude/patterns.md`**: Detailed code patterns reference (auth, TMDB, AJAX, debugging)
+- **MEMORY.md**: Persistent cross-session memory with project architecture and user preferences
+
+### Removed
+- **Observability directory** (`.claude/observability/`): 6 files with 1,209 lines of fictional metrics — no real telemetry existed
+- **Redundant commands**: `docs.md`, `sync-docs.md`, `update-docs.md` (replaced by `/docs` skill)
+- **"ZERO DIRECT WORK" mandate**: Replaced with pragmatic approach (agents for complex tasks, direct work for simple ones)
+
+---
+
 ## 2025-10-30
 
 ### 🎨 **Suggestion Card Button Style Unification**
