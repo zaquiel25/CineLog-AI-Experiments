@@ -22,6 +22,18 @@ Update SESSION_NOTES.md with current session context, accomplishments, and next 
 /session
 ```
 
+### `/audit`
+Project health check — evaluates build, dead code, TODOs, dependencies, code quality. Run periodically.
+```
+/audit
+```
+
+### `/security`
+Security audit — credentials scan, API security, OWASP review, user data isolation, dead code. Run before deployments or when sharing repo.
+```
+/security
+```
+
 ### `/agent-feedback [agent name]`
 Analyze agent performance patterns and generate improvement recommendations.
 ```

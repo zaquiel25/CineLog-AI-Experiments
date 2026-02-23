@@ -1,7 +1,12 @@
 ## 2026-02-23
 
+### Security
+- **Credential cleanup**: Purged hardcoded password from entire git history (507 objects) using BFG Repo-Cleaner
+- **Infrastructure redaction**: Removed Azure server names, database names, admin usernames, Key Vault names from 8 files
+- **Program.cs hardened**: Removed hardcoded fallback values, now requires environment variables in production
+
 ### Changed
-- **CLAUDE.md**: Rewritten from 667 to 121 lines for context efficiency. Detailed patterns moved to `.claude/patterns.md`
+- **CLAUDE.md**: Rewritten from 667 to 121 lines for context efficiency. Detailed patterns moved to `.claude/patterns.md`. Added rule 7 (lessons-learned)
 - **Agent system**: Simplified 6 agent files (removed fictional metrics, kept actionable instructions)
 - **Commands**: Consolidated 3 redundant doc commands (`/docs`, `/sync-docs`, `/update-docs`) into single `/docs` skill
 - **Agent feedback**: Simplified `/agent-feedback` command to focus on real session data
@@ -10,6 +15,9 @@
 ### Added
 - **`/docs` skill** (`.claude/skills/docs/`): Smart documentation update with selective file targeting
 - **`/build` skill** (`.claude/skills/build/`): Build verification, auto-invocable by Claude
+- **`/audit` command**: Project health check — build, dead code, TODOs, dependencies, code quality
+- **`/security` command**: Security audit — credentials, API security, OWASP, user data isolation, dead code
+- **`lessons-learned.md`**: Persistent memory file for recording bug fix patterns and solutions
 - **`.claude/patterns.md`**: Detailed code patterns reference (auth, TMDB, AJAX, debugging)
 - **MEMORY.md**: Persistent cross-session memory with project architecture and user preferences
 

@@ -8,6 +8,7 @@
 4. **Professional comments required.** All new methods need XML docs. Inline comments explain "why", not "what". English only. Use FIX/FEATURE/ENHANCEMENT prefixes.
 5. **Use TodoWrite** for complex multi-step tasks. Keep working until all items are done.
 6. **Safety first.** Check for data privacy, security vulnerabilities, and credential exposure before implementing. When in doubt, ask.
+7. **Learn from mistakes.** Read `lessons-learned.md` from memory before making changes. After fixing bugs, record what was learned.
 
 ## Production Safety
 
