@@ -110,9 +110,10 @@ For detailed agent docs, see [AGENTS.md](.claude/agents/AGENTS.md).
 ## MCP Servers
 
 Use automatically when relevant:
-- **microsoft-docs**: ASP.NET Core, Entity Framework docs
-- **deepwiki**: Wikipedia research
-- **context7**: Contextual AI operations
+- **context7**: Library/framework documentation lookup
+- **azure**: Azure resource management and best practices
+- **microsoft-learn**: Official Microsoft docs (ASP.NET Core, EF Core, C#, .NET)
+- **deepwiki**: Open-source project documentation and knowledge
 
 ## Documentation References
 

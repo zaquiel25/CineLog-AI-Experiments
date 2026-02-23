@@ -7,6 +7,7 @@
 
 ### Changed
 - **CLAUDE.md**: Rewritten from 667 to 121 lines for context efficiency. Detailed patterns moved to `.claude/patterns.md`. Added rule 7 (lessons-learned)
+- **MCP servers**: Reconfigured to 4 servers — Context7, Azure MCP, Microsoft Learn (HTTP), DeepWiki (HTTP). Replaced old microsoft-docs/codacy with accurate names and descriptions
 - **Agent system**: Simplified 6 agent files (removed fictional metrics, kept actionable instructions)
 - **Commands**: Consolidated 3 redundant doc commands (`/docs`, `/sync-docs`, `/update-docs`) into single `/docs` skill
 - **Agent feedback**: Simplified `/agent-feedback` command to focus on real session data

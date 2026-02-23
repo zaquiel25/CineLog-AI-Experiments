@@ -389,7 +389,7 @@ This deployment represents a significant advancement in cloud configuration mana
 
 ### 🛰️ Enhanced AI Development Tools
 - **MCP Server Integration**: Automatic utilization of Model Context Protocol servers for enhanced development capabilities
-- **Seamless Documentation**: Integrated access to Microsoft Learn docs, DeepWiki, Context7, and Codacy code analysis
+- **Seamless Documentation**: Integrated access to Context7, Azure MCP, Microsoft Learn, and DeepWiki
 - **Proactive Assistance**: AI tools automatically leverage available MCP servers when context is relevant
 
 ### 🎭 Cast Suggestion System Logic Improvements
@@ -516,73 +516,30 @@ This deployment represents a significant advancement in cloud configuration mana
 ### Troubleshooting
 - If you see a "Non-JSON response" error in the UI, ensure your AJAX request includes the `X-Requested-With: XMLHttpRequest` header and the backend action returns JSON for all AJAX cases.
 
-## 🤖 Claude Code Development Tools (Enhanced with AI Observability)
-- **Advanced Agent System**: 18 specialized AI assistants with intelligent orchestration and session continuity
-- **Master Agent Director**: Intelligent task router that analyzes complexity and assigns optimal agents
-- **🆕 AI Agent Observability System**: Industry-leading performance monitoring with LLM-as-judge evaluation, continuous learning, and real-time metrics
-- **Context Efficiency**: Each subagent operates in its own context window for focused expertise
+## 🤖 Claude Code Development Tools
+- **Specialized Agent System**: 9 task-specific agents for complex, multi-domain work (simple tasks handled directly)
+- **Context Efficiency**: CLAUDE.md reduced to ~120 lines; detailed patterns in `.claude/patterns.md`
 - **Architecture Knowledge**: Deep understanding of CineLog patterns, conventions, and best practices
-- **Production Deployment**: Strategic deployment coordinator with educational guidance and infrastructure expertise
-- **Optimized Documentation**: Agent system documentation restructured for 45% better performance
+- **MCP Integration**: 4 MCP servers (Context7, Azure, Microsoft Learn, DeepWiki) used automatically when relevant
 
-### 🔍 **AI Agent Observability Features (2025-08-20)**
-- **Real-Time Performance Monitoring**: Track success rates, execution times, and quality scores across all 10 specialized agents
-- **LLM-as-Judge Evaluation**: Automated quality assessment framework scoring agent outputs on 1-10 scale based on task completion, technical excellence, and innovation
-- **Continuous Learning System**: Pattern recognition identifies successful approaches (domain specialists 18% more effective) and failure modes for system optimization
-- **Performance Dashboard**: Live agent health monitoring with 8.7/10 system status, 94% overall success rate, and trend analysis
-- **Master Director Analytics**: 92% routing accuracy with user preference learning (76% alignment with working patterns)
-- **Feedback Loop Integration**: Automated performance optimization recommendations and predictive enhancement strategies
+### 🎬 Specialized Agents
+- **`cinelog-movie-specialist`**: Movie features, suggestion algorithms, CRUD operations
+- **`tmdb-api-expert`**: External API integration, rate limiting, caching strategies
+- **`ef-migration-manager`**: Database operations, schema changes, Entity Framework
+- **`performance-optimizer`**: Caching optimization, query performance, API efficiency
+- **`aspnet-feature-developer`**: Full-stack MVC feature development
+- **`deployment-project-manager`**: Production deployment coordination
+- **`docs-architect`**: Documentation maintenance and change tracking
+- **`performance-monitor`**: Performance validation and benchmarking
+- **`session-secretary`**: Session context management and continuity
 
-### 🎭 Master Agent Director
-The **Master Agent Director** is an intelligent orchestrator that:
-- **Analyzes Task Complexity**: Automatically determines if tasks need strategic planning
-- **Routes Optimally**: Assigns the most efficient agent(s) for each specific task
-- **Coordinates Multi-Agent Workflows**: Manages sequential and parallel agent execution
-- **Triggers Proactive Agents**: Automatically invokes testing, UI enhancement, and quality agents
-
-### 🎬 Core CineLog Subagents
-- **`cinelog-movie-specialist`**: Movie features, suggestion algorithms, CRUD operations, user data management
-- **`tmdb-api-expert`**: External API integration, rate limiting, caching strategies, data mapping
-- **`ef-migration-manager`**: Database operations, schema changes, performance indexes, Entity Framework, production optimization
-- **`performance-optimizer`**: Caching optimization, query performance, API efficiency, production scalability analysis
-- **`aspnet-feature-developer`**: Complete feature development, MVC patterns, UI/UX, Bootstrap integration
-- **`deployment-project-manager`**: Strategic production deployment coordination, infrastructure design, educational guidance, cross-agent orchestration
-- **`docs-architect`**: Documentation maintenance, architecture updates, change tracking, production deployment guides
-- **`session-secretary`**: Session context management, project continuity coordination, cross-session memory, decision tracking
-
-### 🚀 Enhanced Development Subagents
-- **`test-writer-fixer`** (Proactive): Comprehensive test coverage after code changes
-- **`backend-architect`**: Scalable architecture design and API planning
-- **`ui-designer`** (Proactive): Visual design enhancement and modern UI patterns
-- **`whimsy-injector`** (Proactive): Delightful micro-interactions and user engagement
-- **`performance-benchmarker`**: Performance testing and optimization analysis
-- **`devops-automator`**: CI/CD automation and deployment optimization
-- **`api-tester`**: API reliability testing and integration validation
-- **`feedback-synthesizer`**: User feedback analysis and feature prioritization
-- **`code-refactoring-specialist`** (Proactive): Code quality improvement and technical debt reduction
-
-### 🧠 Intelligent Planning System
-- **Complexity Assessment**: Simple tasks get direct execution, complex tasks trigger strategic planning
-- **Strategic Planning**: Auto-triggered 5-step planning process for complex features
-- **Risk Assessment**: Built-in risk identification and mitigation strategies
-- **Phased Execution**: Breaks large features into manageable, testable phases
-
-### Benefits
-- **Intelligent Orchestration**: Master Director routes tasks to optimal agents automatically
-- **Proactive Quality**: Automatic testing, UI enhancement, delight injection, and code refactoring
-- **Strategic Planning**: Complex features get proper planning before implementation
-- **Faster Development**: Task-specific expertise with intelligent coordination
-- **Consistent Architecture**: Deep knowledge ensures adherence to CineLog patterns
-- **Technical Debt Management**: Automatic code quality monitoring and improvement
-- **Comprehensive Coverage**: From architecture to testing to user experience optimization and code maintenance
-- **Performance Optimized**: Agent documentation restructured for 45% faster loading and context efficiency
-
-### 📚 Documentation Commands
-- **`/session`**: Automatic session notes update and context management for development continuity
-- **`/update-docs [description]`**: Comprehensive documentation update after code changes
-- **`/docs [description]`**: Quick documentation synchronization 
-- **`/sync-docs [type] [description]`**: Advanced documentation sync with git integration
-- **🆕 `/agent-feedback [agent]`**: **AI Agent Observability** - Performance analysis and continuous learning optimization
+### 📚 Commands and Skills
+- **`/docs`**: Smart documentation update with selective file targeting
+- **`/build`**: Build verification (auto-invocable)
+- **`/session`**: Session notes management
+- **`/audit`**: Project health check (build, dead code, TODOs, dependencies)
+- **`/security`**: Security audit (credentials, API security, OWASP, data isolation)
+- **`/agent-feedback`**: Agent performance analysis
 
 ### 🤝 **GitHub Copilot Integration - Enhanced Security & Development Standards (2025-08-07)**
 - **Enterprise Security Standards**: GitHub Copilot equipped with comprehensive infrastructure security requirements and audit lessons
