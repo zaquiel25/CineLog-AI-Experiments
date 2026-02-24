@@ -890,12 +890,7 @@ namespace Ezequiel_Movies.Controllers
             var watchProviders = await _tmdbService.GetWatchProvidersAsync(tmdbId, movieDetails.Title ?? string.Empty);
             if (watchProviders?.Results != null)
             {
-                // Region priority: IE → US → GB
-                WatchProviderCountry? providers = null;
-                if (watchProviders.Results.TryGetValue("IE", out var ie)) providers = ie;
-                else if (watchProviders.Results.TryGetValue("US", out var us)) providers = us;
-                else if (watchProviders.Results.TryGetValue("GB", out var gb)) providers = gb;
-                else if (watchProviders.Results.Count > 0) providers = watchProviders.Results.Values.FirstOrDefault();
+                var providers = ResolveWatchProviders(watchProviders.Results);
 
                 var allProviders = new Dictionary<string, List<ProviderInfo>>();
                 if (providers != null)
@@ -976,11 +971,7 @@ namespace Ezequiel_Movies.Controllers
                 var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value, movieDetails?.Title ?? string.Empty);
                 if (watchProviders?.Results != null)
                 {
-                    WatchProviderCountry? providers = null;
-                    if (watchProviders.Results.TryGetValue("IE", out var ie)) providers = ie;
-                    else if (watchProviders.Results.TryGetValue("US", out var us)) providers = us;
-                    else if (watchProviders.Results.TryGetValue("GB", out var gb)) providers = gb;
-                    else if (watchProviders.Results.Count > 0) providers = watchProviders.Results.Values.FirstOrDefault();
+                    var providers = ResolveWatchProviders(watchProviders.Results);
 
                     var allProviders = new Dictionary<string, List<ProviderInfo>>();
                     if (providers != null)
@@ -4390,10 +4381,47 @@ return (bucket3x3, bucket2x3, bucket1x3);
             }
         }
 
-    }
+        /// <summary>
+        /// FIX: Extracts the user's country code from Accept-Language header for watch provider region.
+        /// Example: "es-AR,es;q=0.9,en;q=0.8" → "AR"
+        /// </summary>
+        private string? GetUserRegionFromBrowser()
+        {
+            var acceptLanguage = Request.Headers["Accept-Language"].ToString();
+            if (string.IsNullOrEmpty(acceptLanguage)) return null;
 
+            // Parse entries like "es-AR", "en-US", "pt-BR" — we want the country part after the dash
+            var entries = acceptLanguage.Split(',');
+            foreach (var entry in entries)
+            {
+                var lang = entry.Split(';')[0].Trim();
+                if (lang.Contains('-'))
+                {
+                    var country = lang.Split('-')[1].ToUpperInvariant();
+                    if (country.Length == 2) return country;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// FIX: Resolves watch providers using browser region with AR/US/GB fallback chain.
+        /// </summary>
+        private WatchProviderCountry? ResolveWatchProviders(Dictionary<string, WatchProviderCountry> results)
+        {
+            var browserRegion = GetUserRegionFromBrowser();
+
+            // Priority: browser region → AR → US → GB → first available
+            if (browserRegion != null && results.TryGetValue(browserRegion, out var browser)) return browser;
+            if (results.TryGetValue("AR", out var ar)) return ar;
+            if (results.TryGetValue("US", out var us)) return us;
+            if (results.TryGetValue("GB", out var gb)) return gb;
+            return results.Values.FirstOrDefault();
+        }
+
+    }
 
     #endregion
 
-    
+
     }

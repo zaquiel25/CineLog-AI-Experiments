@@ -9,6 +9,13 @@
   - PWA icons replaced with dark background versions (#212529 bg + gold logo with safe zone padding)
 - **OWASP security skill** (`.claude/skills/owasp-security/`): OWASP Top 10:2025, ASVS 5.0, Agentic AI security (2026), and language-specific security patterns for 20 languages
 
+### Fixed
+- **Watch providers region detection**: Replaced hardcoded Ireland (IE) region with dynamic browser-based detection using Accept-Language header
+  - `MoviesController.cs`: New `GetUserRegionFromBrowser()` parses Accept-Language for country code (e.g., `es-AR` → `AR`)
+  - `MoviesController.cs`: New `ResolveWatchProviders()` with fallback chain: browser region → AR → US → GB → first available
+  - `TmdbService.cs`: Default region changed from "IE" to "AR"
+  - Applied to both Movie Details and Movie Preview watch provider sections
+
 ### Changed
 - **CLAUDE.md**: Added rule 8 (Plan first — use Plan mode for non-trivial tasks, re-plan on failure) and rule 9 (Fix bugs autonomously — investigate, trace, resolve without hand-holding). Now 125 lines, 9 critical rules
 

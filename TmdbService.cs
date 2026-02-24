@@ -319,7 +319,7 @@ public class TmdbService : IDisposable
 
 
         // Gets the watch providers for a given movie from TMDB
-        public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbMovieId, string? region = "IE")
+        public async Task<WatchProviderResponse?> GetWatchProvidersAsync(int tmdbMovieId, string? region = "AR")
         {
             if (tmdbMovieId <= 0) return null;
             var requestUri = $"movie/{tmdbMovieId}/watch/providers";

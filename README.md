@@ -19,6 +19,12 @@ CineLog is now a fully installable Progressive Web App. Users can add it to thei
 
 **Status**: 🟢 **READY FOR DEPLOYMENT** - Full PWA support implemented
 
+### 🌍 **SMART REGION DETECTION** - Watch Providers Now Show Your Country!
+
+Watch provider availability (streaming, rent, buy) now automatically detects the user's region from their browser's Accept-Language header, replacing the previous hardcoded Ireland region. Falls back through AR → US → GB → first available for maximum coverage.
+
+**Status**: 🟢 **READY FOR DEPLOYMENT** - Dynamic region detection implemented
+
 ---
 
 ## 🚀 Previous Updates (2025-08-26)
