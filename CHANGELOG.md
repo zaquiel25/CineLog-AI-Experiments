@@ -23,8 +23,20 @@
   - Cleaned `TrackPasswordGateAccess()` from `CineLogTelemetryService.cs`
   - Identity auth (login/register/Google OAuth) remains for user account features
 
+### Added
+- **Cookie consent banner**: GDPR-compliant cookie consent using ASP.NET Core built-in `CookiePolicyOptions` with Cinema Gold styling
+- **Contact email**: Footer TikTok icon replaced with functional mailto link to appcinelog@gmail.com
+
 ### Changed
+- **Privacy Policy**: Updated for public launch — removed testing language, added appcinelog@gmail.com contact, updated data retention and non-commercial sections
 - **CLAUDE.md**: Added rule 8 (Plan first — use Plan mode for non-trivial tasks, re-plan on failure) and rule 9 (Fix bugs autonomously — investigate, trace, resolve without hand-holding). Now 125 lines, 9 critical rules
+
+### Security
+- **Production hardening**: `Console.WriteLine` replaced with structured logging in `Program.cs` and `NullTelemetryClient.cs`; TMDB token now throws on missing config in production; debug logging removed from `MoviesController.cs`
+
+### Removed
+- **Obsolete documentation**: 10 internal dev files (GPT.md, AI templates, SQL scripts, deployment instructions, empty migration, optimization reports)
+- 3 planning docs moved to .gitignore for local reference only
 
 ---
 

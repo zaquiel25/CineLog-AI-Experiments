@@ -25,6 +25,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <partial name="_CookieConsentPartial" />
     @* We create a new wrapper div to control the flex layout, avoiding theme conflicts on the body tag *@
     <div class="d-flex flex-column min-vh-100">
 
@@ -122,7 +123,7 @@
                                 <div class="d-flex justify-content-center justify-content-lg-end gap-3 mt-3">
                                     <span class="social-link disabled" role="button" aria-disabled="true" title="Instagram (coming soon)"><i class="bi bi-instagram"></i></span>
                                     <span class="social-link disabled" role="button" aria-disabled="true" title="X (coming soon)"><i class="bi bi-twitter-x"></i></span>
-                                    <span class="social-link disabled" role="button" aria-disabled="true" title="TikTok (coming soon)"><i class="bi bi-tiktok"></i></span>
+                                    <a href="mailto:appcinelog@gmail.com" class="social-link" title="Email us"><i class="bi bi-envelope-fill"></i></a>
                                     <span class="social-link disabled" role="button" aria-disabled="true" title="Facebook (coming soon)"><i class="bi bi-facebook"></i></span>
                                 </div>
                             </div>

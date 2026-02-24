@@ -3325,13 +3325,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
             // Get user's blacklisted movie IDs
             var userBlacklistedIds = await GetUserBlacklistedTmdbIdsAsync(userId);
 
-            // DEBUG LOGGING: Output director, filmography IDs, blacklist IDs
-            _logger.LogInformation("[DEBUG] Director: {DirectorName}", directorName);
-            _logger.LogInformation("[DEBUG] Director Filmography IDs: {FilmographyIds}", string.Join(",", allDirectorMovies.Select(m => m.Id)));
-            _logger.LogInformation("[DEBUG] User Blacklisted TMDB IDs: {BlacklistIds}", string.Join(",", userBlacklistedIds));
-
             var availableMovies = allDirectorMovies.Where(movie => !userBlacklistedIds.Contains(movie.Id)).ToList();
-            _logger.LogInformation("[DEBUG] Available movies for {DirectorName}: {AvailableMovieIds}", directorName, string.Join(",", availableMovies.Select(m => m.Id)));
 
             // Check if there are any movies not in the blacklist
             return availableMovies.Any();

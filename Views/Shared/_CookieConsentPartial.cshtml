@@ -1,0 +1,31 @@
+@using Microsoft.AspNetCore.Http.Features
+
+@{
+    var consentFeature = Context.Features.Get<ITrackingConsentFeature>();
+    var showBanner = !consentFeature?.CanTrack ?? false;
+}
+
+@if (showBanner)
+{
+    <div id="cookieConsent" class="cookie-consent-banner" role="alert">
+        <div class="container d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2 py-2">
+            <span class="small">
+                We use cookies to improve your experience. By continuing, you agree to our
+                <a asp-area="" asp-controller="Home" asp-action="Privacy" class="cookie-consent-link">Privacy Policy</a>.
+            </span>
+            <button type="button" class="btn btn-sm btn-warning fw-semibold" id="cookieConsentAccept">
+                Accept
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var button = document.getElementById("cookieConsentAccept");
+            button.addEventListener("click", function () {
+                document.cookie = "@consentFeature?.CreateConsentCookie()" + ";path=/;max-age=31536000;samesite=lax";
+                document.getElementById("cookieConsent").remove();
+            });
+        })();
+    </script>
+}

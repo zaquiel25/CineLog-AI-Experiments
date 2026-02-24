@@ -1,4 +1,20 @@
-﻿
+﻿/* Cookie consent banner */
+.cookie-consent-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1a1a2e;
+    border-top: 1px solid #F4D03F;
+    z-index: 1050;
+    padding: 0.5rem 0;
+}
+
+.cookie-consent-link {
+    color: #F4D03F;
+    text-decoration: underline;
+}
+
 /* Smaller font for Privacy page only */
 .privacy-policy-small {
     font-size: 0.9rem; /* HUMANIZED: Rounded organic size instead of precise 0.92rem */

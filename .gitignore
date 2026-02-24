@@ -79,6 +79,11 @@ dist-server/
 # Session secretary context notes (local development context only)
 SESSION_NOTES.md
 
+# Internal development planning docs (local reference only)
+production-deployment-checklist.md
+MOBILE_STRATEGY.md
+DESIGN_HUMANIZATION_ROADMAP.md
+
 # Claude Code session transcripts and conversation exports (local AI development context only)
 2025-*.txt
 *-claude-conversation*.txt
@@ -91,21 +96,6 @@ SESSION_NOTES.md
 2025-08-07-this-session-is-being-continued-from-a-previous-co.txt
 2025-07-29-this-session-is-being-continued-from-a-previous-co.txt
 
-# Visual Studio/MonoDevelop files
-.vs/
-*.sln.docstates
-*.suo
-*.user
-*.userosscache
-
-# VSCode settings (can contain personal preferences)
-.vscode/
-
-# Build and publish outputs (already handled but ensuring completeness)
-[Bb]in/
-[Oo]bj/
-publish/
-*.zip
 
 # Azure deployment files and local settings
 .claude/settings.local.json

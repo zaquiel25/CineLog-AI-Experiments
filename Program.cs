@@ -110,8 +110,9 @@ else
     // Application Insights not configured - skip telemetry services
     if (builder.Environment.IsProduction())
     {
-        // Log warning that monitoring is not configured in production
-        Console.WriteLine("WARNING: Application Insights not configured in production environment");
+        builder.Logging.AddConsole();
+        var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
+        loggerFactory.CreateLogger("Startup").LogWarning("Application Insights not configured in production environment");
     }
 }
 
@@ -121,8 +122,11 @@ var tmdbAccessToken = builder.Configuration["TMDB:AccessToken"] ?? builder.Confi
 
 if (string.IsNullOrEmpty(tmdbAccessToken))
 {
-    // TMDB token not found - movie features will be limited
-    tmdbAccessToken = "placeholder-token"; // Prevent startup failure
+    if (builder.Environment.IsProduction())
+    {
+        throw new InvalidOperationException("TMDB:AccessToken is required in production. Configure it in Azure Key Vault.");
+    }
+    tmdbAccessToken = "placeholder-token";
 }
 // --- ^^^^ END: ADDED CODE FOR TMDB TOKEN ^^^^ ---
 
@@ -308,6 +312,16 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 // --- ^^^^ END: ADDED HTTP CLIENT CONFIGURATION ^^^^ ---
 
 
+/// <summary>
+/// FEATURE: Cookie consent policy for GDPR compliance.
+/// Shows a banner asking users to accept cookies before non-essential cookies are set.
+/// </summary>
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => true;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -317,6 +331,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseHttpsRedirection();
+app.UseCookiePolicy();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();

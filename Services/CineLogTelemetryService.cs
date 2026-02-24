@@ -237,7 +237,7 @@ namespace Ezequiel_Movies.Services
         public void TrackFeatureUsage(string featureName, string? userId = null, Dictionary<string, string>? additionalProperties = null)
         {
             var eventTelemetry = new EventTelemetry("FeatureUsage");
-            eventTelemetry.Properties["FeatureName"] = featureName; // "GoogleAuth", "PasswordGate", "WishlistManagement", "BlacklistManagement"
+            eventTelemetry.Properties["FeatureName"] = featureName; // "GoogleAuth", "WishlistManagement", "BlacklistManagement"
             eventTelemetry.Properties["UserId"] = userId ?? "Anonymous";
             eventTelemetry.Properties["Timestamp"] = DateTimeOffset.UtcNow.ToString();
 

@@ -21,8 +21,7 @@ namespace Ezequiel_Movies.Services
 
         public void TrackException(Exception exception, IDictionary<string, string>? properties = null, IDictionary<string, double>? metrics = null)
         {
-            // No-op implementation - still log to console in development
-            Console.WriteLine($"Exception (not tracked): {exception.Message}");
+            // No-op implementation - exceptions still visible via standard logging
         }
 
         public void TrackPageView(string name, string? url = null, TimeSpan? duration = null, IDictionary<string, string>? properties = null, IDictionary<string, double>? metrics = null)
