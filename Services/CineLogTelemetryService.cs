@@ -36,7 +36,7 @@ namespace Ezequiel_Movies.Services
         public void TrackUserAuthentication(string authenticationType, bool isSuccessful, string? userId = null, TimeSpan? duration = null)
         {
             var eventTelemetry = new EventTelemetry("UserAuthentication");
-            eventTelemetry.Properties["AuthenticationType"] = authenticationType; // "Identity", "Google", "PasswordGate"
+            eventTelemetry.Properties["AuthenticationType"] = authenticationType; // "Identity", "Google"
             eventTelemetry.Properties["IsSuccessful"] = isSuccessful.ToString();
             eventTelemetry.Properties["UserId"] = userId ?? "Anonymous";
             
@@ -48,19 +48,6 @@ namespace Ezequiel_Movies.Services
             _telemetryClient.TrackEvent(eventTelemetry);
             _logger.LogInformation("Authentication tracking: Type={AuthType}, Success={Success}, Duration={Duration}ms", 
                 authenticationType, isSuccessful, duration?.TotalMilliseconds);
-        }
-
-        /// <summary>
-        /// Tracks password gate access attempts for site-wide security monitoring.
-        /// </summary>
-        public void TrackPasswordGateAccess(bool isSuccessful, string? ipAddress = null, bool rememberMe = false)
-        {
-            var eventTelemetry = new EventTelemetry("PasswordGateAccess");
-            eventTelemetry.Properties["IsSuccessful"] = isSuccessful.ToString();
-            eventTelemetry.Properties["RememberMe"] = rememberMe.ToString();
-            eventTelemetry.Properties["IpAddress"] = ipAddress ?? "Unknown";
-
-            _telemetryClient.TrackEvent(eventTelemetry);
         }
 
         #endregion

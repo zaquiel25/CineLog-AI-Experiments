@@ -16,6 +16,13 @@
   - `TmdbService.cs`: Default region changed from "IE" to "AR"
   - Applied to both Movie Details and Movie Preview watch provider sections
 
+### Removed
+- **PasswordGate authentication layer**: Removed site-wide password protection to make CineLog publicly accessible
+  - Deleted `PasswordGateController.cs` and `Views/PasswordGate/Index.cshtml`
+  - Removed cookie scheme config and redirect middleware from `Program.cs`
+  - Cleaned `TrackPasswordGateAccess()` from `CineLogTelemetryService.cs`
+  - Identity auth (login/register/Google OAuth) remains for user account features
+
 ### Changed
 - **CLAUDE.md**: Added rule 8 (Plan first — use Plan mode for non-trivial tasks, re-plan on failure) and rule 9 (Fix bugs autonomously — investigate, trace, resolve without hand-holding). Now 125 lines, 9 critical rules
 

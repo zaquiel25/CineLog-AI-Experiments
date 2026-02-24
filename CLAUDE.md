@@ -54,9 +54,8 @@ var userId = _userManager.GetUserId(User);
 var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 ```
 
-### Two-Layer Authentication
+### Authentication
 - **Identity (default scheme)**: `[Authorize]` attributes for user account auth
-- **PasswordGate (named scheme)**: Site-wide access control — requires explicit `HttpContext.AuthenticateAsync("PasswordGate")`
 - Google OAuth supported — `app.UseAuthentication()` MUST be present before `app.UseAuthorization()`
 
 ### TMDB Integration

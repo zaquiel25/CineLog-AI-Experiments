@@ -25,6 +25,12 @@ Watch provider availability (streaming, rent, buy) now automatically detects the
 
 **Status**: 🟢 **READY FOR DEPLOYMENT** - Dynamic region detection implemented
 
+### 🔓 **PUBLIC ACCESS** - CineLog Is Now Open!
+
+Removed the PasswordGate authentication layer. CineLog is now publicly accessible — no site-wide password required. User accounts (login/register/Google OAuth) remain for personal movie logging features.
+
+**Status**: 🟢 **READY FOR DEPLOYMENT** - Public access enabled
+
 ---
 
 ## 🚀 Previous Updates (2025-08-26)

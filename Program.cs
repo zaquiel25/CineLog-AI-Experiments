@@ -308,39 +308,6 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 // --- ^^^^ END: ADDED HTTP CLIENT CONFIGURATION ^^^^ ---
 
 
-/// <summary>
-/// FEATURE: Configure cookie-based password gate authentication as NAMED scheme.
-/// Works alongside Identity authentication - PasswordGate for site access, Identity for user accounts.
-/// Eliminates Redis dependency and provides consistent authentication across environments.
-/// </summary>
-builder.Services.AddAuthentication()
-    .AddCookie("PasswordGate", options =>
-    {
-        options.LoginPath = "/PasswordGate";
-        options.LogoutPath = "/PasswordGate/Logout";
-        options.AccessDeniedPath = "/PasswordGate";
-        options.Cookie.Name = "CineLog.PasswordGate";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works in both HTTP (dev) and HTTPS (prod)
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(20); // Session timeout
-        options.SlidingExpiration = true; // Extend on activity
-        
-        // Remember Me functionality - extend expiration
-        options.Events.OnSigningIn = context =>
-        {
-            // Check if Remember Me was requested (stored in ticket properties)
-            if (context.Properties.Items.ContainsKey("RememberMe") && 
-                context.Properties.Items["RememberMe"] == "true")
-            {
-                context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7);
-                context.Properties.IsPersistent = true;
-            }
-            return Task.CompletedTask;
-        };
-    });
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -355,56 +322,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseSession(); // Required for suggestion system anti-repetition tracking
 app.UseAuthorization();
-
-/// <summary>
-/// FEATURE: Site-wide password protection middleware using cookie authentication.
-/// Redirects all requests to password gate unless user is authenticated or accessing allowed paths.
-/// Must be placed AFTER UseAuthentication() to properly read authentication cookies.
-/// </summary>
-app.Use(async (context, next) =>
-{
-    // Allow access to password gate controller
-    if (context.Request.Path.StartsWithSegments("/PasswordGate", StringComparison.OrdinalIgnoreCase))
-    {
-        await next();
-        return;
-    }
-    
-    // Allow access to Identity authentication pages (login, register, etc.)
-    if (context.Request.Path.StartsWithSegments("/Identity", StringComparison.OrdinalIgnoreCase))
-    {
-        await next();
-        return;
-    }
-    
-    // Allow access to static files (CSS, JS, images)
-    if (context.Request.Path.StartsWithSegments("/css") || 
-        context.Request.Path.StartsWithSegments("/js") || 
-        context.Request.Path.StartsWithSegments("/lib") ||
-        context.Request.Path.StartsWithSegments("/images") ||
-        context.Request.Path.StartsWithSegments("/favicon"))
-    {
-        await next();
-        return;
-    }
-    
-    // Check if user is authenticated via password gate cookie
-    // We need to explicitly authenticate against the PasswordGate scheme
-    var authenticateResult = await context.AuthenticateAsync("PasswordGate");
-    var isAuthenticated = authenticateResult.Succeeded && 
-                         authenticateResult.Principal.HasClaim("PasswordGate", "granted");
-    
-    if (isAuthenticated)
-    {
-        await next();
-        return;
-    }
-    
-    // Not authenticated - redirect to password gate with return URL
-    var returnUrl = context.Request.Path + context.Request.QueryString;
-    context.Response.Redirect($"/PasswordGate?returnUrl={Uri.EscapeDataString(returnUrl)}");
-});
-
 
 app.MapControllerRoute(
     name: "default",

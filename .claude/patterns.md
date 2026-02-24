@@ -2,28 +2,16 @@
 
 Reference file for detailed implementation patterns. Read this when working on specific areas.
 
-## Two-Layer Authentication
+## Authentication
 
 ```csharp
-// Identity as default scheme, PasswordGate as named scheme
-builder.Services.AddAuthentication()
-    .AddCookie("PasswordGate", options =>
-    {
-        options.LoginPath = "/PasswordGate";
-    });
+// Identity as default scheme with Google OAuth
 builder.Services.AddDefaultIdentity<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// CORRECT: Explicit authentication against named scheme
-var result = await HttpContext.AuthenticateAsync("PasswordGate");
-var isAuthenticated = result.Succeeded &&
-    result.Principal.HasClaim("PasswordGate", "granted");
-
-// WRONG: Only checks default scheme
-var isAuthenticated = HttpContext.User.HasClaim("PasswordGate", "granted");
+// Use [Authorize] attributes for user account authentication
+// Google OAuth configured via Authentication:Google:ClientId and ClientSecret
 ```
-
-Supports multiple password key formats: SitePassword, Sitepassword, SiteAccess:Password.
 
 ## TMDB Director Validation
 
