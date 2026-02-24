@@ -1,0 +1,195 @@
+@{
+    ViewData["Title"] = "Free App";
+}
+
+<div class="free-app-page">
+    <h1><i class="bi bi-download me-2"></i>Get CineLog</h1>
+    <p class="free-app-subtitle">Install CineLog on your device for free — no app store needed.</p>
+
+    @* FEATURE: Phone installation instructions (Chrome) *@
+    <div class="install-section">
+        <div class="install-section-header">
+            <div class="install-icon">
+                <i class="bi bi-phone"></i>
+            </div>
+            <h2>From Your Phone</h2>
+            <span class="install-badge">Chrome</span>
+        </div>
+
+        <div class="install-steps">
+            <div class="install-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <strong>Tap the menu <i class="bi bi-three-dots-vertical"></i></strong>
+                    <p>Tap the three-dot menu icon in the top-right corner of Chrome.</p>
+                </div>
+            </div>
+            <div class="install-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <strong>Tap "Add to Home Screen" or "Install App"</strong>
+                    <p>The option name may vary slightly depending on your device.</p>
+                </div>
+            </div>
+            <div class="install-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <strong>Confirm and enjoy</strong>
+                    <p>CineLog will appear on your home screen like a native app — fast, fullscreen, and always ready.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* FEATURE: Desktop installation instructions (Chrome) *@
+    <div class="install-section">
+        <div class="install-section-header">
+            <div class="install-icon">
+                <i class="bi bi-laptop"></i>
+            </div>
+            <h2>From Your Desktop</h2>
+            <span class="install-badge">Chrome</span>
+        </div>
+
+        <div class="install-steps">
+            <div class="install-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <strong>Look for the install icon <i class="bi bi-box-arrow-down"></i></strong>
+                    <p>In the address bar (right side), you'll see a small install icon. Click it.</p>
+                </div>
+            </div>
+            <div class="install-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <strong>Click "Install"</strong>
+                    <p>CineLog will open in its own window — no tabs, no clutter. You can find it in your Start Menu or Applications folder.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .free-app-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 1rem 0 3rem;
+    }
+
+    .free-app-page h1 {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .free-app-subtitle {
+        text-align: center;
+        color: #b8bcc8;
+        font-size: 1.05rem;
+        margin-bottom: 2.5rem;
+    }
+
+    /* Section card */
+    .install-section {
+        background: #1e2124;
+        border: 1px solid #495057;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .install-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .install-section-header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    .install-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--cinelog-gold), var(--cinelog-gold-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(244, 208, 63, 0.25);
+    }
+
+    .install-icon i {
+        font-size: 1.3rem;
+        color: #1a1a1a;
+    }
+
+    .install-badge {
+        background: rgba(244, 208, 63, 0.15);
+        color: var(--cinelog-gold);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+    }
+
+    /* Steps */
+    .install-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .install-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #252830;
+        border: 2px solid var(--cinelog-gold);
+        color: var(--cinelog-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .step-content strong {
+        display: block;
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+        color: #f8f9fa;
+    }
+
+    .step-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #b8bcc8;
+        line-height: 1.4;
+        text-align: left;
+    }
+
+    /* Responsive */
+    @@media (max-width: 576px) {
+        .install-section {
+            padding: 1.25rem;
+        }
+
+        .install-section-header h2 {
+            font-size: 1.15rem;
+        }
+    }
+</style>

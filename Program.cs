@@ -110,9 +110,7 @@ else
     // Application Insights not configured - skip telemetry services
     if (builder.Environment.IsProduction())
     {
-        builder.Logging.AddConsole();
-        var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
-        loggerFactory.CreateLogger("Startup").LogWarning("Application Insights not configured in production environment");
+        Console.WriteLine("WARNING: Application Insights not configured in production environment");
     }
 }
 
@@ -122,10 +120,6 @@ var tmdbAccessToken = builder.Configuration["TMDB:AccessToken"] ?? builder.Confi
 
 if (string.IsNullOrEmpty(tmdbAccessToken))
 {
-    if (builder.Environment.IsProduction())
-    {
-        throw new InvalidOperationException("TMDB:AccessToken is required in production. Configure it in Azure Key Vault.");
-    }
     tmdbAccessToken = "placeholder-token";
 }
 // --- ^^^^ END: ADDED CODE FOR TMDB TOKEN ^^^^ ---

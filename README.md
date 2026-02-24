@@ -663,6 +663,7 @@ See `MoviesController.cs` for implementation details and business logic comments
 
 ### 📱 Progressive Web App
 - **Installable**: Add CineLog to home screen on iOS, Android, and desktop for an app-like experience
+- **Installation Guide**: Dedicated "Free App" page with step-by-step instructions for phone and desktop
 - **Offline Support**: Graceful fallback page when network is unavailable
 - **Smart Caching**: Service worker caches TMDB posters and static assets for faster repeat visits
 - **Standalone Mode**: Full-screen display without browser chrome, optimized for mobile

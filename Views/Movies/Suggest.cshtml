@@ -89,12 +89,37 @@
                         }
                         <h4 id="suggestion-title" class="cinelog-gold-title mb-0">@ViewData["SuggestionTitle"]</h4>
                     </div>
-                    
+                    @if (Model.Any())
+                    {
+                        var topNextSuggestionType = ViewData["NextSuggestionType"] as string;
+                        if (topNextSuggestionType != null && (topNextSuggestionType.StartsWith("trending") || topNextSuggestionType.StartsWith("cast_") || topNextSuggestionType.StartsWith("director_") || topNextSuggestionType.StartsWith("year_") || topNextSuggestionType.StartsWith("genre_") ||
+    topNextSuggestionType == "surprise_me"))
+                        {
+                            var topBaseType = topNextSuggestionType.StartsWith("year_") ? "decade" :
+    topNextSuggestionType.StartsWith("genre_") ? "genre" :
+    topNextSuggestionType == "surprise_me" ? "surprise" :
+    (topNextSuggestionType.Contains("_") ? topNextSuggestionType.Split('_')[0] : topNextSuggestionType);
+                        <button type="button" class="reshuffle-btn btn btn-warning mt-3 px-4 py-2" data-suggestion-type="@topBaseType">
+                            <i class="bi bi-shuffle me-2"></i> Reshuffle Suggestions
+                        </button>
+                        }
+                    }
+                </div>
+            </div>
+            @if (Model.Any())
+            {
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+                    @foreach (var movie in Model)
+                    {
+                        <partial name="_MovieSuggestionCard" model="movie" />
+                    }
+                </div>
+            }
+            @* FIX: Reshuffle button placed below movie grid so mobile users don't have to scroll back up *@
+            <div class="text-center mt-4 mb-3">
                     @if (Model.Any())
                     {
                         var nextSuggestionType = ViewData["NextSuggestionType"] as string;
-                        @* The Reshuffle button below is AJAX-powered for Trending, Cast, and Director suggestions. *@
-                        @* It uses event delegation and a data-suggestion-type attribute to dynamically call the correct endpoint. *@
                         if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") ||
     nextSuggestionType == "surprise_me"))
                         {
@@ -102,7 +127,7 @@
     nextSuggestionType.StartsWith("genre_") ? "genre" :
     nextSuggestionType == "surprise_me" ? "surprise" :
     (nextSuggestionType.Contains("_") ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
-                        <button id="reshuffle-btn" type="button" class="btn btn-warning mt-3 px-4 py-2" data-suggestion-type="@suggestionBaseType">
+                        <button type="button" class="reshuffle-btn btn btn-warning mt-3 px-4 py-2" data-suggestion-type="@suggestionBaseType">
                             <i class="bi bi-shuffle me-2"></i> Reshuffle Suggestions
                         </button>
                         }
@@ -135,17 +160,7 @@
                             <i class="bi bi-arrow-repeat me-2"></i> Reshuffle Suggestions
                         </a>
                     }
-                </div>
             </div>
-            @if (Model.Any())
-            {
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
-                    @foreach (var movie in Model)
-                    {
-                        <partial name="_MovieSuggestionCard" model="movie" />
-                    }
-                </div>
-            }
         }
         else if (genreList != null && genreList.Any())
         {
@@ -260,7 +275,7 @@
 
     document.addEventListener('click', function(e) {
         // Find the reshuffle button, even if the click was on the <i> icon inside it.
-        const reshuffleButton = e.target.closest('#reshuffle-btn');
+        const reshuffleButton = e.target.closest('.reshuffle-btn');
 
         if (reshuffleButton) {
             e.preventDefault();

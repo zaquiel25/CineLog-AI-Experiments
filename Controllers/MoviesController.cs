@@ -2357,22 +2357,25 @@ return (bucket3x3, bucket2x3, bucket1x3);
             html.Append($"<h4 id=\"suggestion-title\" class=\"cinelog-gold-title mb-0\">{suggestionTitle}</h4>");
             html.Append("</div>");
 
+            // UX: Reshuffle button above AND below movie grid for convenience
+            string reshuffleButtonHtml = "";
             if (suggestedMovies.Any())
             {
-                // FEATURE: Generate reshuffle button with proper data attributes for AJAX functionality
-                // Transform suggestion type to base type for consistent reshuffle endpoint routing
                 var suggestionBaseType = nextSuggestionType?.StartsWith("year_") == true ? "decade" :
                     nextSuggestionType?.StartsWith("genre_") == true ? "genre" :
                     nextSuggestionType == "surprise_me" ? "surprise" :
                     (nextSuggestionType?.Contains("_") == true ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
 
-                // UX: Only show reshuffle button for suggestion types that support it
                 if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") || nextSuggestionType == "surprise_me"))
                 {
-                    html.Append($"<button id=\"reshuffle-btn\" type=\"button\" class=\"btn btn-outline-light btn-sm mt-2\" data-suggestion-type=\"{suggestionBaseType}\">");
-                    html.Append("<i class=\"bi bi-shuffle\"></i> Reshuffle");
-                    html.Append("</button>");
+                    reshuffleButtonHtml = $"<button type=\"button\" class=\"reshuffle-btn btn btn-outline-light btn-sm mt-2\" data-suggestion-type=\"{suggestionBaseType}\"><i class=\"bi bi-shuffle\"></i> Reshuffle</button>";
                 }
+            }
+
+            // Top reshuffle button
+            if (!string.IsNullOrEmpty(reshuffleButtonHtml))
+            {
+                html.Append(reshuffleButtonHtml);
             }
 
             html.Append("</div>");
@@ -2383,11 +2386,17 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 html.Append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center\">");
                 foreach (var movie in suggestedMovies)
                 {
-                    // PERFORMANCE: Render each movie using existing partial view for consistency
-                    // This ensures identical styling, form helpers, and image paths
                     var partialViewResult = await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
                     html.Append($"<div class=\"col\">{partialViewResult}</div>");
                 }
+                html.Append("</div>");
+            }
+
+            // Bottom reshuffle button
+            if (!string.IsNullOrEmpty(reshuffleButtonHtml))
+            {
+                html.Append("<div class=\"text-center mt-4 mb-3\">");
+                html.Append(reshuffleButtonHtml);
                 html.Append("</div>");
             }
 

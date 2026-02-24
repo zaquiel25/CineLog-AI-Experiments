@@ -24,6 +24,14 @@ public class HomeController : Controller
     }
 
     /// <summary>
+    /// FEATURE: PWA installation instructions page — publicly accessible.
+    /// </summary>
+    public IActionResult FreeApp()
+    {
+        return View();
+    }
+
+    /// <summary>
     /// FEATURE: Offline fallback page for PWA service worker.
     /// </summary>
     public IActionResult Offline()

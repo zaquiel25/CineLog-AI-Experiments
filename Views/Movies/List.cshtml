@@ -1318,7 +1318,8 @@ html { overflow-y: scroll; } /* prevents page width from changing when content h
 document.addEventListener('click', async function (e) {
     if (e.target.closest('.delete-movie-btn')) {
         const btn = e.target.closest('.delete-movie-btn');
-        const card = btn.closest('.col');
+        // FIX: Card view uses .col wrapper, list view uses .movie-list-item
+        const card = btn.closest('.col') || btn.closest('.movie-list-item');
         const movieId = btn.getAttribute('data-movie-id');
         const movieTitle = btn.getAttribute('data-movie-title');
         

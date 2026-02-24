@@ -38,6 +38,17 @@
 - **Obsolete documentation**: 10 internal dev files (GPT.md, AI templates, SQL scripts, deployment instructions, empty migration, optimization reports)
 - 3 planning docs moved to .gitignore for local reference only
 
+### Added
+- **"Free App" PWA installation page**: Dedicated `/Home/FreeApp` page with step-by-step installation instructions for phone (Chrome) and desktop, linked from navbar and footer
+
+### Fixed
+- **Delete button in My Movies list view**: Fixed network error when deleting movies from list view — selector now targets both `.col` and `.movie-list-item` containers
+- **Floating label overlap in Profile Settings**: Fixed Display Name placeholder text overlapping with the floating label via CSS adjustment
+- **Reverted TMDB token and logging configuration**: Restored TMDB token placeholder fallback and `Console.WriteLine` in `Program.cs` to stable pre-launch state
+
+### Changed
+- **Reshuffle button placement**: Reshuffle button now appears above AND below suggestion results for improved mobile UX — changed from `id` to `class` selector to support multiple instances
+
 ---
 
 ## 2026-02-23
