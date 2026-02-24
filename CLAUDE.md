@@ -9,6 +9,8 @@
 5. **Use TodoWrite** for complex multi-step tasks. Keep working until all items are done.
 6. **Safety first.** Check for data privacy, security vulnerabilities, and credential exposure before implementing. When in doubt, ask.
 7. **Learn from mistakes.** Read `lessons-learned.md` from memory before making changes. After fixing bugs, record what was learned.
+8. **Plan first.** Use Plan mode for non-trivial tasks (3+ steps). If an approach fails, STOP and re-plan instead of pushing forward.
+9. **Fix bugs autonomously.** When given a bug report, investigate and fix it. Check logs, trace errors, resolve — don't ask for hand-holding.
 
 ## Production Safety
 

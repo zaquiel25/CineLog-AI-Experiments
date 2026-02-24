@@ -1,3 +1,13 @@
+## 2026-02-24
+
+### Added
+- **OWASP security skill** (`.claude/skills/owasp-security/`): OWASP Top 10:2025, ASVS 5.0, Agentic AI security (2026), and language-specific security patterns for 20 languages
+
+### Changed
+- **CLAUDE.md**: Added rule 8 (Plan first — use Plan mode for non-trivial tasks, re-plan on failure) and rule 9 (Fix bugs autonomously — investigate, trace, resolve without hand-holding). Now 125 lines, 9 critical rules
+
+---
+
 ## 2026-02-23
 
 ### Security
