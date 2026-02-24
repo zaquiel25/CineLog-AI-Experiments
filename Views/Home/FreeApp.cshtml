@@ -6,36 +6,67 @@
     <h1><i class="bi bi-download me-2"></i>Get CineLog</h1>
     <p class="free-app-subtitle">Install CineLog on your device for free — no app store needed.</p>
 
-    @* FEATURE: Phone installation instructions (Chrome) *@
+    @* FEATURE: Phone installation instructions — Android & iPhone *@
     <div class="install-section">
         <div class="install-section-header">
             <div class="install-icon">
                 <i class="bi bi-phone"></i>
             </div>
             <h2>From Your Phone</h2>
-            <span class="install-badge">Chrome</span>
         </div>
 
-        <div class="install-steps">
-            <div class="install-step">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <strong>Tap the menu <i class="bi bi-three-dots-vertical"></i></strong>
-                    <p>Tap the three-dot menu icon in the top-right corner of Chrome.</p>
+        <div class="install-subsection">
+            <h3><i class="bi bi-android2 me-2"></i>Android <span class="install-badge">Chrome</span></h3>
+            <div class="install-steps">
+                <div class="install-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>Tap the menu <i class="bi bi-three-dots-vertical"></i></strong>
+                        <p>Tap the three-dot menu icon in the top-right corner.</p>
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>Tap "Add to Home Screen" or "Install App"</strong>
+                        <p>The option name may vary slightly depending on your device.</p>
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>Confirm and enjoy</strong>
+                        <p>CineLog will appear on your home screen like a native app.</p>
+                    </div>
                 </div>
             </div>
-            <div class="install-step">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <strong>Tap "Add to Home Screen" or "Install App"</strong>
-                    <p>The option name may vary slightly depending on your device.</p>
+        </div>
+
+        <hr class="install-divider">
+
+        <div class="install-subsection">
+            <h3><i class="bi bi-apple me-2"></i>iPhone <span class="install-badge">Safari / Chrome</span></h3>
+            <div class="install-steps">
+                <div class="install-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>Tap the Share button <i class="bi bi-box-arrow-up"></i></strong>
+                        <p>Tap the square icon with an arrow in the top-right corner.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="install-step">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <strong>Confirm and enjoy</strong>
-                    <p>CineLog will appear on your home screen like a native app — fast, fullscreen, and always ready.</p>
+                <div class="install-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>Scroll down and tap "Add to Home Screen"</strong>
+                        <p>You may need to tap "View More" to find this option.</p>
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>Tap "Add" to confirm</strong>
+                        <p>CineLog will appear on your home screen like a native app.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -136,6 +167,21 @@
         padding: 0.2rem 0.6rem;
         border-radius: 4px;
         letter-spacing: 0.05em;
+    }
+
+    /* Subsections (Android / iPhone) */
+    .install-subsection h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .install-divider {
+        border-color: #495057;
+        margin: 1.5rem 0;
     }
 
     /* Steps */

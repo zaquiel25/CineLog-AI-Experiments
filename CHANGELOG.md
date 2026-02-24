@@ -39,7 +39,7 @@
 - 3 planning docs moved to .gitignore for local reference only
 
 ### Added
-- **"Free App" PWA installation page**: Dedicated `/Home/FreeApp` page with step-by-step installation instructions for phone (Chrome) and desktop, linked from navbar and footer
+- **"Free App" PWA installation page**: Dedicated `/Home/FreeApp` page with step-by-step installation instructions for phone (Android Chrome and iPhone Safari/Chrome) and desktop, linked from navbar and footer
 
 ### Fixed
 - **Delete button in My Movies list view**: Fixed network error when deleting movies from list view — selector now targets both `.col` and `.movie-list-item` containers
