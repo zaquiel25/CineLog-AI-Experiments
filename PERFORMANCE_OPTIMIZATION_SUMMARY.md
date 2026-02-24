@@ -1,5 +1,44 @@
 # Performance Optimization Summary
 
+## 📱 **PWA CLIENT-SIDE CACHING LAYER (2026-02-24)**
+
+### 🎯 **Service Worker Caching: Complementing Server-Side Cache**
+
+**Caching Architecture**: The service worker adds a client-side caching layer that complements the existing server-side IMemoryCache (24h TMDB API data, 15min user data).
+
+**Three Caching Strategies**:
+```
+CLIENT-SIDE CACHE (service-worker.js):
+
+1. TMDB POSTERS (cache-first):
+   - Cache name: cinelog-posters-v1
+   - Targets: image.tmdb.org requests
+   - Benefit: Eliminates redundant poster downloads on repeat visits
+   - Posters are immutable — cache-first is optimal
+
+2. STATIC ASSETS (cache-first):
+   - Cache name: cinelog-static-v1
+   - Pre-cached on install: CSS, JS, Bootstrap, jQuery, icons, favicon
+   - Targets: stylesheets, scripts, fonts
+   - Benefit: Instant asset loading after first visit
+
+3. NAVIGATION (network-first):
+   - Tries network first, falls back to /Home/Offline on failure
+   - Dynamic content always fetched fresh when online
+   - Graceful offline experience with retry option
+```
+
+**Performance Impact**:
+- Repeat page loads avoid re-downloading posters and static assets from network
+- Pre-cached static assets available immediately on install
+- No impact on dynamic content freshness (network-first for navigation)
+
+**Cache Management**:
+- Versioned cache names (`v1`) enable clean upgrades via `activate` event
+- App can trigger full cache clear via `postMessage({ action: 'clearCache' })`
+
+---
+
 ## 🚀 **COMPLETE AJAX SYSTEM PERFORMANCE (2025-09-01)**
 
 ### 🎯 **UX PERFORMANCE MILESTONE: Zero-Refresh Interface Completion**

@@ -1,6 +1,12 @@
 ## 2026-02-24
 
 ### Added
+- **Progressive Web App (PWA)**: Full installable app support with service worker, web manifest, and offline fallback
+  - `wwwroot/service-worker.js`: 3 caching strategies — TMDB posters (cache-first), static assets (cache-first), navigation (network-first with offline fallback)
+  - `wwwroot/site.webmanifest`: Enriched with description, start_url, orientation, maskable icons
+  - `Views/Shared/_Layout.cshtml`: iOS meta tags (theme-color, apple-mobile-web-app-capable, status-bar-style), service worker registration
+  - `Views/Home/Offline.cshtml` + `HomeController.Offline()`: Offline fallback page
+  - PWA icons replaced with dark background versions (#212529 bg + gold logo with safe zone padding)
 - **OWASP security skill** (`.claude/skills/owasp-security/`): OWASP Top 10:2025, ASVS 5.0, Agentic AI security (2026), and language-specific security patterns for 20 languages
 
 ### Changed

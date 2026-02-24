@@ -1,19 +1,24 @@
 {
-  "name": "CineLog",
+  "name": "CineLog - Your Movie Journal",
   "short_name": "CineLog",
+  "description": "Track, rate, and discover your favorite movies",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F4D03F",
+  "background_color": "#212529",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ],
-  "theme_color": "#F4D03F",
-  "background_color": "#212529",
-  "display": "standalone"
+  ]
 }

@@ -4,7 +4,24 @@
 
 CineLog is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, CineLog combines modern web development practices with sophisticated movie recommendation algorithms.
 
-## 🚀 Latest Updates (2025-08-26)
+## 🚀 Latest Updates (2026-02-24)
+
+### 📱 **PROGRESSIVE WEB APP (PWA)** - Install CineLog on Any Device!
+
+CineLog is now a fully installable Progressive Web App. Users can add it to their home screen on mobile or desktop for an app-like experience with offline support.
+
+**PWA Capabilities**:
+- **Installable**: Add to home screen on iOS, Android, and desktop browsers
+- **Offline Support**: Graceful offline fallback page when network is unavailable
+- **Client-Side Caching**: Service worker with 3 caching strategies — TMDB poster caching (cache-first), static asset caching (cache-first), and network-first navigation with offline fallback
+- **iOS Optimized**: Full-screen standalone mode with Cinema Gold theme color and status bar styling
+- **Dark-Themed Icons**: Maskable icons with #212529 background and gold logo for consistent appearance across platforms
+
+**Status**: 🟢 **READY FOR DEPLOYMENT** - Full PWA support implemented
+
+---
+
+## 🚀 Previous Updates (2025-08-26)
 
 ### 🎯 **HYBRID JOURNAL-COLLECTION VIEWING SYSTEM** - Revolutionary Movie Browsing Experience!
 
@@ -631,6 +648,12 @@ See `MoviesController.cs` for implementation details and business logic comments
 - Please maintain this standard for all future contributions.
 
 ## ✨ Key Features
+
+### 📱 Progressive Web App
+- **Installable**: Add CineLog to home screen on iOS, Android, and desktop for an app-like experience
+- **Offline Support**: Graceful fallback page when network is unavailable
+- **Smart Caching**: Service worker caches TMDB posters and static assets for faster repeat visits
+- **Standalone Mode**: Full-screen display without browser chrome, optimized for mobile
 
 ### 🎬 Movie Management
 - **Hybrid Journal-Collection System**: Revolutionary dual viewing experience preserving chronological journal while adding collection browsing with watch count statistics

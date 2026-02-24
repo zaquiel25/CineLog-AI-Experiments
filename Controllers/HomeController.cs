@@ -23,6 +23,14 @@ public class HomeController : Controller
         return View();
     }
 
+    /// <summary>
+    /// FEATURE: Offline fallback page for PWA service worker.
+    /// </summary>
+    public IActionResult Offline()
+    {
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
