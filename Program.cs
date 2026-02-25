@@ -325,6 +325,33 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseHttpsRedirection();
+
+/// <summary>
+/// SECURITY: Add security headers to all responses.
+/// Prevents clickjacking (X-Frame-Options), MIME sniffing (X-Content-Type-Options),
+/// controls referrer leakage (Referrer-Policy), and restricts browser features (Permissions-Policy).
+/// Content-Security-Policy restricts resource loading to trusted origins only.
+/// </summary>
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' https://js.monitor.azure.com; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
+        "img-src 'self' https://image.tmdb.org data:; " +
+        "connect-src 'self' https://dc.services.visualstudio.com https://*.in.applicationinsights.azure.com; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self' https://accounts.google.com";
+    await next();
+});
+
 app.UseCookiePolicy();
 app.UseStaticFiles();
 app.UseRouting();
@@ -363,7 +390,7 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
         };
         await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
     }
-});
+}).RequireAuthorization();
 
 // Lightweight health check endpoint for load balancers
 app.MapHealthChecks("/health/ready");

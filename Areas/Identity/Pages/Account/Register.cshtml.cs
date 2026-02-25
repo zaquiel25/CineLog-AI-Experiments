@@ -55,6 +55,13 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account
         public InputModel Input { get; set; }
 
         /// <summary>
+        /// SECURITY: Honeypot field to detect bot registrations.
+        /// Hidden from real users via CSS; bots auto-fill it. If populated, registration is silently rejected.
+        /// </summary>
+        [BindProperty]
+        public string Website { get; set; }
+
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -112,8 +119,16 @@ namespace Ezequiel_Movies.Areas.Identity.Pages.Account
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+
+            // SECURITY: Honeypot check — bots fill the hidden Website field, real users don't see it
+            if (!string.IsNullOrEmpty(Website))
+            {
+                _logger.LogWarning("Bot registration attempt detected (honeypot triggered)");
+                return LocalRedirect(returnUrl);
+            }
+
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            
+
             if (ModelState.IsValid)
             {
                 try

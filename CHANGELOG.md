@@ -3,6 +3,13 @@
 ### Added
 - **Homepage Free App CTA**: Outline-style button linking to PWA install instructions, positioned below main hero buttons
 
+### Security
+- **Security Headers**: Added middleware with X-Content-Type-Options, X-Frame-Options (DENY), Referrer-Policy, Permissions-Policy, and Content-Security-Policy restricting resources to trusted origins
+- **Health Check Protection**: Detailed `/health` endpoint now requires authentication; lightweight `/health/ready` and `/health/live` remain public
+- **AllowedHosts Restriction**: Production config restricted to `frameroute.net` and `cinelog-app.azurewebsites.net` (was `*`)
+- **SRI Integrity Hashes**: Added Subresource Integrity attributes to Bootstrap Icons and Font Awesome CDN links
+- **Honeypot Bot Protection**: Hidden field on registration form silently rejects bot submissions with logging
+
 ### Changed
 - **Rebrand**: Renamed application from CineLog to FrameRoute across entire codebase
 

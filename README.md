@@ -113,7 +113,7 @@ Removed the PasswordGate authentication layer. FrameRoute is now publicly access
 - **Cookie Authentication**: Eliminated Redis dependency while maintaining 20-minute sessions with 7-day Remember Me
 - **User Data Protection**: Verified UserId filtering and complete data isolation across all controllers
 - **Azure Key Vault**: Production secrets properly managed through secure infrastructure
-- **Security Headers**: HTTPS redirection, HSTS, and HttpOnly cookies active in production
+- **Security Headers**: HTTPS redirection, HSTS, HttpOnly cookies, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and SRI integrity hashes on CDN resources
 
 **Status**: 🟢 **LIVE AND SECURE** - Ready for friend testing at https://cinelog-app.azurewebsites.net/
 
