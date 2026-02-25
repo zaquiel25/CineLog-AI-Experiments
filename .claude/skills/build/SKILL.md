@@ -1,6 +1,6 @@
 ---
 name: build
-description: Build the CineLog project and report results. Use after code changes to verify compilation.
+description: Build the FrameRoute project and report results. Use after code changes to verify compilation.
 disable-model-invocation: false
 allowed-tools: ["Bash"]
 ---

@@ -1,4 +1,4 @@
-# CineLog Detailed Code Patterns
+# FrameRoute Detailed Code Patterns
 
 Reference file for detailed implementation patterns. Read this when working on specific areas.
 

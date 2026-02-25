@@ -6,9 +6,9 @@ using System.Diagnostics;
 namespace Ezequiel_Movies.Services
 {
     /// <summary>
-    /// CineLog-specific telemetry service for Application Insights monitoring.
+    /// FrameRoute-specific telemetry service for Application Insights monitoring.
     /// Provides comprehensive production monitoring for user experience, performance optimization validation,
-    /// and business intelligence tracking for the CineLog movie suggestion platform.
+    /// and business intelligence tracking for the FrameRoute movie suggestion platform.
     /// 
     /// FEATURE: Production monitoring for 70-90% database performance improvements validation
     /// FEATURE: TMDB API response time and usage tracking
@@ -16,12 +16,12 @@ namespace Ezequiel_Movies.Services
     /// FEATURE: Suggestion system performance and accuracy metrics
     /// FEATURE: Cache hit rate optimization tracking
     /// </summary>
-    public class CineLogTelemetryService
+    public class FrameRouteTelemetryService
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly ILogger<CineLogTelemetryService> _logger;
+        private readonly ILogger<FrameRouteTelemetryService> _logger;
 
-        public CineLogTelemetryService(TelemetryClient telemetryClient, ILogger<CineLogTelemetryService> logger)
+        public FrameRouteTelemetryService(TelemetryClient telemetryClient, ILogger<FrameRouteTelemetryService> logger)
         {
             _telemetryClient = telemetryClient;
             _logger = logger;
@@ -274,7 +274,7 @@ namespace Ezequiel_Movies.Services
         #region Error and Exception Monitoring
 
         /// <summary>
-        /// Tracks custom exceptions with CineLog-specific context.
+        /// Tracks custom exceptions with FrameRoute-specific context.
         /// </summary>
         public void TrackException(Exception exception, string context, string? userId = null, Dictionary<string, string>? additionalProperties = null)
         {

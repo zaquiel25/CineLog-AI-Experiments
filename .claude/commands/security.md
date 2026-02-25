@@ -5,7 +5,7 @@ allowed-tools: ["Read", "Bash", "Grep", "Glob"]
 
 # Security Audit
 
-Run a focused security review of the CineLog codebase. This is critical for a public repo.
+Run a focused security review of the FrameRoute codebase. This is critical for a public repo.
 
 ## Checks to Perform
 
@@ -30,7 +30,7 @@ Run a focused security review of the CineLog codebase. This is critical for a pu
 - **CSRF**: Verify anti-forgery tokens on all forms
 - **Security Misconfiguration**: Check HTTPS enforcement, security headers
 
-### 4. User Data Isolation (CineLog-specific)
+### 4. User Data Isolation (FrameRoute-specific)
 - Verify ALL database queries filter by `UserId`
 - Check for any endpoints that could leak data across users
 - Review any admin/debug endpoints
@@ -47,7 +47,7 @@ Run a focused security review of the CineLog codebase. This is critical for a pu
 ## Output Format
 
 ```
-## CineLog Security Audit — [date]
+## FrameRoute Security Audit — [date]
 
 ### Credentials: ✅/❌ (X issues)
 [details]

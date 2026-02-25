@@ -36,7 +36,7 @@ If a user requests information or actions related to an MCP server or extension,
 1. **Problem Analysis**: Understand requirements deeply, question existing patterns
 2. **Codebase Investigation**: Search, read, and understand relevant code
 3. **Planning & TodoWrite**: Create detailed todo list, check off systematically
-4. **Implementation**: Professional comments, build verification, CineLog patterns
+4. **Implementation**: Professional comments, build verification, FrameRoute patterns
 5. **Debugging & Testing**: Edge cases, user isolation, structured logging
 6. **Documentation Update**: Update SESSION_NOTES.md after major milestones
 
@@ -256,7 +256,7 @@ dotnet ef database update      # Update local database only
 - When detecting environment variables needed, proactively create .env file
 - Test frequently after each change
 - **ALWAYS** run `dotnet build` to verify compilation
-- **Follow CineLog patterns** for user data isolation, caching, and API usage
+- **Follow FrameRoute patterns** for user data isolation, caching, and API usage
 - **Use unified helper methods** for consistent business logic
 
 ### 5. 🐛 Debugging & Testing
@@ -332,10 +332,10 @@ applyTo: '**'
 
 ---
 
-## 🎯 CineLog-Specific Development Principles
+## 🎯 FrameRoute-Specific Development Principles
 
 ### 🚀 LIVE PRODUCTION DEPLOYMENT SUCCESS (2025-08-07)
-**CineLog is now LIVE at https://[YOUR-APP-NAME].azurewebsites.net/ with complete Azure infrastructure:**
+**FrameRoute is now LIVE at https://[YOUR-APP-NAME].azurewebsites.net/ with complete Azure infrastructure:**
 
 #### 🎯 Production Status: 100% OPERATIONAL
 - ✅ **Application Status**: Live and fully functional with all features operational
@@ -559,7 +559,7 @@ az keyvault secret show --vault-name [YOUR-KEYVAULT] --name DatabasePassword --q
 **Maintain existing patterns:**
 - ✅ Maintain consistency with existing architecture
 - ✅ Implement appropriate error handling
-- Always follow established CineLog patterns and conventions
+- Always follow established FrameRoute patterns and conventions
 
 ### 🤔 Question Before Replicating
 **Critical thinking approach:**
@@ -700,12 +700,12 @@ string directorTypeKey = $"DirectorTypeSequence_{userId}";
 - All visual and UX improvements are documented in `CHANGELOG.md`.
 - After any visual changes, test the card across all browsers and devices to ensure consistency.
 
-# Copilot Instructions for CineLog-AI-Experiments
+# Copilot Instructions for FrameRoute (CineLog-AI-Experiments)
 
 ## Project Overview
 
 **Latest Update (2025-08-03): Azure Cloud Integration Complete**
-CineLog has achieved **9.5/10 production readiness** with full Azure cloud infrastructure:
+FrameRoute has achieved **9.5/10 production readiness** with full Azure cloud infrastructure:
 - ✅ **Azure SQL Database**: Production database "[YOUR-DATABASE]" on server "[YOUR-SQL-SERVER]"
 - ✅ **Azure Key Vault**: Secure secret management with "[YOUR-KEYVAULT]" Key Vault using DefaultAzureCredential
 - ✅ **Connection Resilience**: Retry policies (3 attempts, 10s delay) and 60s timeouts for Azure SQL
@@ -1026,7 +1026,7 @@ The project includes an intelligent **Master Agent Director** enhanced with the 
 - **Complex Tasks** (new features) → Critical workflow → Strategic planning → Multi-agent execution
 - **Strategic Tasks** (major changes) → Full workflow → Deep planning → Phased execution
 
-### 🎬 Core CineLog Subagents
+### 🎬 Core FrameRoute Subagents
 
 #### `cinelog-movie-specialist`
 **Domain Expert** for movie-specific features and suggestion algorithms:
@@ -1044,7 +1044,7 @@ The project includes an intelligent **Master Agent Director** enhanced with the 
 - Batch operations using `GetMultipleMovieDetailsAsync()` to avoid N+1 queries
 - Parallel execution for pool building (up to 15 concurrent calls)
 - Rate limiting with SemaphoreSlim and error handling for API failures
-- Data mapping between TMDB API responses and CineLog models
+- Data mapping between TMDB API responses and FrameRoute models
 
 #### `performance-optimizer`
 **Performance & Caching Specialist**:
@@ -1148,7 +1148,7 @@ UI/UX changes → whimsy-injector (adds personality and delight)
 - **Session Context Awareness**: Every agent starts with SESSION_NOTES.md reading
 - **Build Verification**: All agents verify compilation before task completion
 - **Professional Standards**: Mandatory commenting and documentation standards
-- **Domain Expertise**: Each agent has deep knowledge of specific CineLog patterns
+- **Domain Expertise**: Each agent has deep knowledge of specific FrameRoute patterns
 - **Consistency**: All agents follow the same architectural conventions and coding standards
 - **Quality First**: Built-in quality gates and performance considerations
 - **User-Centric**: Every feature considers the complete user experience
@@ -1233,9 +1233,9 @@ Don't remove working patterns or guidance unless explicitly asked. Add and enhan
 
 ---
 
-## 🔍 CineLog Development Knowledge Base
+## 🔍 FrameRoute Development Knowledge Base
 
-*Quick reference for GitHub Copilot to access specialized knowledge when working on specific CineLog components*
+*Quick reference for GitHub Copilot to access specialized knowledge when working on specific FrameRoute components*
 
 ### 🎬 Movie Suggestions **[WHEN: MoviesController, suggestion algorithms, AJAX reshuffles, empty states]**
 
@@ -1542,7 +1542,7 @@ var poolResults = await Task.WhenAll(poolTasks);
 
 #### **Core Patterns:**
 ```csharp
-// CONTROLLER STRUCTURE - Standard CineLog pattern
+// CONTROLLER STRUCTURE - Standard FrameRoute pattern
 [Authorize] // Always require authentication
 public class MoviesController : Controller
 {
@@ -1732,7 +1732,7 @@ var movies = _dbContext.Movies
 
 #### **Entity Models:**
 ```csharp
-// Standard CineLog entity pattern
+// Standard FrameRoute entity pattern
 public class Movies
 {
     public int Id { get; set; }
@@ -2044,7 +2044,7 @@ if (suggestionType == "trending" &&
 if (ShouldShowTrendingSuggestions(suggestionType, userPreferences, userMovies))
 ```
 
-#### **CineLog-Specific Refactoring Patterns:**
+#### **FrameRoute-Specific Refactoring Patterns:**
 
 **MoviesController Simplification:**
 ```csharp

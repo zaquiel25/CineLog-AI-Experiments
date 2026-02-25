@@ -116,7 +116,7 @@ a.btn-success:hover {
     /* HUMANIZED: Removed universal translateY pattern */
     box-shadow: 0 4px 12px rgba(var(--cinelog-gold-rgb), 0.4);
 }
-/* ===== CINELOG BRAND COLORS - HUMANIZED DESIGN v2.0 ===== */
+/* ===== FRAMEROUTE BRAND COLORS - HUMANIZED DESIGN v2.0 ===== */
 :root {
   --cinelog-gold: #f4d03f;
   --cinelog-gold-light: #f7dc6f;
@@ -455,7 +455,7 @@ div#wishlist-list div.movie-list-item.wishlist-movie-card:hover {
 
 /*
 ============================================================
-  CineLog - Movie Preview Card (Ultra Specific)
+  FrameRoute - Movie Preview Card (Ultra Specific)
   Last update: 2025-07-15
 
   Improvements implemented:
@@ -1551,7 +1551,7 @@ footer .tmdb-logo {
     flex: 1;
     margin-bottom: 2.5rem; /* Ensure space before footer to prevent overlap */
 }
-/* Custom styles for CineLog */
+/* Custom styles for FrameRoute */
 
 /* A helper class to make a link look like normal text */
 .link-as-text,
@@ -3792,7 +3792,7 @@ form[id="searchForm"] .input-group button.btn i {
     border: none;
 }
 
-/* FIX: Override Bootstrap purple/blue link colors with CineLog gold */
+/* FIX: Override Bootstrap purple/blue link colors with FrameRoute gold */
 .manage-card-content-body .btn-link,
 .manage-card-content-body .btn-link:link,
 .manage-card-content-body .btn-link:visited,

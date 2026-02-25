@@ -2,13 +2,13 @@
 
 **Your journey in film: Watch, Log, Discover.**
 
-CineLog is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, CineLog combines modern web development practices with sophisticated movie recommendation algorithms.
+FrameRoute is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, FrameRoute combines modern web development practices with sophisticated movie recommendation algorithms.
 
 ## 🚀 Latest Updates (2026-02-24)
 
-### 📱 **PROGRESSIVE WEB APP (PWA)** - Install CineLog on Any Device!
+### 📱 **PROGRESSIVE WEB APP (PWA)** - Install FrameRoute on Any Device!
 
-CineLog is now a fully installable Progressive Web App. Users can add it to their home screen on mobile or desktop for an app-like experience with offline support.
+FrameRoute is now a fully installable Progressive Web App. Users can add it to their home screen on mobile or desktop for an app-like experience with offline support.
 
 **PWA Capabilities**:
 - **Installable**: Add to home screen on iOS, Android, and desktop browsers
@@ -25,9 +25,9 @@ Watch provider availability (streaming, rent, buy) now automatically detects the
 
 **Status**: 🟢 **READY FOR DEPLOYMENT** - Dynamic region detection implemented
 
-### 🔓 **PUBLIC ACCESS** - CineLog Is Now Open!
+### 🔓 **PUBLIC ACCESS** - FrameRoute Is Now Open!
 
-Removed the PasswordGate authentication layer. CineLog is now publicly accessible — no site-wide password required. User accounts (login/register/Google OAuth) remain for personal movie logging features.
+Removed the PasswordGate authentication layer. FrameRoute is now publicly accessible — no site-wide password required. User accounts (login/register/Google OAuth) remain for personal movie logging features.
 
 **Status**: 🟢 **READY FOR DEPLOYMENT** - Public access enabled
 
@@ -90,7 +90,7 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
 - ✅ **Zero API Overhead**: Client-side preprocessing maintains TMDB API efficiency
 - ✅ **Build Quality**: 0 warnings, 0 errors with comprehensive documentation
 - ✅ **User-Centric**: Direct solutions to specific user pain points without over-engineering
-- ✅ **Brand Consistency**: Maintains CineLog visual identity throughout enhancements
+- ✅ **Brand Consistency**: Maintains FrameRoute visual identity throughout enhancements
 
 **Status**: 🟢 **LIVE AND ENHANCED** - Significantly improved user experience ready for testing
 
@@ -98,9 +98,9 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
 
 ## 🚀 Previous Updates (2025-08-14)
 
-### 🚀 **PRODUCTION DEPLOYMENT SUCCESSFUL** - CineLog Live with Password Protection!
+### 🚀 **PRODUCTION DEPLOYMENT SUCCESSFUL** - FrameRoute Live with Password Protection!
 
-**🎯 MAJOR MILESTONE ACHIEVED**: CineLog successfully deployed to production with comprehensive security verification and is now live at https://cinelog-app.azurewebsites.net/ for friend testing phase.
+**🎯 MAJOR MILESTONE ACHIEVED**: FrameRoute successfully deployed to production with comprehensive security verification and is now live at https://cinelog-app.azurewebsites.net/ for friend testing phase.
 
 **Complete Production Security Deployment**:
 - **🔐 Password Gate Protection**: Site-wide password protection system with cookie-based authentication
@@ -128,12 +128,12 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
 - **🛡️ Security Architecture**: Integrated with existing Azure Key Vault infrastructure for secure credential management  
 - **🔒 CSRF Protection**: Anti-forgery tokens throughout authentication flow prevent cross-site request forgery attacks
 - **👥 User Data Isolation**: Google users receive completely separate data namespaces maintaining security model
-- **📱 Cross-Device Access**: Users can access personalized CineLog data from any device using Google credentials
+- **📱 Cross-Device Access**: Users can access personalized FrameRoute data from any device using Google credentials
 
 **Production Deployment Excellence**:
 - ✅ **LIVE PRODUCTION**: Google OAuth fully operational at https://cinelog-app.azurewebsites.net/
 - ✅ **Security Score**: Achieved 9.5/10 security rating with enterprise-grade implementation
-- ✅ **Feature Integration**: All CineLog features work seamlessly with Google authentication
+- ✅ **Feature Integration**: All FrameRoute features work seamlessly with Google authentication
 - ✅ **Authentication Pipeline**: Fixed critical UseAuthentication() middleware for proper OAuth functionality
 
 **Cast Suggestion Enhancement**:
@@ -242,7 +242,7 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
 
 ### 🔧 **CRITICAL PRODUCTION FIX: Styling & Static Files Deployment Issue Resolved**
 
-**✅ PRODUCTION ISSUE RESOLVED**: Successfully diagnosed and fixed critical styling issue where deployed CineLog application was displaying only HTML content without CSS/JavaScript styling on Azure App Service.
+**✅ PRODUCTION ISSUE RESOLVED**: Successfully diagnosed and fixed critical styling issue where deployed FrameRoute application was displaying only HTML content without CSS/JavaScript styling on Azure App Service.
 
 **🎯 Root Cause Identified**: Initial deployment package did not properly include the complete `wwwroot` folder with all static resources, causing Bootstrap CSS, custom styling, and JavaScript files to fail loading.
 
@@ -255,7 +255,7 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
   - ✅ Custom CSS: https://[YOUR-APP-NAME].azurewebsites.net/css/site.css
   - ✅ jQuery JS: https://[YOUR-APP-NAME].azurewebsites.net/lib/jquery/dist/jquery.min.js
 
-**🌟 Production Status**: CineLog now displays with full styling including dark Cyborg Bootstrap theme, custom CineLog branding, and all interactive features operational.
+**🌟 Production Status**: FrameRoute now displays with full styling including dark Cyborg Bootstrap theme, custom FrameRoute branding, and all interactive features operational.
 
 ### 🏆 **MAJOR OPTIMIZATION ACHIEVEMENT: Comprehensive Agent System Enhancement** - 93.7% Efficiency Gain!
 
@@ -275,9 +275,9 @@ Removed the PasswordGate authentication layer. CineLog is now publicly accessibl
 - **Performance Monitoring Framework**: Complete A/B testing and validation system with AGENT_PERFORMANCE_METRICS.md and OPTIMIZATION_VALIDATION_REPORT.md
 - **Quality Assurance**: Comprehensive validation confirms 98%+ accuracy maintained with dramatic efficiency gains
 
-### 🏆 **MILESTONE CONFIRMED: CineLog FULLY OPERATIONAL & LIVE** - 10/10 Production Success!
+### 🏆 **MILESTONE CONFIRMED: FrameRoute FULLY OPERATIONAL & LIVE** - 10/10 Production Success!
 
-**🎉 DEPLOYMENT MILESTONE ACHIEVED**: CineLog is confirmed fully deployed and operational at **https://[YOUR-APP-NAME].azurewebsites.net/** with complete Azure production infrastructure and 10/10 production readiness status!
+**🎉 DEPLOYMENT MILESTONE ACHIEVED**: FrameRoute is confirmed fully deployed and operational at **https://[YOUR-APP-NAME].azurewebsites.net/** with complete Azure production infrastructure and 10/10 production readiness status!
 
 ### 🏆 **COMPREHENSIVE WORKFLOW SYSTEM COMPLETED** - Enhanced Development Efficiency & Agent Framework!
 
@@ -432,7 +432,7 @@ This deployment represents a significant advancement in cloud configuration mana
 
 ## 🔐 Production Status: 10/10 - FULLY DEPLOYED & LIVE ✅
 
-**MAJOR MILESTONE CONFIRMED:** CineLog has achieved complete production deployment with full Azure infrastructure, enterprise-grade security, and live application hosting at https://[YOUR-APP-NAME].azurewebsites.net/
+**MAJOR MILESTONE CONFIRMED:** FrameRoute has achieved complete production deployment with full Azure infrastructure, enterprise-grade security, and live application hosting at https://[YOUR-APP-NAME].azurewebsites.net/
 
 ### 🎯 **Next Priority: Performance Database Optimization**
 **📊 Ready for Implementation**: Execute `production-performance-indexes.sql` on production database for 50-95% query performance improvements
@@ -484,11 +484,11 @@ This deployment represents a significant advancement in cloud configuration mana
 7. ✅ **Performance Optimization**: DEPLOYED - 11 production database indexes providing 70-90% query improvements
 8. ✅ **Azure Monitoring**: DEPLOYED - Application Insights live monitoring with comprehensive telemetry tracking
 
-**DEPLOYMENT COMPLETE**: CineLog has achieved full production deployment with live Azure hosting and enterprise-grade infrastructure.
+**DEPLOYMENT COMPLETE**: FrameRoute has achieved full production deployment with live Azure hosting and enterprise-grade infrastructure.
 
 ### 🎯 **Production Deployment Achievement Summary**
 - **✅ Complete Azure Infrastructure Deployed**: App Service + SQL Database + Key Vault + Managed Identity + Application Insights all operational
-- **✅ Live Application Hosting**: CineLog fully functional at https://cinelog-app.azurewebsites.net/
+- **✅ Live Application Hosting**: FrameRoute fully functional at https://cinelog-app.azurewebsites.net/
 - **✅ Database Migration Complete**: All 25 EF Core migrations successfully applied to Azure SQL Database with 11 performance indexes
 - **✅ Security Architecture Complete**: Azure Key Vault managing all production secrets with enterprise-grade authentication
 - **✅ Production Infrastructure Ready**: Complete Azure cloud hosting with auto-scaling and enterprise reliability
@@ -548,7 +548,7 @@ This deployment represents a significant advancement in cloud configuration mana
 ## 🤖 Claude Code Development Tools
 - **Specialized Agent System**: 9 task-specific agents for complex, multi-domain work (simple tasks handled directly)
 - **Context Efficiency**: CLAUDE.md reduced to ~120 lines; detailed patterns in `.claude/patterns.md`
-- **Architecture Knowledge**: Deep understanding of CineLog patterns, conventions, and best practices
+- **Architecture Knowledge**: Deep understanding of FrameRoute patterns, conventions, and best practices
 - **MCP Integration**: 4 MCP servers (Context7, Azure, Microsoft Learn, DeepWiki) used automatically when relevant
 
 ### 🎬 Specialized Agents
@@ -577,7 +577,7 @@ This deployment represents a significant advancement in cloud configuration mana
 - **Security Verification**: Built-in 6-point checklist for AI-assisted pre-deployment security validation
 - **Synchronized Behavior**: Both Claude Code and GitHub Copilot follow identical development workflows and security patterns
 - **Enhanced Coordination**: Explicit agent invocation guidance, escalation rules, and planning templates for optimal secure task execution
-- **Domain Expertise**: Copilot can instantly reference CineLog-specific patterns, performance optimizations, and security requirements
+- **Domain Expertise**: Copilot can instantly reference FrameRoute-specific patterns, performance optimizations, and security requirements
 - **Professional Standards**: Unified documentation standards, coding conventions, and security practices across all AI assistance
 - **Production Readiness Knowledge**: Both AI systems have comprehensive access to secure deployment patterns and infrastructure protection
 - **Security-First Development**: AI assistance includes automatic infrastructure protection and reconnaissance prevention
@@ -628,7 +628,7 @@ See `MoviesController.cs` for implementation details and business logic comments
 - **Navbar:** The bottom border of the navbar is now gold (Cinema Gold) and enforced with `!important` for maximum visual consistency.
 - **Section Titles:** Suggestion section titles use Cinema Gold and retain their original size and visual weight.
 - **Suggestion Cards:** Descriptive text inside each card is one point larger for better readability.
-- **Visual Consistency:** All color and typographic hierarchy changes are aligned with the CineLog visual identity and documented in `site.css`.
+- **Visual Consistency:** All color and typographic hierarchy changes are aligned with the FrameRoute visual identity and documented in `site.css`.
 - **No Bootstrap classes or base sizes were altered, only color and key visual details.
 
 # 🎭 Sequential Cast Reshuffle (2025-07-20)
@@ -662,7 +662,7 @@ See `MoviesController.cs` for implementation details and business logic comments
 ## ✨ Key Features
 
 ### 📱 Progressive Web App
-- **Installable**: Add CineLog to home screen on iOS, Android, and desktop for an app-like experience
+- **Installable**: Add FrameRoute to home screen on iOS, Android, and desktop for an app-like experience
 - **Installation Guide**: Dedicated "Free App" page with step-by-step instructions for phone and desktop
 - **Offline Support**: Graceful fallback page when network is unavailable
 - **Smart Caching**: Service worker caches TMDB posters and static assets for faster repeat visits
@@ -768,11 +768,11 @@ Our suggestion system follows a **hybrid architecture** that provides both tradi
 
 ### 🔐 Modern Authentication Experience with Google OAuth Integration
 - **Google OAuth Integration**: Complete "Continue with Google" authentication with enterprise-grade security implementation
-- **Cross-Device Access**: Users can access their CineLog data from any device using Google credentials
+- **Cross-Device Access**: Users can access their FrameRoute data from any device using Google credentials
 - **Security Architecture**: CSRF protection, input validation, and secure logging throughout OAuth flow
 - **User Data Isolation**: Google users receive completely separate data namespaces maintaining security model
-- **Seamless Integration**: All CineLog features (suggestions, wishlists, ratings) work perfectly with Google accounts
-- **Welcoming Interface**: Friendly titles ("Welcome Back", "Join CineLog") with professional typography using h3 instead of oversized headers
+- **Seamless Integration**: All FrameRoute features (suggestions, wishlists, ratings) work perfectly with Google accounts
+- **Welcoming Interface**: Friendly titles ("Welcome Back", "Join FrameRoute") with professional typography using h3 instead of oversized headers
 - **Centered Layout**: Responsive design with better form centering using Bootstrap's `col-md-6 col-lg-4` for optimal viewing across devices
 - **Enhanced UX**: Improved button text ("Sign In", "Create Account") and clean link styling with proper spacing
 - **Professional Forms**: Bootstrap floating labels with consistent styling and better visual hierarchy

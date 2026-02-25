@@ -1,6 +1,6 @@
-# CineLog Claude Code Agents
+# FrameRoute Claude Code Agents
 
-Specialized agents for CineLog development. Use the Task tool to invoke them.
+Specialized agents for FrameRoute development. Use the Task tool to invoke them.
 
 ## Agent Roster
 

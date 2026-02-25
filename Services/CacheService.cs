@@ -15,10 +15,10 @@ namespace Ezequiel_Movies.Services
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IMemoryCache _memoryCache;
-        private readonly CineLogTelemetryService? _telemetryService;
+        private readonly FrameRouteTelemetryService? _telemetryService;
         private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(15);
 
-        public CacheService(ApplicationDbContext dbContext, IMemoryCache memoryCache, CineLogTelemetryService? telemetryService = null)
+        public CacheService(ApplicationDbContext dbContext, IMemoryCache memoryCache, FrameRouteTelemetryService? telemetryService = null)
         {
             _dbContext = dbContext;
             _memoryCache = memoryCache;

@@ -4,15 +4,15 @@ using Microsoft.ApplicationInsights.Extensibility;
 namespace Ezequiel_Movies.Services
 {
     /// <summary>
-    /// Custom telemetry initializer for CineLog-specific context and metadata.
+    /// Custom telemetry initializer for FrameRoute-specific context and metadata.
     /// Adds consistent properties to all Application Insights telemetry for better tracking and analysis.
     /// </summary>
-    public class CineLogTelemetryInitializer : ITelemetryInitializer
+    public class FrameRouteTelemetryInitializer : ITelemetryInitializer
     {
         public void Initialize(ITelemetry telemetry)
         {
-            // Add consistent CineLog application metadata to all telemetry
-            telemetry.Context.GlobalProperties["Application"] = "CineLog";
+            // Add consistent FrameRoute application metadata to all telemetry
+            telemetry.Context.GlobalProperties["Application"] = "FrameRoute";
             telemetry.Context.GlobalProperties["ApplicationVersion"] = GetApplicationVersion();
             telemetry.Context.GlobalProperties["Environment"] = GetEnvironmentName();
             

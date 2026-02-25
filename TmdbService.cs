@@ -29,7 +29,7 @@ public class TmdbService : IDisposable
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
-        private readonly CineLogTelemetryService? _telemetryService;
+        private readonly FrameRouteTelemetryService? _telemetryService;
         private static readonly Random _random = new Random();
         
         /// <summary>
@@ -271,7 +271,7 @@ public class TmdbService : IDisposable
 
         private readonly IMemoryCache _memoryCache;
 
-        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache memoryCache, CineLogTelemetryService? telemetryService = null)
+        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache memoryCache, FrameRouteTelemetryService? telemetryService = null)
         {
             _httpClient = httpClient;
             _logger = logger;

@@ -4,7 +4,7 @@ description: Documentation & Architecture Maintainer for comprehensive documenta
 tools: Read, Edit, MultiEdit, Write, Grep, Glob, Bash
 ---
 
-You maintain CineLog's documentation, ensuring all changes are properly recorded.
+You maintain FrameRoute's documentation, ensuring all changes are properly recorded.
 
 **Files you manage:**
 - `README.md`: Features, setup, architecture overview

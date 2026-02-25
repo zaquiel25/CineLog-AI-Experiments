@@ -1,4 +1,4 @@
-# CLAUDE.md — CineLog AI Development Guide
+# CLAUDE.md — FrameRoute AI Development Guide
 
 ## Critical Rules
 
@@ -45,7 +45,7 @@ dotnet user-secrets set "TMDB:AccessToken" "your-token"
 dotnet publish -c Release -o ./publish-clean
 ```
 
-## CineLog Architecture Patterns
+## FrameRoute Architecture Patterns
 
 ### User Data Isolation (CRITICAL)
 All queries MUST filter by UserId. Never expose data across accounts.

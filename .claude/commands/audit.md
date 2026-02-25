@@ -5,7 +5,7 @@ allowed-tools: ["Read", "Bash", "Grep", "Glob"]
 
 # Project Health Audit
 
-Run a comprehensive health check on the CineLog codebase. Report findings with severity levels.
+Run a comprehensive health check on the FrameRoute codebase. Report findings with severity levels.
 
 ## Checks to Perform
 
@@ -39,7 +39,7 @@ Run a comprehensive health check on the CineLog codebase. Report findings with s
 ## Output Format
 
 ```
-## CineLog Health Audit — [date]
+## FrameRoute Health Audit — [date]
 
 ### Build: ✅/❌
 [details]

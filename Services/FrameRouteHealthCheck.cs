@@ -7,24 +7,24 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Ezequiel_Movies.Services
 {
     /// <summary>
-    /// Custom health check for CineLog application components.
+    /// Custom health check for FrameRoute application components.
     /// Monitors database connectivity, TMDB API availability, and cache performance
     /// to provide comprehensive production health status for Application Insights monitoring.
     /// </summary>
-    public class CineLogHealthCheck : IHealthCheck
+    public class FrameRouteHealthCheck : IHealthCheck
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _memoryCache;
-        private readonly CineLogTelemetryService? _telemetryService;
-        private readonly ILogger<CineLogHealthCheck> _logger;
+        private readonly FrameRouteTelemetryService? _telemetryService;
+        private readonly ILogger<FrameRouteHealthCheck> _logger;
 
-        public CineLogHealthCheck(
+        public FrameRouteHealthCheck(
             ApplicationDbContext dbContext,
             IHttpClientFactory httpClientFactory,
             IMemoryCache memoryCache,
-            ILogger<CineLogHealthCheck> logger,
-            CineLogTelemetryService? telemetryService = null)
+            ILogger<FrameRouteHealthCheck> logger,
+            FrameRouteTelemetryService? telemetryService = null)
         {
             _dbContext = dbContext;
             _httpClient = httpClientFactory.CreateClient();
@@ -80,7 +80,7 @@ namespace Ezequiel_Movies.Services
                 try
                 {
                     _httpClient.DefaultRequestHeaders.Clear();
-                    _httpClient.DefaultRequestHeaders.Add("User-Agent", "CineLog-HealthCheck/1.0");
+                    _httpClient.DefaultRequestHeaders.Add("User-Agent", "FrameRoute-HealthCheck/1.0");
                     
                     var response = await _httpClient.GetAsync("https://api.themoviedb.org/3/configuration", cancellationToken);
                     tmdbStopwatch.Stop();
@@ -197,7 +197,7 @@ namespace Ezequiel_Movies.Services
 
                 // Create result message
                 var resultMessage = overallHealth == HealthStatus.Healthy 
-                    ? "All CineLog components are healthy" 
+                    ? "All FrameRoute components are healthy" 
                     : $"Health issues detected: {string.Join(", ", issues)}";
 
                 // Track overall health status

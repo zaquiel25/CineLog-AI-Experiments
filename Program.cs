@@ -51,7 +51,7 @@ if (builder.Environment.IsProduction())
 /// <summary>
 /// PRODUCTION MONITORING: Configure Application Insights for comprehensive production monitoring.
 /// Integrates with Azure Key Vault for secure connection string management and provides
-/// CineLog-specific telemetry for user experience, performance optimization validation,
+/// FrameRoute-specific telemetry for user experience, performance optimization validation,
 /// and business intelligence tracking.
 /// 
 /// FEATURE: Validates recent 70-90% database performance improvements
@@ -89,8 +89,8 @@ if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
         }
     });
     
-    // Register CineLog-specific telemetry service
-    builder.Services.AddScoped<CineLogTelemetryService>();
+    // Register FrameRoute-specific telemetry service
+    builder.Services.AddScoped<FrameRouteTelemetryService>();
     
     builder.Services.AddLogging(logging =>
     {
@@ -226,7 +226,7 @@ builder.Services.AddScoped<UserDisplayNameService>();
 /// Essential for validating the 70-90% performance improvements and detecting regressions.
 /// </summary>
 builder.Services.AddHealthChecks()
-    .AddCheck<CineLogHealthCheck>("cinelog_health")
+    .AddCheck<FrameRouteHealthCheck>("cineroute_health")
     .AddDbContextCheck<ApplicationDbContext>("database");
 
 /// <summary>
@@ -236,7 +236,7 @@ builder.Services.AddHealthChecks()
 /// </summary>
 builder.Services.AddSession(options =>
 {
-    options.Cookie.Name = "CineLog.Session";
+    options.Cookie.Name = "FrameRoute.Session";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Works in both HTTP (dev) and HTTPS (prod)
     options.Cookie.SameSite = SameSiteMode.Lax;

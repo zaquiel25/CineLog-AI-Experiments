@@ -13,7 +13,7 @@ namespace Ezequiel_Movies1.Models.Entities
             DateCreated = DateTime.UtcNow;
         }
 /// <summary>
-/// Fecha de creación del registro de película en CineLog.
+/// Fecha de creación del registro de película en FrameRoute.
 /// </summary>
 /// <remarks>
 /// Se utiliza como fallback para ordenamiento y sugerencias cuando DateWatched es null.

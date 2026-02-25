@@ -1,6 +1,6 @@
 # Auto-Update Session Notes Command
 
-You are tasked with automatically updating and optimizing SESSION_NOTES.md for focused day-to-day context management in this CineLog-AI-Experiments project.
+You are tasked with automatically updating and optimizing SESSION_NOTES.md for focused day-to-day context management in this FrameRoute-AI-Experiments project.
 
 ## Context
 This is an ASP.NET Core movie logging application with sophisticated suggestion algorithms, TMDB API integration, and performance optimizations. The SESSION_NOTES.md file maintains cross-session context for development continuity and should focus on actionable, current information rather than comprehensive historical logs.

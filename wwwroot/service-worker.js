@@ -1,5 +1,5 @@
 /**
- * CineLog Service Worker
+ * FrameRoute Service Worker
  * Client-side caching that complements the existing server-side IMemoryCache.
  * Server handles: TMDB API data (24h), user blacklist/wishlist (15min)
  * Client handles: TMDB posters, static assets, offline navigation

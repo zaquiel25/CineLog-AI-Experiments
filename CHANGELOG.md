@@ -1,3 +1,10 @@
+## 2026-02-25
+
+### Changed
+- **Rebrand**: Renamed application from CineLog to FrameRoute across entire codebase
+
+---
+
 ## 2026-02-24
 
 ### Added

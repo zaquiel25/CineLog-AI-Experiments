@@ -1,6 +1,6 @@
 {
-  "name": "CineLog - Your Movie Journal",
-  "short_name": "CineLog",
+  "name": "FrameRoute - Your Movie Journal",
+  "short_name": "FrameRoute",
   "description": "Track, rate, and discover your favorite movies",
   "start_url": "/",
   "display": "standalone",
