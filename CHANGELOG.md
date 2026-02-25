@@ -1,5 +1,8 @@
 ## 2026-02-25
 
+### Added
+- **Homepage Free App CTA**: Outline-style button linking to PWA install instructions, positioned below main hero buttons
+
 ### Changed
 - **Rebrand**: Renamed application from CineLog to FrameRoute across entire codebase
 

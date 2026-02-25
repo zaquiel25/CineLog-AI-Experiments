@@ -1136,6 +1136,23 @@ h5.card-title {
   /* HUMANIZED: Subtle scale only, no translateY */
   transform: scale(1.01);
 }
+
+.hero-btn-outline {
+  background: rgba(44, 62, 80, 0.55);
+  color: var(--cinelog-gold);
+  border: 1.5px solid var(--cinelog-gold);
+  font-size: 0.9rem;
+  padding: 0.55rem 1.4rem;
+  min-width: auto;
+}
+
+.hero-btn-outline:hover, .hero-btn-outline:focus {
+  background: rgba(44, 62, 80, 0.85);
+  color: var(--cinelog-gold-light);
+  border-color: var(--cinelog-gold-light);
+  box-shadow: 0 4px 20px rgba(var(--cinelog-gold-rgb), 0.15);
+  transform: scale(1.01);
+}
 /* --- HERO LANDING PAGE TRANSFORMATION (Apple-esque) --- */
 
 /* --- HERO LANDING PAGE ULTRA CLEAN (Apple-style) --- */
