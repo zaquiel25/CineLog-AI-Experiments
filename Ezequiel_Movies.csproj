@@ -33,6 +33,7 @@
   <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
   <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.8" />
   <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.8" />
+  <PackageReference Include="Resend" Version="0.2.1" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Data\" />

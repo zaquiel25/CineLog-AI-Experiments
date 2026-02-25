@@ -1,0 +1,30 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Check Your Email";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="text-center mb-4">
+            <img src="~/images/logo-gold.svg" alt="FrameRoute" height="80" class="mb-3">
+            <h3 class="mb-1">Check Your Email</h3>
+            <p class="text-muted">We sent a confirmation link to</p>
+            <p class="fw-bold">@Model.Email</p>
+        </div>
+
+        <div class="alert alert-secondary text-center" role="alert">
+            <i class="fas fa-envelope me-2"></i>
+            Click the link in the email to activate your account.
+        </div>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small mb-2">Didn't receive the email? Check your spam folder or</p>
+            <a asp-page="./ResendEmailConfirmation" class="text-decoration-none">Resend confirmation email</a>
+        </div>
+
+        <div class="text-center mt-3">
+            <a asp-page="./Login" class="text-decoration-none text-muted small">Back to Login</a>
+        </div>
+    </div>
+</div>

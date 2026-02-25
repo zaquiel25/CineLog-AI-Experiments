@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -251,8 +253,35 @@ builder.Services.AddSession(options =>
 /// Integrates with Azure Key Vault for secure credential management in production.
 /// FEATURE: DisplayName column added to AspNetUsers via migration (access via direct SQL queries).
 /// </summary>
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// FEATURE: Configure Resend email service for Identity email confirmation and password reset
+var resendApiKey = builder.Configuration["Resend:ApiKey"] ?? builder.Configuration["Resend--ApiKey"];
+if (!string.IsNullOrEmpty(resendApiKey))
+{
+    builder.Services.AddOptions();
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.Configure<ResendClientOptions>(o =>
+    {
+        o.ApiToken = resendApiKey;
+    });
+    builder.Services.AddTransient<IResend, ResendClient>();
+    builder.Services.AddTransient<IEmailSender, ResendEmailSender>();
+}
+else if (builder.Environment.IsDevelopment())
+{
+    // Development without Resend — log emails to console for testing
+    builder.Services.AddTransient<IEmailSender, DevelopmentEmailSender>();
+    Console.WriteLine("INFO: Using DevelopmentEmailSender — emails will appear in console output.");
+    Console.WriteLine("Configure Resend with: dotnet user-secrets set \"Resend:ApiKey\" \"re_your_api_key\"");
+}
+else
+{
+    // Production without Resend — silent no-op (should not happen, log warning)
+    builder.Services.AddTransient<IEmailSender, Microsoft.AspNetCore.Identity.UI.Services.NoOpEmailSender>();
+    Console.WriteLine("WARNING: Resend API key not configured in production. Emails will not be sent.");
+}
 
 // Configure Google authentication - this extends the default Identity authentication
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"] ?? builder.Configuration["Authentication--Google--ClientId"];

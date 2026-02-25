@@ -40,6 +40,7 @@ dotnet ef database update            # Apply migrations
 
 # Configuration
 dotnet user-secrets set "TMDB:AccessToken" "your-token"
+dotnet user-secrets set "Resend:ApiKey" "re_your_api_key"
 
 # Production deployment (REQUIRES EXPLICIT PERMISSION)
 dotnet publish -c Release -o ./publish-clean

@@ -11,11 +11,9 @@ namespace EzequielMovies.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "InvitationCodeUsages");
-
-            migrationBuilder.DropTable(
-                name: "InvitationCodes");
+            // FIX: Use conditional drops — tables may not exist when recreating DB from scratch
+            migrationBuilder.Sql("IF OBJECT_ID('InvitationCodeUsages', 'U') IS NOT NULL DROP TABLE [InvitationCodeUsages];");
+            migrationBuilder.Sql("IF OBJECT_ID('InvitationCodes', 'U') IS NOT NULL DROP TABLE [InvitationCodes];");
         }
 
         /// <inheritdoc />

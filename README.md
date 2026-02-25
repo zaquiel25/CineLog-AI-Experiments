@@ -4,7 +4,26 @@
 
 FrameRoute is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, FrameRoute combines modern web development practices with sophisticated movie recommendation algorithms.
 
-## 🚀 Latest Updates (2026-02-24)
+## 🚀 Latest Updates (2026-02-25)
+
+### 📧 **EMAIL SYSTEM** - Resend Integration with Branded Templates
+
+Complete email infrastructure powered by Resend API. New users must confirm their email before logging in. Password reset flow fully implemented.
+
+**Email Features**:
+- **Email Confirmation**: Registration requires email verification with branded confirmation email
+- **Password Reset**: Full forgot/reset password flow with secure token-based links
+- **Branded Templates**: Dark-themed HTML emails with FrameRoute logo and Cinema Gold CTA buttons
+- **Development Mode**: Console-logged emails for local testing without API key
+- **Resend API**: 3,000 free emails/month, verified domain (frameroute.net)
+
+**Identity Pages**: ConfirmEmail, RegisterConfirmation, ForgotPassword, ResetPassword, ResendEmailConfirmation
+
+**Status**: 🟢 **DEPLOYED** - Email system active
+
+---
+
+## 🚀 Previous Updates (2026-02-24)
 
 ### 📱 **PROGRESSIVE WEB APP (PWA)** - Install FrameRoute on Any Device!
 

@@ -1,7 +1,20 @@
 ## 2026-02-25
 
 ### Added
+- **Email System (Resend)**: Complete email infrastructure with Resend API integration
+  - `ResendEmailSender` service implementing `IEmailSender` with error handling and logging
+  - `DevelopmentEmailSender` for local testing — logs email content to console
+  - `EmailTemplateService` with branded HTML templates (dark theme, Cinema Gold buttons, FrameRoute logo)
+  - 3-tier fallback: Resend (configured) → Dev console (development) → NoOp (production without key)
+- **Identity Pages**: Full email confirmation and password reset flow
+  - ConfirmEmail, RegisterConfirmation, ForgotPassword, ForgotPasswordConfirmation
+  - ResetPassword, ResetPasswordConfirmation, ResendEmailConfirmation
+  - All pages styled with FrameRoute branding (logo, Bootstrap 5, Cinema Gold theme)
+- **Email Confirmation Required**: `RequireConfirmedAccount` enabled — new users must verify email before login
 - **Homepage Free App CTA**: Outline-style button linking to PWA install instructions, positioned below main hero buttons
+
+### Fixed
+- **RemoveInvitationSystem migration**: Use conditional drops (`IF OBJECT_ID`) to prevent errors when recreating DB from scratch
 
 ### Security
 - **Security Headers**: Added middleware with X-Content-Type-Options, X-Frame-Options (DENY), Referrer-Policy, Permissions-Policy, and Content-Security-Policy restricting resources to trusted origins
