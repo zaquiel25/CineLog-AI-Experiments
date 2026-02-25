@@ -7,7 +7,7 @@ namespace Ezequiel_Movies.Services;
 /// </summary>
 public static class EmailTemplateService
 {
-    private const string LogoUrl = "https://frameroute.net/images/logo-gold.svg";
+    private const string LogoUrl = "https://frameroute.net/images/logo-gold.png";
     private const string Gold = "#f4d03f";
     private const string DarkBg = "#1a1a2e";
     private const string CardBg = "#222244";

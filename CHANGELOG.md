@@ -15,6 +15,9 @@
 
 ### Fixed
 - **RemoveInvitationSystem migration**: Use conditional drops (`IF OBJECT_ID`) to prevent errors when recreating DB from scratch
+- **Email template logo**: Changed from SVG to PNG (`logo-gold.png`) — SVG not supported by most email clients (Gmail, Outlook)
+- **RegisterConfirmation page**: Redesigned with card layout, gold-highlighted email address, and improved visual hierarchy
+- **ForgotPasswordConfirmation page**: Redesigned with matching card layout for consistent identity page styling
 
 ### Security
 - **Security Headers**: Added middleware with X-Content-Type-Options, X-Frame-Options (DENY), Referrer-Policy, Permissions-Policy, and Content-Security-Policy restricting resources to trusted origins
