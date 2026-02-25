@@ -11,13 +11,13 @@
 CLIENT-SIDE CACHE (service-worker.js):
 
 1. TMDB POSTERS (cache-first):
-   - Cache name: cinelog-posters-v1
+   - Cache name: cinelog-posters-v2
    - Targets: image.tmdb.org requests
    - Benefit: Eliminates redundant poster downloads on repeat visits
    - Posters are immutable — cache-first is optimal
 
 2. STATIC ASSETS (cache-first):
-   - Cache name: cinelog-static-v1
+   - Cache name: cinelog-static-v2
    - Pre-cached on install: CSS, JS, Bootstrap, jQuery, icons, favicon
    - Targets: stylesheets, scripts, fonts
    - Benefit: Instant asset loading after first visit
@@ -34,8 +34,11 @@ CLIENT-SIDE CACHE (service-worker.js):
 - No impact on dynamic content freshness (network-first for navigation)
 
 **Cache Management**:
-- Versioned cache names (`v1`) enable clean upgrades via `activate` event
+- Versioned cache names (`v2`) enable clean upgrades via `activate` event
 - App can trigger full cache clear via `postMessage({ action: 'clearCache' })`
+- `service-worker.js` served with `Cache-Control: no-cache, no-store` and registered with `updateViaCache: 'none'` to ensure prompt updates
+- **Cloudflare CDN interaction**: Cloudflare caches static files by default, including `service-worker.js`. Stale SW copies retain old CSP headers, causing fetch failures. The `no-cache, no-store` header ensures Cloudflare always revalidates with origin. A `controllerchange` listener in `_Layout.cshtml` triggers auto-reload when a new SW takes control
+- `.catch()` error handlers on all fetch operations prevent unhandled rejections; opaque responses cached for cross-origin resources
 
 ---
 

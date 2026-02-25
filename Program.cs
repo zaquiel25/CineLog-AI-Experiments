@@ -374,7 +374,7 @@ app.Use(async (context, next) =>
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
         "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
         "img-src 'self' https://image.tmdb.org data:; " +
-        "connect-src 'self' https://dc.services.visualstudio.com https://*.in.applicationinsights.azure.com; " +
+        "connect-src 'self' https://image.tmdb.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com https://dc.services.visualstudio.com https://*.in.applicationinsights.azure.com; " +
         "frame-ancestors 'none'; " +
         "base-uri 'self'; " +
         "form-action 'self' https://accounts.google.com";
@@ -382,7 +382,17 @@ app.Use(async (context, next) =>
 });
 
 app.UseCookiePolicy();
-app.UseStaticFiles();
+// FIX: Serve service-worker.js with no-cache to ensure browsers always check for updates
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.File.Name == "service-worker.js")
+        {
+            ctx.Context.Response.Headers["Cache-Control"] = "no-cache, no-store";
+        }
+    }
+});
 app.UseRouting();
 app.UseAuthentication();
 app.UseSession(); // Required for suggestion system anti-repetition tracking

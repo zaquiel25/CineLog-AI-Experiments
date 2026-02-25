@@ -14,6 +14,9 @@
 - **Homepage Free App CTA**: Outline-style button linking to PWA install instructions, positioned below main hero buttons
 
 ### Fixed
+- **CSP blocking service worker fetch**: `connect-src 'self'` blocked service worker requests to external domains (TMDB images, CDN assets). Expanded CSP to include `image.tmdb.org`, `cdn.jsdelivr.net`, `cdnjs.cloudflare.com`, `fonts.googleapis.com`, `fonts.gstatic.com`. Users without cached resources saw broken posters and missing star ratings.
+- **Service worker cache staleness via Cloudflare CDN**: Cloudflare was caching old `service-worker.js` with stale CSP headers, causing persistent fetch failures even after server-side fixes. Added `Cache-Control: no-cache, no-store` for SW file via `StaticFileOptions`, `updateViaCache: 'none'` on registration, and `controllerchange` auto-reload in `_Layout.cshtml` so users get the new SW immediately without manual refresh
+- **Service worker error handling**: Cache version bump v1 to v2, added `.catch()` error handlers on fetch to prevent unhandled rejections, enabled opaque response caching for cross-origin resources
 - **RemoveInvitationSystem migration**: Use conditional drops (`IF OBJECT_ID`) to prevent errors when recreating DB from scratch
 - **Email template logo**: Changed from SVG to PNG (`logo-gold.png`) — SVG not supported by most email clients (Gmail, Outlook)
 - **RegisterConfirmation page**: Redesigned with card layout, gold-highlighted email address, and improved visual hierarchy
