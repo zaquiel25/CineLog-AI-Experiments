@@ -4015,21 +4015,21 @@ return (bucket3x3, bucket2x3, bucket1x3);
             // FEATURE: Favorite movie selection — rating-first approach
             // Rating is the user's explicit opinion of quality, so it takes priority.
             // Rewatch and watch count are affinity signals used to break ties.
-            var mostWatchedMovie = collectionData
+            var favoriteMovie = collectionData
                 .OrderByDescending(c => c.Movie.UserRating ?? 0)         // 1st: Highest rated — the user's explicit "how much I liked it"
                 .ThenByDescending(c => c.HasRewatch)                     // 2nd: Has rewatch — rewatching signals stronger affinity
                 .ThenByDescending(c => c.WatchCount)                     // 3rd: Watch count — more views = more engagement
                 .ThenByDescending(c => c.LastWatched ?? c.Movie.DateWatched ?? c.Movie.DateCreated) // 4th: Most recently watched
                 .ThenBy(c => c.Movie.Title)                              // 5th: Alphabetical for deterministic results
                 .FirstOrDefault();
-                
+
             var averageWatchesPerMovie = collectionData.Count > 0 ? Math.Round((double)totalWatches / collectionData.Count, 1) : 0;
-            
+
             // Store enhanced statistics for view display
             ViewData["MovieCount"] = collectionData.Count;
             ViewData["TotalWatches"] = totalWatches;
-            ViewData["MostWatchedMovie"] = mostWatchedMovie?.Movie.Title ?? "N/A";
-            ViewData["MostWatchedCount"] = mostWatchedMovie?.WatchCount ?? 0;
+            ViewData["FavoriteMovie"] = favoriteMovie?.Movie.Title ?? "N/A";
+            ViewData["FavoriteMovieWatchCount"] = favoriteMovie?.WatchCount ?? 0;
             ViewData["AverageWatchesPerMovie"] = averageWatchesPerMovie;
 
             // ENHANCEMENT: Apply sorting to collection data with new collection-specific options

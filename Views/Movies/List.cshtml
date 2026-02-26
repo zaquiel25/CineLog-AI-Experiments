@@ -165,7 +165,7 @@
                             <i class="fas fa-crown"></i>
                         </div>
                         <div class="analytics-content">
-                            <div class="analytics-number">@ViewData["MostWatchedCount"]</div>
+                            <div class="analytics-number">@ViewData["FavoriteMovieWatchCount"]</div>
                             <div class="analytics-label">Most Rewatched</div>
                         </div>
                     </div>
@@ -177,14 +177,14 @@
                 <div class="col-md-8">
                     <div class="analytics-card featured-movie">
                         <div class="featured-header">
-                            <i class="fas fa-trophy me-2"></i>Most Watched Movie
+                            <i class="fas fa-trophy me-2"></i>Favourite Movie
                         </div>
                         <div class="featured-content">
-                            <div class="featured-title">@ViewData["MostWatchedMovie"]</div>
-                            <div class="featured-subtitle">Watched @ViewData["MostWatchedCount"] times</div>
+                            <div class="featured-title">@ViewData["FavoriteMovie"]</div>
+                            <div class="featured-subtitle">Watched @ViewData["FavoriteMovieWatchCount"] times</div>
                             <div class="featured-progress">
                                 @{
-                                    var maxWatches = (int)(ViewData["MostWatchedCount"] ?? 1);
+                                    var maxWatches = (int)(ViewData["FavoriteMovieWatchCount"] ?? 1);
                                     var progressWidth = Math.Min(100, (maxWatches * 20)); // Scale for visual appeal
                                 }
                                 <div class="progress-bar-container">
