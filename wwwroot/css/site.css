@@ -1094,7 +1094,9 @@ h5.card-title {
 /* Both buttons identical styling */
 /* ===== HERO BUTTONS CON CINEMA GOLD ===== */
 .hero-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 180px;
   padding: 0.85rem 2.2rem;
   font-size: 1.1rem;
@@ -1124,33 +1126,35 @@ h5.card-title {
 }
 
 .hero-btn-secondary {
-  background: rgba(44, 62, 80, 0.85);
-  color: #fff;
+  background: rgba(44, 62, 80, 0.9);
+  color: var(--cinelog-gold);
   border: 1.5px solid var(--cinelog-gold);
+  box-shadow: 0 2px 12px rgba(var(--cinelog-gold-rgb), 0.10);
 }
 
 .hero-btn-secondary:hover {
   background: rgba(44, 62, 80, 1);
+  color: var(--cinelog-gold-light);
   border-color: var(--cinelog-gold-light);
-  box-shadow: 0 4px 26px rgba(var(--cinelog-gold-rgb), 0.18);
-  /* HUMANIZED: Subtle scale only, no translateY */
+  box-shadow: 0 4px 26px rgba(var(--cinelog-gold-rgb), 0.22);
   transform: scale(1.01);
 }
 
 .hero-btn-outline {
-  background: rgba(44, 62, 80, 0.55);
+  background: rgba(44, 62, 80, 0.75);
   color: var(--cinelog-gold);
   border: 1.5px solid var(--cinelog-gold);
+  box-shadow: 0 2px 10px rgba(var(--cinelog-gold-rgb), 0.08);
   font-size: 0.9rem;
   padding: 0.55rem 1.4rem;
   min-width: auto;
 }
 
 .hero-btn-outline:hover, .hero-btn-outline:focus {
-  background: rgba(44, 62, 80, 0.85);
+  background: rgba(44, 62, 80, 0.95);
   color: var(--cinelog-gold-light);
   border-color: var(--cinelog-gold-light);
-  box-shadow: 0 4px 20px rgba(var(--cinelog-gold-rgb), 0.15);
+  box-shadow: 0 4px 20px rgba(var(--cinelog-gold-rgb), 0.18);
   transform: scale(1.01);
 }
 /* --- HERO LANDING PAGE TRANSFORMATION (Apple-esque) --- */
@@ -1218,7 +1222,9 @@ p {
 }
 
 .hero-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 180px;
   padding: 0.85rem 2.2rem;
   font-size: 1.1rem;
@@ -1244,17 +1250,16 @@ p {
   transform: scale(1.01);
 }
 .hero-btn-secondary {
-  background: rgba(44, 62, 80, 0.85);
-  color: #fff;
-  border: 1.5px solid #fff;
-
+  background: rgba(44, 62, 80, 0.9);
+  color: var(--cinelog-gold);
+  border: 1.5px solid var(--cinelog-gold);
+  box-shadow: 0 2px 12px rgba(var(--cinelog-gold-rgb), 0.10);
 }
 .hero-btn-secondary:hover, .hero-btn-secondary:focus {
   background: rgba(44, 62, 80, 1);
-  color: #fff;
-  border-color: #e0e0e0;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  /* HUMANIZED: Subtle scale only, no translateY */
+  color: var(--cinelog-gold-light);
+  border-color: var(--cinelog-gold-light);
+  box-shadow: 0 4px 26px rgba(var(--cinelog-gold-rgb), 0.22);
   transform: scale(1.01);
 }
 
@@ -1591,6 +1596,65 @@ html {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
+/* FIX: Password toggle — input loses right radius and border when toggle is present */
+.input-group > .form-floating > .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+/* FIX: Password toggle — standalone element, stretches to match input height */
+.password-toggle {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    border-left: none !important;
+    color: #999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: stretch !important;
+    width: 48px !important;
+    padding: 0 !important;
+    margin-left: -1px !important;
+    cursor: pointer !important;
+    border-radius: 0 0.375rem 0.375rem 0 !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+}
+
+.password-toggle:hover {
+    color: #555 !important;
+    background: #f0f0f0 !important;
+}
+
+.password-toggle:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* FIX: Password toggle in manage (dark theme) — match dark input style and height */
+.manage-dashboard .password-toggle {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-left: none !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    border-radius: 0 14px 14px 0 !important;
+    height: calc(3.8rem + 2px) !important;
+}
+
+.manage-dashboard .password-toggle:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+}
+
+.manage-dashboard .input-group > .form-floating > .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
 /* --- CSS for Star Rating System --- */
 .star-rating-container .star {
     display: inline-block;
@@ -1910,6 +1974,25 @@ body:has(.nav-pills) textarea,
     line-height: 1.4 !important;
 }
 
+/* FIX: Form-floating inputs need MORE padding for label/value separation — override nav-pills reset */
+body:has(.nav-pills) .form-floating > .form-control,
+.nav-pills ~ * .form-floating > .form-control {
+    padding: 1.5rem 1.05rem 0.5rem !important;
+    height: calc(3.8rem + 2px) !important;
+    line-height: 1.25 !important;
+}
+
+/* FIX: Password toggle — match explicit form-control height on manage pages */
+body:has(.nav-pills) .password-toggle,
+.nav-pills ~ * .password-toggle {
+    padding: 0 !important;
+    width: 48px !important;
+    height: calc(3.8rem + 2px) !important;
+    align-self: auto !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+
 /* MANAGE PAGES: Reduce navigation pills text */
 .nav-pills .nav-link {
     font-size: 0.85rem !important; /* Reduced from 1rem to 0.85rem */
@@ -2046,6 +2129,9 @@ body:has(.nav-pills) .nav-link:focus,
     align-items: center;
     min-width: 160px;
     transition: transform 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 
 .step:hover {
@@ -3358,9 +3444,20 @@ form[id="searchForm"] .input-group button.btn i {
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.92);
-    padding: 0.85rem 1.05rem;
     font-size: 0.98rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+/* FIX: Form-floating in manage forms — more air between label and value */
+.manage-form .form-floating > .form-control {
+    height: calc(3.8rem + 2px) !important;
+    padding: 1.5rem 1.05rem 0.5rem !important;
+    line-height: 1.25 !important;
+}
+
+.manage-form .form-floating > .form-control:focus ~ label,
+.manage-form .form-floating > .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(0.85) translateY(-0.65rem) translateX(0.15rem) !important;
 }
 
 .manage-form .form-control:focus {
@@ -3536,9 +3633,9 @@ form[id="searchForm"] .input-group button.btn i {
 }
 
 .manage-dashboard .form-floating > .form-control {
-    height: calc(3.5rem + 2px);
-    line-height: 1.25;
-    padding: 1rem 0.75rem;
+    height: calc(3.8rem + 2px) !important;
+    line-height: 1.25 !important;
+    padding: 1.5rem 0.75rem 0.5rem !important;
 }
 
 .manage-dashboard .form-floating > label {
@@ -3557,7 +3654,7 @@ form[id="searchForm"] .input-group button.btn i {
 .manage-dashboard .form-floating > .form-control:focus ~ label,
 .manage-dashboard .form-floating > .form-control:not(:placeholder-shown) ~ label {
     opacity: 0.65;
-    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    transform: scale(0.85) translateY(-0.65rem) translateX(0.15rem);
 }
 
 .manage-dashboard .form-floating > .form-control:disabled {

@@ -3644,6 +3644,20 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 }
 
 
+                // FIX: Auto-detect rewatch when adding a movie the user already has
+                var isRewatch = viewModel.IsRewatch;
+                if (!isRewatch && viewModel.TmdbId.HasValue)
+                {
+                    var alreadyExists = await _dbContext.Movies
+                        .AnyAsync(m => m.UserId == userId && m.TmdbId == viewModel.TmdbId);
+                    if (alreadyExists)
+                    {
+                        isRewatch = true;
+                        _logger.LogInformation("Auto-marked as rewatch: '{Title}' (TmdbId: {TmdbId}) already exists for user {UserId}",
+                            viewModel.Title, viewModel.TmdbId, userId);
+                    }
+                }
+
                 var movie = new Ezequiel_Movies1.Models.Entities.Movies
                 {
                     Id = Guid.NewGuid(),
@@ -3654,7 +3668,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     WatchedLocation = viewModel.WatchedLocation,
                     PosterPath = viewModel.PosterPath,
                     Overview = viewModel.Overview,
-                    IsRewatch = viewModel.IsRewatch,
+                    IsRewatch = isRewatch,
                     Subscribed = viewModel.Subscribed,
                     UserRating = viewModel.UserRating,
                     TmdbId = viewModel.TmdbId,
@@ -3988,6 +4002,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     // Use the most recent movie entry for display details
                     Movie = g.OrderByDescending(m => m.DateWatched ?? m.DateCreated).First(),
                     WatchCount = g.Count(),
+                    HasRewatch = g.Any(m => m.IsRewatch),
                     FirstWatched = g.Min(m => m.DateWatched),
                     LastWatched = g.Max(m => m.DateWatched)
                 })
@@ -3997,13 +4012,15 @@ return (bucket3x3, bucket2x3, bucket1x3);
             // ENHANCEMENT: Calculate comprehensive collection statistics
             var totalWatches = collectionData.Sum(c => c.WatchCount);
             
-            // FEATURE: Intelligent favorite movie selection with multi-criteria fallback
-            // When multiple movies have the same watch count, use additional criteria for meaningful selection
+            // FEATURE: Favorite movie selection — rating-first approach
+            // Rating is the user's explicit opinion of quality, so it takes priority.
+            // Rewatch and watch count are affinity signals used to break ties.
             var mostWatchedMovie = collectionData
-                .OrderByDescending(c => c.WatchCount)                    // Primary: Most watched
-                .ThenByDescending(c => c.Movie.UserRating ?? 0)          // Fallback 1: Highest rated
-                .ThenByDescending(c => c.LastWatched ?? c.Movie.DateWatched ?? c.Movie.DateCreated) // Fallback 2: Most recently watched
-                .ThenBy(c => c.Movie.Title)                              // Fallback 3: Alphabetical consistency
+                .OrderByDescending(c => c.Movie.UserRating ?? 0)         // 1st: Highest rated — the user's explicit "how much I liked it"
+                .ThenByDescending(c => c.HasRewatch)                     // 2nd: Has rewatch — rewatching signals stronger affinity
+                .ThenByDescending(c => c.WatchCount)                     // 3rd: Watch count — more views = more engagement
+                .ThenByDescending(c => c.LastWatched ?? c.Movie.DateWatched ?? c.Movie.DateCreated) // 4th: Most recently watched
+                .ThenBy(c => c.Movie.Title)                              // 5th: Alphabetical for deterministic results
                 .FirstOrDefault();
                 
             var averageWatchesPerMovie = collectionData.Count > 0 ? Math.Round((double)totalWatches / collectionData.Count, 1) : 0;

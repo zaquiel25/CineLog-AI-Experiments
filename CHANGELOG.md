@@ -1,3 +1,19 @@
+## 2026-02-26
+
+### Fixed
+- **Password toggle (eye icon) styling**: Redesigned toggle buttons across all Identity pages to be seamless visual continuations of password input fields
+  - Light theme pages (Register, Login, ResetPassword): white background, `align-self: stretch`, `margin-left: -1px` for seamless border joining
+  - Dark theme pages (ChangePassword, SetPassword): dark semi-transparent background with explicit `height: calc(3.8rem + 2px)` matching `form-control` height
+  - Root cause: `align-self: stretch` only stretches upward — button intrinsic height (69px) exceeded `form-floating` container (55px), causing misalignment. Fixed with explicit matching height formula
+  - Removed Bootstrap `.btn` classes from toggle buttons to prevent Cyborg theme interference
+  - Added `!important` overrides to counter `body:has(.nav-pills)` specificity conflicts
+- **Manage section form spacing**: Fixed cramped label/value spacing in account management forms
+
+### Changed
+- **Service worker cache**: Bumped cache version v2 to v3 to force CSS asset refresh for all users
+
+---
+
 ## 2026-02-25
 
 ### Added
@@ -12,6 +28,7 @@
   - All pages styled with FrameRoute branding (logo, Bootstrap 5, Cinema Gold theme)
 - **Email Confirmation Required**: `RequireConfirmedAccount` enabled — new users must verify email before login
 - **Homepage Free App CTA**: Outline-style button linking to PWA install instructions, positioned below main hero buttons
+- **Auto-rewatch detection**: When adding a movie already in the collection (same TmdbId), `IsRewatch` is automatically set to true
 
 ### Fixed
 - **CSP blocking service worker fetch**: `connect-src 'self'` blocked service worker requests to external domains (TMDB images, CDN assets). Expanded CSP to include `image.tmdb.org`, `cdn.jsdelivr.net`, `cdnjs.cloudflare.com`, `fonts.googleapis.com`, `fonts.gstatic.com`. Users without cached resources saw broken posters and missing star ratings.
@@ -30,6 +47,7 @@
 - **Honeypot Bot Protection**: Hidden field on registration form silently rejects bot submissions with logging
 
 ### Changed
+- **Favorite movie selection**: Now uses rating-first approach (`UserRating` → `HasRewatch` → `WatchCount` → `LastWatched` → `Title`) instead of watch-count-first priority
 - **Rebrand**: Renamed application from CineLog to FrameRoute across entire codebase
 
 ---

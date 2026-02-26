@@ -253,7 +253,13 @@ builder.Services.AddSession(options =>
 /// Integrates with Azure Key Vault for secure credential management in production.
 /// FEATURE: DisplayName column added to AspNetUsers via migration (access via direct SQL queries).
 /// </summary>
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+    // FIX: Relax password rules to accept browser-generated strong passwords (e.g. Google)
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // FEATURE: Configure Resend email service for Identity email confirmation and password reset

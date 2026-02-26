@@ -5,7 +5,7 @@
  * Client handles: TMDB posters, static assets, offline navigation
  */
 
-const STATIC_CACHE = 'cinelog-static-v2';
+const STATIC_CACHE = 'cinelog-static-v3';
 const POSTER_CACHE = 'cinelog-posters-v2';
 
 const STATIC_ASSETS = [
@@ -65,14 +65,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static assets: Cache-First with network fallback
+  // Static assets: Stale-While-Revalidate (serve cached, update in background)
   if (event.request.destination === 'style' ||
       event.request.destination === 'script' ||
       event.request.destination === 'font') {
     event.respondWith(
-      caches.match(event.request).then(cached =>
-        cached || fetch(event.request)
-      ).catch(() => fetch(event.request))
+      caches.open(STATIC_CACHE).then(cache =>
+        cache.match(event.request).then(cached => {
+          const fetched = fetch(event.request).then(response => {
+            if (response.ok) cache.put(event.request, response.clone());
+            return response;
+          }).catch(() => cached);
+          return cached || fetched;
+        })
+      )
     );
     return;
   }

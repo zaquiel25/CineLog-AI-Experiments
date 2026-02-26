@@ -35,9 +35,14 @@ namespace Ezequiel_Movies1.Models
         public DateTime? LastWatched { get; set; }
 
         /// <summary>
-        /// Indicates if this movie has been watched multiple times.
+        /// Whether any entry for this movie was explicitly marked as a rewatch by the user.
+        /// </summary>
+        public bool HasRewatch { get; set; }
+
+        /// <summary>
+        /// Indicates if this movie has been watched multiple times or marked as rewatch.
         /// Convenience property for UI display of rewatch status.
         /// </summary>
-        public bool IsRewatched => WatchCount > 1;
+        public bool IsRewatched => WatchCount > 1 || HasRewatch;
     }
 }
