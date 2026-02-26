@@ -11,6 +11,7 @@
 
 ### Changed
 - **Service worker cache**: Bumped cache version v2 to v3 to force CSS asset refresh for all users
+- **Favorite movie naming consistency**: Renamed `mostWatchedMovie` → `favoriteMovie` and related ViewData keys to align with the new rating-first sorting logic
 
 ---
 
