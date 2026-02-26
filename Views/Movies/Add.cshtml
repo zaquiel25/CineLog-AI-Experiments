@@ -11,125 +11,122 @@
     <hr class="mx-auto" style="max-width: 600px;" />
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-7">
-        <form asp-action="Add" asp-controller="Movies" method="post">
+<div class="add-page-content mx-auto px-3">
+    <form asp-action="Add" asp-controller="Movies" method="post">
 
-            @* TMDB Search Section - Enhanced with Fuzzy Search UX *@
-            <fieldset class="mb-4 p-3 border rounded mx-auto" style="max-width: 600px;">
-                <div class="mb-2" style="position: relative;">
-                    <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
-                    <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg enhanced-search-input" 
-                           placeholder="Try 'Oppenheimer', 'wall e', or 'spider man'..." autocomplete="off" />
-                    <div id="tmdbSearchResultsDisplay" class="list-group mt-1"
-                         style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
-                        @* TMDB Search suggestions will appear here *@
-                    </div>
+        @* TMDB Search Section - Enhanced with Fuzzy Search UX *@
+        <fieldset class="mb-4 p-3 border rounded">
+            <div class="mb-2" style="position: relative;">
+                <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
+                <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg enhanced-search-input"
+                       placeholder="Try 'Oppenheimer', 'wall e', or 'spider man'..." autocomplete="off" />
+                <div id="tmdbSearchResultsDisplay" class="list-group mt-1"
+                     style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
+                    @* TMDB Search suggestions will appear here *@
                 </div>
-                @* Enhanced Search Help Text *@
-                <div class="search-help-text mt-2 text-center">
-                    <small class="text-muted">
-                        Works with typos, partial titles & nicknames
-                    </small>
-                </div>
-            </fieldset>
+            </div>
+            @* Enhanced Search Help Text *@
+            <div class="search-help-text mt-2 text-center">
+                <small class="text-muted">
+                    Works with typos, partial titles & nicknames
+                </small>
+            </div>
+        </fieldset>
 
-            @* Movie details container (shown after TMDB selection) *@
-            <div id="movieDetailsAndUserInputsSection" style="display: none;">
+        @* Movie details container (shown after TMDB selection) *@
+        <div id="movieDetailsAndUserInputsSection" style="display: none;">
 
-                @* Movie preview card *@
-                <div id="tmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white" style="max-width: 600px; margin-left:auto; margin-right:auto;">
-                    <div class="row">
-                        <div class="col-md-4 text-center text-md-start mb-3 mb-md-0" id="posterImageContainer">
-                            <img id="selectedPosterImage" src="#" alt="Movie Poster" class="img-fluid rounded shadow-sm" style="max-width: 180px; display: none;" />
-                        </div>
-                        <div class="col-md-8">
-                            <h3 id="selectedMovieTitleText" class="card-title"></h3>
-                            <p class="mb-1"><strong>Director:</strong> <span id="selectedMovieDirectorText"></span></p>
-                            <p class="mb-1"><strong>Released:</strong> <span id="selectedMovieYearText"></span></p>
-                            <p id="selectedMovieOverviewText" class="mt-2" style="font-size: 0.9rem;"></p>
-                        </div>
+            @* Movie preview card *@
+            <div id="tmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white">
+                <div class="d-flex flex-column flex-md-row gap-3">
+                    <div class="flex-shrink-0 text-center text-md-start" id="posterImageContainer">
+                        <img id="selectedPosterImage" src="#" alt="Movie Poster" class="img-fluid rounded shadow-sm" style="max-width: 180px; display: none;" />
                     </div>
-                </div>
-
-                @* Hidden fields to store TMDB data for submission *@
-                <input type="hidden" asp-for="Title" id="movieFormTitleHidden" />
-                <input type="hidden" asp-for="Director" id="movieFormDirectorHidden" />
-                <input type="hidden" asp-for="ReleasedYear" id="movieFormReleasedYearHidden" />
-                <input type="hidden" asp-for="PosterPath" id="movieFormPosterPath" />
-                <input type="hidden" asp-for="Overview" id="movieFormOverviewHidden" />
-                <input type="hidden" asp-for="TmdbId" id="movieFormTmdbIdHidden" />
-
-                @* User input fields *@
-                <div class="pt-3 border-top mb-5" style="max-width: 600px; margin-left:auto; margin-right:auto;">
-
-                    <div class="mb-3">
-                        <label asp-for="DateWatched" class="form-label">Date Watched</label>
-                        <div class="add-date-row">
-                            <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" asp-format="{0:yyyy-MM-dd}" />
-                            <div class="add-date-options">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedSpecific" value="specific" checked />
-                                    <label class="form-check-label" for="dateWatchedSpecific">Specific Date</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedDontRemember" value="dontRemember" />
-                                    <label class="form-check-label" for="dateWatchedDontRemember">I don't remember</label>
-                                </div>
-                            </div>
-                        </div>
-                        <span asp-validation-for="DateWatched" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
-                        <div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Home" name="WatchedLocation" id="addWatchedLocationHome" />
-                                <label class="form-check-label" for="addWatchedLocationHome">Home</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Cinema" name="WatchedLocation" id="addWatchedLocationCinema" />
-                                <label class="form-check-label" for="addWatchedLocationCinema">Cinema</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Other" name="WatchedLocation" id="addWatchedLocationOther" />
-                                <label class="form-check-label" for="addWatchedLocationOther">Other</label>
-                            </div>
-                        </div>
-                        <span asp-validation-for="WatchedLocation" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="addIsRewatchCheck" />
-                            <label class="form-check-label" for="addIsRewatchCheck">Rewatched</label>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Your Rating:</label>
-                        <div id="starRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
-                            <i class="bi bi-star star" data-value="1"></i>
-                            <i class="bi bi-star star" data-value="2"></i>
-                            <i class="bi bi-star star" data-value="3"></i>
-                            <i class="bi bi-star star" data-value="4"></i>
-                            <i class="bi bi-star star" data-value="5"></i>
-                            <a href="#" id="clearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </a>
-                        </div>
-                        <input type="hidden" asp-for="UserRating" id="userRatingHidden" />
-                        <span asp-validation-for="UserRating" class="text-danger"></span>
-                    </div>
-
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
+                    <div style="min-width: 0; overflow-wrap: break-word;">
+                        <h3 id="selectedMovieTitleText" class="card-title"></h3>
+                        <p class="mb-1"><strong>Director:</strong> <span id="selectedMovieDirectorText"></span></p>
+                        <p class="mb-1"><strong>Released:</strong> <span id="selectedMovieYearText"></span></p>
+                        <p id="selectedMovieOverviewText" class="mt-2" style="font-size: 0.9rem;"></p>
                     </div>
                 </div>
             </div>
-        </form>
-    </div>
+
+            @* Hidden fields to store TMDB data for submission *@
+            <input type="hidden" asp-for="Title" id="movieFormTitleHidden" />
+            <input type="hidden" asp-for="Director" id="movieFormDirectorHidden" />
+            <input type="hidden" asp-for="ReleasedYear" id="movieFormReleasedYearHidden" />
+            <input type="hidden" asp-for="PosterPath" id="movieFormPosterPath" />
+            <input type="hidden" asp-for="Overview" id="movieFormOverviewHidden" />
+            <input type="hidden" asp-for="TmdbId" id="movieFormTmdbIdHidden" />
+
+            @* User input fields *@
+            <div class="pt-3 border-top mb-5">
+                <div class="mb-3">
+                    <label asp-for="DateWatched" class="form-label">Date Watched</label>
+                    <div class="add-date-row">
+                        <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" asp-format="{0:yyyy-MM-dd}" />
+                        <div class="add-date-options">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedSpecific" value="specific" checked />
+                                <label class="form-check-label" for="dateWatchedSpecific">Specific Date</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedDontRemember" value="dontRemember" />
+                                <label class="form-check-label" for="dateWatchedDontRemember">I don't remember</label>
+                            </div>
+                        </div>
+                    </div>
+                    <span asp-validation-for="DateWatched" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Home" name="WatchedLocation" id="addWatchedLocationHome" />
+                            <label class="form-check-label" for="addWatchedLocationHome">Home</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Cinema" name="WatchedLocation" id="addWatchedLocationCinema" />
+                            <label class="form-check-label" for="addWatchedLocationCinema">Cinema</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Other" name="WatchedLocation" id="addWatchedLocationOther" />
+                            <label class="form-check-label" for="addWatchedLocationOther">Other</label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="WatchedLocation" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="addIsRewatchCheck" />
+                        <label class="form-check-label" for="addIsRewatchCheck">Rewatched</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Your Rating:</label>
+                    <div id="starRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
+                        <i class="bi bi-star star" data-value="1"></i>
+                        <i class="bi bi-star star" data-value="2"></i>
+                        <i class="bi bi-star star" data-value="3"></i>
+                        <i class="bi bi-star star" data-value="4"></i>
+                        <i class="bi bi-star star" data-value="5"></i>
+                        <a href="#" id="clearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    </div>
+                    <input type="hidden" asp-for="UserRating" id="userRatingHidden" />
+                    <span asp-validation-for="UserRating" class="text-danger"></span>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
@@ -225,12 +222,6 @@
             const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
 
             // --- Helper Functions ---
-            function updatePreviewCard(details) { /* This function is good from your code */ }
-            function showDetailsAndInputsOnLoad() { /* This function is good from your code */ }
-            function renderStarsForRating(ratingToDisplay) { /* This function is good from your code */ }
-            function setStarRating(value) { /* This function is good from your code */ }
-
-            // --- The actual functions (copied from your working script) ---
             function updatePreviewCard(details) {
                 if (!selectedMoviePreviewDiv || !details) { if (selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'none'; return; }
                 if (selectedMovieTitleText) selectedMovieTitleText.textContent = details.title || 'N/A';

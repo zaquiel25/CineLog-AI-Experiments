@@ -14,6 +14,11 @@
 - **Service worker cache**: Bumped cache version v2 to v3 to force CSS asset refresh for all users
 - **Favorite movie naming consistency**: Renamed `mostWatchedMovie` → `favoriteMovie` and related ViewData keys to align with the new rating-first sorting logic
 
+### Code Quality
+- **Add.cshtml cleanup**: Removed dead CSS rules targeting old Bootstrap `row`/`col` grid structure replaced by flexbox layout
+- **Add.cshtml cleanup**: Removed duplicate JavaScript function stubs left over from previous refactors
+- **Add.cshtml cleanup**: Fixed inconsistent indentation in the user input section
+
 ---
 
 ## 2026-02-25
