@@ -2196,9 +2196,6 @@ body:has(.nav-pills) .nav-link:focus,
     cursor: pointer;
 }
 
-.step:hover {
-    /* HUMANIZED: Removed universal translateY pattern */
-}
 
 .step-icon {
     width: 60px;
