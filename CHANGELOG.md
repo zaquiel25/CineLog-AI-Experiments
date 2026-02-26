@@ -8,6 +8,7 @@
   - Removed Bootstrap `.btn` classes from toggle buttons to prevent Cyborg theme interference
   - Added `!important` overrides to counter `body:has(.nav-pills)` specificity conflicts
 - **Manage section form spacing**: Fixed cramped label/value spacing in account management forms
+- **Add Movie mobile layout**: Fixed horizontal overflow on mobile — date section stacks vertically, poster reduced to 120px, text overflow contained
 
 ### Changed
 - **Service worker cache**: Bumped cache version v2 to v3 to force CSS asset refresh for all users

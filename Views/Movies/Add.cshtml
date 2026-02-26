@@ -65,15 +65,17 @@
 
                     <div class="mb-3">
                         <label asp-for="DateWatched" class="form-label">Date Watched</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="DateWatched" type="date" class="form-control me-3" id="movieFormDateWatched" asp-format="{0:yyyy-MM-dd}" style="width: 60%;" />
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedSpecific" value="specific" checked />
-                                <label class="form-check-label" for="dateWatchedSpecific">Specific Date</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedDontRemember" value="dontRemember" />
-                                <label class="form-check-label" for="dateWatchedDontRemember">I don't remember</label>
+                        <div class="add-date-row">
+                            <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" asp-format="{0:yyyy-MM-dd}" />
+                            <div class="add-date-options">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedSpecific" value="specific" checked />
+                                    <label class="form-check-label" for="dateWatchedSpecific">Specific Date</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedDontRemember" value="dontRemember" />
+                                    <label class="form-check-label" for="dateWatchedDontRemember">I don't remember</label>
+                                </div>
                             </div>
                         </div>
                         <span asp-validation-for="DateWatched" class="text-danger"></span>
