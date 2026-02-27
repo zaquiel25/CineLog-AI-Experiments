@@ -921,6 +921,15 @@ namespace Ezequiel_Movies.Controllers
             if (trailerKey != null)
                 ViewData["TrailerUrl"] = $"https://www.youtube.com/watch?v={trailerKey}";
 
+            // FEATURE: Dynamic OG tags for social sharing — shows movie poster and info when link is shared
+            ViewData["OgTitle"] = $"{movieDetails.Title} — FrameRoute";
+            ViewData["OgDescription"] = !string.IsNullOrEmpty(movieDetails.Overview)
+                ? (movieDetails.Overview.Length > 150 ? movieDetails.Overview[..150] + "..." : movieDetails.Overview)
+                : "Check out this movie on FrameRoute.";
+            if (!string.IsNullOrEmpty(movieDetails.PosterPath))
+                ViewData["OgImage"] = $"https://image.tmdb.org/t/p/w500{movieDetails.PosterPath}";
+            ViewData["OgUrl"] = $"https://frameroute.net/Movies/Preview?tmdbId={tmdbId}";
+
             // Pass the full TMDB movie details object to the view
             return View(movieDetails);
         }
@@ -1002,6 +1011,15 @@ namespace Ezequiel_Movies.Controllers
                 if (trailerKey != null)
                     ViewData["TrailerUrl"] = $"https://www.youtube.com/watch?v={trailerKey}";
             }
+
+            // FEATURE: Dynamic OG tags for social sharing — shows movie poster and info when link is shared
+            ViewData["OgTitle"] = $"{movie.Title} — FrameRoute";
+            ViewData["OgDescription"] = !string.IsNullOrEmpty(movie.Overview)
+                ? (movie.Overview.Length > 150 ? movie.Overview[..150] + "..." : movie.Overview)
+                : "Check out this movie on FrameRoute.";
+            if (!string.IsNullOrEmpty(movie.PosterPath))
+                ViewData["OgImage"] = $"https://image.tmdb.org/t/p/w500{movie.PosterPath}";
+            ViewData["OgUrl"] = $"https://frameroute.net/Movies/Details/{movie.Id}";
 
             return View(movie);
         }

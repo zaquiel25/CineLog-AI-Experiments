@@ -4,21 +4,29 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - FrameRoute</title>
+    @{
+        // FEATURE: Dynamic OG tags — movie pages override these via ViewData, all other pages use defaults
+        var ogTitle = ViewData["OgTitle"] as string ?? "FrameRoute — We Know What You Should Watch Next";
+        var ogDescription = ViewData["OgDescription"] as string ?? "Log what you watch. We pick what's next — based on your favorite genres, directors, and ratings. Not the same 10 movies everyone recommends.";
+        var ogImage = ViewData["OgImage"] as string ?? "https://frameroute.net/images/og-image.png";
+        var ogUrl = ViewData["OgUrl"] as string ?? "https://frameroute.net";
+        var seoDescription = ViewData["SeoDescription"] as string ?? "Log movies and get recommendations based on what you actually like — your genres, directors, and ratings. Free movie tracker with smart suggestions.";
+    }
     <!-- SEO -->
-    <meta name="description" content="Track every movie you watch, rate and review films, and get personalized recommendations based on your taste. Your free personal movie journal.">
+    <meta name="description" content="@seoDescription">
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
-    <meta property="og:title" content="FrameRoute — Your Personal Movie Journal">
-    <meta property="og:description" content="Log movies, rate them, and get smart recommendations based on what you actually watch. Free and simple.">
-    <meta property="og:image" content="https://frameroute.net/images/logo-gold.png">
-    <meta property="og:url" content="https://frameroute.net">
+    <meta property="og:title" content="@ogTitle">
+    <meta property="og:description" content="@ogDescription">
+    <meta property="og:image" content="@ogImage">
+    <meta property="og:url" content="@ogUrl">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="FrameRoute">
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@@framerouteapp">
-    <meta name="twitter:title" content="FrameRoute — Your Personal Movie Journal">
-    <meta name="twitter:description" content="Log movies, rate them, and get smart recommendations based on what you actually watch.">
-    <meta name="twitter:image" content="https://frameroute.net/images/logo-gold.png">
+    <meta name="twitter:title" content="@ogTitle">
+    <meta name="twitter:description" content="@ogDescription">
+    <meta name="twitter:image" content="@ogImage">
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png">

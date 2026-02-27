@@ -3,6 +3,11 @@
 ### Added
 - **Watch Trailer button**: Preview and Details pages now show a "Watch Trailer" button linking to YouTube when a trailer is available. Uses TMDB's video data via the existing API call (zero extra requests). Prioritizes official trailers, then any trailer, then teasers
 - **SEO & Open Graph meta tags**: Added meta description, Open Graph tags (`og:title`, `og:description`, `og:image`, `og:url`, `og:type`, `og:site_name`), and Twitter Card tags to `_Layout.cshtml` for improved search engine visibility and social sharing previews
+- **Dynamic Open Graph tags**: Preview and Details pages now show movie-specific title, poster, and description when shared on social media (WhatsApp, Facebook, Twitter, LinkedIn). Other pages use site-wide defaults
+- **OG image**: New 1200x630 branded image with dark background for social sharing previews (replaces transparent logo)
+
+### Changed
+- **SEO/OG copy rewritten**: Shifted focus from "movie journal" to movie recommendations. Removed AI-sounding words ("tailored", "personalized", "algorithms"). Uses "Log" instead of "Rate" for consistency with the app's agenda concept
 
 ### Fixed
 - **Mobile reshuffle scroll**: Bottom reshuffle button on suggestion pages now scrolls to the first card after reshuffling, instead of leaving users viewing the middle card. Added `scrollIntoView` call after AJAX reshuffle completes in `Suggest.cshtml`
