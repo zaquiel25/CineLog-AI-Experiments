@@ -35,11 +35,29 @@ namespace Ezequiel_Movies.Models.TmdbApi
         [JsonPropertyName("genres")]
         public List<TmdbGenre> Genres { get; set; } = new();
 
+        [JsonPropertyName("videos")]
+        public TmdbVideoResponse? Videos { get; set; }
+
         public string? GetDirector()
         {
             if (Credits?.Crew == null) return null;
             var director = Credits.Crew.FirstOrDefault(c => c.Job == "Director");
             return director?.Name;
+        }
+
+        /// <summary>
+        /// FEATURE: Returns the YouTube key for the best available trailer.
+        /// Priority: official trailer > any trailer > teaser.
+        /// </summary>
+        public string? GetTrailerYouTubeKey()
+        {
+            var trailer = Videos?.Results?
+                .Where(v => v.Site == "YouTube")
+                .OrderByDescending(v => v.Type == "Trailer" && v.Official)
+                .ThenByDescending(v => v.Type == "Trailer")
+                .ThenByDescending(v => v.Type == "Teaser")
+                .FirstOrDefault();
+            return trailer?.Key;
         }
     }
 

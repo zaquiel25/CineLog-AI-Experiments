@@ -561,7 +561,8 @@ public class TmdbService : IDisposable
 
             _logger.LogInformation("CACHE MISS: La clave '{CacheKey}' no fue encontrada. Realizando llamada a la API de TMDB.", cacheKey);
 
-            var requestUri = $"movie/{tmdbMovieId}?append_to_response=credits";
+            // FEATURE: Include videos for trailer extraction alongside credits
+            var requestUri = $"movie/{tmdbMovieId}?append_to_response=credits,videos";
             _logger.LogInformation("Requesting TMDB API for movie details: {RequestUri}", requestUri);
 
             try
@@ -890,7 +891,8 @@ public class TmdbService : IDisposable
                     await _tmdbSemaphore.WaitAsync();
                     try
                     {
-                        var details = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>($"movie/{id}?append_to_response=credits");
+                        // FEATURE: Include videos for trailer extraction alongside credits
+                        var details = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>($"movie/{id}?append_to_response=credits,videos");
                         if (details != null)
                         {
                             var cacheKey = $"movie_details_{id}";

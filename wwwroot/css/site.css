@@ -1771,9 +1771,10 @@ html {
 
     .suggestion-card .suggestion-description {
         opacity: 0;
-        height: 0;
+        max-height: 0;
         overflow: hidden;
-        transition: opacity 0.3s ease-in-out, height 0.3s ease-in-out;
+        /* FIX: Use max-height instead of height — CSS can't animate height: 0 → auto */
+        transition: opacity 0.4s ease-in-out, max-height 0.4s ease-in-out, margin 0.4s ease-in-out;
     }
 
     /* --- HUMANIZED: Suggestion Cards Hover Effects --- */
@@ -1792,7 +1793,7 @@ html {
 
         .suggestion-card:hover .suggestion-description {
             opacity: 1;
-            height: auto;
+            max-height: 100px;
             margin-top: 0.5rem;
         }
 

@@ -1,3 +1,20 @@
+## 2026-02-27
+
+### Added
+- **Watch Trailer button**: Preview and Details pages now show a "Watch Trailer" button linking to YouTube when a trailer is available. Uses TMDB's video data via the existing API call (zero extra requests). Prioritizes official trailers, then any trailer, then teasers
+- **SEO & Open Graph meta tags**: Added meta description, Open Graph tags (`og:title`, `og:description`, `og:image`, `og:url`, `og:type`, `og:site_name`), and Twitter Card tags to `_Layout.cshtml` for improved search engine visibility and social sharing previews
+
+### Fixed
+- **Mobile reshuffle scroll**: Bottom reshuffle button on suggestion pages now scrolls to the first card after reshuffling, instead of leaving users viewing the middle card. Added `scrollIntoView` call after AJAX reshuffle completes in `Suggest.cshtml`
+- **Suggestion card animation**: Description reveal on hover/tap now slides smoothly instead of snapping abruptly (replaced CSS `height` with `max-height` transition)
+- **Action button visibility**: "Back to Suggestions", "Back to List", and "Edit" navigation buttons changed from grey (`btn-outline-secondary`/`btn-secondary`) to Cinema Gold (`btn-outline-warning`) across Preview, Details, and Edit pages for better visibility on dark theme
+- **Mobile button layout**: Action buttons in Preview and Details pages now use flex-wrap with uniform gap spacing for clean wrapping on small screens
+
+### Code Quality
+- **TmdbService comment consistency**: Added missing `FEATURE` comment prefix at `TmdbService.cs:894` to match project commenting conventions
+
+---
+
 ## 2026-02-26
 
 ### Fixed

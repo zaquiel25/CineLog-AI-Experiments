@@ -317,6 +317,9 @@
                         if (container) {
                             container.innerHTML = data.html;
                             attachEventListeners();
+                            // FIX: Scroll to first card after reshuffle so mobile users see card #1
+                            const resultsArea = document.getElementById('suggestion-results-area');
+                            if (resultsArea) resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
 
                         const titleElement = document.getElementById('suggestion-title');

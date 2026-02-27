@@ -916,6 +916,11 @@ namespace Ezequiel_Movies.Controllers
             ViewData["IsInWishlist"] = isInWishlist;
             ViewData["IsInBlacklist"] = isInBlacklist;
 
+            // FEATURE: Pass YouTube trailer URL if available
+            var trailerKey = movieDetails.GetTrailerYouTubeKey();
+            if (trailerKey != null)
+                ViewData["TrailerUrl"] = $"https://www.youtube.com/watch?v={trailerKey}";
+
             // Pass the full TMDB movie details object to the view
             return View(movieDetails);
         }
@@ -989,10 +994,13 @@ namespace Ezequiel_Movies.Controllers
                 // Pass the top 3 cast members to the view
                 if (movieDetails?.Credits?.Cast != null)
                 {
-                    // Pass the top 3 cast members to the view
                     ViewData["Cast"] = movieDetails.Credits.Cast.Take(3).ToList();
                 }
-                // End of cast logic
+
+                // FEATURE: Pass YouTube trailer URL if available
+                var trailerKey = movieDetails?.GetTrailerYouTubeKey();
+                if (trailerKey != null)
+                    ViewData["TrailerUrl"] = $"https://www.youtube.com/watch?v={trailerKey}";
             }
 
             return View(movie);

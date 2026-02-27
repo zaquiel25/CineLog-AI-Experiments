@@ -77,6 +77,16 @@
                 </div>
             }
 
+            @* --- Watch Trailer Button --- *@
+            @if (ViewData["TrailerUrl"] is string trailerUrl)
+            {
+                <div class="mt-3">
+                    <a href="@trailerUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger">
+                        <i class="bi bi-play-circle"></i> Watch Trailer
+                    </a>
+                </div>
+            }
+
             @* --- "Where to Watch" Section --- *@
             @{
                 var watchProviders = ViewData["WatchProviders"] as Dictionary<string, List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>>;
@@ -153,7 +163,8 @@
 <hr />
 
 @* --- Action Buttons Section --- *@
-<div class="mt-3">
+@* FIX: flex-wrap + gap for clean mobile layout, outline-warning for visibility *@
+<div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
     @* Mutual exclusion logic: prevent conflicting user actions via conditional rendering *@
     @* See also: Details.cshtml for identical pattern *@
     @if (!isInWishlist && !isInBlacklist)
@@ -169,7 +180,7 @@
             @Html.AntiForgeryToken()
             <input type="hidden" name="tmdbId" value="@Model.Id" />
             <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-            <button type="submit" class="btn btn-danger ms-2">
+            <button type="submit" class="btn btn-danger">
                 <i class="bi bi-slash-circle"></i> Add to Blacklist
             </button>
         </form>
@@ -179,12 +190,12 @@
         <button type="button" class="btn btn-info text-white" disabled>
             <i class="bi bi-heart-fill"></i> In Wishlist
         </button>
-        <span class="text-info ms-2">Delete from Wishlist for Blacklist</span>
+        <span class="text-info">Delete from Wishlist for Blacklist</span>
     }
     else if (isInBlacklist)
     {
         <span class="badge bg-danger">Blacklisted</span>
-        <small class="text-muted ms-2">Remove from blacklist to add to wishlist</small>
+        <small class="text-muted">Remove from blacklist to add to wishlist</small>
     }
-    <a asp-action="Suggest" class="btn btn-outline-secondary ms-3">Back to Suggestions</a>
+    <a asp-action="Suggest" class="btn btn-outline-warning">Back to Suggestions</a>
 </div>

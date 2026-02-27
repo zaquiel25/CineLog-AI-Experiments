@@ -692,6 +692,7 @@ See `MoviesController.cs` for implementation details and business logic comments
 - **Personal Movie Log**: Track what you've watched with ratings, dates, and locations
 - **Smart Search Integration**: Powered by The Movie Database (TMDB) API with fuzzy search and typo tolerance
 - **Rich Movie Details**: Automatic director, year, poster, and genre information
+- **Watch Trailer**: Preview and Details pages include a YouTube trailer link when available via TMDB video data
 - **Professional Analytics Dashboard**: Netflix-quality collection statistics with Cinema Gold styling and interactive elements
 
 ### 📋 Lists & Organization
