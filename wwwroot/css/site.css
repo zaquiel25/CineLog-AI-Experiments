@@ -63,23 +63,23 @@
 .cinelog-gold-title {
     color: var(--cinelog-gold);
 }
-/* Search and Clear Search buttons */
+/* FIX: Action buttons in Cinema Gold — grey looked disabled to users */
 .btn-primary,
 .btn-info,
 input[type="submit"].btn-primary,
 button.btn-primary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: #fff;
+    background-color: var(--cinelog-gold);
+    border-color: var(--cinelog-gold);
+    color: #1a1a1a;
 }
 
 .btn-primary:hover,
 .btn-info:hover,
 input[type="submit"].btn-primary:hover,
 button.btn-primary:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
-    color: #fff;
+    background-color: var(--cinelog-gold-hover);
+    border-color: var(--cinelog-gold-hover);
+    color: #000;
 }
 /* Add New Movie button in Cinema Gold - Strategic Usage */
 .btn-success,

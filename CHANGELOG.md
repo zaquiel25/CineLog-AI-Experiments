@@ -9,10 +9,12 @@
   - Added `!important` overrides to counter `body:has(.nav-pills)` specificity conflicts
 - **Manage section form spacing**: Fixed cramped label/value spacing in account management forms
 - **Add Movie mobile layout**: Fixed horizontal overflow on mobile — date section stacks vertically, poster reduced to 120px, text overflow contained
+- **Global `btn-primary` color**: Changed from grey (`#6c757d`) to Cinema Gold — grey buttons looked disabled to users, causing confusion on Register, Login, and other action pages. Reported by real user feedback
 
 ### Changed
 - **Service worker cache**: Bumped cache version v2 to v3 to force CSS asset refresh for all users
 - **Favorite movie naming consistency**: Renamed `mostWatchedMovie` → `favoriteMovie` and related ViewData keys to align with the new rating-first sorting logic
+- **Footer social links**: Activated Instagram, X (Twitter), and Facebook links in the site footer — replaced "coming soon" disabled placeholders with live profile links
 
 ### Code Quality
 - **Add.cshtml cleanup**: Removed dead CSS rules targeting old Bootstrap `row`/`col` grid structure replaced by flexbox layout
