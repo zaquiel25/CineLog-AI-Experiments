@@ -1,14 +1,22 @@
 ## 2026-10-17
 
 ### Added
-- **Design system**: New `DESIGN.md` with the 2026 redesign tokens and rules: warm blacks, gold reserved for actions, muted gold for the logo-derived signature (reel dots, hand-drawn underline), Switzer for the interface and Zodiak for movie titles
+- **Design system**: New `DESIGN.md` with the 2026 redesign tokens and rules: warm blacks, gold reserved for actions, muted gold for the logo-derived signature (reel dots, hand-drawn underline), Geist for the interface and Newsreader for movie titles
 - **Dynamic home hero**: Shows the signed-in user's last three logged movies; visitors see TMDB trending movies (also used to fill up to three)
-- **Self-hosted fonts**: Switzer and Zodiak woff2 files in `wwwroot/fonts`
+- **Self-hosted open fonts**: Geist and Newsreader woff2 files (SIL Open Font License 1.1) in `wwwroot/fonts`, with their license files
+- **My Movies redesigned**: Journal is now a diary grouped by month (day, poster, title, director, rating dots); Collection is a poster wall with stats in one line of text. One filter bar (search, month, sort, first watches only), edit/delete moved to a "•••" menu, one gold "Log a movie" button
+- **Rating dots partial** (`_RatingDots`): five dots with half points, reusable across the site
 
 ### Changed
 - **Home redesigned**: New headline and copy, gold "Log a movie" plus a quiet "Explore suggestions" button, fanned posters, and "how it works" reduced to one line with progress dots
 - **Navigation redesigned (all pages)**: Sticky nav with hand-drawn underline on the active section, new mobile menu, "Sign up" as a text link. Labels shortened: Wishlist, Suggestions, Log in, Sign up, Log out
 - **Footer redesigned (all pages)**: Quiet dark footer instead of the gold block; "Free App" moved here as "Get the app"
+
+### Changed (My Movies)
+- **Filters reload the page** instead of updating via AJAX (about 1,500 lines of view-embedded JavaScript replaced by `wwwroot/js/my-movies.js`)
+- **Grid/list toggle removed**: each view has its own layout now
+- **Page size**: 20 per page in Journal, 24 in Collection (was 8)
+- **Collection stats**: analytics cards and progress bars replaced by one line (films, viewings, rewatches, most rewatched)
 
 ### Removed
 - **Unused Google Fonts**: Inter and Outfit were loaded on every page but not used
@@ -23,6 +31,8 @@
 - **Azure infrastructure**: Azure subscription canceled. Removed Key Vault integration, `AZURE_SQL_*` connection logic, and the `Azure.Identity`, `Azure.Extensions.AspNetCore.Configuration.Secrets` and `Microsoft.EntityFrameworkCore.SqlServer` packages. The site is offline until a new host is set up
 
 ### Fixed
+- **Case-sensitive search in My Movies**: after the move to SQLite, searching "wenders" did not find "Wenders". Title and director now compare lowercased (Wishlist and Blacklist already did)
+- **Month filter lost on pagination** in My Movies
 - **SQL Server-only code**: `UserDisplayNameService` now uses provider-agnostic parameters, and the health check queries `sqlite_master` instead of `sys.indexes`
 
 ---

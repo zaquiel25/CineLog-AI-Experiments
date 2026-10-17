@@ -1,0 +1,12 @@
+@* Rating as five dots (signature from the logo's reel dots, see DESIGN.md). Supports half points. *@
+@model decimal?
+@if (Model.HasValue && Model.Value > 0)
+{
+    <span class="fr-rating" role="img" aria-label="Rated @Model.Value.ToString("0.#") out of 5">
+        @for (int i = 1; i <= 5; i++)
+        {
+            var state = Model.Value >= i ? "is-full" : Model.Value >= i - 0.5m ? "is-half" : "";
+            <i class="@state"></i>
+        }
+    </span>
+}

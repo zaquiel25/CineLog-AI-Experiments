@@ -107,6 +107,3 @@ DESIGN_HUMANIZATION_ROADMAP.md
 *.db
 *.db-*
 EzequielMovies.db
-# Fontshare fonts (ITF Free Font License): self-hosting on our site is allowed,
-# publishing the files in a public repository is not. Download them from fontshare.com.
-wwwroot/fonts/*.woff2

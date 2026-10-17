@@ -3965,8 +3965,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
             if (!string.IsNullOrEmpty(searchString))
             {
                 moviesQuery = moviesQuery.Where(m =>
-                    (!string.IsNullOrEmpty(m.Title) && m.Title.Contains(searchString)) ||
-                    (!string.IsNullOrEmpty(m.Director) && m.Director.Contains(searchString)) ||
+                    // FIX: SQLite Contains is case-sensitive (SQL Server's collation was not), so compare lowercased
+                    (!string.IsNullOrEmpty(m.Title) && m.Title.ToLower().Contains(searchString.ToLower())) ||
+                    (!string.IsNullOrEmpty(m.Director) && m.Director.ToLower().Contains(searchString.ToLower())) ||
                     (m.ReleasedYear != null && m.ReleasedYear.Value.ToString().Contains(searchString))
                 );
             }
@@ -3988,7 +3989,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 "datewatched_desc" or _ => moviesQuery.OrderByDescending(m => m.DateWatched)
             };
 
-            int pageSize = 8;
+            // Journal is a compact diary list: 20 rows per page
+            int pageSize = 20;
             var paginatedMovies = await PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>.CreateAsync(
                 moviesQuery.AsNoTracking(),
                 pageNumber ?? 1,
@@ -4011,8 +4013,9 @@ return (bucket3x3, bucket2x3, bucket1x3);
             if (!string.IsNullOrEmpty(searchString))
             {
                 moviesQuery = moviesQuery.Where(m =>
-                    (!string.IsNullOrEmpty(m.Title) && m.Title.Contains(searchString)) ||
-                    (!string.IsNullOrEmpty(m.Director) && m.Director.Contains(searchString)) ||
+                    // FIX: SQLite Contains is case-sensitive (SQL Server's collation was not), so compare lowercased
+                    (!string.IsNullOrEmpty(m.Title) && m.Title.ToLower().Contains(searchString.ToLower())) ||
+                    (!string.IsNullOrEmpty(m.Director) && m.Director.ToLower().Contains(searchString.ToLower())) ||
                     (m.ReleasedYear != null && m.ReleasedYear.Value.ToString().Contains(searchString))
                 );
             }
@@ -4080,8 +4083,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 "datewatched_desc" or _ => collectionData.OrderByDescending(c => c.LastWatched)
             };
 
-            // Apply pagination to sorted collection
-            int pageSize = 8;
+            // Apply pagination to sorted collection. 24 fills poster rows of 6, 4, 3 and 2 evenly.
+            int pageSize = 24;
             var collectionList = sortedCollection.ToList();
             var totalCount = collectionList.Count;
             var pageIndex = pageNumber ?? 1;

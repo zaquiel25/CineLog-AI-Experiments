@@ -44,12 +44,14 @@ Rules:
 
 ## Typography
 
-Two roles, both from Fontshare (self-host as woff2 in production).
+Two roles, both under the **SIL Open Font License 1.1**, self-hosted from `wwwroot/fonts` (license files included there, latin subset).
 
 | Role | Font | Weights | Where |
 |---|---|---|---|
-| Interface | **Switzer** | 300, 400, 500, 600 | Everything that is the app: nav, headings, body, buttons, metadata |
-| Film voice | **Zodiak** | 400 | **Only** movie titles (cards, detail pages, suggestions) |
+| Interface | **Geist** | 300, 400, 500, 600 | Everything that is the app: nav, headings, body, buttons, metadata |
+| Film voice | **Newsreader** | 400 | **Only** movie titles (cards, detail pages, suggestions) |
+
+Only use open-license (OFL) fonts: the repository is public, and fonts under licenses like Fontshare's ITF FFL cannot be published in a public repo. Switzer + Zodiak were the first choice and were replaced for this reason.
 
 Contrast by extremes: headlines pair 600 with 300 (e.g. "Every film you watch." 600 + "And the next one." 300 in `--fr-muted`).
 
@@ -91,6 +93,19 @@ From `motion.md` (Marfil): ease-out entries `cubic-bezier(0.22, 1, 0.36, 1)`, ex
 ```
 
 Hero posters: the signed-in user's last 3 logged movies (latest in the middle). Visitors, or users with fewer than 3, get TMDB trending to fill the gap.
+
+## My Movies
+
+Each view answers one question and has its own shape:
+
+- **Journal** ("when did I watch what?"): a diary. Month headings (only when sorted by watch date), one row per viewing: day number + weekday, poster thumb, title (Newsreader), director · year · place, rating dots, "•••" menu.
+- **Collection** ("what have I watched?"): a poster wall (6 / 4 / 3 columns). Poster, title, rating dots, "N×" tag when rewatched. Stats are one line of text, never metric cards.
+
+Shared rules for list screens:
+- One filter bar: search, selects (pill style), checkbox toggles. Changing a filter reloads the page with the query.
+- Row actions (edit, delete) live in a "•••" menu (`<details class="fr-more">`), never as colored buttons on every item.
+- The only gold on the screen is the main action ("Log a movie").
+- Rating is always `_RatingDots` (5 dots, half points).
 
 ## Human touch (declared)
 

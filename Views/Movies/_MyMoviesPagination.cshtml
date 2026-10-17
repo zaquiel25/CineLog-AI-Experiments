@@ -1,0 +1,37 @@
+@* Pagination for My Movies. Keeps every active filter (including the month filter) across pages. *@
+@using Microsoft.AspNetCore.Routing
+@model (int PageIndex, int TotalPages)
+@{
+    var query = new Dictionary<string, string?>
+    {
+        ["view"] = ViewData["CurrentView"]?.ToString(),
+        ["sortOrder"] = ViewData["CurrentSort"]?.ToString(),
+        ["searchString"] = ViewData["CurrentFilter"]?.ToString(),
+        ["monthFilter"] = ViewData["CurrentMonthFilter"]?.ToString(),
+        ["firstWatchOnly"] = Context.Request.Query["firstWatchOnly"].ToString() == "true" ? "true" : null
+    };
+    string PageUrl(int page)
+    {
+        var values = new RouteValueDictionary();
+        foreach (var pair in query.Where(p => !string.IsNullOrEmpty(p.Value)))
+        {
+            values[pair.Key] = pair.Value;
+        }
+        values["pageNumber"] = page;
+        return Url.Action("List", values) ?? "#";
+    }
+}
+@if (Model.TotalPages > 1)
+{
+    <nav class="fr-pagination" aria-label="My Movies pages">
+        @if (Model.PageIndex > 1)
+        {
+            <a class="fr-btn fr-btn--secondary" href="@PageUrl(Model.PageIndex - 1)">Previous</a>
+        }
+        <span>Page @Model.PageIndex of @Model.TotalPages</span>
+        @if (Model.PageIndex < Model.TotalPages)
+        {
+            <a class="fr-btn fr-btn--secondary" href="@PageUrl(Model.PageIndex + 1)">Next</a>
+        }
+    </nav>
+}

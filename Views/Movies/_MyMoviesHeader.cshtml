@@ -1,0 +1,87 @@
+@*
+    Shared header for My Movies (Journal and Collection views): title, view switch and one filter form.
+    Every control lives in a single GET form, so filters always travel together (search, sort,
+    month and first-watch-only) and a change just reloads the page with the new query.
+*@
+@using Ezequiel_Movies.Models
+@{
+    var currentView = ViewData["CurrentView"]?.ToString() ?? "journal";
+    var isJournal = currentView == "journal";
+    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "datewatched_desc";
+    var currentFilter = ViewData["CurrentFilter"]?.ToString();
+    var currentMonth = ViewData["CurrentMonthFilter"]?.ToString();
+    var firstWatchOnly = Context.Request.Query["firstWatchOnly"].ToString() == "true";
+    var timeline = ViewData["TimelineNavigator"] as TimelineNavigatorViewModel;
+    var movieCount = ViewData["MovieCount"] as int? ?? 0;
+
+    var sortOptions = new List<(string Value, string Label)>
+    {
+        ("datewatched_desc", "Recently watched"),
+        ("datewatched_asc", "Oldest first"),
+        ("rating_desc", "Highest rated"),
+        ("title_asc", "Title"),
+        ("director_asc", "Director"),
+        ("year_desc", "Release year")
+    };
+    if (!isJournal)
+    {
+        sortOptions.Insert(1, ("most_watched_desc", "Most watched"));
+    }
+}
+
+<div class="fr-mm-head">
+    <h1 class="fr-mm-title">My Movies <span data-movie-count="@movieCount">@movieCount @(movieCount == 1 ? "film" : "films")</span></h1>
+    <div class="fr-mm-head-actions">
+        <nav class="fr-segmented" aria-label="My Movies view">
+            <a href="@Url.Action("List", new { view = "journal" })" class="@(isJournal ? "is-active" : "")" aria-current="@(isJournal ? "page" : null)">Journal</a>
+            <a href="@Url.Action("List", new { view = "collection" })" class="@(!isJournal ? "is-active" : "")" aria-current="@(!isJournal ? "page" : null)">Collection</a>
+        </nav>
+        <a asp-action="Add" class="fr-btn">Log a movie</a>
+    </div>
+</div>
+
+<form method="get" action="@Url.Action("List")" class="fr-mm-tools" id="myMoviesFilters">
+    <input type="hidden" name="view" value="@currentView" />
+
+    <div class="fr-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="search" name="searchString" value="@currentFilter" placeholder="Search your movies" aria-label="Search your movies" />
+    </div>
+
+    @if (isJournal && timeline != null && timeline.AvailableMonths.Any())
+    {
+        <label class="fr-select">
+            <span class="visually-hidden">Month</span>
+            <select name="monthFilter" data-autosubmit>
+                <option value="">All months</option>
+                @foreach (var month in timeline.AvailableMonths)
+                {
+                    <option value="@month.MonthKey" selected="@(currentMonth == month.MonthKey)">@month.DisplayName</option>
+                }
+            </select>
+        </label>
+    }
+
+    <label class="fr-select">
+        <span class="visually-hidden">Sort by</span>
+        <select name="sortOrder" data-autosubmit>
+            @foreach (var option in sortOptions)
+            {
+                <option value="@option.Value" selected="@(currentSort == option.Value)">@option.Label</option>
+            }
+        </select>
+    </label>
+
+    @if (isJournal)
+    {
+        <label class="fr-toggle">
+            <input type="checkbox" name="firstWatchOnly" value="true" checked="@firstWatchOnly" data-autosubmit />
+            <span>First watches only</span>
+        </label>
+    }
+
+    @if (!string.IsNullOrEmpty(currentFilter))
+    {
+        <a class="fr-mm-clear" href="@Url.Action("List", new { view = currentView, sortOrder = currentSort, monthFilter = currentMonth, firstWatchOnly = firstWatchOnly ? "true" : null })">Clear search "@currentFilter"</a>
+    }
+</form>
