@@ -1,201 +1,114 @@
-﻿@model Ezequiel_Movies.Models.TmdbApi.TmdbMovieDetails
+@*
+    Movie page for a film from TMDB (not necessarily logged). Layout shared with Details:
+    poster on the left (sticky), everything else on the right. Main action: "Log it" (opens Add with the film).
+*@
+@model Ezequiel_Movies.Models.TmdbApi.TmdbMovieDetails
 
 @{
-    ViewData["Title"] = $"Preview: {Model.Title}";
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w500";
+    ViewData["Title"] = Model.Title;
     var isAlreadyLogged = (bool)(ViewData["IsAlreadyLogged"] ?? false);
     var isInWishlist = (bool)(ViewData["IsInWishlist"] ?? false);
     var isInBlacklist = (bool)(ViewData["IsInBlacklist"] ?? false);
+    var trailerUrl = ViewData["TrailerUrl"] as string;
+    var year = !string.IsNullOrEmpty(Model.ReleaseDate) && Model.ReleaseDate.Length >= 4 ? Model.ReleaseDate[..4] : null;
+    var director = Model.GetDirector();
+    var metaParts = new List<string?>
+    {
+        year,
+        Model.Runtime > 0 ? $"{Model.Runtime / 60}h {Model.Runtime % 60}m" : null,
+        Model.Genres.Any() ? string.Join(", ", Model.Genres.Select(g => g.Name)) : null,
+        string.IsNullOrEmpty(director) ? null : $"Directed by {director}",
+        Model.VoteAverage > 0 ? $"TMDB {Model.VoteAverage:0.0}" : null
+    };
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
-<div>
-    @* --- Header Section --- *@
-    <div class="d-flex align-items-center mb-3">
-        <h1 class="display-4 mb-0">@Model.Title</h1>
-        @if (isAlreadyLogged)
+<article class="fr-movie">
+    <div class="fr-movie-poster">
+        @if (!string.IsNullOrEmpty(Model.PosterPath))
         {
-            <span class="badge bg-success ms-3" style="font-size: 1rem;">In Your Log</span>
+            <img src="https://image.tmdb.org/t/p/w500@(Model.PosterPath)" alt="@Model.Title poster" width="500" height="750" />
+        }
+        else
+        {
+            <span class="fr-wall-fallback">@Model.Title</span>
         }
     </div>
-    <p class="text-muted">@Model.Tagline</p>
-    <hr />
 
-    @* --- Main Content Row --- *@
-    <div class="row">
-        <div class="col-md-4">
-            @if (!string.IsNullOrEmpty(Model.PosterPath))
+    <div class="fr-movie-body">
+        <h1 class="fr-movie-title">@Model.Title</h1>
+        <p class="fr-movie-meta">@string.Join(" · ", metaParts.Where(p => !string.IsNullOrEmpty(p)))</p>
+        @if (!string.IsNullOrEmpty(Model.Tagline))
+        {
+            <p class="fr-movie-tagline">@Model.Tagline</p>
+        }
+
+        @if (isInWishlist || isInBlacklist || isAlreadyLogged)
+        {
+            <p class="fr-movie-tags">
+                @if (isAlreadyLogged) { <span class="fr-tag">In your log</span> }
+                @if (isInWishlist) { <span class="fr-tag">In your Wishlist</span> }
+                @if (isInBlacklist) { <span class="fr-tag">Not interested</span> }
+            </p>
+        }
+
+        <div class="fr-movie-actions">
+            <a class="fr-btn" asp-action="Add" asp-route-tmdbId="@Model.Id">@(isAlreadyLogged ? "Log again" : "Log it")</a>
+
+            @* Wishlist and Not interested are mutually exclusive, so each only shows when the other is off *@
+            @if (!isInWishlist && !isInBlacklist && !isAlreadyLogged)
             {
-                <img src="@(tmdbImageBaseUrl + Model.PosterPath)" class="img-fluid rounded shadow-sm" alt="@Model.Title Poster">
+                <form asp-action="AddToWishlist" method="post">
+                    <input type="hidden" name="tmdbId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="fr-btn fr-btn--secondary">Save to Wishlist</button>
+                </form>
             }
-            else
+
+            @if (trailerUrl != null)
             {
-                <div class="d-flex align-items-center justify-content-center bg-light rounded shadow-sm" style="width: 100%; height: 450px; border: 1px dashed #ccc;">
-                    <span class="text-muted">No Poster Available</span>
-                </div>
+                <a class="fr-btn fr-btn--secondary" href="@trailerUrl" target="_blank" rel="noopener noreferrer"><i class="bi bi-play-fill" aria-hidden="true"></i> Trailer</a>
+            }
+
+            @if (isInWishlist || isInBlacklist || !isAlreadyLogged)
+            {
+                <details class="fr-more">
+                    <summary aria-label="More actions for @Model.Title"><span aria-hidden="true">•••</span></summary>
+                    <div class="fr-more-menu">
+                        @if (isInWishlist)
+                        {
+                            <button type="button" data-movie-remove="wishlist" data-tmdb-id="@Model.Id">Remove from Wishlist</button>
+                        }
+                        else if (isInBlacklist)
+                        {
+                            <button type="button" data-movie-remove="blacklist" data-tmdb-id="@Model.Id">Show in suggestions again</button>
+                        }
+                        else
+                        {
+                            <form asp-action="AddToBlacklist" method="post">
+                                <input type="hidden" name="tmdbId" value="@Model.Id" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit">Not interested</button>
+                            </form>
+                        }
+                    </div>
+                </details>
             }
         </div>
-        <div class="col-md-8">
-            <dl class="row">
-                <dt class="col-sm-3">Director</dt>
-                <dd class="col-sm-9">@Model.GetDirector()</dd>
 
-                <dt class="col-sm-3">Released</dt>
-                <dd class="col-sm-9">@Model.ReleaseDate</dd>
+        @if (!string.IsNullOrEmpty(Model.Overview))
+        {
+            <p class="fr-movie-overview">@Model.Overview</p>
+        }
 
-                <dt class="col-sm-3">Genres</dt>
-                <dd class="col-sm-9">@(Model.Genres != null && Model.Genres.Any() ? string.Join(", ", Model.Genres.Select(g => g.Name)) : "N/A")</dd>
-
-                <dt class="col-sm-3">Rating</dt>
-                <dd class="col-sm-9"><i class="bi bi-star-fill" style="color: #ffc107;"></i> @Model.VoteAverage.ToString("0.0") / 10</dd>
-            </dl>
-
-            <h5 class="mt-4">Overview</h5>
-            <p class="movie-overview">@Model.Overview</p>
-
-            @* --- Cast Section --- *@
-            @{
-                var cast = Model.Credits?.Cast;
-            }
-            @if (cast != null && cast.Any())
-            {
-                <h5 class="mt-4">Starring</h5>
-                <div class="d-flex">
-                    @foreach (var actor in cast.Take(4))
-                    {
-                        <div class="text-center me-3">
-                            @if(!string.IsNullOrEmpty(actor.ProfilePath))
-                            {
-                                <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + actor.ProfilePath)"
-                                     class="rounded-circle"
-                                     style="width: 60px; height: 60px; object-fit: cover;"
-                                     title="@actor.Name"
-                                     alt="@actor.Name profile picture">
-                            }
-                            <p class="mb-0" style="font-size: 0.8rem;">@actor.Name</p>
-                        </div>
-                    }
-                </div>
-            }
-
-            @* --- Watch Trailer Button --- *@
-            @if (ViewData["TrailerUrl"] is string trailerUrl)
-            {
-                <div class="mt-3">
-                    <a href="@trailerUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger">
-                        <i class="bi bi-play-circle"></i> Watch Trailer
-                    </a>
-                </div>
-            }
-
-            @* --- "Where to Watch" Section --- *@
-            @{
-                var watchProviders = ViewData["WatchProviders"] as Dictionary<string, List<Ezequiel_Movies.Models.TmdbApi.ProviderInfo>>;
-                bool hasProviders = watchProviders != null && watchProviders.Any(kvp => kvp.Value != null && kvp.Value.Any());
-            }
-            <div class="mt-4">
-            @if (hasProviders && watchProviders != null)
-            {
-                if (watchProviders.ContainsKey("Streaming"))
-                {
-                    <div class="provider-category mb-2">
-                        <h6>Stream</h6>
-                        <div class="d-flex flex-wrap">
-                            @foreach (var provider in watchProviders["Streaming"])
-                            {
-                                <div class="me-2 mb-2">
-                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                         class="rounded"
-                                         style="width: 50px; height: 50px;"
-                                         title="View streaming options for '@Model.Title' on TMDB"
-                                         alt="See where to watch '@Model.Title' on TMDB">
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-                if (watchProviders.ContainsKey("Buy"))
-                {
-                    <div class="provider-category mb-2">
-                        <h6>Buy</h6>
-                        <div class="d-flex flex-wrap">
-                            @foreach (var provider in watchProviders["Buy"])
-                            {
-                                <div class="me-2 mb-2">
-                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                         class="rounded"
-                                         style="width: 50px; height: 50px;"
-                                         title="Search for @Model.Title on @provider.ProviderName"
-                                         alt="Search for @Model.Title on @provider.ProviderName">
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-                if (watchProviders.ContainsKey("Rent"))
-                {
-                    <div class="provider-category mb-2">
-                        <h6>Rent</h6>
-                        <div class="d-flex flex-wrap">
-                            @foreach (var provider in watchProviders["Rent"])
-                            {
-                                <div class="me-2 mb-2">
-                                    <img src="@(tmdbImageBaseUrl.Replace("w500", "w185") + provider.LogoPath)"
-                                         class="rounded"
-                                         style="width: 50px; height: 50px;"
-                                         title="@provider.ProviderName"
-                                         alt="@provider.ProviderName logo">
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="no-providers">
-                    <p class="text-muted">Not currently available in your region</p>
-                </div>
-            }
-            </div>
-        </div>
+        <partial name="_MovieCast" model="Model.Credits?.Cast?.Take(4).ToList()" />
+        <partial name="_MovieWhereToWatch" />
     </div>
-</div>
-<hr />
 
-@* --- Action Buttons Section --- *@
-@* FIX: flex-wrap + gap for clean mobile layout, outline-warning for visibility *@
-<div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
-    @* Mutual exclusion logic: prevent conflicting user actions via conditional rendering *@
-    @* See also: Details.cshtml for identical pattern *@
-    @if (!isInWishlist && !isInBlacklist)
-    {
-        <form asp-action="AddToWishlist" method="post" style="display: inline;">
-            <input type="hidden" name="tmdbId" value="@Model.Id" />
-            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-plus-square"></i> Add to Wishlist
-            </button>
-        </form>
-        <form asp-action="AddToBlacklist" method="post" style="display: inline;">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="tmdbId" value="@Model.Id" />
-            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-            <button type="submit" class="btn btn-danger">
-                <i class="bi bi-slash-circle"></i> Add to Blacklist
-            </button>
-        </form>
-    }
-    else if (isInWishlist)
-    {
-        <button type="button" class="btn btn-info text-white" disabled>
-            <i class="bi bi-heart-fill"></i> In Wishlist
-        </button>
-        <span class="text-info">Delete from Wishlist for Blacklist</span>
-    }
-    else if (isInBlacklist)
-    {
-        <span class="badge bg-danger">Blacklisted</span>
-        <small class="text-muted">Remove from blacklist to add to wishlist</small>
-    }
-    <a asp-action="Suggest" class="btn btn-outline-warning">Back to Suggestions</a>
-</div>
+    @* Anti-forgery token for the remove requests *@
+    <form hidden>@Html.AntiForgeryToken()</form>
+</article>
+
+@section Scripts {
+    <script src="~/js/movie-page.js" asp-append-version="true"></script>
+}

@@ -14,6 +14,10 @@ namespace Ezequiel_Movies.Models.TmdbApi
         [JsonPropertyName("vote_average")]
         public double VoteAverage { get; set; }
 
+        // FEATURE: Runtime in minutes, shown in the movie page header (part of the same details response)
+        [JsonPropertyName("runtime")]
+        public int? Runtime { get; set; }
+
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
@@ -25,6 +29,10 @@ namespace Ezequiel_Movies.Models.TmdbApi
 
         [JsonPropertyName("poster_path")]
         public string? PosterPath { get; set; }
+
+        // FEATURE: Wide still from the film, used as the My Movies hero (same details response)
+        [JsonPropertyName("backdrop_path")]
+        public string? BackdropPath { get; set; }
 
         [JsonPropertyName("overview")]
         public string? Overview { get; set; }

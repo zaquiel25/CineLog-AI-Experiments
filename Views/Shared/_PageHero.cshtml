@@ -1,0 +1,37 @@
+@* Page hero: a film still with kicker, title, context line and main action (see PageHeroViewModel). *@
+@model Ezequiel_Movies.Models.PageHeroViewModel
+@{
+    var hasImage = !string.IsNullOrEmpty(Model.BackdropPath);
+}
+<header class="fr-ph@(hasImage ? "" : " fr-ph--plain")">
+    @if (hasImage)
+    {
+        <img class="fr-ph-img" src="https://image.tmdb.org/t/p/w1280@(Model.BackdropPath)" alt="" />
+    }
+    <div class="fr-ph-in">
+        <div>
+            @if (!string.IsNullOrEmpty(Model.Kicker))
+            {
+                <p class="fr-ph-kicker">@Model.Kicker</p>
+            }
+            <h1 class="fr-ph-title">
+                @if (!string.IsNullOrEmpty(Model.TitleUrl))
+                {
+                    <a href="@Model.TitleUrl">@Model.Title</a>
+                }
+                else
+                {
+                    @Model.Title
+                }
+            </h1>
+            @if (!string.IsNullOrEmpty(Model.Sub))
+            {
+                <p class="fr-ph-sub">@Model.Sub</p>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(Model.ActionText))
+        {
+            <a href="@Model.ActionUrl" class="fr-btn">@Model.ActionText</a>
+        }
+    </div>
+</header>

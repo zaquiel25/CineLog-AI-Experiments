@@ -38,12 +38,8 @@
         return data;
     }
 
-    // Chips: load a suggestion type. Falls back to a normal page load if anything fails.
-    document.addEventListener('click', async function (e) {
-        const chip = e.target.closest('.fr-chip[data-suggestion-type]');
-        if (!chip || !slot) return;
-        e.preventDefault();
-
+    // Load a suggestion type into the results slot. Falls back to a normal page load if anything fails.
+    async function loadChip(chip, scroll) {
         const type = chip.dataset.suggestionType;
         setActiveChip(type);
         slot.setAttribute('aria-busy', 'true');
@@ -52,14 +48,30 @@
         try {
             const data = await getJson(chip.href);
             slot.innerHTML = data.html;
-            scrollToResults();
+            if (scroll) scrollToResults();
         } catch (err) {
             window.location.href = chip.href;
         } finally {
             slot.removeAttribute('aria-busy');
             slot.classList.remove('is-loading');
         }
+    }
+
+    // Chips
+    document.addEventListener('click', function (e) {
+        const chip = e.target.closest('.fr-chip[data-suggestion-type]');
+        if (!chip || !slot) return;
+        e.preventDefault();
+        loadChip(chip, true);
     });
+
+    // FEATURE: open with personalized results (set by the server only when the user has logged films),
+    // so the page never starts empty. No scroll: the user did not ask for it.
+    const autoload = slot && !slot.children.length && slot.dataset.autoload;
+    if (autoload) {
+        const chip = document.querySelector('.fr-chip[data-suggestion-type="' + autoload + '"]');
+        if (chip) loadChip(chip, false);
+    }
 
     // Shuffle: replace only the cards (and the heading/avatar when the server sends new ones).
     document.addEventListener('click', async function (e) {

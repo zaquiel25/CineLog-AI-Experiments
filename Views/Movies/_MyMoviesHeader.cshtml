@@ -1,9 +1,11 @@
 @*
-    Shared header for My Movies (Journal and Collection views): title, view switch and one filter form.
-    Every control lives in a single GET form, so filters always travel together (search, sort,
-    month and first-watch-only) and a change just reloads the page with the new query.
+    Shared header for My Movies (Diary and Collection views).
+    Hero: the last watched film over its TMDB still, with the diary totals and the main action.
+    Bar: Diary / Collection tabs and the filters. Filters are text menus (links that change one query
+    value), like Letterboxd's; search is a small GET form that keeps the other filters.
 *@
 @using Ezequiel_Movies.Models
+@using Microsoft.AspNetCore.Routing
 @{
     var currentView = ViewData["CurrentView"]?.ToString() ?? "journal";
     var isJournal = currentView == "journal";
@@ -12,7 +14,10 @@
     var currentMonth = ViewData["CurrentMonthFilter"]?.ToString();
     var firstWatchOnly = Context.Request.Query["firstWatchOnly"].ToString() == "true";
     var timeline = ViewData["TimelineNavigator"] as TimelineNavigatorViewModel;
-    var movieCount = ViewData["MovieCount"] as int? ?? 0;
+    var lastWatched = ViewData["LastWatched"] as Ezequiel_Movies1.Models.Entities.Movies;
+    var backdrop = ViewData["LastWatchedBackdrop"] as string;
+    var viewings = ViewData["DiaryViewings"] as int? ?? 0;
+    var rewatches = ViewData["DiaryRewatches"] as int? ?? 0;
 
     var sortOptions = new List<(string Value, string Label)>
     {
@@ -27,61 +32,101 @@
     {
         sortOptions.Insert(1, ("most_watched_desc", "Most watched"));
     }
+    var currentSortLabel = sortOptions.FirstOrDefault(o => o.Value == currentSort).Label ?? "Recently watched";
+    var currentMonthLabel = timeline?.AvailableMonths.FirstOrDefault(m => m.MonthKey == currentMonth)?.DisplayName;
+
+    // Builds a List URL keeping every active filter, with one value changed (null removes it)
+    string ListUrl(string key, string? value)
+    {
+        var query = new Dictionary<string, string?>
+        {
+            ["view"] = currentView,
+            ["sortOrder"] = currentSort,
+            ["searchString"] = currentFilter,
+            ["monthFilter"] = isJournal ? currentMonth : null,
+            ["firstWatchOnly"] = isJournal && firstWatchOnly ? "true" : null
+        };
+        query[key] = value;
+        var values = new RouteValueDictionary();
+        foreach (var pair in query.Where(p => !string.IsNullOrEmpty(p.Value)))
+        {
+            values[pair.Key] = pair.Value;
+        }
+        return Url.Action("List", values) ?? "#";
+    }
 }
 
-<div class="fr-mm-head">
-    <h1 class="fr-mm-title">My Movies <span data-movie-count="@movieCount">@movieCount @(movieCount == 1 ? "film" : "films")</span></h1>
-    <div class="fr-mm-head-actions">
-        <nav class="fr-segmented" aria-label="My Movies view">
-            <a href="@Url.Action("List", new { view = "journal" })" class="@(isJournal ? "is-active" : "")" aria-current="@(isJournal ? "page" : null)">Journal</a>
-            <a href="@Url.Action("List", new { view = "collection" })" class="@(!isJournal ? "is-active" : "")" aria-current="@(!isJournal ? "page" : null)">Collection</a>
-        </nav>
-        <a asp-action="Add" class="fr-btn">Log a movie</a>
+@{
+    var hero = lastWatched != null
+        ? new PageHeroViewModel
+        {
+            Kicker = "Last watched · " + lastWatched.DateWatched!.Value.ToString("dddd, MMMM d", System.Globalization.CultureInfo.InvariantCulture),
+            Title = lastWatched.Title,
+            TitleUrl = Url.Action("Details", new { id = lastWatched.Id }),
+            Sub = $"{viewings} {(viewings == 1 ? "entry" : "entries")} in your diary" +
+                  (rewatches > 0 ? $" · {rewatches} {(rewatches == 1 ? "rewatch" : "rewatches")}" : ""),
+            BackdropPath = backdrop,
+            ActionText = "Log a movie",
+            ActionUrl = Url.Action("Add")
+        }
+        : new PageHeroViewModel
+        {
+            Title = "My Movies",
+            Sub = "Your diary starts with the first film you log.",
+            ActionText = "Log a movie",
+            ActionUrl = Url.Action("Add")
+        };
+}
+<partial name="_PageHero" model="hero" />
+
+<div class="fr-mm-bar">
+    <nav class="fr-mm-tabs" aria-label="My Movies view">
+        <a href="@Url.Action("List", new { view = "journal" })" class="@(isJournal ? "is-active" : "")" aria-current="@(isJournal ? "page" : null)">Diary</a>
+        <a href="@Url.Action("List", new { view = "collection" })" class="@(!isJournal ? "is-active" : "")" aria-current="@(!isJournal ? "page" : null)">Collection</a>
+    </nav>
+
+    <div class="fr-mm-filters">
+        <form method="get" action="@Url.Action("List")" class="fr-mm-search" id="myMoviesFilters" role="search">
+            <input type="hidden" name="view" value="@currentView" />
+            <input type="hidden" name="sortOrder" value="@currentSort" />
+            @if (isJournal && !string.IsNullOrEmpty(currentMonth)) { <input type="hidden" name="monthFilter" value="@currentMonth" /> }
+            @if (isJournal && firstWatchOnly) { <input type="hidden" name="firstWatchOnly" value="true" /> }
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" name="searchString" value="@currentFilter" placeholder="Search" aria-label="Search your movies" />
+        </form>
+
+        @if (isJournal && timeline != null && timeline.AvailableMonths.Any())
+        {
+            <details class="fr-more fr-filter">
+                <summary>@(currentMonthLabel ?? "All months")</summary>
+                <div class="fr-more-menu fr-filter-menu">
+                    <a href="@ListUrl("monthFilter", null)" class="@(string.IsNullOrEmpty(currentMonth) ? "is-current" : "")">All months</a>
+                    @foreach (var month in timeline.AvailableMonths)
+                    {
+                        <a href="@ListUrl("monthFilter", month.MonthKey)" class="@(currentMonth == month.MonthKey ? "is-current" : "")">@month.DisplayName</a>
+                    }
+                </div>
+            </details>
+        }
+
+        <details class="fr-more fr-filter">
+            <summary>Sort by @currentSortLabel</summary>
+            <div class="fr-more-menu fr-filter-menu">
+                @foreach (var option in sortOptions)
+                {
+                    <a href="@ListUrl("sortOrder", option.Value)" class="@(currentSort == option.Value ? "is-current" : "")">@option.Label</a>
+                }
+            </div>
+        </details>
+
+        @if (isJournal)
+        {
+            <a class="fr-filter-toggle@(firstWatchOnly ? " is-on" : "")" href="@ListUrl("firstWatchOnly", firstWatchOnly ? null : "true")" aria-pressed="@(firstWatchOnly ? "true" : "false")">First watches only</a>
+        }
     </div>
 </div>
 
-<form method="get" action="@Url.Action("List")" class="fr-mm-tools" id="myMoviesFilters">
-    <input type="hidden" name="view" value="@currentView" />
-
-    <div class="fr-search">
-        <i class="bi bi-search" aria-hidden="true"></i>
-        <input type="search" name="searchString" value="@currentFilter" placeholder="Search your movies" aria-label="Search your movies" />
-    </div>
-
-    @if (isJournal && timeline != null && timeline.AvailableMonths.Any())
-    {
-        <label class="fr-select">
-            <span class="visually-hidden">Month</span>
-            <select name="monthFilter" data-autosubmit>
-                <option value="">All months</option>
-                @foreach (var month in timeline.AvailableMonths)
-                {
-                    <option value="@month.MonthKey" selected="@(currentMonth == month.MonthKey)">@month.DisplayName</option>
-                }
-            </select>
-        </label>
-    }
-
-    <label class="fr-select">
-        <span class="visually-hidden">Sort by</span>
-        <select name="sortOrder" data-autosubmit>
-            @foreach (var option in sortOptions)
-            {
-                <option value="@option.Value" selected="@(currentSort == option.Value)">@option.Label</option>
-            }
-        </select>
-    </label>
-
-    @if (isJournal)
-    {
-        <label class="fr-toggle">
-            <input type="checkbox" name="firstWatchOnly" value="true" checked="@firstWatchOnly" data-autosubmit />
-            <span>First watches only</span>
-        </label>
-    }
-
-    @if (!string.IsNullOrEmpty(currentFilter))
-    {
-        <a class="fr-mm-clear" href="@Url.Action("List", new { view = currentView, sortOrder = currentSort, monthFilter = currentMonth, firstWatchOnly = firstWatchOnly ? "true" : null })">Clear search "@currentFilter"</a>
-    }
-</form>
+@if (!string.IsNullOrEmpty(currentFilter))
+{
+    <p class="fr-mm-searching">Showing results for "@currentFilter" · <a href="@ListUrl("searchString", null)">Clear</a></p>
+}

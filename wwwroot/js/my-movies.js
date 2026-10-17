@@ -80,6 +80,12 @@
             const row = button.closest('[data-movie-row]');
             const previous = row.previousElementSibling;
             const next = row.nextElementSibling;
+
+            // The month badge sits on the first row of each month: hand it to the next row of that month.
+            const badge = row.querySelector('.fr-diary-mon');
+            if (badge && badge.children.length && next && next.matches('[data-movie-row]')) {
+                next.querySelector('.fr-diary-mon').innerHTML = badge.innerHTML;
+            }
             row.remove();
 
             // Remove a month heading left without movies.

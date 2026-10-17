@@ -1,0 +1,24 @@
+@* Movie page: top cast as small faces with names. *@
+@model List<Ezequiel_Movies.Models.TmdbApi.TmdbCastPerson>
+@if (Model != null && Model.Any())
+{
+    <section class="fr-movie-block">
+        <h2 class="fr-movie-h">Starring</h2>
+        <ul class="fr-movie-cast">
+            @foreach (var actor in Model)
+            {
+                <li>
+                    @if (!string.IsNullOrEmpty(actor.ProfilePath))
+                    {
+                        <img src="https://image.tmdb.org/t/p/w185@(actor.ProfilePath)" alt="" width="44" height="44" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="fr-movie-face" aria-hidden="true"></span>
+                    }
+                    @actor.Name
+                </li>
+            }
+        </ul>
+    </section>
+}

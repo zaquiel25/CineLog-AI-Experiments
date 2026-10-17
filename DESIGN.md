@@ -16,7 +16,7 @@ One thing a visitor should do before leaving: **log their first movie**. Suggest
   - Active nav link: hand-drawn underline (same irregular stroke as the logo)
   - Sequences (the 3 steps): dots that fill up to show progress
   - Film strip perforation: a row of dots under poster groups
-- Dose rule: **max 2 signature appearances per screen** (rating dots in lists do not count, they are data).
+- Dose rule: **max 2 signature appearances per screen** (rating dots in lists do not count, they are data). The hand-drawn underline on the active tab or chip counts as one appearance, together with the nav (both mean "you are here").
 
 Why: the logo is the only visual material that belongs only to FrameRoute. Gold on near-black is one of the default AI looks, so the signature is what keeps this from looking like every other dark site.
 
@@ -49,7 +49,7 @@ Two roles, both under the **SIL Open Font License 1.1**, self-hosted from `wwwro
 | Role | Font | Weights | Where |
 |---|---|---|---|
 | Interface | **Geist** | 300, 400, 500, 600 | Everything that is the app: nav, headings, body, buttons, metadata |
-| Film voice | **Newsreader** | 400 | **Only** movie titles (cards, detail pages, suggestions) |
+| Film voice | **Newsreader** | 400 | Movie titles (cards, detail pages, suggestions) **and page titles** ("My Movies", "Wishlist", "Log a movie") |
 
 Only use open-license (OFL) fonts: the repository is public, and fonts under licenses like Fontshare's ITF FFL cannot be published in a public repo. Switzer + Zodiak were the first choice and were replaced for this reason.
 
@@ -60,7 +60,9 @@ Scale (px): 13 · 15 · 17 · 19 · 23 · 30 · 44 · 60 · 72. Letter-spacing: 
 ## Spacing and shape
 
 - Spacing in multiples of 8 (4 allowed for tight inline gaps).
-- Radius: buttons and chips `980px` (pill), cards `14px`, posters `8px`.
+- Radius: buttons `6px` (`--fr-radius-control`), tags `4px`, cards `14px`, posters `8px`. **No pills.** Pill-shaped everything (buttons, chips, tabs, fields all at 980px) was tried and read as a generic AI/template look; it also flattened the hierarchy between filters, tabs and actions.
+- Tabs (`.fr-segmented`) and chips (`.fr-chip`) are **text**, muted when inactive; the active one is in `--fr-text` with the hand-drawn underline (same stroke as the nav).
+- Fields (search, selects, the Add search) are **a line, not a box**: transparent, bottom border only.
 - Buttons are always solid. Main action: gold (`.fr-btn`). Secondary action: quiet solid button, `--fr-surface-2` with a thin light border (`.fr-btn--secondary`). Text links with an underline were tried for secondary actions and got lost on the dark background.
 - One bright gold element per screen whenever possible. In the nav, "Sign up" is text (`.fr-nav-link--strong`), not a gold button, so the hero CTA is the only gold.
 
@@ -94,22 +96,31 @@ From `motion.md` (Marfil): ease-out entries `cubic-bezier(0.22, 1, 0.36, 1)`, ex
 
 Hero posters: the signed-in user's last 3 logged movies (latest in the middle). Visitors, or users with fewer than 3, get TMDB trending to fill the gap.
 
+## Page hero (shared)
+
+`Views/Shared/_PageHero.cshtml` + `PageHeroViewModel`: a film still (TMDB backdrop) with a small caps kicker, a title in Newsreader 600, one line of context and the gold main action. Without a still it renders as plain text. Each page picks a film that means something there:
+
+| Page | Film in the hero | Action |
+|---|---|---|
+| My Movies | Last watched ("Last watched · Saturday, October 17") | Log a movie |
+| Wishlist | Latest added ("Latest in your Wishlist · added October 17") | Find movies |
+| Suggestions | A random film the user rated 4+ (changes every visit) | none |
+
+Add has no hero: a small caps label ("LOG A MOVIE") with a hairline, and the big search field is the protagonist.
+
 ## My Movies
 
-Each view answers one question and has its own shape:
+Built from real references (Letterboxd diary + MUBI/A24 film pages, captured 2026-10-17): no giant page title, warmth from the film's own image, density from a table.
 
-- **Journal** ("when did I watch what?"): a diary. Month headings (only when sorted by watch date), one row per viewing: day number + weekday, poster thumb, title (Newsreader), director · year · place, rating dots, "•••" menu.
-- **Collection** ("what have I watched?"): a poster wall (6 / 4 / 3 columns). Poster, title, rating dots, "N×" tag when rewatched. Stats are one line of text, never metric cards.
-
-Shared rules for list screens:
-- One filter bar: search, selects (pill style), checkbox toggles. Changing a filter reloads the page with the query.
-- Row actions (edit, delete) live in a "•••" menu (`<details class="fr-more">`), never as colored buttons on every item.
-- The only gold on the screen is the main action ("Log a movie").
-- Rating is always `_RatingDots` (5 dots, half points).
+- **Hero**: the last watched film over its TMDB still ("Last watched · Saturday, October 17" / title in Newsreader 600 / "12 entries in your diary · 2 rewatches") with the gold "Log a movie". A dark scrim over the still is the one allowed gradient (functional, for legibility). Without movies: plain title "My Movies".
+- **Bar**: Diary / Collection tabs (text, 2px muted-gold line under the active one) and the filters on the right as small caps text with a caret ("ALL MONTHS ▾", "SORT BY RECENTLY WATCHED ▾", "FIRST WATCHES ONLY"). Each opens a menu below (`details.fr-filter`); items are plain links that change one query value. Search is a small inline field.
+- **Diary**: a table. Columns Month · Day · Film · Released · Rating; the month is an almanac badge on the first row of each month (on mobile it becomes a small caps heading). Film titles in Newsreader 600.
+- **Collection**: poster wall (6 / 4 / 3 columns) under the same hero and bar, stats as one line of text.
+- Row actions in "•••"; rating is always `_RatingDots`.
 
 ## Suggestions
 
-- Picking a starting point uses **chips** (`.fr-chip`), never a grid of icon boxes. Active chip = `--fr-surface-2` with a light inset border.
+- Picking a starting point uses **chips** (`.fr-chip`), never a grid of icon boxes. Chips are text; the active one gets the hand-drawn underline.
 - Results appear right below the chips. Heading in normal text (never gold), with one "Shuffle" secondary button next to it.
 - Suggestion card: poster, title (Newsreader), year, optional "Watched" tag. Main action "Save to Wishlist" (secondary button); "I've seen it" and "Not interested" live in the "•••" menu.
 - One result (Surprise me) sits in the middle column.
@@ -128,13 +139,22 @@ One page, two tabs (`.fr-segmented`, like Journal/Collection), each answering on
 
 Two steps on one page:
 
-1. **Search** ("What did you watch?"): one big pill search field. Results show poster thumb, title (Newsreader) and "year · overview", so films with the same name can be told apart. Arrow keys move through results.
+1. **Search** ("Log a movie", placeholder "Which film?"): one big underlined field in Newsreader. Results show poster thumb, title (Newsreader) and "year · overview", so films with the same name can be told apart. Arrow keys move through results.
 2. **The log**, two shapes for the same values:
    - Desktop: a sentence next to the poster. "I watched *Aftersun* [for the first time / again] [today / yesterday / on a date / some time ago], [at home / at the cinema / somewhere else], and I'd give it ●●●●○". Each choice is a native select underlined in muted gold.
    - Mobile: poster + title on top, then chips (When / Where), rating dots, a Rewatch toggle and a full-width "Log it".
 - Rating is the interactive version of the signature dots: click a dot (left half = half point), click the current value to clear, arrow keys work.
 - "again" is pre-selected when the user already logged the film.
 - Only gold: "Log it". "Change movie" is a secondary button.
+
+## Movie page (Preview and Details)
+
+One layout for both: poster on the left (sticky while scrolling), everything else on the right; on mobile it stacks.
+
+- Header: title (Newsreader, large), one meta line "year · runtime · genres · Directed by X · TMDB 7.7", tagline in Newsreader italic.
+- Preview (any film): gold "Log it" ("Log again" if already logged) opens Add with the film. "Save to Wishlist" and "Trailer" are secondary; "Not interested" lives in "•••". Tags show "In your log", "In your Wishlist" or "Not interested".
+- Details (one viewing): the log read back with the same words as the Add sentence, underlined in muted gold ("You watched it again on Sunday, August 30, at home, and gave it ●●●●○"). Gold "Log again"; "Edit this viewing" and "Delete this viewing" in "•••". No Wishlist actions (the film is already watched).
+- Starring: small round faces with names. Where to watch: logos only for streaming; rent/buy as one line of text, plus "Data from JustWatch" (TMDB attribution requirement).
 
 ## Human touch (declared)
 

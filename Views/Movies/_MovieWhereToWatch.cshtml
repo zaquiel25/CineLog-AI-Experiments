@@ -1,0 +1,47 @@
+@*
+    Movie page: where to watch. Streaming services as logos; rent and buy as one line of text, so the
+    section stays short. Provider data comes from JustWatch via TMDB, which asks for this attribution.
+*@
+@using Ezequiel_Movies.Models.TmdbApi
+@{
+    var providers = ViewData["WatchProviders"] as Dictionary<string, List<ProviderInfo>>;
+    var streaming = providers != null && providers.TryGetValue("Streaming", out var s) ? s : new List<ProviderInfo>();
+    var rentOrBuy = new[] { "Rent", "Buy" }
+        .Where(k => providers != null && providers.ContainsKey(k))
+        .SelectMany(k => providers![k])
+        .Select(p => p.ProviderName)
+        .Where(n => !string.IsNullOrEmpty(n))
+        .Distinct()
+        .ToList();
+
+    string JoinNames(List<string?> names) => names.Count <= 1
+        ? string.Join("", names)
+        : string.Join(", ", names.Take(names.Count - 1)) + " and " + names.Last();
+}
+
+<section class="fr-movie-block">
+    <h2 class="fr-movie-h">Where to watch</h2>
+    @if (streaming.Any())
+    {
+        <ul class="fr-movie-providers">
+            @foreach (var provider in streaming)
+            {
+                <li>
+                    <img src="https://image.tmdb.org/t/p/w92@(provider.LogoPath)" alt="" width="36" height="36" loading="lazy" />
+                    @provider.ProviderName
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="fr-movie-text">Not streaming in your region right now.</p>
+    }
+    <p class="fr-movie-small">
+        @if (rentOrBuy.Any())
+        {
+            <text>Rent or buy on @JoinNames(rentOrBuy). </text>
+        }
+        Data from JustWatch.
+    </p>
+</section>

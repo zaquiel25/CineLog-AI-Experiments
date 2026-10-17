@@ -21,10 +21,15 @@
 }
 
 <section class="fr-suggest">
-    <h1 class="fr-page-title">Find your next movie</h1>
-    <p class="fr-page-sub">Pick a starting point. Suggestions come from what you logged.</p>
+    <partial name="_PageHero" model="@(new Ezequiel_Movies.Models.PageHeroViewModel
+    {
+        Kicker = "Suggestions",
+        Title = "Find your next movie",
+        Sub = "Pick a starting point. Suggestions come from what you logged.",
+        BackdropPath = ViewData["SuggestBackdrop"] as string
+    })" />
 
-    <nav class="fr-chips" aria-label="Suggestion types">
+    <nav class="fr-chips fr-chips--bar" aria-label="Suggestion types">
         @foreach (var (type, label) in chips)
         {
             var href = type == "surprise_me"
@@ -34,7 +39,8 @@
         }
     </nav>
 
-    <div id="suggestion-results-slot">
+    @{ var hasLogs = ViewData["HasLogs"] as bool? ?? false; }
+    <div id="suggestion-results-slot" data-autoload="@(hasLogs && Model == null ? "director_recent" : null)">
         @if (Model != null)
         {
             var nextType = ViewData["NextSuggestionType"] as string;
@@ -96,6 +102,14 @@
                         <a class="fr-chip" asp-action="ShowSuggestions" asp-route-suggestionType="movies_by_genre" asp-route-query="@genre.Id">@genre.Name</a>
                     }
                 </nav>
+            </div>
+        }
+        @if (Model == null && !hasLogs)
+        {
+            <div class="fr-empty">
+                <p class="fr-empty-title">Suggestions start with your diary.</p>
+                <p class="fr-empty-text">Log a few films you watched and we'll suggest what to see next.</p>
+                <a class="fr-link" asp-action="Add">Log a movie</a>
             </div>
         }
     </div>

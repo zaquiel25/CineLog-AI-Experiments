@@ -1,20 +1,76 @@
 @*
-    Shared header for the Wishlist page: title, tab switch (Want to see / Not interested) and the main action.
-    "Not interested" is the Blacklist action; both tabs are plain links, like Journal/Collection in My Movies.
+    Shared header for the Wishlist page: hero (latest film added, over its TMDB still), then the
+    Want to see / Not interested tabs and, on Want to see, the filters as text menus (same as My Movies).
+    "Not interested" is the Blacklist action.
 *@
+@using Ezequiel_Movies.Models
 @{
     var isWant = ViewData["ListsTab"]?.ToString() != "hidden";
     var wishlistCount = ViewData["WishlistCount"] as int? ?? 0;
     var hiddenCount = ViewData["HiddenCount"] as int? ?? 0;
+    var latest = ViewData["WishlistLatest"] as Ezequiel_Movies1.Models.Entities.WishlistItem;
+    var backdrop = ViewData["WishlistLatestBackdrop"] as string;
+    var currentFilter = ViewData["CurrentFilter"]?.ToString();
+    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "date_desc";
+    var sortOptions = new List<(string Value, string Label)>
+    {
+        ("date_desc", "Recently added"),
+        ("title_asc", "Title"),
+        ("director_asc", "Director"),
+        ("year_desc", "Release year")
+    };
+    var currentSortLabel = sortOptions.FirstOrDefault(o => o.Value == currentSort).Label ?? "Recently added";
+
+    var hero = latest != null
+        ? new PageHeroViewModel
+        {
+            Kicker = "Latest in your Wishlist · added " + latest.DateAdded.ToLocalTime().ToString("MMMM d", System.Globalization.CultureInfo.InvariantCulture),
+            Title = latest.Title,
+            TitleUrl = Url.Action("Preview", new { tmdbId = latest.TmdbId }),
+            Sub = $"{wishlistCount} {(wishlistCount == 1 ? "film" : "films")} you want to see",
+            BackdropPath = backdrop,
+            ActionText = "Find movies",
+            ActionUrl = Url.Action("Suggest")
+        }
+        : new PageHeroViewModel
+        {
+            Title = "Wishlist",
+            Sub = "Save movies from Suggestions and they will wait for you here.",
+            ActionText = "Find movies",
+            ActionUrl = Url.Action("Suggest")
+        };
 }
 
-<div class="fr-mm-head">
-    <h1 class="fr-mm-title">Wishlist</h1>
-    <div class="fr-mm-head-actions">
-        <nav class="fr-segmented" aria-label="Wishlist tabs">
-            <a asp-action="Wishlist" class="@(isWant ? "is-active" : "")" aria-current="@(isWant ? "page" : null)">Want to see <em data-list-count="want">@wishlistCount</em></a>
-            <a asp-action="Blacklist" class="@(!isWant ? "is-active" : "")" aria-current="@(!isWant ? "page" : null)">Not interested <em data-list-count="hidden">@hiddenCount</em></a>
-        </nav>
-        <a asp-action="Suggest" class="fr-btn">Find movies</a>
-    </div>
+<partial name="_PageHero" model="hero" />
+
+<div class="fr-mm-bar">
+    <nav class="fr-mm-tabs" aria-label="Wishlist tabs">
+        <a asp-action="Wishlist" class="@(isWant ? "is-active" : "")" aria-current="@(isWant ? "page" : null)">Want to see <em data-list-count="want">@wishlistCount</em></a>
+        <a asp-action="Blacklist" class="@(!isWant ? "is-active" : "")" aria-current="@(!isWant ? "page" : null)">Not interested <em data-list-count="hidden">@hiddenCount</em></a>
+    </nav>
+
+    @if (isWant && wishlistCount > 0)
+    {
+        <div class="fr-mm-filters">
+            <form method="get" action="@Url.Action("Wishlist")" class="fr-mm-search" id="listFilters" role="search">
+                <input type="hidden" name="sortOrder" value="@currentSort" />
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" name="searchString" value="@currentFilter" placeholder="Search" aria-label="Search your wishlist" />
+            </form>
+            <details class="fr-more fr-filter">
+                <summary>Sort by @currentSortLabel</summary>
+                <div class="fr-more-menu fr-filter-menu">
+                    @foreach (var option in sortOptions)
+                    {
+                        <a href="@Url.Action("Wishlist", new { sortOrder = option.Value, searchString = currentFilter })" class="@(currentSort == option.Value ? "is-current" : "")">@option.Label</a>
+                    }
+                </div>
+            </details>
+        </div>
+    }
 </div>
+
+@if (isWant && !string.IsNullOrEmpty(currentFilter))
+{
+    <p class="fr-mm-searching">Showing results for "@currentFilter" · <a href="@Url.Action("Wishlist", new { sortOrder = currentSort })">Clear</a></p>
+}

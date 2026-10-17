@@ -9,45 +9,10 @@
     ViewData["ListsTab"] = "want";
     ViewData["PaginationAction"] = "Wishlist";
     var currentFilter = ViewData["CurrentFilter"]?.ToString();
-    var currentSort = ViewData["CurrentSort"]?.ToString() ?? "date_desc";
-    var wishlistCount = ViewData["WishlistCount"] as int? ?? 0;
-
-    var sortOptions = new List<(string Value, string Label)>
-    {
-        ("date_desc", "Recently added"),
-        ("title_asc", "Title"),
-        ("director_asc", "Director"),
-        ("year_desc", "Release year")
-    };
 }
 
 <section class="fr-mm">
     <partial name="_ListsHeader" />
-
-    @if (wishlistCount > 0)
-    {
-        <form method="get" action="@Url.Action("Wishlist")" class="fr-mm-tools" id="listFilters">
-            <div class="fr-search">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="search" name="searchString" value="@currentFilter" placeholder="Search your wishlist" aria-label="Search your wishlist" />
-            </div>
-
-            <label class="fr-select">
-                <span class="visually-hidden">Sort by</span>
-                <select name="sortOrder" data-autosubmit>
-                    @foreach (var option in sortOptions)
-                    {
-                        <option value="@option.Value" selected="@(currentSort == option.Value)">@option.Label</option>
-                    }
-                </select>
-            </label>
-
-            @if (!string.IsNullOrEmpty(currentFilter))
-            {
-                <a class="fr-mm-clear" href="@Url.Action("Wishlist", new { sortOrder = ViewData["CurrentSort"] })">Clear search "@currentFilter"</a>
-            }
-        </form>
-    }
 
     @if (!Model.Any())
     {

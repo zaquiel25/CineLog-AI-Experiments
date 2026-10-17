@@ -79,12 +79,57 @@ namespace Ezequiel_Movies.Controllers
         }
 
         /// <summary>
-        /// Totals for the Wishlist / Not interested tabs, regardless of search or page.
+        /// Totals for the Wishlist / Not interested tabs, regardless of search or page, plus the page hero:
+        /// the latest film added to the wishlist over its TMDB still.
         /// </summary>
         private async Task SetListCountsAsync(string userId)
         {
             ViewData["WishlistCount"] = await _dbContext.WishlistItems.CountAsync(w => w.UserId == userId);
             ViewData["HiddenCount"] = await _dbContext.BlacklistedMovies.CountAsync(b => b.UserId == userId);
+
+            var latest = await _dbContext.WishlistItems.AsNoTracking()
+                .Where(w => w.UserId == userId)
+                .OrderByDescending(w => w.DateAdded)
+                .FirstOrDefaultAsync();
+            ViewData["WishlistLatest"] = latest;
+            ViewData["WishlistLatestBackdrop"] = await GetBackdropAsync(latest?.TmdbId);
+        }
+
+        /// <summary>
+        /// TMDB backdrop (wide still) for a film, used by the page heroes. Comes from the cached details call.
+        /// </summary>
+        private async Task<string?> GetBackdropAsync(int? tmdbId)
+        {
+            if (tmdbId == null || tmdbId <= 0) return null;
+            var details = await _tmdbService.GetMovieDetailsAsync(tmdbId.Value);
+            return details?.BackdropPath;
+        }
+
+        /// <summary>
+        /// Suggestions hero: the still of one of the user's favourite films (rated 4 or more), picked at random
+        /// so it changes between visits and differs from the My Movies hero. Falls back to any logged film.
+        /// </summary>
+        private async Task SetSuggestHeroAsync(string? userId)
+        {
+            if (userId == null) return;
+            ViewData["HasLogs"] = await _dbContext.Movies.AnyAsync(m => m.UserId == userId);
+            var tmdbIds = await _dbContext.Movies.AsNoTracking()
+                .Where(m => m.UserId == userId && m.TmdbId != null && m.UserRating >= 4)
+                .Select(m => m.TmdbId)
+                .Distinct()
+                .ToListAsync();
+            if (!tmdbIds.Any())
+            {
+                tmdbIds = await _dbContext.Movies.AsNoTracking()
+                    .Where(m => m.UserId == userId && m.TmdbId != null)
+                    .Select(m => m.TmdbId)
+                    .Distinct()
+                    .ToListAsync();
+            }
+            if (tmdbIds.Any())
+            {
+                ViewData["SuggestBackdrop"] = await GetBackdropAsync(tmdbIds[Random.Shared.Next(tmdbIds.Count)]);
+            }
         }
 
         private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
@@ -345,6 +390,9 @@ namespace Ezequiel_Movies.Controllers
                     return Json(new { success = false, message = "An error occurred while adding the movie to your blacklist." });
                 throw;
             }
+            // FIX: honor returnUrl on success too, so the movie page reloads in place
+            if (returnUrl != "/" && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
             return RedirectToAction(nameof(Blacklist));
         }
 
@@ -700,6 +748,9 @@ namespace Ezequiel_Movies.Controllers
                 throw;
             }
 
+            // FIX: honor returnUrl on success too (it was only used on the early exits), so the movie page reloads in place
+            if (returnUrl != "/" && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
             return RedirectToAction("Wishlist");
         }
         // Alternative removal method for wishlist items by TMDB ID
@@ -866,7 +917,7 @@ namespace Ezequiel_Movies.Controllers
                 ViewData["TrailerUrl"] = $"https://www.youtube.com/watch?v={trailerKey}";
 
             // FEATURE: Dynamic OG tags for social sharing — shows movie poster and info when link is shared
-            ViewData["OgTitle"] = $"{movieDetails.Title} — FrameRoute";
+            ViewData["OgTitle"] = $"{movieDetails.Title} · FrameRoute";
             ViewData["OgDescription"] = !string.IsNullOrEmpty(movieDetails.Overview)
                 ? (movieDetails.Overview.Length > 150 ? movieDetails.Overview[..150] + "..." : movieDetails.Overview)
                 : "Check out this movie on FrameRoute.";
@@ -897,35 +948,12 @@ namespace Ezequiel_Movies.Controllers
                 return NotFound();
             }
 
-            // Determine if the movie is in the user's wishlist
-            bool isInWishlist = false;
-            if (movie.TmdbId.HasValue)
-            {
-                isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == movie.TmdbId.Value);
-            }
-            else
-            {
-                // If no TmdbId, search by local Id (if supported by WishlistItem)
-                isInWishlist = await _dbContext.WishlistItems.AnyAsync(w => w.UserId == userId && w.TmdbId == 0);
-            }
-            ViewData["IsInWishlist"] = isInWishlist;
-
-            // Determine if the movie is in the user's blacklist (copied from Preview)
-            bool isInBlacklist = false;
-            if (movie.TmdbId.HasValue)
-            {
-                isInBlacklist = await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == movie.TmdbId.Value);
-            }
-            else
-            {
-                isInBlacklist = await _dbContext.BlacklistedMovies.AnyAsync(b => b.UserId == userId && b.TmdbId == 0);
-            }
-            ViewData["IsInBlacklist"] = isInBlacklist;
-
             if (movie.TmdbId.HasValue)
             {
                 // Retrieve "Where to Watch" info (Streaming, Buy, Rent)
                 var movieDetails = await _tmdbService.GetMovieDetailsAsync(movie.TmdbId.Value);
+                // Runtime, tagline and TMDB score for the page header
+                ViewData["TmdbDetails"] = movieDetails;
                 var watchProviders = await _tmdbService.GetWatchProvidersAsync(movie.TmdbId.Value, movieDetails?.Title ?? string.Empty);
                 if (watchProviders?.Results != null)
                 {
@@ -944,10 +972,10 @@ namespace Ezequiel_Movies.Controllers
                     ViewData["WatchProviders"] = allProviders;
                 }
 
-                // Pass the top 3 cast members to the view
+                // Pass the top 4 cast members to the view (same as Preview)
                 if (movieDetails?.Credits?.Cast != null)
                 {
-                    ViewData["Cast"] = movieDetails.Credits.Cast.Take(3).ToList();
+                    ViewData["Cast"] = movieDetails.Credits.Cast.Take(4).ToList();
                 }
 
                 // FEATURE: Pass YouTube trailer URL if available
@@ -957,7 +985,7 @@ namespace Ezequiel_Movies.Controllers
             }
 
             // FEATURE: Dynamic OG tags for social sharing — shows movie poster and info when link is shared
-            ViewData["OgTitle"] = $"{movie.Title} — FrameRoute";
+            ViewData["OgTitle"] = $"{movie.Title} · FrameRoute";
             ViewData["OgDescription"] = !string.IsNullOrEmpty(movie.Overview)
                 ? (movie.Overview.Length > 150 ? movie.Overview[..150] + "..." : movie.Overview)
                 : "Check out this movie on FrameRoute.";
@@ -1132,6 +1160,7 @@ namespace Ezequiel_Movies.Controllers
                 return Json(new { success = true, html = html });
             }
 
+            await SetSuggestHeroAsync(_userManager.GetUserId(User));
             return View("Suggest", suggestedMoviesList);
         }
 
@@ -1556,7 +1585,7 @@ namespace Ezequiel_Movies.Controllers
 
                 // 5. Obtener Sugerencias y Construir Respuesta
                 var suggestedMovies = await GetSuggestionsForDirector(directorToSuggest, userId);
-                var suggestionTitle = $"Because you like {directorToSuggest}...";
+                var suggestionTitle = $"Because you like {directorToSuggest}";
 
                 // This should now rarely happen since we pre-filter directors, but keeping as safety net
                 if (!suggestedMovies.Any())
@@ -2497,9 +2526,10 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
 
         [HttpGet]
-        public IActionResult Suggest()
+        public async Task<IActionResult> Suggest()
         {
             // Display initial suggestion page with criteria buttons
+            await SetSuggestHeroAsync(_userManager.GetUserId(User));
             return View();
         }
 
@@ -2789,7 +2819,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                                 var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
                                 directorToSuggest = fallbackDirector;
                                 directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
-                                suggestionTitle = $"Because you like {fallbackDirector}... (Random)";
+                                suggestionTitle = $"Because you like {fallbackDirector} (Random)";
                                 _logger.LogInformation("Fallback director selected: {Director}", fallbackDirector);
                             }
                             else
@@ -2801,7 +2831,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                         }
 
                         suggestedMovies = directorSuggestions;
-                        suggestionTitle = $"Because you like {directorToSuggest}...";
+                        suggestionTitle = $"Because you like {directorToSuggest}";
                         nextSuggestionType = nextDirectorType;
                         nextQuery = directorToSuggest;
                         break;
@@ -3202,6 +3232,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                 return Json(new { success = true, html = html });
             }
 
+            await SetSuggestHeroAsync(_userManager.GetUserId(User));
             return View("Suggest", suggestedMovies);
         }
 
@@ -3852,6 +3883,17 @@ return (bucket3x3, bucket2x3, bucket1x3);
             
             ViewData["TimelineNavigator"] = timelineData;
             ViewData["CurrentMonthFilter"] = monthFilter;
+
+            // FEATURE: My Movies hero. The last watched film (with its TMDB backdrop) and diary totals,
+            // independent of the current filters and page
+            var lastWatched = await _dbContext.Movies.AsNoTracking()
+                .Where(m => m.UserId == userId && m.DateWatched != null)
+                .OrderByDescending(m => m.DateWatched)
+                .FirstOrDefaultAsync();
+            ViewData["LastWatched"] = lastWatched;
+            ViewData["LastWatchedBackdrop"] = await GetBackdropAsync(lastWatched?.TmdbId);
+            ViewData["DiaryViewings"] = await _dbContext.Movies.CountAsync(m => m.UserId == userId);
+            ViewData["DiaryRewatches"] = await _dbContext.Movies.CountAsync(m => m.UserId == userId && m.IsRewatch);
 
             IActionResult result;
             if (viewMode == "collection")

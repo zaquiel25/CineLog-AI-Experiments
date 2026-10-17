@@ -7,10 +7,15 @@
 - **My Movies redesigned**: Journal is now a diary grouped by month (day, poster, title, director, rating dots); Collection is a poster wall with stats in one line of text. One filter bar (search, month, sort, first watches only), edit/delete moved to a "•••" menu, one gold "Log a movie" button
 - **Rating dots partial** (`_RatingDots`): five dots with half points, reusable across the site
 - **Suggestions redesigned**: chips instead of six icon boxes, results right below, one "Shuffle" button, cards with "Save to Wishlist" plus a "•••" menu ("I've seen it", "Not interested"), sideways scrolling on mobile, single result centered
+- **Movie pages redesigned (Preview and Details)**: one layout with a sticky poster, Newsreader title, one meta line (now with runtime), "Log it" / "Log again" as the main action and the rest in "•••". Details reads the log back as a sentence. Where to watch shows logos only for streaming and credits JustWatch
 - **Log a movie (Add) redesigned**: search results with posters; on desktop the log is a sentence ("I watched Aftersun for the first time today, at home, and I'd give it ●●●●○"), on mobile the same choices as chips. Interactive rating dots replace the stars, and "again" is pre-selected for films already logged. Nav item renamed from "Add New" to "Log a movie"
 - **Wishlist redesigned**: one page with two tabs. "Want to see" is a poster wall (search, sort, "•••" menu with "I've seen it" and "Remove from Wishlist"); "Not interested" (the old Blacklist) is a compact list with when each movie was hidden and "Show in suggestions again". One gold "Find movies" button
 
 ### Changed
+- **Suggestions open with personalized results** ("By director") when the user has logged films; without logs, a prompt to log the first one. Director titles no longer end in "..."
+- **Wishlist, Suggestions and Add follow the same pattern**: shared page hero with a film still (Wishlist: latest added; Suggestions: a random favourite), tabs on a bar, filters as text menus, and Add opens with a small label and the big search field
+- **My Movies rebuilt from real references**: hero with the last watched film's still, Diary/Collection tabs, filters as small caps text menus (no native selects), the diary as a table with month badges. Film titles now use Newsreader 600 (self-hosted, OFL)
+- **No more pills (all pages)**: tabs and chips are text with the hand-drawn underline on the active one, buttons use a 6px radius, search and selects are underlined fields. Page titles ("My Movies", "Wishlist", "Find your next movie", "Log a movie") switch to Newsreader. Add title changed from "What did you watch?" to "Log a movie"
 - **Home redesigned**: New headline and copy, gold "Log a movie" plus a quiet "Explore suggestions" button, fanned posters, and "how it works" reduced to one line with progress dots
 - **Navigation redesigned (all pages)**: Sticky nav with hand-drawn underline on the active section, new mobile menu, "Sign up" as a text link. Labels shortened: Wishlist, Suggestions, Log in, Sign up, Log out
 - **Footer redesigned (all pages)**: Quiet dark footer instead of the gold block; "Free App" moved here as "Get the app"
@@ -36,6 +41,8 @@
 - **Azure infrastructure**: Azure subscription canceled. Removed Key Vault integration, `AZURE_SQL_*` connection logic, and the `Azure.Identity`, `Azure.Extensions.AspNetCore.Configuration.Secrets` and `Microsoft.EntityFrameworkCore.SqlServer` packages. The site is offline until a new host is set up
 
 ### Fixed
+- **Save to Wishlist / Not interested from a movie page** sent you to the Wishlist or Blacklist page instead of back to the movie: the `returnUrl` was ignored on success
+- **Em dash in social titles**: movie OG titles now read "Aftersun · FrameRoute"
 - **CSRF on Add**: the log form always sent an anti-forgery token, but the POST action never validated it
 - **Unencoded HTML in Add search results**: TMDB titles were inserted with `innerHTML`; results are now built with `textContent`
 - **Case-sensitive search in My Movies**: after the move to SQLite, searching "wenders" did not find "Wenders". Title and director now compare lowercased (Wishlist and Blacklist already did)

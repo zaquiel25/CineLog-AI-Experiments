@@ -10,6 +10,7 @@
 @font-face { font-family: "Geist"; src: url("../fonts/geist-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: "Geist"; src: url("../fonts/geist-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
 @font-face { font-family: "Newsreader"; src: url("../fonts/newsreader-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("../fonts/newsreader-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
 
 :root {
     /* Color */
@@ -29,7 +30,8 @@
     --fr-font-film: "Newsreader", Georgia, serif;
 
     /* Shape */
-    --fr-radius-pill: 980px;
+    /* Buttons and fields: a small radius. Pills everywhere read as a generic template (see DESIGN.md) */
+    --fr-radius-control: 6px;
     --fr-radius-card: 14px;
     --fr-radius-poster: 8px;
 
@@ -66,7 +68,7 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
     line-height: 1;
     padding: 14px 24px;
     border: 0; /* <button class="fr-btn"> would otherwise get the browser's default border */
-    border-radius: var(--fr-radius-pill);
+    border-radius: var(--fr-radius-control);
     text-decoration: none;
     transition: background-color .16s var(--fr-ease-out), transform .16s var(--fr-ease-out);
 }
@@ -422,7 +424,7 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
    -------------------------------------------------------------------------- */
 .fr-film-title {
     font-family: var(--fr-font-film);
-    font-weight: 400;
+    font-weight: 600; /* bold serif reads warm; 400 at large sizes looked thin and cold */
     color: var(--fr-text);
     text-decoration: none;
     line-height: 1.2;
@@ -440,7 +442,7 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
     line-height: 1;
     color: var(--fr-sig);
     padding: 4px 8px;
-    border-radius: var(--fr-radius-pill);
+    border-radius: 4px;
     background: rgba(184, 161, 90, .12);
     vertical-align: middle;
 }
@@ -575,11 +577,12 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
     gap: 20px 32px;
 }
 
+/* Page titles use the film voice (Newsreader), so they read like a magazine, not a dashboard */
 .fr-mm .fr-mm-title {
-    font-family: var(--fr-font-ui);
-    font-size: clamp(34px, 4.4vw, 44px);
-    font-weight: 600;
-    letter-spacing: -0.035em;
+    font-family: var(--fr-font-film);
+    font-size: clamp(40px, 4.8vw, 52px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
     line-height: 1;
     color: var(--fr-text);
     text-align: left;
@@ -587,11 +590,13 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 }
 
 .fr-mm-title span {
-    font-size: .55em;
-    font-weight: 300;
-    letter-spacing: -0.01em;
+    font-family: var(--fr-font-ui);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0;
     color: var(--fr-muted);
-    margin-left: 8px;
+    margin-left: 14px;
+    vertical-align: middle;
 }
 
 .fr-mm-head-actions {
@@ -602,32 +607,39 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 
 .fr-mm-head-actions .fr-btn { font-size: 15px; padding: 11px 20px; }
 
+/* Tabs as text: the active one gets the hand-drawn underline (same stroke as the nav) */
 .fr-segmented {
     display: inline-flex;
-    padding: 3px;
-    background: var(--fr-surface);
-    border: 1px solid var(--fr-line);
-    border-radius: var(--fr-radius-pill);
+    gap: 28px;
 }
 
 .fr-segmented a {
-    font-size: 14px;
+    position: relative;
+    font-size: 15px;
     color: var(--fr-muted);
     text-decoration: none;
-    padding: 8px 16px;
-    border-radius: var(--fr-radius-pill);
-    transition: color .16s var(--fr-ease-out), background-color .16s var(--fr-ease-out);
+    padding: 6px 0;
+    transition: color .16s var(--fr-ease-out);
 }
 
 .fr-segmented a:hover { color: var(--fr-text); }
 
-.fr-segmented a.is-active {
-    color: var(--fr-text);
-    background: var(--fr-surface-2);
-    box-shadow: inset 0 0 0 1px rgba(243, 239, 230, .12);
+.fr-segmented a.is-active { color: var(--fr-text); }
+
+.fr-segmented a.is-active::after,
+.fr-chip.is-active::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: -4px;
+    height: 6px;
+    background: var(--fr-sig);
+    -webkit-mask: var(--fr-stroke) center / 100% 100% no-repeat;
+    mask: var(--fr-stroke) center / 100% 100% no-repeat;
 }
 
-.fr-segmented a:focus-visible { outline: 2px solid var(--fr-action); outline-offset: 2px; }
+.fr-segmented a:focus-visible { outline: 2px solid var(--fr-action); outline-offset: 4px; border-radius: 2px; }
 
 .fr-mm-tools {
     display: flex;
@@ -645,7 +657,7 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 
 .fr-search i {
     position: absolute;
-    left: 14px;
+    left: 2px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--fr-muted);
@@ -653,21 +665,23 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
     pointer-events: none;
 }
 
+/* Fields are a line, not a box (editorial, like a form on paper) */
 .fr-search input,
 .fr-select select {
     font-family: var(--fr-font-ui);
-    font-size: 14px;
+    font-size: 15px;
     color: var(--fr-text);
-    background-color: var(--fr-surface);
-    border: 1px solid var(--fr-line);
-    border-radius: var(--fr-radius-pill);
+    background-color: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(243, 239, 230, .18);
+    border-radius: 0;
     height: 40px;
     transition: border-color .16s var(--fr-ease-out);
 }
 
 .fr-search input {
     width: 100%;
-    padding: 0 16px 0 36px;
+    padding: 0 4px 0 24px;
 }
 
 .fr-search input::placeholder { color: var(--fr-muted); }
@@ -675,12 +689,15 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 .fr-select select {
     appearance: none;
     -webkit-appearance: none;
-    padding: 0 36px 0 16px;
+    padding: 0 24px 0 2px;
     cursor: pointer;
+    color-scheme: dark; /* FIX: keeps the native dropdown dark and readable now that the field is transparent */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239A9385' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 14px center;
+    background-position: right 4px center;
 }
+
+.fr-select option { background: var(--fr-surface); color: var(--fr-text); }
 
 .fr-search input:hover,
 .fr-select select:hover { border-color: rgba(243, 239, 230, .2); }
@@ -722,46 +739,333 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 .fr-mm-stats b { color: var(--fr-text); font-weight: 500; }
 
 /* --------------------------------------------------------------------------
-   My Movies: Journal (diary)
+   Page hero (film still) + bar (tabs and text filters): My Movies, Wishlist, Suggestions
    -------------------------------------------------------------------------- */
-.fr-diary { margin-top: 16px; }
-
-.fr-mm .fr-diary-month {
-    font-family: var(--fr-font-ui);
-    font-size: 19px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--fr-text);
-    text-align: left;
-    margin: 40px 0 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--fr-line);
+.fr-ph {
+    position: relative;
+    min-height: 340px;
+    display: flex;
+    align-items: flex-end;
+    border-radius: var(--fr-radius-card);
+    overflow: hidden;
+    background: var(--fr-surface);
 }
 
+.fr-ph--plain { min-height: 0; background: none; border-radius: 0; overflow: visible; }
+
+.fr-ph-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+}
+
+/* Exception to "no gradients": a functional scrim so the text over the still stays legible */
+.fr-ph:not(.fr-ph--plain)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(13, 12, 10, .25), rgba(13, 12, 10, .55) 55%, rgba(13, 12, 10, .92));
+}
+
+.fr-ph-in {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 32px;
+}
+
+.fr-ph--plain .fr-ph-in { padding: 8px 0 0; }
+
+p.fr-ph-kicker {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #E7E0D1;
+    text-align: left;
+    margin: 0 0 12px;
+}
+
+h1.fr-ph-title {
+    font-family: var(--fr-font-film);
+    font-weight: 600;
+    font-size: clamp(34px, 4.2vw, 48px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: #fff;
+    text-align: left;
+    margin: 0;
+}
+
+.fr-ph-title a { color: inherit; text-decoration: none; }
+.fr-ph-title a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
+p.fr-ph-sub {
+    font-size: 15px;
+    color: #E7E0D1;
+    text-align: left;
+    margin: 10px 0 0;
+}
+
+.fr-mm-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-top: 24px;
+    border-bottom: 1px solid rgba(243, 239, 230, .18);
+}
+
+.fr-mm-tabs { display: flex; gap: 28px; }
+
+.fr-mm-tabs a {
+    position: relative;
+    font-size: 15px;
+    color: var(--fr-muted);
+    text-decoration: none;
+    padding: 4px 0 12px;
+}
+
+.fr-mm-tabs a:hover,
+.fr-mm-tabs a.is-active { color: var(--fr-text); }
+
+.fr-mm-tabs a.is-active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--fr-sig);
+}
+
+.fr-mm-tabs em {
+    font-style: normal;
+    font-size: 13px;
+    color: var(--fr-muted);
+    margin-left: 4px;
+}
+
+/* Suggestions: the starting points read as tabs on a bar, like the My Movies / Wishlist tabs */
+.fr-chips--bar {
+    margin-top: 24px;
+    padding-bottom: 0;
+    border-bottom: 1px solid rgba(243, 239, 230, .18);
+}
+
+.fr-chips--bar .fr-chip { padding: 4px 0 12px; }
+
+.fr-chips--bar .fr-chip.is-active::after {
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    -webkit-mask: none;
+    mask: none;
+}
+
+/* Small caps page label (Add): the content below is the protagonist, not the page title */
+h1.fr-page-kicker {
+    font-family: var(--fr-font-ui);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(243, 239, 230, .18);
+}
+
+.fr-mm-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    padding-bottom: 8px;
+}
+
+/* Filters as small caps text with a caret, opening a menu below (no boxes, no native selects) */
+.fr-filter summary,
+.fr-filter-toggle {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fr-muted);
+    text-decoration: none;
+    padding: 6px 0;
+    background: none;
+    border-radius: 0;
+}
+
+.fr-filter summary::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-3px) rotate(45deg);
+}
+
+.fr-filter summary:hover,
+.fr-filter[open] summary,
+.fr-filter-toggle:hover { color: var(--fr-text); background: none; }
+
+.fr-filter-toggle.is-on { color: var(--fr-text); }
+.fr-filter-toggle.is-on::before { content: "✓ "; color: var(--fr-sig); }
+
+.fr-filter-menu {
+    min-width: 200px;
+    max-height: 320px;
+    overflow-y: auto;
+    border-radius: var(--fr-radius-control);
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.fr-filter-menu a.is-current { color: var(--fr-text); }
+.fr-filter-menu a.is-current::after { content: " ✓"; color: var(--fr-sig); }
+
+.fr-mm-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.fr-mm-search i {
+    position: absolute;
+    left: 0;
+    font-size: 12px;
+    color: var(--fr-muted);
+    pointer-events: none;
+}
+
+.fr-mm-search input {
+    width: 150px;
+    height: 30px;
+    padding: 0 0 0 20px;
+    font-family: var(--fr-font-ui);
+    font-size: 13px;
+    color: var(--fr-text);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color .16s var(--fr-ease-out), width .2s var(--fr-ease-out);
+}
+
+.fr-mm-search input::placeholder {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fr-muted);
+}
+
+.fr-mm-search input:focus { outline: none; border-bottom-color: var(--fr-muted); width: 200px; }
+
+.fr-mm p.fr-mm-searching {
+    font-size: 14px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 16px 0 0;
+}
+
+.fr-mm-searching a { color: var(--fr-text); }
+
+/* --------------------------------------------------------------------------
+   My Movies: Diary (a table, like a film diary)
+   -------------------------------------------------------------------------- */
+.fr-diary-cols,
 .fr-diary-row {
     display: grid;
-    grid-template-columns: 56px 52px minmax(0, 1fr) auto 40px;
-    grid-template-areas: "day poster info rating more";
+    grid-template-columns: 56px 40px 36px minmax(0, 1fr) 72px 110px 32px;
+    grid-template-areas: "mon day poster info year rating more";
     align-items: center;
-    gap: 20px;
-    padding: 14px 0;
+    column-gap: 16px;
+}
+
+.fr-diary-cols {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #6F695E;
+    padding: 12px 0 8px;
     border-bottom: 1px solid var(--fr-line);
 }
 
-.fr-diary-day { grid-area: day; text-align: center; }
+.fr-diary-cols span:nth-child(3) { grid-column: poster / info; }
+.fr-diary-cols span:nth-child(4) { display: none; }
+
+.fr-diary-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--fr-line);
+}
+
+/* On desktop the month lives in the almanac badge; the heading stays for screen readers */
+.fr-mm .fr-diary-month {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.fr-diary-mon { grid-area: mon; }
+
+.fr-diary-mon b {
+    display: block;
+    width: 52px;
+    padding: 6px 0 2px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: var(--fr-text);
+    background: var(--fr-surface-2);
+    border-radius: 4px 4px 0 0;
+}
+
+.fr-diary-mon small {
+    display: block;
+    width: 52px;
+    padding: 0 0 5px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--fr-muted);
+    background: var(--fr-surface-2);
+    border-radius: 0 0 4px 4px;
+}
+
+.fr-diary-day { grid-area: day; text-align: left; }
 
 .fr-diary-day b {
     display: block;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 300;
-    letter-spacing: -0.02em;
     line-height: 1;
-    color: var(--fr-text);
+    color: var(--fr-muted);
 }
+
+/* Day of week only matters when not grouped by month */
+.fr-diary--months .fr-diary-day small { display: none; }
 
 .fr-diary-day small {
     display: block;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--fr-muted);
     margin-top: 4px;
 }
@@ -771,27 +1075,28 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 .fr-diary-poster img,
 .fr-diary-poster:empty {
     display: block;
-    width: 52px;
-    height: 78px;
+    width: 36px;
+    height: 54px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 3px;
     background: var(--fr-surface);
 }
 
 .fr-diary-info { grid-area: info; min-width: 0; }
 
-.fr-diary-info .fr-film-title { font-size: 21px; margin-right: 8px; }
+.fr-diary-info .fr-film-title { font-size: 20px; margin-right: 8px; }
 
 .fr-mm .fr-diary-meta {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--fr-muted);
     text-align: left;
-    margin: 4px 0 0;
+    margin: 3px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.fr-diary-year { grid-area: year; font-size: 13px; color: var(--fr-muted); }
 .fr-diary-rating { grid-area: rating; }
 .fr-diary-row .fr-more { grid-area: more; justify-self: end; }
 
@@ -872,8 +1177,12 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
 
     .fr-search { flex-basis: 100%; max-width: none; }
 
+    .fr-diary-cols,
+    .fr-diary-mon,
+    .fr-diary-year { display: none; }
+
     .fr-diary-row {
-        grid-template-columns: 40px 44px minmax(0, 1fr) 36px;
+        grid-template-columns: 32px 40px minmax(0, 1fr) 32px;
         grid-template-areas:
             "day poster info more"
             "day poster rating more";
@@ -881,13 +1190,32 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
         row-gap: 6px;
     }
 
+    .fr-mm .fr-diary-month {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--fr-muted);
+        margin: 28px 0 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--fr-line);
+    }
+
     .fr-diary-rating { align-self: start; }
     .fr-diary-info { align-self: end; }
-    .fr-diary-day b { font-size: 22px; }
     .fr-diary-poster img,
-    .fr-diary-poster:empty { width: 44px; height: 66px; }
+    .fr-diary-poster:empty { width: 40px; height: 60px; }
     .fr-diary-info .fr-film-title { font-size: 18px; }
-    .fr-mm .fr-diary-meta { font-size: 13px; }
+
+    .fr-ph { min-height: 260px; }
+    .fr-ph-in { flex-direction: column; align-items: flex-start; padding: 20px; }
+    .fr-mm-bar { align-items: stretch; }
+    .fr-mm-filters { width: 100%; }
 
     .fr-wall {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -905,10 +1233,10 @@ body, p, .btn, .subtitle, h1, h2, h3, h4, h5, h6 {
    Page titles (shared by inner pages)
    -------------------------------------------------------------------------- */
 .fr-page-title {
-    font-family: var(--fr-font-ui);
-    font-size: clamp(34px, 4.4vw, 44px);
-    font-weight: 600;
-    letter-spacing: -0.035em;
+    font-family: var(--fr-font-film);
+    font-size: clamp(40px, 4.8vw, 52px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
     line-height: 1;
     color: var(--fr-text);
     text-align: left;
@@ -940,32 +1268,30 @@ p.fr-page-sub {
 .fr-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px 28px;
     margin-top: 28px;
+    padding-bottom: 6px; /* room for the underline when the row scrolls sideways on mobile */
 }
 
+/* Chips as text, like the tabs: the active one gets the hand-drawn underline */
 .fr-chip {
+    position: relative;
     font-family: var(--fr-font-ui);
-    font-size: 14px;
+    font-size: 15px;
     white-space: nowrap;
     color: var(--fr-muted);
     text-decoration: none;
-    padding: 9px 16px;
-    border-radius: var(--fr-radius-pill);
-    background: var(--fr-surface);
-    border: 1px solid var(--fr-line);
-    transition: color .16s var(--fr-ease-out), background-color .16s var(--fr-ease-out);
+    padding: 6px 0;
+    background: none;
+    border: 0;
+    transition: color .16s var(--fr-ease-out);
 }
 
 .fr-chip:hover { color: var(--fr-text); }
 
-.fr-chip.is-active {
-    color: var(--fr-text);
-    background: var(--fr-surface-2);
-    box-shadow: inset 0 0 0 1px rgba(243, 239, 230, .14);
-}
+.fr-chip.is-active { color: var(--fr-text); }
 
-.fr-chip:focus-visible { outline: 2px solid var(--fr-action); outline-offset: 2px; }
+.fr-chip:focus-visible { outline: 2px solid var(--fr-action); outline-offset: 4px; border-radius: 2px; }
 
 /* --------------------------------------------------------------------------
    Suggestions
@@ -1372,7 +1698,7 @@ p.fr-page-sub {
 
 .fr-log-search-field i {
     position: absolute;
-    left: 20px;
+    left: 4px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--fr-muted);
@@ -1381,14 +1707,15 @@ p.fr-page-sub {
 
 .fr-log-search-field input {
     width: 100%;
-    height: 56px;
-    padding: 0 20px 0 48px;
-    font-family: var(--fr-font-ui);
-    font-size: 19px;
+    height: 60px;
+    padding: 0 4px 0 36px;
+    font-family: var(--fr-font-film);
+    font-size: 28px;
     color: var(--fr-text);
-    background: var(--fr-surface);
-    border: 1px solid rgba(243, 239, 230, .2);
-    border-radius: var(--fr-radius-pill);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(243, 239, 230, .3);
+    border-radius: 0;
     transition: border-color .16s var(--fr-ease-out);
 }
 
@@ -1656,7 +1983,7 @@ p.fr-log-sentence {
         margin-bottom: 12px;
     }
 
-    .fr-log-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .fr-log-chips { display: flex; flex-wrap: wrap; gap: 10px 24px; }
     .fr-log-chips .fr-chip { cursor: pointer; }
 
     .fr-log-date { display: block; margin-top: 12px; }
@@ -1669,7 +1996,7 @@ p.fr-log-sentence {
         color: var(--fr-text);
         background: var(--fr-surface);
         border: 1px solid var(--fr-line);
-        border-radius: var(--fr-radius-pill);
+        border-radius: var(--fr-radius-control);
         color-scheme: dark;
     }
 
@@ -1682,6 +2009,190 @@ p.fr-log-sentence {
 
     .fr-log-actions { margin-top: 32px; }
     .fr-log-actions .fr-btn { flex: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   Movie page (Preview and Details): poster left (sticky), everything else right
+   -------------------------------------------------------------------------- */
+.fr-movie {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 0 96px;
+}
+
+.fr-movie-poster {
+    position: sticky;
+    top: 96px;
+    aspect-ratio: 2 / 3;
+    border-radius: var(--fr-radius-poster);
+    overflow: hidden;
+    background: var(--fr-surface);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .5);
+}
+
+.fr-movie-poster img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fr-movie-body { min-width: 0; }
+
+.fr-movie h1.fr-movie-title {
+    font-family: var(--fr-font-film);
+    font-weight: 400;
+    font-size: clamp(40px, 5vw, 60px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--fr-text);
+    text-align: left;
+    margin: 0;
+}
+
+.fr-movie p.fr-movie-meta {
+    font-size: 15px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 14px 0 0;
+}
+
+.fr-movie p.fr-movie-tagline {
+    font-family: var(--fr-font-film);
+    font-style: italic;
+    font-size: 19px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 16px 0 0;
+}
+
+.fr-movie p.fr-movie-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 0;
+}
+
+/* The log read back: same underlined words as the Add sentence */
+.fr-movie-log {
+    max-width: 620px;
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--fr-surface);
+    border: 1px solid var(--fr-line);
+    border-radius: var(--fr-radius-card);
+}
+
+.fr-movie-log p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 0;
+}
+
+.fr-movie-log b {
+    font-weight: 400;
+    color: var(--fr-text);
+    border-bottom: 2px solid var(--fr-sig);
+}
+
+.fr-movie-log .fr-rating { margin-left: 4px; }
+.fr-movie-log .fr-rating i { width: 10px; height: 10px; }
+
+.fr-movie-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.fr-movie-actions form { margin: 0; }
+.fr-movie-actions .fr-btn { font-size: 15px; padding: 12px 20px; gap: 6px; }
+.fr-more-menu form { margin: 0; }
+
+.fr-movie p.fr-movie-overview {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--fr-text);
+    max-width: 62ch;
+    text-align: left;
+    margin: 36px 0 0;
+}
+
+.fr-movie-block { margin-top: 36px; }
+
+.fr-movie h2.fr-movie-h {
+    font-family: var(--fr-font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 0 0 14px;
+}
+
+.fr-movie-cast,
+.fr-movie-providers {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+}
+
+.fr-movie-cast li,
+.fr-movie-providers li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--fr-text);
+}
+
+.fr-movie-cast img,
+.fr-movie-face {
+    display: block;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--fr-surface-2);
+}
+
+.fr-movie-providers img { border-radius: 8px; }
+
+.fr-movie p.fr-movie-text {
+    font-size: 15px;
+    color: var(--fr-text);
+    text-align: left;
+    margin: 0;
+}
+
+.fr-movie p.fr-movie-small {
+    font-size: 13px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 12px 0 0;
+}
+
+@media (max-width: 767.98px) {
+    .fr-movie {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding: 16px 8px 80px;
+    }
+
+    .fr-movie-poster { position: static; width: 180px; }
+    .fr-movie h1.fr-movie-title { font-size: 36px; }
 }
 
 /* --------------------------------------------------------------------------

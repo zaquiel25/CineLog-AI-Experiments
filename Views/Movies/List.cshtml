@@ -36,26 +36,39 @@
     }
     else
     {
-        <div class="fr-diary" data-movie-list>
+        <div class="fr-diary@(groupByMonth ? " fr-diary--months" : "")" data-movie-list>
+            <div class="fr-diary-cols" aria-hidden="true">
+                <span>@(groupByMonth ? "Month" : "")</span><span>Day</span><span></span><span>Film</span><span>Released</span><span>Rating</span><span></span>
+            </div>
             @foreach (var movie in Model)
             {
                 var watched = movie.DateWatched;
+                var startsMonth = false;
                 if (groupByMonth && watched.HasValue)
                 {
                     var monthKey = watched.Value.ToString("yyyy-MM");
                     if (monthKey != currentMonthKey)
                     {
                         currentMonthKey = monthKey;
+                        startsMonth = true;
+                        @* Shown as a heading on mobile; on desktop the month is the almanac badge in the row *@
                         <h2 class="fr-diary-month">@watched.Value.ToString("MMMM yyyy")</h2>
                     }
                 }
 
                 var title = string.IsNullOrWhiteSpace(movie.Title) ? "Untitled" : movie.Title;
                 var location = movie.WatchedLocation?.ToString();
-                var meta = new[] { movie.Director, movie.ReleasedYear?.ToString(), location }
+                var meta = new[] { movie.Director, location }
                     .Where(part => !string.IsNullOrWhiteSpace(part));
 
                 <article class="fr-diary-row" data-movie-row>
+                    <span class="fr-diary-mon" aria-hidden="true">
+                        @if (startsMonth)
+                        {
+                            <b>@watched!.Value.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture).ToUpperInvariant()</b>
+                            <small>@watched.Value.Year</small>
+                        }
+                    </span>
                     @if (watched.HasValue)
                     {
                         <time class="fr-diary-day" datetime="@watched.Value.ToString("yyyy-MM-dd")" title="@watched.Value.ToString("d MMMM yyyy")">
@@ -83,6 +96,8 @@
                         }
                         <p class="fr-diary-meta">@string.Join(" · ", meta)</p>
                     </div>
+
+                    <span class="fr-diary-year">@movie.ReleasedYear</span>
 
                     <div class="fr-diary-rating">
                         <partial name="_RatingDots" model="movie.UserRating" />
