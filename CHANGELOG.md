@@ -7,11 +7,13 @@
 - **My Movies redesigned**: Journal is now a diary grouped by month (day, poster, title, director, rating dots); Collection is a poster wall with stats in one line of text. One filter bar (search, month, sort, first watches only), edit/delete moved to a "•••" menu, one gold "Log a movie" button
 - **Rating dots partial** (`_RatingDots`): five dots with half points, reusable across the site
 - **Suggestions redesigned**: chips instead of six icon boxes, results right below, one "Shuffle" button, cards with "Save to Wishlist" plus a "•••" menu ("I've seen it", "Not interested"), sideways scrolling on mobile, single result centered
+- **Wishlist redesigned**: one page with two tabs. "Want to see" is a poster wall (search, sort, "•••" menu with "I've seen it" and "Remove from Wishlist"); "Not interested" (the old Blacklist) is a compact list with when each movie was hidden and "Show in suggestions again". One gold "Find movies" button
 
 ### Changed
 - **Home redesigned**: New headline and copy, gold "Log a movie" plus a quiet "Explore suggestions" button, fanned posters, and "how it works" reduced to one line with progress dots
 - **Navigation redesigned (all pages)**: Sticky nav with hand-drawn underline on the active section, new mobile menu, "Sign up" as a text link. Labels shortened: Wishlist, Suggestions, Log in, Sign up, Log out
 - **Footer redesigned (all pages)**: Quiet dark footer instead of the gold block; "Free App" moved here as "Get the app"
+- **Blacklist left the nav and footer**: it is now the "Not interested" tab of the Wishlist page (same URL, `/Movies/Blacklist`)
 
 ### Changed (My Movies)
 - **Filters reload the page** instead of updating via AJAX (about 1,500 lines of view-embedded JavaScript replaced by `wwwroot/js/my-movies.js`)
@@ -20,6 +22,7 @@
 - **Collection stats**: analytics cards and progress bars replaced by one line (films, viewings, rewatches, most rewatched)
 
 ### Removed
+- **Wishlist/Blacklist grid-list toggle, AJAX sorting and unused partials** (`_WishlistContent`, `_BlacklistContent`); replaced by `wwwroot/js/lists.js`
 - **Unused Google Fonts**: Inter and Outfit were loaded on every page but not used
 - **Leftover test CSS**: "IMMEDIATE VISIBLE TEST" rules in `vertical-centering.css` that forced every heading and paragraph to center
 

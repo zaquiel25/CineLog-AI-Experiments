@@ -55,8 +55,9 @@
             // Marks the current section in the nav (hand-drawn underline, see DESIGN.md)
             var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
             var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-            string NavState(string action) =>
-                currentController == "Movies" && currentAction == action ? "fr-nav-link is-active" : "fr-nav-link";
+            // "Not interested" (Blacklist action) is a tab of the Wishlist page, so it lights up Wishlist
+            string NavState(params string[] actions) =>
+                currentController == "Movies" && actions.Contains(currentAction) ? "fr-nav-link is-active" : "fr-nav-link";
         }
         <header class="fr-header">
             <nav class="fr-nav" aria-label="Main">
@@ -71,8 +72,7 @@
                     <ul class="fr-nav-links">
                         <li><a class="@NavState("Add")" asp-area="" asp-controller="Movies" asp-action="Add">Add New</a></li>
                         <li><a class="@NavState("List")" asp-area="" asp-controller="Movies" asp-action="List">My Movies</a></li>
-                        <li><a class="@NavState("Wishlist")" asp-area="" asp-controller="Movies" asp-action="Wishlist">Wishlist</a></li>
-                        <li><a class="@NavState("Blacklist")" asp-area="" asp-controller="Movies" asp-action="Blacklist">Blacklist</a></li>
+                        <li><a class="@NavState("Wishlist", "Blacklist")" asp-area="" asp-controller="Movies" asp-action="Wishlist">Wishlist</a></li>
                         <li><a class="@NavState("Suggest")" asp-area="" asp-controller="Movies" asp-action="Suggest">Suggestions</a></li>
                     </ul>
                     <partial name="_LoginPartial.cshtml" />
@@ -113,7 +113,6 @@
                         <li><a asp-area="" asp-controller="Movies" asp-action="Add">Add New</a></li>
                         <li><a asp-area="" asp-controller="Movies" asp-action="List">My Movies</a></li>
                         <li><a asp-area="" asp-controller="Movies" asp-action="Wishlist">Wishlist</a></li>
-                        <li><a asp-area="" asp-controller="Movies" asp-action="Blacklist">Blacklist</a></li>
                         <li><a asp-area="" asp-controller="Movies" asp-action="Suggest">Suggestions</a></li>
                         <li><a asp-area="" asp-controller="Home" asp-action="FreeApp">Get the app</a></li>
                     </ul>

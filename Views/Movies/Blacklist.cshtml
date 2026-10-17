@@ -1,482 +1,79 @@
+@*
+    Wishlist page, "Not interested" tab: movies hidden from Suggestions (the user's blacklist).
+    A compact list, newest first. "Show in suggestions again" removes it via fetch (wwwroot/js/lists.js).
+*@
 @model Ezequiel_Movies.Helpers.PaginatedList<Ezequiel_Movies.Models.BlacklistViewModel>
 
-@Html.AntiForgeryToken()
 @{
-    ViewData["Title"] = "My Blacklist";
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
-    var posterSize = "w342";
-    
-    // FEATURE: Display mode support for grid/list view switching
-    var currentDisplayMode = ViewData["CurrentDisplayMode"]?.ToString() ?? "grid";
-    var isGridMode = currentDisplayMode == "grid";
-    var isListMode = currentDisplayMode == "list";
-    
-    // FEATURE: Current sort display mapping for legend
-    var currentSortDisplay = ViewData["CurrentSort"]?.ToString() switch
+    ViewData["Title"] = "Not interested";
+    ViewData["ListsTab"] = "hidden";
+    ViewData["PaginationAction"] = "Blacklist";
+    var today = DateTime.Now.Date;
+
+    // "today", "yesterday", "3 days ago", then a short date
+    string HiddenWhen(DateTime date)
     {
-        "director_asc" => "Director A-Z",
-        "director_desc" => "Director Z-A", 
-        "title_asc" => "Title A-Z",
-        "title_desc" => "Title Z-A",
-        "year_asc" => "Released Year (Oldest First)",
-        "year_desc" => "Released Year (Newest First)",
-        "Date" => "Date Added (Oldest First)",
-        "date_desc" => "Date Added (Newest First)",
-        _ => "Date Added (Newest First)"
-    };
+        var days = (today - date.Date).Days;
+        if (days <= 0) return "today";
+        if (days == 1) return "yesterday";
+        if (days < 7) return $"{days} days ago";
+        return date.Year == today.Year ? date.ToString("MMM d") : date.ToString("MMM d, yyyy");
+    }
 }
 
-<div class="professional-title-section">
-    <div class="title-container-professional">
-        <h1 class="page-title-professional">My Blacklist</h1>
-    </div>
-    <hr />
-    
-    <p class="text-muted mb-4">Curate your preferences - movies added here won't appear in your <a asp-action="Suggest" class="text-decoration-none">Suggestions</a></p>
-</div>
+<section class="fr-mm">
+    <partial name="_ListsHeader" />
 
-<div class="row mb-3">
-</div>
-@* FEATURE: Unified sort dropdown with AJAX functionality matching Collection/Journal views *@
-<div class="mb-3 d-flex justify-content-end align-items-center">
-    <!-- Display mode toggle -->
-    <div class="btn-group btn-group-sm me-2" role="group">
-        <a href="@Url.Action("Blacklist", new { displayMode = "grid", sortOrder = ViewData["CurrentSort"] })"
-           class="btn @(isGridMode ? "btn-warning" : "btn-outline-secondary")"
-           title="Grid View"
-           data-display-toggle="grid">
-            <i class="fas fa-th"></i>
-        </a>
-        <a href="@Url.Action("Blacklist", new { displayMode = "list", sortOrder = ViewData["CurrentSort"] })"
-           class="btn @(isListMode ? "btn-warning" : "btn-outline-secondary")"
-           title="List View"
-           data-display-toggle="list">
-            <i class="fas fa-list"></i>
-        </a>
-    </div>
-    
-    <div class="dropdown me-2">
-        <button class="btn btn-outline-secondary dropdown-toggle" 
-                type="button" 
-                id="sortDropdown" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false">
-            <i class="fas fa-sort me-1"></i>
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-            @* FIX: Toggle pattern like Journal/Collection - click same option to change order *@
-            <li>
-                <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DirectorSortParm"], displayMode = currentDisplayMode })"
-                   data-sort-link="true">
-                    Director
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["DateSortParm"], displayMode = currentDisplayMode })"
-                   data-sort-link="true">
-                    Date Added
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["YearSortParm"], displayMode = currentDisplayMode })"
-                   data-sort-link="true">
-                    Released Year
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" 
-                   href="@Url.Action("Blacklist", new { sortOrder = ViewData["TitleSortParm"], displayMode = currentDisplayMode })"
-                   data-sort-link="true">
-                    Title
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
-
-@* FEATURE: Sort indicator legend like Journal/Collection views *@
-<div class="mb-3">
-    <small class="text-muted">
-        <i class="fas fa-sort me-1"></i>Sorted by: <strong>@currentSortDisplay</strong>
-    </small>
-</div>
-
-@if (!Model.Any())
-{
-    <p>Your blacklist is empty. Movies you add here will not appear in your suggestions.</p>
-}
-else
-{
-    @* FEATURE: Conditional rendering for Grid vs List display modes *@
-    @if (isGridMode)
+    @if (!Model.Any())
     {
-        @* GRID VIEW - Original card-based layout *@
-        <div id="blacklist-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var item in Model)
-            {
-                <div class="col">
-                    <div class="card h-100 blacklist-movie-card">
-                        <div class="card-img-top text-center" style="background-color: #2a1f1f;">
-                            @if (!string.IsNullOrEmpty(item.PosterUrl))
-                            {
-                                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">
-                                    <img src="@(tmdbImageBaseUrl + posterSize + item.PosterUrl)" alt="@item.Title Poster" style="width: 100%; height: 100%; object-fit: contain;">
-                                </a>
-                            }
-                            else
-                            {
-                                <div class="d-flex align-items-center justify-content-center h-100">
-                                    <span class="text-muted" style="font-size:0.8rem;">No Poster</span>
-                                </div>
-                            }
-                        </div>
-                        <div class="card-body d-flex flex-column position-relative">
-                            <h5 class="card-title mb-1">
-                                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" class="link-as-text">
-                                    @item.Title
-                                </a>
-                            </h5>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
-                                    {
-                                        <text>Directed by @item.Director</text>
-                                        @if (item.ReleasedYear != 0)
-                                        {
-                                            <text> &bull; @item.ReleasedYear</text>
-                                        }
-                                    }
-                                    else if (item.ReleasedYear != 0)
-                                    {
-                                        <text>@item.ReleasedYear</text>
-                                    }
-                                    else
-                                    {
-                                        <text>Added on @item.BlacklistedDate.ToString("MM/dd/yyyy")</text>
-                                    }
-                                </small>
-                            </p>
-                            <div class="mt-auto">
-                                <button type="button" class="btn btn-danger btn-sm remove-from-blacklist" data-tmdb-id="@item.TmdbId">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
+        <div class="fr-empty">
+            <p class="fr-empty-title">Nothing hidden.</p>
+            <p class="fr-empty-text">When you mark a suggestion as "Not interested", it lands here and stops showing up.</p>
         </div>
     }
     else
     {
-        @* LIST VIEW - Cinema Gold styled horizontal layout matching Journal design *@
-        <div id="blacklist-list" class="movies-list-container">
+        <p class="fr-lists-sub">These never show up in your suggestions.</p>
+
+        <ul class="fr-hidden-list" data-list>
             @foreach (var item in Model)
             {
-                @* FEATURE: Improved list item with Cinema Gold styling *@
-                <div class="movie-list-item d-flex align-items-center p-2 mb-2 blacklist-movie-card">
-                    @* Small poster thumbnail *@
-                    <div class="list-poster-container me-3 position-relative">
+                var title = string.IsNullOrWhiteSpace(item.Title) ? "Untitled" : item.Title;
+                var hasDirector = !string.IsNullOrEmpty(item.Director) && !item.Director.StartsWith("Unknown");
+                var meta = string.Join(" · ", new[] { item.ReleasedYear > 0 ? item.ReleasedYear.ToString() : null, hasDirector ? item.Director : null }.Where(s => s != null));
+
+                <li class="fr-hidden-row" data-list-item>
+                    <a class="fr-hidden-poster" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" tabindex="-1" aria-hidden="true">
                         @if (!string.IsNullOrEmpty(item.PosterUrl))
                         {
-                            <img src="@(tmdbImageBaseUrl + posterSize + item.PosterUrl)"
-                                 alt="@item.Title Poster"
-                                 class="list-poster-image">
+                            <img src="https://image.tmdb.org/t/p/w92@(item.PosterUrl)" alt="" width="40" height="60" loading="lazy" />
                         }
-                        else
+                    </a>
+                    <div class="fr-hidden-info">
+                        <a class="fr-film-title" asp-action="Preview" asp-route-tmdbId="@item.TmdbId">@title</a>
+                        @if (!string.IsNullOrEmpty(meta))
                         {
-                            <div class="list-poster-placeholder d-flex align-items-center justify-content-center">
-                                <i class="fas fa-film text-muted"></i>
-                            </div>
+                            <p class="fr-hidden-meta">@meta</p>
                         }
                     </div>
-                    
-                    @* Movie information *@
-                    <div class="list-movie-info flex-grow-1">
-                        <div class="list-title-row d-flex align-items-center justify-content-between">
-                            <h5 class="list-movie-title mb-1">
-                                <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@item.TmdbId" class="link-as-text">
-                                    @item.Title
-                                </a>
-                            </h5>
+                    <span class="fr-hidden-when">Hidden @HiddenWhen(item.BlacklistedDate)</span>
+                    <details class="fr-more">
+                        <summary aria-label="More actions for @title"><span aria-hidden="true">•••</span></summary>
+                        <div class="fr-more-menu">
+                            <button type="button" data-list-remove="blacklist" data-tmdb-id="@item.TmdbId" data-title="@title">Show in suggestions again</button>
                         </div>
-                        
-                        <div class="list-movie-details text-muted mb-1">
-                            @if (!string.IsNullOrEmpty(item.Director) && item.Director != "Unknown (TMDB)")
-                            {
-                                <span class="me-3">
-                                    <i class="fas fa-user-tie me-1"></i>@item.Director
-                                </span>
-                            }
-                            @if (item.ReleasedYear != 0)
-                            {
-                                <span class="me-3">
-                                    <i class="fas fa-calendar me-1"></i>@item.ReleasedYear
-                                </span>
-                            }
-                            <span class="me-3">
-                                <i class="fas fa-ban me-1"></i>@item.BlacklistedDate.ToString("MMM d, yyyy")
-                            </span>
-                        </div>
-                    </div>
-                    
-                    @* Action buttons *@
-                    <div class="list-actions ms-3">
-                        <button type="button" class="btn btn-danger btn-sm remove-from-blacklist" 
-                                data-tmdb-id="@item.TmdbId">
-                            <i class="bi bi-trash"></i> Remove
-                        </button>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-
-    <!-- Pagination -->
-    <nav aria-label="Page navigation" class="mt-4">
-        <ul class="pagination justify-content-center">
-            @if (Model.HasPreviousPage)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Blacklist"
-                       asp-route-pageNumber="@(Model.PageIndex - 1)"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]"
-                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Previous</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <span class="page-link">Previous</span>
-                </li>
-            }
-
-            @for (int i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
-                    <a class="page-link" asp-action="Blacklist"
-                       asp-route-pageNumber="@i"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]"
-                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">@i</a>
-                </li>
-            }
-
-            @if (Model.HasNextPage)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Blacklist"
-                       asp-route-pageNumber="@(Model.PageIndex + 1)"
-                       asp-route-sortOrder="@ViewData["CurrentSort"]"
-                       asp-route-displayMode="@ViewData["CurrentDisplayMode"]">Next</a>
-                </li>
-            }
-            else
-            {
-                <li class="page-item disabled">
-                    <span class="page-link">Next</span>
+                    </details>
                 </li>
             }
         </ul>
-    </nav>
-}
 
-<script>
-/**
- * FEATURE: AJAX-powered blacklist management system
- * Provides seamless movie removal with optimistic UI updates and comprehensive error handling
- */
-
-// FEATURE: AJAX Blacklist Removal with enhanced security and error boundaries
-document.addEventListener('click', async function (e) {
-    if (e.target.closest('.remove-from-blacklist')) {
-        const btn = e.target.closest('.remove-from-blacklist');
-        const card = btn.closest('.blacklist-movie-card');
-        const tmdbId = btn.getAttribute('data-tmdb-id');
-        
-        // SECURITY: Validate required elements exist before proceeding
-        if (!card || !tmdbId) {
-            showTempAlert('Unable to remove movie - missing required data', 'danger');
-            return;
-        }
-        
-        btn.disabled = true;
-        
-        // SECURITY: Get anti-forgery token with fallback validation
-        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (!tokenElement) {
-            showTempAlert('Security token not found - please refresh the page', 'danger');
-            btn.disabled = false;
-            return;
-        }
-        const token = tokenElement.value;
-        try {
-            // PERFORMANCE: Use optimized fetch with proper error boundaries
-            const response = await fetch('/Movies/RemoveFromBlacklist', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: `tmdbId=${encodeURIComponent(tmdbId)}&__RequestVerificationToken=${encodeURIComponent(token)}`,
-                credentials: 'same-origin'
-            });
-            
-            // SECURITY: Validate response and parse JSON safely
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const rawText = await response.text();
-            let data;
-            try {
-                data = JSON.parse(rawText);
-            } catch (jsonErr) {
-                console.error('JSON parsing error:', jsonErr);
-                showTempAlert('Invalid server response format', 'danger');
-                btn.disabled = false;
-                return;
-            }
-            
-            // FEATURE: Handle successful removal with smooth UI updates
-            if (data.success) {
-                card.classList.add('fade-out');
-                setTimeout(() => {
-                    card.remove();
-                    
-                    // ENHANCEMENT: Check for remaining cards with fallback for both grid and list views
-                    const gridContainer = document.getElementById('blacklist-container');
-                    const listContainer = document.getElementById('blacklist-list');
-                    const activeContainer = gridContainer || listContainer;
-                    
-                    if (activeContainer && !activeContainer.querySelector('.blacklist-movie-card')) {
-                        activeContainer.innerHTML = '<div class="alert alert-info mt-4"><p>Your blacklist is empty. Movies you add here will not appear in your suggestions.</p></div>';
-                    }
-                }, 300);
-                
-                showTempAlert('Movie removed from blacklist successfully', 'success');
-            } else {
-                showTempAlert(data.message || 'Failed to remove movie from blacklist', 'danger');
-                btn.disabled = false;
-            }
-        } catch (err) {
-            // SECURITY: Log errors safely and provide user-friendly messages
-            console.error('Blacklist removal error:', err);
-            showTempAlert('Network error occurred. Please try again.', 'danger');
-            btn.disabled = false;
-        }
+        <partial name="_MyMoviesPagination" model="(Model.PageIndex, Model.TotalPages)" />
     }
-});
 
-function showTempAlert(message, type) {
-    let alert = document.createElement('div');
-    alert.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
-    alert.style.zIndex = 2000;
-    alert.textContent = message;
-    document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 2200);
+    @* Anti-forgery token for the remove request *@
+    <form hidden>@Html.AntiForgeryToken()</form>
+</section>
+
+@section Scripts {
+    <script src="~/js/lists.js" asp-append-version="true"></script>
 }
-
-// FEATURE: AJAX sorting functionality for Blacklist page - unified with Collection/Journal pattern
-document.addEventListener('click', async function(e) {
-    const clickedLink = e.target.closest('.dropdown-item');
-    if (!clickedLink || !clickedLink.hasAttribute('data-sort-link')) return;
-    
-    e.preventDefault();
-    console.log('AJAX sort request initiated for:', clickedLink.href);
-    
-    try {
-        const response = await fetch(clickedLink.href, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        
-        if (!response.ok) {
-            console.error('AJAX response error:', response.status);
-            return;
-        }
-        
-        const html = await response.text();
-        console.log('AJAX response received, updating container');
-        // Controller returns a partial for AJAX; replace the main container content directly
-        const currentContainer = document.querySelector('main .container');
-        if (currentContainer) {
-            currentContainer.innerHTML = html;
-            console.log('AJAX content replacement successful');
-        }
-        
-        // FIX: Update URL without page refresh for proper browser navigation
-        history.pushState(null, '', clickedLink.href);
-        
-    } catch (error) {
-        console.error('AJAX sorting error:', error);
-        showTempAlert('Sorting failed. Please try again.', 'danger');
-    }
-});
-
-// FEATURE: AJAX Display Mode Toggle - No Page Reload for Blacklist
-document.addEventListener('click', function(e) {
-    const displayToggle = e.target.closest('[data-display-toggle]');
-    if (!displayToggle) return;
-    
-    e.preventDefault();
-    console.log('Blacklist display mode toggle initiated:', displayToggle.getAttribute('data-display-toggle'));
-    
-    // Show loading state
-    const originalText = displayToggle.innerHTML;
-    displayToggle.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    displayToggle.style.pointerEvents = 'none';
-    
-    // Make AJAX request
-    fetch(displayToggle.href, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-        },
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.text();
-    })
-    .then(html => {
-        console.log('AJAX blacklist display mode toggle response received, processing...');
-        
-        // Update container content (same approach as sorting)
-        const currentContainer = document.querySelector('main .container');
-        if (currentContainer) {
-            console.log('Replacing container content with blacklist display mode toggle results...');
-            currentContainer.innerHTML = html;
-            
-            // Update URL without page reload
-            const newUrl = new URL(displayToggle.href);
-            window.history.pushState({}, '', newUrl);
-            
-            console.log('Blacklist display mode toggle completed successfully');
-        } else {
-            console.error('Could not find container element for blacklist display mode toggle');
-        }
-    })
-    .catch(error => {
-        console.error('AJAX blacklist display mode toggle failed:', error);
-        
-        // Reset button state on error
-        displayToggle.innerHTML = originalText;
-        displayToggle.style.pointerEvents = 'auto';
-        
-        // FALLBACK: Use standard navigation on AJAX failure
-        window.location.href = displayToggle.href;
-    })
-    .finally(() => {
-        // Restore toggle button so user can switch again
-        displayToggle.innerHTML = originalText;
-        displayToggle.style.pointerEvents = 'auto';
-    });
-});
-</script>
-
-@* List view CSS moved to wwwroot/css/site.css for AJAX persistence *@

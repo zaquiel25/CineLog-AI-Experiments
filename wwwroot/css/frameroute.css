@@ -1246,6 +1246,109 @@ p.fr-page-sub {
 }
 
 /* --------------------------------------------------------------------------
+   Wishlist page: Want to see (poster wall) / Not interested (compact list)
+   -------------------------------------------------------------------------- */
+.fr-segmented em {
+    font-style: normal;
+    font-size: 13px;
+    color: var(--fr-muted);
+    margin-left: 4px;
+}
+
+/* Year · director under the title; the year goes first so truncation only cuts the name */
+.fr-mm .fr-wall-sub {
+    font-size: 13px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 4px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A single result sits in the middle column (user preference) */
+.fr-wall--single > .fr-wall-item {
+    grid-column: 3 / 5;
+    width: calc(50% - 10px);
+    justify-self: center;
+}
+
+.fr-mm p.fr-lists-sub {
+    font-size: 17px;
+    font-weight: 300;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 28px 0 0;
+}
+
+.fr-hidden-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+    max-width: 760px;
+}
+
+.fr-hidden-row {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--fr-line);
+}
+
+.fr-hidden-poster {
+    display: block;
+    width: 40px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--fr-surface);
+}
+
+/* Greyed out: these are films the user said no to */
+.fr-hidden-poster img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1);
+    opacity: .7;
+}
+
+.fr-hidden-info { min-width: 0; }
+.fr-hidden-info .fr-film-title { font-size: 19px; }
+
+.fr-mm .fr-hidden-meta {
+    font-size: 13px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 2px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fr-hidden-when {
+    font-size: 13px;
+    color: var(--fr-muted);
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    .fr-mm-head-actions { flex-wrap: wrap; }
+
+    .fr-wall--single > .fr-wall-item {
+        grid-column: 2 / 3;
+        width: auto;
+    }
+
+    .fr-hidden-row { grid-template-columns: 40px minmax(0, 1fr) auto; }
+    .fr-hidden-when { display: none; }
+    .fr-hidden-info .fr-film-title { font-size: 17px; }
+}
+
+/* --------------------------------------------------------------------------
    Accessibility preferences (motion.md)
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {

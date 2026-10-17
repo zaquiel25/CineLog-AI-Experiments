@@ -115,6 +115,15 @@ Shared rules for list screens:
 - One result (Surprise me) sits in the middle column.
 - Mobile: chips and result cards scroll sideways with scroll-snap, so the first result is on the first screen.
 
+## Wishlist
+
+One page, two tabs (`.fr-segmented`, like Journal/Collection), each answering one question:
+
+- **Want to see** ("what do I want to watch?"): poster wall. Poster, title (Newsreader), "year · director" (year first, so truncation only cuts the name). Search + sort. "•••" menu: "I've seen it" (opens the log form) and "Remove from Wishlist".
+- **Not interested** ("what did I hide from suggestions?"): compact list, newest first. Greyed thumb, title, "year · director", "Hidden today / 3 days ago / Oct 2", "•••" with "Show in suggestions again". It is the old Blacklist (action and URL kept), no longer in the nav.
+- Tab labels carry the totals. Only gold: "Find movies" (goes to Suggestions).
+- One result in the wall sits in the middle column.
+
 ## Human touch (declared)
 
 - Hand-drawn underline on the active nav link, derived from the logo's stroke.

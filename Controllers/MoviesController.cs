@@ -78,6 +78,15 @@ namespace Ezequiel_Movies.Controllers
             return moviePool.OrderBy(x => Random.Shared.Next()).ToList();
         }
 
+        /// <summary>
+        /// Totals for the Wishlist / Not interested tabs, regardless of search or page.
+        /// </summary>
+        private async Task SetListCountsAsync(string userId)
+        {
+            ViewData["WishlistCount"] = await _dbContext.WishlistItems.CountAsync(w => w.UserId == userId);
+            ViewData["HiddenCount"] = await _dbContext.BlacklistedMovies.CountAsync(b => b.UserId == userId);
+        }
+
         private async Task<bool> MovieExistsInWishlistAsync(string userId, int tmdbId)
         {
             try
@@ -340,10 +349,8 @@ namespace Ezequiel_Movies.Controllers
         }
 
         /// <summary>
-        /// Displays the user's blacklist, with optional search and sort.
+        /// Displays the user's blacklist ("Not interested" tab of the Wishlist page), newest first.
         /// </summary>
-        /// <param name="searchString">Optional: filter blacklist by title or metadata.</param>
-        /// <param name="sortOrder">Optional: sort order for the blacklist view.</param>
         /// <param name="pageNumber">Optional: page number for pagination.</param>
         /// <remarks>
         /// - Only movies blacklisted by the current user are shown.
@@ -351,7 +358,7 @@ namespace Ezequiel_Movies.Controllers
         /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Blacklist(string? searchString = null, string? sortOrder = null, string? displayMode = null, int? pageNumber = 1)
+        public async Task<IActionResult> Blacklist(int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
@@ -364,52 +371,8 @@ namespace Ezequiel_Movies.Controllers
 
             var blacklistQuery = _dbContext.BlacklistedMovies
                 .Where(b => b.UserId == userId)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                blacklistQuery = blacklistQuery.Where(b => b.Title.ToLower().Contains(searchString.ToLower()));
-            }
-
-            // Sorting - toggle logic like Journal/Collection views  
-            ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
-            ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
-            ViewData["YearSortParm"] = sortOrder == "year_asc" ? "year_desc" : "year_asc";
-            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["CurrentSort"] = sortOrder;
-            ViewData["CurrentDisplayMode"] = displayMode ?? "grid";
-
-            switch (sortOrder)
-            {
-                case "director_asc":
-                    blacklistQuery = blacklistQuery.OrderBy(b => b.Director ?? "zzz");
-                    break;
-                case "director_desc":
-                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.Director ?? "");
-                    break;
-                case "title_asc":
-                    blacklistQuery = blacklistQuery.OrderBy(b => b.Title);
-                    break;
-                case "title_desc":
-                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.Title);
-                    break;
-                case "year_asc":
-                    blacklistQuery = blacklistQuery.OrderBy(b => b.ReleasedYear ?? 0);
-                    break;
-                case "year_desc":
-                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.ReleasedYear ?? 0);
-                    break;
-                case "Date":
-                    blacklistQuery = blacklistQuery.OrderBy(b => b.BlacklistedDate);
-                    break;
-                case "date_desc":
-                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.BlacklistedDate);
-                    break;
-                default:
-                    blacklistQuery = blacklistQuery.OrderByDescending(b => b.BlacklistedDate);
-                    break;
-            }
+                .OrderByDescending(b => b.BlacklistedDate);
+            await SetListCountsAsync(userId);
 
             int pageSize = 20;
             var paginatedBlacklist = await PaginatedList<Ezequiel_Movies1.Models.Entities.BlacklistedMovie>.CreateAsync(
@@ -469,13 +432,6 @@ namespace Ezequiel_Movies.Controllers
                 paginatedBlacklist.TotalCount,
                 paginatedBlacklist.PageIndex,
                 pageSize);
-
-            // FEATURE: Handle AJAX requests for display mode and sorting to eliminate page reloads  
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                _logger.LogInformation("Blacklist AJAX request - returning partial view");
-                return PartialView(paginatedResult);
-            }
 
             return View(paginatedResult);
         }
@@ -554,7 +510,7 @@ namespace Ezequiel_Movies.Controllers
         /// - Performance optimized with pagination and batch processing.
         /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null, string? displayMode = null, int? pageNumber = 1)
+        public async Task<IActionResult> Wishlist(string? searchString = null, string? sortOrder = null, int? pageNumber = 1)
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null)
@@ -575,14 +531,9 @@ namespace Ezequiel_Movies.Controllers
                 wishlistQuery = wishlistQuery.Where(w => w.Title.ToLower().Contains(searchString.ToLower()));
             }
 
-            // Sorting - toggle logic like Journal/Collection views
-            ViewData["TitleSortParm"] = sortOrder == "title_asc" ? "title_desc" : "title_asc";
-            ViewData["DirectorSortParm"] = sortOrder == "director_asc" ? "director_desc" : "director_asc";
-            ViewData["YearSortParm"] = sortOrder == "year_asc" ? "year_desc" : "year_asc";
-            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["CurrentDisplayMode"] = displayMode ?? "grid";
+            await SetListCountsAsync(userId);
 
             switch (sortOrder)
             {
@@ -615,7 +566,7 @@ namespace Ezequiel_Movies.Controllers
                     break;
             }
 
-            int pageSize = 20;
+            int pageSize = 24;
             var paginatedWishlist = await PaginatedList<Ezequiel_Movies1.Models.Entities.WishlistItem>.CreateAsync(
                 wishlistQuery.AsNoTracking(),
                 pageNumber ?? 1,
@@ -663,13 +614,6 @@ namespace Ezequiel_Movies.Controllers
                 paginatedWishlist.TotalCount,
                 paginatedWishlist.PageIndex,
                 pageSize);
-
-            // FEATURE: Handle AJAX requests for display mode and sorting to eliminate page reloads  
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                _logger.LogInformation("Wishlist AJAX request - returning partial view");
-                return PartialView(paginatedResult);
-            }
 
             return View(paginatedResult);
         }

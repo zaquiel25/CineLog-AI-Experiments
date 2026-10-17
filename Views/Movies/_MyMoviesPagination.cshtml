@@ -1,4 +1,5 @@
-@* Pagination for My Movies. Keeps every active filter (including the month filter) across pages. *@
+@* Pagination for My Movies and the Wishlist tabs. Keeps every active filter (including the month filter) across pages.
+   Pages link to the List action unless the view sets ViewData["PaginationAction"]. *@
 @using Microsoft.AspNetCore.Routing
 @model (int PageIndex, int TotalPages)
 @{
@@ -18,12 +19,12 @@
             values[pair.Key] = pair.Value;
         }
         values["pageNumber"] = page;
-        return Url.Action("List", values) ?? "#";
+        return Url.Action(ViewData["PaginationAction"]?.ToString() ?? "List", values) ?? "#";
     }
 }
 @if (Model.TotalPages > 1)
 {
-    <nav class="fr-pagination" aria-label="My Movies pages">
+    <nav class="fr-pagination" aria-label="Pages">
         @if (Model.PageIndex > 1)
         {
             <a class="fr-btn fr-btn--secondary" href="@PageUrl(Model.PageIndex - 1)">Previous</a>

@@ -1,0 +1,20 @@
+@*
+    Shared header for the Wishlist page: title, tab switch (Want to see / Not interested) and the main action.
+    "Not interested" is the Blacklist action; both tabs are plain links, like Journal/Collection in My Movies.
+*@
+@{
+    var isWant = ViewData["ListsTab"]?.ToString() != "hidden";
+    var wishlistCount = ViewData["WishlistCount"] as int? ?? 0;
+    var hiddenCount = ViewData["HiddenCount"] as int? ?? 0;
+}
+
+<div class="fr-mm-head">
+    <h1 class="fr-mm-title">Wishlist</h1>
+    <div class="fr-mm-head-actions">
+        <nav class="fr-segmented" aria-label="Wishlist tabs">
+            <a asp-action="Wishlist" class="@(isWant ? "is-active" : "")" aria-current="@(isWant ? "page" : null)">Want to see <em data-list-count="want">@wishlistCount</em></a>
+            <a asp-action="Blacklist" class="@(!isWant ? "is-active" : "")" aria-current="@(!isWant ? "page" : null)">Not interested <em data-list-count="hidden">@hiddenCount</em></a>
+        </nav>
+        <a asp-action="Suggest" class="fr-btn">Find movies</a>
+    </div>
+</div>
