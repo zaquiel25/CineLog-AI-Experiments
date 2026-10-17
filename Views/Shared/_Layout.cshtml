@@ -43,62 +43,39 @@
     <link rel="stylesheet" href="~/css/vertical-centering.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Ezequiel_Movies.styles.css" asp-append-version="true" />
-    <!-- Google Fonts: Inter and Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @* 2026 redesign system (see DESIGN.md). Loaded last so its tokens win over legacy styles. *@
+    <link rel="stylesheet" href="~/css/frameroute.css" asp-append-version="true" />
 </head>
 <body>
     <partial name="_CookieConsentPartial" />
     @* We create a new wrapper div to control the flex layout, avoiding theme conflicts on the body tag *@
     <div class="d-flex flex-column min-vh-100">
 
-        <header>
-            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
-                <div class="container-fluid">
-                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
-                        <img src="~/images/logo-gold.svg" alt="FrameRoute" height="40" class="d-inline-block align-top">
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                            aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Add">
-                                    Add New
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="List">
-                                    My Movies
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Movies" asp-action="Wishlist">
-                                    My Wishlist
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Movies" asp-action="Blacklist">
-                                    Blacklist
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Suggest">
-                                    Movie Suggestions
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="FreeApp">
-                                    Free App
-                                </a>
-                            </li>
-                        </ul>
-
-                        <partial name="_LoginPartial.cshtml" />
-
-                    </div>
+        @{
+            // Marks the current section in the nav (hand-drawn underline, see DESIGN.md)
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+            var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+            string NavState(string action) =>
+                currentController == "Movies" && currentAction == action ? "fr-nav-link is-active" : "fr-nav-link";
+        }
+        <header class="fr-header">
+            <nav class="fr-nav" aria-label="Main">
+                <a class="fr-nav-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo-gold.svg" alt="FrameRoute" width="26" height="28">
+                </a>
+                <button class="fr-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#frNavMenu"
+                        aria-controls="frNavMenu" aria-expanded="false" aria-label="Open menu">
+                    <span></span><span></span>
+                </button>
+                <div class="fr-nav-menu collapse" id="frNavMenu">
+                    <ul class="fr-nav-links">
+                        <li><a class="@NavState("Add")" asp-area="" asp-controller="Movies" asp-action="Add">Add New</a></li>
+                        <li><a class="@NavState("List")" asp-area="" asp-controller="Movies" asp-action="List">My Movies</a></li>
+                        <li><a class="@NavState("Wishlist")" asp-area="" asp-controller="Movies" asp-action="Wishlist">Wishlist</a></li>
+                        <li><a class="@NavState("Blacklist")" asp-area="" asp-controller="Movies" asp-action="Blacklist">Blacklist</a></li>
+                        <li><a class="@NavState("Suggest")" asp-area="" asp-controller="Movies" asp-action="Suggest">Suggestions</a></li>
+                    </ul>
+                    <partial name="_LoginPartial.cshtml" />
                 </div>
             </nav>
         </header>
@@ -124,53 +101,40 @@
             </div>
         </main>
 
-        <footer class="border-top footer text-dark bg-light mt-auto py-5">
-            <div class="container">
-                <div class="footer-main">
-                    <div class="row g-4 align-items-start">
-                        <div class="col-lg-4 col-md-6">
-                            <div class="footer-brand">
-                                <img src="~/images/logo-black.svg" alt="FrameRoute" height="50" class="d-block">
-                            </div>
-                        </div>
-                        <div class="col-lg-5 col-md-6">
-                            <div class="footer-links">
-                                <div class="footer-heading">Explore</div>
-                                <div class="row row-cols-1 row-cols-sm-2 gy-1 gx-5 footer-link-groups">
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Movies" asp-action="Add">Add New</a></div>
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Movies" asp-action="List">My Movies</a></div>
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Movies" asp-action="Wishlist">My Wishlist</a></div>
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Movies" asp-action="Blacklist">Blacklist</a></div>
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Movies" asp-action="Suggest">Movie Suggestions</a></div>
-                                    <div class="col"><a class="link-dark footer-link" asp-area="" asp-controller="Home" asp-action="FreeApp">Free App</a></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="footer-social d-flex flex-column align-items-lg-end align-items-md-start align-items-center">
-                                <div class="footer-heading">Connect With Us</div>
-                                <div class="d-flex justify-content-center justify-content-lg-end gap-3 mt-3">
-                                    <a href="https://instagram.com/framerouteapp" target="_blank" rel="noopener noreferrer" class="social-link" title="Follow us on Instagram"><i class="bi bi-instagram"></i></a>
-                                    <a href="https://x.com/framerouteapp" target="_blank" rel="noopener noreferrer" class="social-link" title="Follow us on X"><i class="bi bi-twitter-x"></i></a>
-                                    <a href="mailto:appcinelog@gmail.com" class="social-link" title="Email us"><i class="bi bi-envelope-fill"></i></a>
-                                    <a href="https://www.facebook.com/FrameRoute" target="_blank" rel="noopener noreferrer" class="social-link" title="Follow us on Facebook"><i class="bi bi-facebook"></i></a>
-                                </div>
-                            </div>
-                        </div>
+        @* A div with role="contentinfo" instead of <footer>: legacy site.css forces gold on the footer element with !important *@
+        <div class="fr-footer" role="contentinfo">
+            <div class="fr-footer-inner">
+                <div class="fr-footer-top">
+                    <a class="fr-footer-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                        <img src="~/images/logo-gold.svg" alt="FrameRoute" width="22" height="24">
+                        <span>FrameRoute</span>
+                    </a>
+                    <ul class="fr-footer-links">
+                        <li><a asp-area="" asp-controller="Movies" asp-action="Add">Add New</a></li>
+                        <li><a asp-area="" asp-controller="Movies" asp-action="List">My Movies</a></li>
+                        <li><a asp-area="" asp-controller="Movies" asp-action="Wishlist">Wishlist</a></li>
+                        <li><a asp-area="" asp-controller="Movies" asp-action="Blacklist">Blacklist</a></li>
+                        <li><a asp-area="" asp-controller="Movies" asp-action="Suggest">Suggestions</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="FreeApp">Get the app</a></li>
+                    </ul>
+                    <div class="fr-footer-social">
+                        <a href="https://instagram.com/framerouteapp" target="_blank" rel="noopener noreferrer" aria-label="FrameRoute on Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="https://x.com/framerouteapp" target="_blank" rel="noopener noreferrer" aria-label="FrameRoute on X"><i class="bi bi-twitter-x"></i></a>
+                        <a href="mailto:appcinelog@gmail.com" aria-label="Email FrameRoute"><i class="bi bi-envelope"></i></a>
+                        <a href="https://www.facebook.com/FrameRoute" target="_blank" rel="noopener noreferrer" aria-label="FrameRoute on Facebook"><i class="bi bi-facebook"></i></a>
                     </div>
                 </div>
-                <div class="footer-divider my-5"></div>
-                <div class="footer-bottom d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                    <div class="footer-meta">&copy; @DateTime.Now.Year FrameRoute &middot; <a asp-area="" asp-controller="Home" asp-action="Privacy" class="link-dark">Privacy</a></div>
-                    <div class="tmdb-attribution">
-                        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" title="Visit TMDB">
-                            <img src="~/images/tmdb-logo.svg" alt="TMDB Logo" class="tmdb-logo">
+                <div class="fr-footer-bottom">
+                    <span>&copy; @DateTime.Now.Year FrameRoute &middot; <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></span>
+                    <span class="fr-footer-tmdb">
+                        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="TMDB">
+                            <img src="~/images/tmdb-logo.svg" alt="TMDB" width="60" height="8">
                         </a>
-                        <p class="tmdb-notice mb-0">This website uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</p>
-                    </div>
+                        This website uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
+                    </span>
                 </div>
             </div>
-        </footer>
+        </div>
 
     </div> @* This closes the new wrapper div *@
 

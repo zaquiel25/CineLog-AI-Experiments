@@ -1,11 +1,25 @@
 ## 2026-10-17
 
+### Added
+- **Design system**: New `DESIGN.md` with the 2026 redesign tokens and rules: warm blacks, gold reserved for actions, muted gold for the logo-derived signature (reel dots, hand-drawn underline), Switzer for the interface and Zodiak for movie titles
+- **Dynamic home hero**: Shows the signed-in user's last three logged movies; visitors see TMDB trending movies (also used to fill up to three)
+- **Self-hosted fonts**: Switzer and Zodiak woff2 files in `wwwroot/fonts`
+
 ### Changed
+- **Home redesigned**: New headline and copy, gold "Log a movie" plus a quiet "Explore suggestions" button, fanned posters, and "how it works" reduced to one line with progress dots
+- **Navigation redesigned (all pages)**: Sticky nav with hand-drawn underline on the active section, new mobile menu, "Sign up" as a text link. Labels shortened: Wishlist, Suggestions, Log in, Sign up, Log out
+- **Footer redesigned (all pages)**: Quiet dark footer instead of the gold block; "Free App" moved here as "Get the app"
+
+### Removed
+- **Unused Google Fonts**: Inter and Outfit were loaded on every page but not used
+- **Leftover test CSS**: "IMMEDIATE VISIBLE TEST" rules in `vertical-centering.css` that forced every heading and paragraph to center
+
+### Changed (database)
 - **Database moved from SQL Server to SQLite**: The app now uses a local `FrameRoute.db` file (gitignored). The 52 SQL Server migrations were replaced by a single `InitialSqlite` migration. Production data was intentionally discarded
 - **Ratings stored as REAL**: `UserRating` uses a double conversion because SQLite cannot compare or sort decimals in queries
 - **DisplayName kept in the model**: The `AspNetUsers.DisplayName` column is now declared as a shadow property so regenerated migrations keep it
 
-### Removed
+### Removed (infrastructure)
 - **Azure infrastructure**: Azure subscription canceled. Removed Key Vault integration, `AZURE_SQL_*` connection logic, and the `Azure.Identity`, `Azure.Extensions.AspNetCore.Configuration.Secrets` and `Microsoft.EntityFrameworkCore.SqlServer` packages. The site is offline until a new host is set up
 
 ### Fixed

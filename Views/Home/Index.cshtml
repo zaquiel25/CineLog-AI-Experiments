@@ -1,42 +1,36 @@
-﻿@{
+﻿@model Ezequiel_Movies.Models.HomeIndexViewModel
+@{
     ViewData["Title"] = "Home - FrameRoute";
 }
 
-
-<h1>FrameRoute</h1>
-<p>Your journey in film: Watch, Log, Discover.</p>
-<div style="margin-top:2.2rem; display:flex; justify-content:center; flex-wrap:wrap; gap:0.5rem;">
-    <a asp-controller="Movies" asp-action="Add" class="hero-btn hero-btn-gold">Add New Movie</a>
-    <a asp-controller="Movies" asp-action="Suggest" class="hero-btn hero-btn-secondary">Explore Suggestions</a>
-</div>
-<div style="display:flex; justify-content:center; margin-top:1.5rem;">
-    <a asp-controller="Home" asp-action="FreeApp" class="hero-btn hero-btn-outline"><i class="bi bi-download me-2"></i>Free App</a>
-</div>
-<div class="how-it-works-section">
-    <div class="process-steps">
-        <a asp-controller="Movies" asp-action="Add" class="step">
-            <div class="step-icon">
-                <i class="bi bi-journal-plus"></i>
-            </div>
-            <span class="step-text">Log what you watch</span>
-        </a>
-        <div class="step-arrow">
-            <i class="bi bi-arrow-right"></i>
+<section class="fr-hero">
+    <div class="fr-hero-copy">
+        <h1 class="fr-hero-title">Every film you watch. <span>And the next one.</span></h1>
+        <p class="fr-hero-sub">Log what you see, build your taste, get suggestions that actually fit.</p>
+        <div class="fr-hero-actions">
+            <a asp-controller="Movies" asp-action="Add" class="fr-btn">Log a movie</a>
+            <a asp-controller="Movies" asp-action="Suggest" class="fr-btn fr-btn--secondary">Explore suggestions</a>
         </div>
-        <a asp-controller="Movies" asp-action="List" class="step">
-            <div class="step-icon">
-                <i class="bi bi-person-gear"></i>
-            </div>
-            <span class="step-text">Build your profile</span>
-        </a>
-        <div class="step-arrow">
-            <i class="bi bi-arrow-right"></i>
-        </div>
-        <a asp-controller="Movies" asp-action="Suggest" class="step">
-            <div class="step-icon">
-                <i class="bi bi-stars"></i>
-            </div>
-            <span class="step-text">Discover perfect matches</span>
-        </a>
     </div>
-</div>
+
+    @if (Model.Posters.Any())
+    {
+        <div class="fr-hero-visual" aria-hidden="true">
+            <div class="fr-poster-fan fr-poster-fan--@Model.Posters.Count">
+                @foreach (var poster in Model.Posters)
+                {
+                    <img src="https://image.tmdb.org/t/p/w342@(poster.PosterPath)" alt="" width="342" height="513" loading="eager" />
+                }
+            </div>
+            @* Film strip perforation: signature element from the logo's reel dots *@
+            <div class="fr-perforation"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+    }
+</section>
+
+@* How it works: one quiet line, the dots fill up because it is a real sequence *@
+<ol class="fr-steps" aria-label="How FrameRoute works">
+    <li><a asp-controller="Movies" asp-action="Add" class="fr-step"><span class="fr-step-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span>Log what you watch</a></li>
+    <li><a asp-controller="Movies" asp-action="List" class="fr-step"><span class="fr-step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>Build your profile</a></li>
+    <li><a asp-controller="Movies" asp-action="Suggest" class="fr-step"><span class="fr-step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span>Discover what's next</a></li>
+</ol>

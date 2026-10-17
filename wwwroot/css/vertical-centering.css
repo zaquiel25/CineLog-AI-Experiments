@@ -1,18 +1,6 @@
 /* ===== VERTICAL CENTERING ENHANCEMENTS ===== */
 /* Inspired by Letterboxd's centered design approach */
 
-/* IMMEDIATE VISIBLE TEST - Homepage title centering */
-body h1 {
-  text-align: center !important;
-  margin: 2rem auto !important;
-  max-width: 600px !important;
-}
-
-/* IMMEDIATE VISIBLE TEST - Homepage paragraph centering */
-body p {
-  text-align: center !important;
-}
-
 /* Letterboxd-style navbar width constraint */
 .navbar .container-fluid {
   max-width: 1200px; /* Constrain navbar width like Letterboxd */
