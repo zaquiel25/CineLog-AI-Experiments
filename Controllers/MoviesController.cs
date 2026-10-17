@@ -2485,7 +2485,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     id = m.Id,
                     title = m.Title,
                     releaseDate = m.ReleaseDate,
-                    overview = m.Overview
+                    overview = m.Overview,
+                    posterPath = m.PosterPath
                 }).ToList();
 
                 return Json(new { results = simplifiedResults });
@@ -3510,10 +3511,13 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
             var movieDetails = await _tmdbService.GetMovieDetailsAsync(id);
 
-            // In MoviesController.cs -> GetTmdbMovieDetailsJson action
             if (movieDetails != null)
             {
-                // ...
+                // FEATURE: Lets the Add form say "again" up front when the user already logged this film
+                var userId = _userManager.GetUserId(User);
+                var alreadyLogged = userId != null &&
+                    await _dbContext.Movies.AnyAsync(m => m.UserId == userId && m.TmdbId == id);
+
                 return Json(new
                 {
                     tmdbId = movieDetails.Id,
@@ -3523,7 +3527,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
                                     ? movieDetails.ReleaseDate.Substring(0, 4)
                                     : null,
                     posterPath = movieDetails.PosterPath,
-                    overview = movieDetails.Overview
+                    overview = movieDetails.Overview,
+                    alreadyLogged
                 });
             }
 
@@ -3556,6 +3561,11 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     viewModel.PosterPath = movieDetails.PosterPath;
                     viewModel.Overview = movieDetails.Overview;
                     viewModel.TmdbId = movieDetails.Id;
+
+                    // FEATURE: Pre-select "again" when the user already logged this film (e.g. from the Wishlist)
+                    var userId = _userManager.GetUserId(User);
+                    viewModel.IsRewatch = userId != null &&
+                        await _dbContext.Movies.AnyAsync(m => m.UserId == userId && m.TmdbId == movieDetails.Id);
                 }
             }
 
@@ -3567,6 +3577,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
 
         [HttpPost]
+        [ValidateAntiForgeryToken] // FIX: the form always sent a token, but it was never validated (CSRF)
         public async Task<IActionResult> Add(AddMoviesViewModel viewModel)
         {
             _logger.LogInformation("Add POST action invoked for user {UserId}", _userManager.GetUserId(User));

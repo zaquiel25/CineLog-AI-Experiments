@@ -124,6 +124,18 @@ One page, two tabs (`.fr-segmented`, like Journal/Collection), each answering on
 - Tab labels carry the totals. Only gold: "Find movies" (goes to Suggestions).
 - One result in the wall sits in the middle column.
 
+## Log a movie (Add)
+
+Two steps on one page:
+
+1. **Search** ("What did you watch?"): one big pill search field. Results show poster thumb, title (Newsreader) and "year · overview", so films with the same name can be told apart. Arrow keys move through results.
+2. **The log**, two shapes for the same values:
+   - Desktop: a sentence next to the poster. "I watched *Aftersun* [for the first time / again] [today / yesterday / on a date / some time ago], [at home / at the cinema / somewhere else], and I'd give it ●●●●○". Each choice is a native select underlined in muted gold.
+   - Mobile: poster + title on top, then chips (When / Where), rating dots, a Rewatch toggle and a full-width "Log it".
+- Rating is the interactive version of the signature dots: click a dot (left half = half point), click the current value to clear, arrow keys work.
+- "again" is pre-selected when the user already logged the film.
+- Only gold: "Log it". "Change movie" is a secondary button.
+
 ## Human touch (declared)
 
 - Hand-drawn underline on the active nav link, derived from the logo's stroke.

@@ -7,6 +7,7 @@
 - **My Movies redesigned**: Journal is now a diary grouped by month (day, poster, title, director, rating dots); Collection is a poster wall with stats in one line of text. One filter bar (search, month, sort, first watches only), edit/delete moved to a "•••" menu, one gold "Log a movie" button
 - **Rating dots partial** (`_RatingDots`): five dots with half points, reusable across the site
 - **Suggestions redesigned**: chips instead of six icon boxes, results right below, one "Shuffle" button, cards with "Save to Wishlist" plus a "•••" menu ("I've seen it", "Not interested"), sideways scrolling on mobile, single result centered
+- **Log a movie (Add) redesigned**: search results with posters; on desktop the log is a sentence ("I watched Aftersun for the first time today, at home, and I'd give it ●●●●○"), on mobile the same choices as chips. Interactive rating dots replace the stars, and "again" is pre-selected for films already logged. Nav item renamed from "Add New" to "Log a movie"
 - **Wishlist redesigned**: one page with two tabs. "Want to see" is a poster wall (search, sort, "•••" menu with "I've seen it" and "Remove from Wishlist"); "Not interested" (the old Blacklist) is a compact list with when each movie was hidden and "Show in suggestions again". One gold "Find movies" button
 
 ### Changed
@@ -35,6 +36,8 @@
 - **Azure infrastructure**: Azure subscription canceled. Removed Key Vault integration, `AZURE_SQL_*` connection logic, and the `Azure.Identity`, `Azure.Extensions.AspNetCore.Configuration.Secrets` and `Microsoft.EntityFrameworkCore.SqlServer` packages. The site is offline until a new host is set up
 
 ### Fixed
+- **CSRF on Add**: the log form always sent an anti-forgery token, but the POST action never validated it
+- **Unencoded HTML in Add search results**: TMDB titles were inserted with `innerHTML`; results are now built with `textContent`
 - **Case-sensitive search in My Movies**: after the move to SQLite, searching "wenders" did not find "Wenders". Title and director now compare lowercased (Wishlist and Blacklist already did)
 - **Month filter lost on pagination** in My Movies
 - **Unencoded HTML in suggestion results**: the results title (built from TMDB director, actor and genre names) was inserted into raw HTML without encoding

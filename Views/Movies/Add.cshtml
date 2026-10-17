@@ -1,387 +1,159 @@
-﻿@model Ezequiel_Movies.Models.AddMoviesViewModel
+﻿@*
+    Log a movie. Step 1: search TMDB. Step 2: the log itself.
+    Desktop shows the log as a sentence ("I watched X for the first time today, at home, and I'd give it ●●●●○");
+    mobile shows the same choices as chips in one column. Both write into the same hidden fields
+    (wwwroot/js/log-movie.js), so only one set of values is posted.
+*@
+@model Ezequiel_Movies.Models.AddMoviesViewModel
 @using Ezequiel_Movies.Models
 
 @{
-    ViewData["Title"] = "Add New Movie - FrameRoute";
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
+    ViewData["Title"] = "Log a movie";
+    var hasMovie = !string.IsNullOrEmpty(Model.Title);
+    var meta = string.Join(" · ", new[]
+    {
+        Model.ReleasedYear?.ToString(),
+        string.IsNullOrEmpty(Model.Director) || Model.Director == "N/A" ? null : Model.Director
+    }.Where(s => s != null));
+    var location = Model.WatchedLocation?.ToString() ?? WatchedLocationType.Home.ToString();
 }
 
-<div class="text-center">
-    <h2>What have you watched today?</h2>
-    <hr class="mx-auto" style="max-width: 600px;" />
-</div>
+<section class="fr-log-page">
+    <form asp-action="Add" asp-controller="Movies" method="post" id="logForm" data-has-movie="@(hasMovie ? "true" : "false")">
 
-<div class="add-page-content mx-auto px-3">
-    <form asp-action="Add" asp-controller="Movies" method="post">
-
-        @* TMDB Search Section - Enhanced with Fuzzy Search UX *@
-        <fieldset class="mb-4 p-3 border rounded">
-            <div class="mb-2" style="position: relative;">
-                <label for="tmdbSearchQueryInput" class="form-label visually-hidden">Movie Title to Search on TMDB:</label>
-                <input type="text" id="tmdbSearchQueryInput" class="form-control form-control-lg enhanced-search-input"
-                       placeholder="Try 'Oppenheimer', 'wall e', or 'spider man'..." autocomplete="off" />
-                <div id="tmdbSearchResultsDisplay" class="list-group mt-1"
-                     style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;">
-                    @* TMDB Search suggestions will appear here *@
+        @* Step 1: search *@
+        <div class="fr-log-search" data-step="search" hidden="@hasMovie">
+            <h1 class="fr-page-title">What did you watch?</h1>
+            <div class="fr-log-search-box">
+                <div class="fr-log-search-field">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="logSearchInput" placeholder="Search a movie" aria-label="Search a movie"
+                           autocomplete="off" role="combobox" aria-expanded="false" aria-controls="logSearchResults" />
                 </div>
-            </div>
-            @* Enhanced Search Help Text *@
-            <div class="search-help-text mt-2 text-center">
-                <small class="text-muted">
-                    Works with typos, partial titles & nicknames
-                </small>
-            </div>
-        </fieldset>
-
-        @* Movie details container (shown after TMDB selection) *@
-        <div id="movieDetailsAndUserInputsSection" style="display: none;">
-
-            @* Movie preview card *@
-            <div id="tmdbSelectedMoviePreview" class="mb-4 p-3 border rounded text-white">
-                <div class="d-flex flex-column flex-md-row gap-3">
-                    <div class="flex-shrink-0 text-center text-md-start" id="posterImageContainer">
-                        <img id="selectedPosterImage" src="#" alt="Movie Poster" class="img-fluid rounded shadow-sm" style="max-width: 180px; display: none;" />
-                    </div>
-                    <div style="min-width: 0; overflow-wrap: break-word;">
-                        <h3 id="selectedMovieTitleText" class="card-title"></h3>
-                        <p class="mb-1"><strong>Director:</strong> <span id="selectedMovieDirectorText"></span></p>
-                        <p class="mb-1"><strong>Released:</strong> <span id="selectedMovieYearText"></span></p>
-                        <p id="selectedMovieOverviewText" class="mt-2" style="font-size: 0.9rem;"></p>
-                    </div>
-                </div>
-            </div>
-
-            @* Hidden fields to store TMDB data for submission *@
-            <input type="hidden" asp-for="Title" id="movieFormTitleHidden" />
-            <input type="hidden" asp-for="Director" id="movieFormDirectorHidden" />
-            <input type="hidden" asp-for="ReleasedYear" id="movieFormReleasedYearHidden" />
-            <input type="hidden" asp-for="PosterPath" id="movieFormPosterPath" />
-            <input type="hidden" asp-for="Overview" id="movieFormOverviewHidden" />
-            <input type="hidden" asp-for="TmdbId" id="movieFormTmdbIdHidden" />
-
-            @* User input fields *@
-            <div class="pt-3 border-top mb-5">
-                <div class="mb-3">
-                    <label asp-for="DateWatched" class="form-label">Date Watched</label>
-                    <div class="add-date-row">
-                        <input asp-for="DateWatched" type="date" class="form-control" id="movieFormDateWatched" asp-format="{0:yyyy-MM-dd}" />
-                        <div class="add-date-options">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedSpecific" value="specific" checked />
-                                <label class="form-check-label" for="dateWatchedSpecific">Specific Date</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="DateWatchedOption" id="dateWatchedDontRemember" value="dontRemember" />
-                                <label class="form-check-label" for="dateWatchedDontRemember">I don't remember</label>
-                            </div>
-                        </div>
-                    </div>
-                    <span asp-validation-for="DateWatched" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="WatchedLocation" class="control-label">Watched At:</label>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Home" name="WatchedLocation" id="addWatchedLocationHome" />
-                            <label class="form-check-label" for="addWatchedLocationHome">Home</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Cinema" name="WatchedLocation" id="addWatchedLocationCinema" />
-                            <label class="form-check-label" for="addWatchedLocationCinema">Cinema</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" asp-for="WatchedLocation" value="@WatchedLocationType.Other" name="WatchedLocation" id="addWatchedLocationOther" />
-                            <label class="form-check-label" for="addWatchedLocationOther">Other</label>
-                        </div>
-                    </div>
-                    <span asp-validation-for="WatchedLocation" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" asp-for="IsRewatch" id="addIsRewatchCheck" />
-                        <label class="form-check-label" for="addIsRewatchCheck">Rewatched</label>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Your Rating:</label>
-                    <div id="starRatingContainer" class="star-rating-container" style="font-size: 1.5rem; cursor: pointer;">
-                        <i class="bi bi-star star" data-value="1"></i>
-                        <i class="bi bi-star star" data-value="2"></i>
-                        <i class="bi bi-star star" data-value="3"></i>
-                        <i class="bi bi-star star" data-value="4"></i>
-                        <i class="bi bi-star star" data-value="5"></i>
-                        <a href="#" id="clearRating" class="ms-3" title="Clear Rating" style="font-size: 0.8rem; vertical-align: middle; text-decoration: none; display: none;">
-                            <i class="bi bi-x-circle"></i> Clear
-                        </a>
-                    </div>
-                    <input type="hidden" asp-for="UserRating" id="userRatingHidden" />
-                    <span asp-validation-for="UserRating" class="text-danger"></span>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary mt-3 btn-lg">Add Movie to My Log</button>
-                </div>
+                <ul class="fr-log-results" id="logSearchResults" role="listbox" hidden></ul>
             </div>
         </div>
+
+        @* Step 2: the log *@
+        <div class="fr-log" data-step="log" hidden="@(!hasMovie)">
+            @* The poster and title open the movie page; the URL keeps ?tmdbId so "back" returns with the movie loaded *@
+            <a class="fr-log-poster" data-movie-link href="@(Model.TmdbId.HasValue ? Url.Action("Preview", new { tmdbId = Model.TmdbId }) : "#")"
+               aria-label="More about @Model.Title">
+                <img data-movie-poster alt="" width="342" height="513"
+                     src="@(string.IsNullOrEmpty(Model.PosterPath) ? "" : "https://image.tmdb.org/t/p/w342" + Model.PosterPath)"
+                     hidden="@string.IsNullOrEmpty(Model.PosterPath)" />
+            </a>
+
+            @* Mobile header: title, year · director, change movie *@
+            <div class="fr-log-head">
+                <h1 class="fr-log-film"><a data-movie-link data-movie-title href="@(Model.TmdbId.HasValue ? Url.Action("Preview", new { tmdbId = Model.TmdbId }) : "#")">@Model.Title</a></h1>
+                <p class="fr-log-meta" data-movie-meta>@meta</p>
+                <button type="button" class="fr-btn fr-btn--secondary fr-btn--compact" data-change-movie>Change movie</button>
+            </div>
+
+            @* Desktop: the sentence *@
+            <p class="fr-log-sentence">
+                I watched <a class="fr-log-sentence-film" data-movie-link data-movie-title href="@(Model.TmdbId.HasValue ? Url.Action("Preview", new { tmdbId = Model.TmdbId }) : "#")">@Model.Title</a>
+                <label class="fr-log-inline">
+                    <span class="visually-hidden">First time or rewatch</span>
+                    <select data-field="rewatch">
+                        <option value="false" selected="@(!Model.IsRewatch)">for the first time</option>
+                        <option value="true" selected="@Model.IsRewatch">again</option>
+                    </select>
+                </label>
+                <label class="fr-log-inline">
+                    <span class="visually-hidden">When</span>
+                    <select data-field="when">
+                        <option value="today">today</option>
+                        <option value="yesterday">yesterday</option>
+                        <option value="date">on a date…</option>
+                        <option value="unknown">some time ago</option>
+                    </select>
+                </label><label class="fr-log-inline fr-log-inline--date" hidden>
+                    <span class="visually-hidden">Date watched</span>
+                    <input type="date" data-field="date" />
+                </label>,
+                <label class="fr-log-inline">
+                    <span class="visually-hidden">Where</span>
+                    <select data-field="where">
+                        <option value="Home" selected="@(location == "Home")">at home</option>
+                        <option value="Cinema" selected="@(location == "Cinema")">at the cinema</option>
+                        <option value="Other" selected="@(location == "Other")">somewhere else</option>
+                    </select>
+                </label>,
+                and I'd give it
+                <span class="fr-log-dots" data-rating tabindex="0" role="slider" aria-label="Your rating"
+                      aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="No rating">
+                    <i></i><i></i><i></i><i></i><i></i>
+                </span>
+            </p>
+            <p class="fr-log-meta fr-log-meta--desktop" data-movie-meta>@meta</p>
+
+            @* Mobile: the same choices as chips *@
+            <div class="fr-log-fields">
+                <div class="fr-log-field">
+                    <span class="fr-log-label" id="whenLabel">When did you watch it?</span>
+                    <div class="fr-log-chips" role="radiogroup" aria-labelledby="whenLabel">
+                        <button type="button" class="fr-chip" role="radio" data-chip="when" data-value="today">Today</button>
+                        <button type="button" class="fr-chip" role="radio" data-chip="when" data-value="yesterday">Yesterday</button>
+                        <button type="button" class="fr-chip" role="radio" data-chip="when" data-value="date">Pick a date</button>
+                        <button type="button" class="fr-chip" role="radio" data-chip="when" data-value="unknown">I don't remember</button>
+                    </div>
+                    <label class="fr-log-date" hidden>
+                        <span class="visually-hidden">Date watched</span>
+                        <input type="date" data-field="date" />
+                    </label>
+                </div>
+                <div class="fr-log-field">
+                    <span class="fr-log-label" id="whereLabel">Where?</span>
+                    <div class="fr-log-chips" role="radiogroup" aria-labelledby="whereLabel">
+                        <button type="button" class="fr-chip" role="radio" data-chip="where" data-value="Home">Home</button>
+                        <button type="button" class="fr-chip" role="radio" data-chip="where" data-value="Cinema">Cinema</button>
+                        <button type="button" class="fr-chip" role="radio" data-chip="where" data-value="Other">Other</button>
+                    </div>
+                </div>
+                <div class="fr-log-field">
+                    <span class="fr-log-label">Your rating</span>
+                    <span class="fr-log-dots" data-rating tabindex="0" role="slider" aria-label="Your rating"
+                          aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="No rating">
+                        <i></i><i></i><i></i><i></i><i></i>
+                    </span>
+                    <span class="fr-log-rating-text" data-rating-text>No rating</span>
+                </div>
+                <div class="fr-log-field">
+                    <label class="fr-toggle">
+                        <input type="checkbox" data-field="rewatch-check" checked="@Model.IsRewatch" />
+                        <span>Rewatch</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="fr-log-actions">
+                <button type="submit" class="fr-btn">Log it</button>
+                <button type="button" class="fr-btn fr-btn--secondary fr-log-change-desktop" data-change-movie>Change movie</button>
+            </div>
+
+            <div class="fr-log-errors">
+                <span asp-validation-for="Title"></span>
+                <span asp-validation-for="DateWatched"></span>
+                <span asp-validation-for="UserRating"></span>
+            </div>
+        </div>
+
+        @* The values that are actually posted *@
+        <input type="hidden" asp-for="Title" data-hidden="title" />
+        <input type="hidden" asp-for="Director" data-hidden="director" />
+        <input type="hidden" asp-for="ReleasedYear" data-hidden="year" />
+        <input type="hidden" asp-for="PosterPath" data-hidden="poster" />
+        <input type="hidden" asp-for="Overview" data-hidden="overview" />
+        <input type="hidden" asp-for="TmdbId" data-hidden="tmdbId" />
+        <input type="hidden" name="DateWatched" value="@Model.DateWatched?.ToString("yyyy-MM-dd")" data-hidden="date" />
+        <input type="hidden" name="WatchedLocation" value="@location" data-hidden="where" />
+        <input type="hidden" name="IsRewatch" value="@(Model.IsRewatch ? "true" : "false")" data-hidden="rewatch" />
+        <input type="hidden" name="UserRating" value="@Model.UserRating?.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)" data-hidden="rating" />
     </form>
-</div>
+</section>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            
-            // FEATURE: Enhanced search input with rotating placeholders
-            const searchInput = document.getElementById('tmdbSearchQueryInput');
-            if (searchInput) {
-                const placeholders = [
-                    "Try 'Oppenheimer', 'wall e', or 'spider man'...",
-                    "Search 'avengers endgame', 'lord rings'...",
-                    "Find 'mission impossible', 'fast furious'...",
-                    "Type 'dark knight', 'star wars', 'matrix'...",
-                    "Search any movie title - typos work too!"
-                ];
-                
-                let currentIndex = 0;
-                
-                // Rotate placeholder every 4 seconds
-                setInterval(function() {
-                    if (!searchInput.value && document.activeElement !== searchInput) {
-                        currentIndex = (currentIndex + 1) % placeholders.length;
-                        searchInput.placeholder = placeholders[currentIndex];
-                    }
-                }, 4000);
-                
-                // Reset to first placeholder when user starts typing
-                searchInput.addEventListener('focus', function() {
-                    if (!searchInput.value) {
-                        searchInput.placeholder = "Start typing any movie title...";
-                    }
-                });
-                
-                searchInput.addEventListener('blur', function() {
-                    if (!searchInput.value) {
-                        currentIndex = 0;
-                        searchInput.placeholder = placeholders[0];
-                    }
-                });
-            }
-            
-            // Date radio toggle logic
-            const dateInput = document.getElementById('movieFormDateWatched');
-            const radioSpecific = document.getElementById('dateWatchedSpecific');
-            const radioDontRemember = document.getElementById('dateWatchedDontRemember');
-            function toggleDateInput() {
-                if (radioDontRemember.checked) {
-                    dateInput.value = '';
-                    dateInput.disabled = true;
-                } else {
-                    dateInput.disabled = false;
-                }
-            }
-            if (radioSpecific && radioDontRemember && dateInput) {
-                radioSpecific.addEventListener('change', toggleDateInput);
-                radioDontRemember.addEventListener('change', toggleDateInput);
-                toggleDateInput();
-            }
-            console.log('Add.cshtml - Full script loaded.');
-
-            // --- Get all DOM Elements first ---
-
-            const tmdbQueryInput = document.getElementById('tmdbSearchQueryInput');
-            const tmdbResultsDisplayDiv = document.getElementById('tmdbSearchResultsDisplay');
-            const movieDetailsAndUserInputsSection = document.getElementById('movieDetailsAndUserInputsSection');
-            const selectedMoviePreviewDiv = document.getElementById('tmdbSelectedMoviePreview');
-            const posterImageContainer = document.getElementById('posterImageContainer');
-            const selectedPosterImage = document.getElementById('selectedPosterImage');
-            const selectedMovieTitleText = document.getElementById('selectedMovieTitleText');
-            const selectedMovieDirectorText = document.getElementById('selectedMovieDirectorText');
-            const selectedMovieYearText = document.getElementById('selectedMovieYearText');
-            const selectedMovieOverviewText = document.getElementById('selectedMovieOverviewText');
-
-            const hiddenTitleField = document.getElementById('movieFormTitleHidden');
-            const hiddenDirectorField = document.getElementById('movieFormDirectorHidden');
-            const hiddenYearField = document.getElementById('movieFormReleasedYearHidden');
-            const hiddenPosterPathField = document.getElementById('movieFormPosterPath');
-            const hiddenOverviewField = document.getElementById('movieFormOverviewHidden');
-            const userRatingHiddenInput = document.getElementById('userRatingHidden');
-            const hiddenTmdbIdField = document.getElementById('movieFormTmdbIdHidden');
-
-            const dateWatchedField = document.getElementById('movieFormDateWatched');
-            const isRewatchCheckbox = document.getElementById('addIsRewatchCheck');
-            const locationRadios = document.querySelectorAll('input[type="radio"][name="WatchedLocation"]');
-            let lastCheckedLocation = null;
-
-            const starRatingContainer = document.getElementById('starRatingContainer');
-            const stars = starRatingContainer ? Array.from(starRatingContainer.querySelectorAll('.star')) : [];
-            const clearRatingLink = document.getElementById('clearRating');
-            let currentRating = 0;
-
-            const tmdbImageBaseUrl = "@tmdbImageBaseUrl";
-
-            // --- Helper Functions ---
-            function updatePreviewCard(details) {
-                if (!selectedMoviePreviewDiv || !details) { if (selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'none'; return; }
-                if (selectedMovieTitleText) selectedMovieTitleText.textContent = details.title || 'N/A';
-                if (selectedMovieDirectorText) selectedMovieDirectorText.textContent = details.director || 'N/A';
-                if (selectedMovieYearText) selectedMovieYearText.textContent = details.releaseYear || 'N/A';
-                if (selectedMovieOverviewText) selectedMovieOverviewText.textContent = details.overview || 'No overview available.';
-                if (posterImageContainer && selectedPosterImage) {
-                    posterImageContainer.innerHTML = '';
-                    if (details.posterPath) {
-                        selectedPosterImage.src = tmdbImageBaseUrl + details.posterPath;
-                        selectedPosterImage.style.display = 'block';
-                        posterImageContainer.appendChild(selectedPosterImage);
-                    } else {
-                        selectedPosterImage.style.display = 'none'; selectedPosterImage.src = '#';
-                        posterImageContainer.innerHTML = `<div class="no-poster-placeholder d-flex align-items-center justify-content-center text-muted" style="width: 100%; max-width: 180px; height: 270px; border: 1px dashed; border-radius:.25rem; font-size:0.9em; background-color: #e9ecef;"><span>No Poster Available</span></div>`;
-                    }
-                }
-                if (selectedMoviePreviewDiv) selectedMoviePreviewDiv.style.display = 'block';
-            }
-            function showDetailsAndInputsOnLoad() {
-                if (hiddenTitleField && hiddenTitleField.value && movieDetailsAndUserInputsSection) {
-                    console.log('Add.cshtml: Re-populating preview card from model data on page load.');
-                    const initialDetails = { title: hiddenTitleField.value, director: hiddenDirectorField.value, releaseYear: hiddenYearField.value, overview: hiddenOverviewField.value, posterPath: hiddenPosterPathField.value };
-                    updatePreviewCard(initialDetails);
-                    movieDetailsAndUserInputsSection.style.display = 'block';
-                } else {
-                    if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
-                }
-            }
-            function renderStarsForRating(ratingToDisplay) {
-                if (!stars.length) return;
-                stars.forEach((starIcon, index) => {
-                    const starFullValue = index + 1;
-                    starIcon.classList.remove('bi-star-fill', 'bi-star-half', 'bi-star', 'filled', 'hover');
-                    if (ratingToDisplay >= starFullValue) starIcon.classList.add('bi-star-fill', 'filled');
-                    else if (ratingToDisplay >= starFullValue - 0.5) starIcon.classList.add('bi-star-half', 'filled');
-                    else starIcon.classList.add('bi-star');
-                });
-            }
-            function setStarRating(value) {
-                currentRating = parseFloat(value) || 0;
-                if (userRatingHiddenInput) userRatingHiddenInput.value = (currentRating === 0) ? "" : currentRating.toFixed(1);
-                renderStarsForRating(currentRating);
-                if (clearRatingLink) clearRatingLink.style.display = (currentRating > 0) ? 'inline-block' : 'none';
-                console.log("Star Rating set to: " + currentRating);
-            }
-
-            // --- Initial Page Load Setup ---
-            showDetailsAndInputsOnLoad(); // Check for validation postback
-            const initialUserRating = userRatingHiddenInput.value ? parseFloat(userRatingHiddenInput.value) : 0;
-            setStarRating(initialUserRating); // Initialize stars
-            // Note: Date initialization is handled server-side. The date radio toggle logic below manages field resets.
-
-            // --- Event Listeners and Main Logic ---
-            locationRadios.forEach(radio => {
-                if (radio.checked) {
-                    lastCheckedLocation = radio;
-                }
-            });
-
-            // Add a click listener to every radio button in the group
-            locationRadios.forEach(radio => {
-                radio.addEventListener('click', function (e) {
-                    if (lastCheckedLocation === e.target) {
-                        // If the clicked radio is the same as the one we remember,
-                        // un-check it and forget it.
-                        e.target.checked = false;
-                        lastCheckedLocation = null;
-                    } else {
-                        // Otherwise, remember this new selection.
-                        lastCheckedLocation = e.target;
-                    }
-                });
-            });
-
-            if (starRatingContainer) {
-                starRatingContainer.addEventListener('mousemove', function(e) { if (currentRating > 0) { return; } const targetStarElement = e.target.closest('.star'); if (targetStarElement && stars.includes(targetStarElement)) { const starIndex = stars.indexOf(targetStarElement); const starElementFullValue = starIndex + 1; const rect = targetStarElement.getBoundingClientRect(); const mouseX = e.clientX - rect.left; let hoverRating = starElementFullValue; if (mouseX <= rect.width / 2) { hoverRating -= 0.5; } renderStarsForRating(hoverRating); stars.forEach(s => s.classList.add('hover')); } });
-                starRatingContainer.addEventListener('mouseleave', function() { renderStarsForRating(currentRating); });
-                starRatingContainer.addEventListener('click', function(e) { const targetStarElement = e.target.closest('.star'); if (targetStarElement && stars.includes(targetStarElement)) { const starIndex = stars.indexOf(targetStarElement); const starElementFullValue = starIndex + 1; const rect = targetStarElement.getBoundingClientRect(); const clickX = e.clientX - rect.left; let newRating = starElementFullValue; if (clickX <= rect.width / 2) { newRating -= 0.5; } setStarRating(newRating); } });
-                if (clearRatingLink) { clearRatingLink.addEventListener('click', function(e) { e.preventDefault(); setStarRating(0); }); }
-            }
-
-            let tmdbSearchDebounceTimer;
-            if (tmdbQueryInput && tmdbResultsDisplayDiv) {
-                tmdbQueryInput.addEventListener('input', function () {
-                    clearTimeout(tmdbSearchDebounceTimer);
-                    const query = tmdbQueryInput.value;
-                    if (query.length < 2) {
-                        tmdbResultsDisplayDiv.innerHTML = '';
-                        tmdbResultsDisplayDiv.style.display = 'none';
-                        if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
-                        return;
-                    }
-                    tmdbSearchDebounceTimer = setTimeout(async () => {
-                        tmdbResultsDisplayDiv.innerHTML = '<div class="list-group-item disabled">Searching TMDB...</div>';
-                        tmdbResultsDisplayDiv.style.display = 'block';
-                        if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'none';
-                        try {
-                            const response = await fetch(`/Movies/SearchTmdbApi?query=${encodeURIComponent(query)}`);
-                            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-                            const data = await response.json();
-                            tmdbResultsDisplayDiv.innerHTML = '';
-                            if (data.results && data.results.length > 0) {
-                                data.results.slice(0, 7).forEach(movie => {
-                                    const releaseYear = movie.releaseDate ? movie.releaseDate.substring(0, 4) : 'N/A';
-                                    const movieItem = document.createElement('a');
-                                    movieItem.href = '#';
-                                    movieItem.classList.add('list-group-item', 'list-group-item-action');
-                                    movieItem.innerHTML = `<div class="border-bottom pb-2 mb-2"><div class="fw-bold">${movie.title}</div><div class="text-muted small">${releaseYear} • ${(movie.overview || '').substring(0, 60)}...</div></div>`;
-                                    movieItem.setAttribute('data-tmdb-id', movie.id);
-
-                                    movieItem.addEventListener('click', async function (e) {
-                                        e.preventDefault();
-                                        const tmdbIdToFetch = this.getAttribute('data-tmdb-id');
-                                        tmdbResultsDisplayDiv.innerHTML = `<div class="list-group-item disabled">Fetching details...</div>`;
-                                        try {
-                                            const detailsResponse = await fetch(`/Movies/GetTmdbMovieDetailsJson?id=${tmdbIdToFetch}`);
-                                            if (!detailsResponse.ok) { throw new Error(`HTTP error! status: ${detailsResponse.statusText}`); }
-                                            const movieDetailsFromApi = await detailsResponse.json();
-                                            if (movieDetailsFromApi) {
-                                                // Populate hidden fields
-                                                if (hiddenTitleField) hiddenTitleField.value = movieDetailsFromApi.title || '';
-                                                if (hiddenDirectorField) hiddenDirectorField.value = movieDetailsFromApi.director || "N/A";
-                                                if (hiddenYearField) hiddenYearField.value = movieDetailsFromApi.releaseYear || '';
-                                                if (hiddenPosterPathField) hiddenPosterPathField.value = movieDetailsFromApi.posterPath || '';
-                                                if (hiddenOverviewField) hiddenOverviewField.value = movieDetailsFromApi.overview || '';
-                                                if (hiddenTmdbIdField) { hiddenTmdbIdField.value = movieDetailsFromApi.tmdbId || (movieDetailsFromApi.id || ''); }
-
-                                                // Update preview card
-                                                updatePreviewCard(movieDetailsFromApi);
-
-                                                // Reset user-specific fields when new movie is selected
-                                                console.log("Resetting user-specific log fields for new movie selection.");
-                                                if (dateWatchedField) {
-                                                    const today = new Date();
-                                                    const year = today.getFullYear();
-                                                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                                                    const day = String(today.getDate()).padStart(2, '0');
-                                                    dateWatchedField.value = `${year}-${month}-${day}`; // Reset to today
-                                                    console.log('DateWatched field reset to today.');
-                                                }
-                                                if (isRewatchCheckbox) isRewatchCheckbox.checked = false;
-                                                setStarRating(0); // Reset star rating
-                                                if (locationRadios) locationRadios.forEach(radio => radio.checked = false);
-
-                                                if (movieDetailsAndUserInputsSection) movieDetailsAndUserInputsSection.style.display = 'block';
-                                                tmdbResultsDisplayDiv.innerHTML = '';
-                                                tmdbResultsDisplayDiv.style.display = 'none';
-                                                if (dateWatchedField) dateWatchedField.focus();
-                                            }
-                                        } catch (error) { console.error('Error in suggestion click (Add Page):', error); }
-                                    });
-                                    tmdbResultsDisplayDiv.appendChild(movieItem);
-                                });
-                            } else { tmdbResultsDisplayDiv.innerHTML = '<div class="list-group-item">No movies found.</div>'; }
-                        } catch (error) { console.error('Error fetching TMDB search results (Add Page):', error); }
-                    }, 500);
-                });
-                document.addEventListener('click', function (event) { if (tmdbQueryInput && tmdbResultsDisplayDiv && !tmdbQueryInput.contains(event.target) && !tmdbResultsDisplayDiv.contains(event.target) && !event.target.closest('#tmdbSearchResultsDisplay')) { tmdbResultsDisplayDiv.style.display = 'none'; } });
-            }
-        });
-    </script>
+    <script src="~/js/log-movie.js" asp-append-version="true"></script>
 }
