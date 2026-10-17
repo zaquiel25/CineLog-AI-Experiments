@@ -1,3 +1,18 @@
+## 2026-10-17
+
+### Changed
+- **Database moved from SQL Server to SQLite**: The app now uses a local `FrameRoute.db` file (gitignored). The 52 SQL Server migrations were replaced by a single `InitialSqlite` migration. Production data was intentionally discarded
+- **Ratings stored as REAL**: `UserRating` uses a double conversion because SQLite cannot compare or sort decimals in queries
+- **DisplayName kept in the model**: The `AspNetUsers.DisplayName` column is now declared as a shadow property so regenerated migrations keep it
+
+### Removed
+- **Azure infrastructure**: Azure subscription canceled. Removed Key Vault integration, `AZURE_SQL_*` connection logic, and the `Azure.Identity`, `Azure.Extensions.AspNetCore.Configuration.Secrets` and `Microsoft.EntityFrameworkCore.SqlServer` packages. The site is offline until a new host is set up
+
+### Fixed
+- **SQL Server-only code**: `UserDisplayNameService` now uses provider-agnostic parameters, and the health check queries `sqlite_master` instead of `sys.indexes`
+
+---
+
 ## 2026-02-27
 
 ### Added

@@ -5,8 +5,6 @@ using Ezequiel_Movies;
 using Microsoft.AspNetCore.Identity;
 using Ezequiel_Movies.Services;
 using Ezequiel_Movies.Models;
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
-using Azure.Identity;
 using System.Collections;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -16,39 +14,6 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
-
-/// <summary>
-/// PRODUCTION: Configure Azure Key Vault integration for secure secret management.
-/// This approach builds the connection string directly from Key Vault secrets,
-/// eliminating configuration file loading issues in Azure App Service.
-/// </summary>
-// Environment configuration logging removed for security
-
-// Configure Key Vault integration for production
-if (builder.Environment.IsProduction())
-{
-    // Configuring Azure Key Vault integration
-    
-    // Get Key Vault URI from environment variable (set in Azure App Service)
-    var keyVaultUri = Environment.GetEnvironmentVariable("AZURE_KEY_VAULT_URI");
-    // Key Vault URI configured from environment variable
-    
-    if (!string.IsNullOrEmpty(keyVaultUri))
-    {
-        try
-        {
-            builder.Configuration.AddAzureKeyVault(
-                new Uri(keyVaultUri),
-                new DefaultAzureCredential());
-        }
-        catch (Exception)
-        {
-            // Continue without Key Vault - will use fallback configuration
-            // Log error but don't fail application startup
-        }
-    }
-    // If no Key Vault URI provided, will use connection strings from configuration
-}
 
 /// <summary>
 /// PRODUCTION MONITORING: Configure Application Insights for comprehensive production monitoring.
@@ -131,87 +96,23 @@ if (string.IsNullOrEmpty(tmdbAccessToken))
 builder.Services.AddControllersWithViews();
 
 /// <summary>
-/// PRODUCTION: Configure secure database connection with direct Key Vault integration.
-/// Builds connection string from individual secrets to eliminate configuration file dependencies.
+/// Configure the SQLite database. The connection string comes from configuration
+/// (appsettings or the ConnectionStrings__DefaultConnection environment variable on the host).
 /// </summary>
-// Configuring database connection
-string connectionString;
-
-if (builder.Environment.IsProduction())
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
 {
-    // Production database configuration with Key Vault integration
-    var databasePassword = builder.Configuration["DatabasePassword"];
-    
-    if (!string.IsNullOrEmpty(databasePassword))
-    {
-        // Build connection string from Key Vault secrets and environment variables
-        var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER")
-            ?? throw new InvalidOperationException("AZURE_SQL_SERVER environment variable is required in production");
-        var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE")
-            ?? throw new InvalidOperationException("AZURE_SQL_DATABASE environment variable is required in production");
-        var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER")
-            ?? throw new InvalidOperationException("AZURE_SQL_USER environment variable is required in production");
-        
-        connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={databasePassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
-    }
-    else
-    {
-        // Fallback when Key Vault is unavailable — require all values from environment
-        var sqlServer = Environment.GetEnvironmentVariable("AZURE_SQL_SERVER")
-            ?? throw new InvalidOperationException("AZURE_SQL_SERVER environment variable is required in production");
-        var sqlDatabase = Environment.GetEnvironmentVariable("AZURE_SQL_DATABASE")
-            ?? throw new InvalidOperationException("AZURE_SQL_DATABASE environment variable is required in production");
-        var sqlUser = Environment.GetEnvironmentVariable("AZURE_SQL_USER")
-            ?? throw new InvalidOperationException("AZURE_SQL_USER environment variable is required in production");
-
-        // Try to get fallback password from environment variable
-        var fallbackPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ??
-                              Environment.GetEnvironmentVariable("DATABASE_PASSWORD")
-                              ?? throw new InvalidOperationException("No database password available - Key Vault failed and no fallback password configured");
-
-        connectionString = $"Server=tcp:{sqlServer},1433;Database={sqlDatabase};User ID={sqlUser};Password={fallbackPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=60";
-    }
-}
-else
-{
-    // Development: Use connection string from configuration
-    var devConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrEmpty(devConnectionString))
-    {
-        throw new InvalidOperationException("Database connection string 'DefaultConnection' not found in development configuration.");
-    }
-    connectionString = devConnectionString;
+    throw new InvalidOperationException("Database connection string 'DefaultConnection' is not configured.");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (builder.Environment.IsProduction())
+    options.UseSqlite(connectionString);
+
+    if (builder.Environment.IsDevelopment())
     {
-        // Production: Use SQL Server with retry policies
-        options.UseSqlServer(connectionString, sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 3,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null);
-            
-            sqlOptions.CommandTimeout(60);
-        });
-        
-        options.EnableServiceProviderCaching();
-    }
-    else
-    {
-        // Development: Use SQL Server with detailed error reporting
-        options.UseSqlServer(connectionString);
         options.EnableSensitiveDataLogging();
         options.EnableDetailedErrors();
-    }
-    
-    // Validate connection string is configured
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        throw new InvalidOperationException("Database connection string is not configured");
     }
 });
 

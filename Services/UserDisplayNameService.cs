@@ -1,5 +1,4 @@
 using Ezequiel_Movies.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ezequiel_Movies.Services
@@ -32,7 +31,10 @@ namespace Ezequiel_Movies.Services
                 using var command = _dbContext.Database.GetDbConnection().CreateCommand();
                 command.CommandText = "SELECT DisplayName FROM AspNetUsers WHERE Id = @id";
 
-                var parameter = new SqlParameter("@id", userId);
+                // FIX: Provider-agnostic parameter (works with SQLite, not only SQL Server)
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = "@id";
+                parameter.Value = userId;
                 command.Parameters.Add(parameter);
 
                 // Ensure connection is open

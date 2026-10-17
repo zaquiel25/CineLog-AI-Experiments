@@ -4,7 +4,30 @@
 
 FrameRoute is a comprehensive movie tracking application that helps you manage your film journey through intelligent suggestions, personal movie logging, and dynamic list management. Built with ASP.NET Core and powered by The Movie Database (TMDB) API, FrameRoute combines modern web development practices with sophisticated movie recommendation algorithms.
 
-## 🚀 Latest Updates (2026-02-25)
+## 🚧 Current Status (2026-10-17)
+
+**FrameRoute is temporarily offline.** The Azure subscription was canceled, so the App Service, Azure SQL database and Key Vault are no longer running. The code is intact on GitHub, and `frameroute.net` (registered at Cloudflare) is still owned.
+
+**Done**:
+- Database moved from SQL Server to SQLite (single `InitialSqlite` migration, database file `FrameRoute.db`, gitignored)
+- Azure Key Vault and Azure SQL configuration removed
+
+**Run locally**:
+```bash
+dotnet ef database update            # Creates FrameRoute.db
+dotnet run --launch-profile http     # http://localhost:5059
+```
+
+**Next steps**:
+- Redesign the UI
+- Remove Application Insights
+- Redeploy to a new host and point `frameroute.net` at it
+
+Sections below that mention Azure describe the previous infrastructure.
+
+---
+
+## 🚀 Previous Updates (2026-02-25)
 
 ### 📧 **EMAIL SYSTEM** - Resend Integration with Branded Templates
 

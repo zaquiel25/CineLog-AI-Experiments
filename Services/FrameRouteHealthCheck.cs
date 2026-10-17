@@ -230,12 +230,12 @@ namespace Ezequiel_Movies.Services
             try
             {
                 // Check for existence of key performance indexes deployed on 2025-08-15
-                var indexCount = await _dbContext.Database.ExecuteSqlRawAsync(
-                    "SELECT 1 WHERE EXISTS (SELECT 1 FROM sys.indexes WHERE name LIKE 'IX_Movies_UserId_%')",
-                    cancellationToken);
+                // FIX: Query SQLite's schema table instead of SQL Server's sys.indexes
+                var indexCount = await _dbContext.Database
+                    .SqlQueryRaw<int>("SELECT COUNT(*) AS Value FROM sqlite_master WHERE type = 'index' AND name LIKE 'IX_Movies_UserId_%'")
+                    .SingleAsync(cancellationToken);
 
-                // If we can't check indexes or they don't exist, return false
-                return indexCount >= 0; // Basic check that query executed without error
+                return indexCount > 0;
             }
             catch
             {

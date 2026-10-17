@@ -14,9 +14,10 @@
 
 ## Production Safety
 
-- **Production**: https://cinelog-app.azurewebsites.net/ — DO NOT TOUCH without explicit permission
+- **Production**: currently offline. The Azure subscription was canceled on 2026-10-17 (App Service, Azure SQL, Key Vault and Application Insights no longer exist). A new host is pending
+- **Domain**: `frameroute.net`, registered at Cloudflare. DNS still points to the old Azure app. Do not delete existing DNS records (Resend email verification lives there)
 - **Local dev**: https://localhost:7186 — safe for testing
-- **Forbidden without explicit permission**: `az webapp deployment`, `git push`, any Azure deploy command
+- **Forbidden without explicit permission**: `git push`, any deploy command, DNS changes
 - Always work locally by default
 
 ## Session Continuity
@@ -30,7 +31,8 @@
 ```bash
 # Local development (safe)
 dotnet build                         # Build
-dotnet run                           # Run at localhost:7186
+dotnet run --launch-profile http     # Run at http://localhost:5059 (https profile needs: dotnet dev-certs https --trust)
+Resend__ApiKey="" dotnet run --launch-profile http  # Same, but log emails to console instead of sending real ones
 dotnet watch run                     # Hot reload (recommended)
 dotnet test                          # Run tests
 
@@ -76,10 +78,14 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - Use `RouteValueDictionary` for conditional parameter inclusion
 - Never include boolean params as empty strings — omit when false
 
-### Azure Production
-- Key Vault configured via `AZURE_KEY_VAULT_URI` environment variable
-- Automatic `{DatabasePassword}` placeholder replacement in production
-- Environment variable: `AZURE_KEY_VAULT_URI`
+### Database (SQLite)
+- Connection string: `DefaultConnection` = `Data Source=FrameRoute.db` (override with `ConnectionStrings__DefaultConnection` on the host)
+- `UserRating` is stored as REAL via `HasConversion<double?>()`: SQLite cannot compare or order decimals server-side
+- `DisplayName` on `AspNetUsers` is a shadow property (accessed via raw SQL). Keep it declared in `OnModelCreating` or migrations will drop it
+- Use provider-agnostic ADO.NET (`command.CreateParameter()`), never `SqlParameter` / `Microsoft.Data.SqlClient`
+
+### Legacy Azure Code
+- Application Insights is still wired in `Program.cs` (no-op without a connection string). Pending removal
 
 ## Agent System
 

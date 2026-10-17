@@ -24,7 +24,7 @@ namespace Ezequiel_Movies.Data
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseSqlite(connectionString);
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

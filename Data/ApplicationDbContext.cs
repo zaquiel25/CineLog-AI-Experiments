@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies1.Models.Entities; // Assuming this is the correct namespace for your Movies entity
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Ezequiel_Movies.Models;
 
@@ -29,11 +30,19 @@ namespace Ezequiel_Movies.Data
         {
             base.OnModelCreating(modelBuilder); // Good practice to call the base method
 
+            // FIX: DisplayName is read/written via raw SQL (UserDisplayNameService, Manage/Index).
+            // Declared as a shadow property so migrations create the column.
+            modelBuilder.Entity<IdentityUser>()
+                .Property<string>("DisplayName")
+                .HasMaxLength(100);
+
             // Configure the UserRating property for the Movies entity
             modelBuilder.Entity<Movies>(entity =>
             {
+                // FIX: SQLite cannot compare or order decimal columns server-side, so ratings are stored as REAL.
+                // Ratings are 0-5 with one decimal place, so double precision is sufficient.
                 entity.Property(m => m.UserRating)
-                      .HasPrecision(3, 1); // Sets precision to 3 and scale to 1 (e.g., can store 12.3, 5.0, 0.5)
+                      .HasConversion<double?>();
                 
                 // PERFORMANCE: Add composite indexes for efficient user-specific queries
                 entity.HasIndex(m => new { m.UserId, m.DateWatched })
