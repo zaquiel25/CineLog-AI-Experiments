@@ -6,6 +6,7 @@
 - **Self-hosted open fonts**: Geist and Newsreader woff2 files (SIL Open Font License 1.1) in `wwwroot/fonts`, with their license files
 - **My Movies redesigned**: Journal is now a diary grouped by month (day, poster, title, director, rating dots); Collection is a poster wall with stats in one line of text. One filter bar (search, month, sort, first watches only), edit/delete moved to a "•••" menu, one gold "Log a movie" button
 - **Rating dots partial** (`_RatingDots`): five dots with half points, reusable across the site
+- **Suggestions redesigned**: chips instead of six icon boxes, results right below, one "Shuffle" button, cards with "Save to Wishlist" plus a "•••" menu ("I've seen it", "Not interested"), sideways scrolling on mobile, single result centered
 
 ### Changed
 - **Home redesigned**: New headline and copy, gold "Log a movie" plus a quiet "Explore suggestions" button, fanned posters, and "how it works" reduced to one line with progress dots
@@ -33,6 +34,8 @@
 ### Fixed
 - **Case-sensitive search in My Movies**: after the move to SQLite, searching "wenders" did not find "Wenders". Title and director now compare lowercased (Wishlist and Blacklist already did)
 - **Month filter lost on pagination** in My Movies
+- **Unencoded HTML in suggestion results**: the results title (built from TMDB director, actor and genre names) was inserted into raw HTML without encoding
+- **Suggestions cards overflowing on mobile**: caused by leftover test CSS, gone with its removal
 - **SQL Server-only code**: `UserDisplayNameService` now uses provider-agnostic parameters, and the health check queries `sqlite_master` instead of `sys.indexes`
 
 ---

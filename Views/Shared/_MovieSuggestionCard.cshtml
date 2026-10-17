@@ -1,77 +1,64 @@
-﻿@model Ezequiel_Movies.Models.TmdbApi.TmdbMovieBrief
+﻿@*
+    One suggested movie. Main action: save to wishlist. Secondary actions ("I've seen it",
+    "Not interested") live in the "•••" menu. Rendered both in Suggest.cshtml and server-side
+    for AJAX responses (RenderPartialViewToStringAsync), so keep it self-contained.
+*@
+@model Ezequiel_Movies.Models.TmdbApi.TmdbMovieBrief
 
 @{
-    var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/";
-    var posterSize = "w342";
+    var year = !string.IsNullOrEmpty(Model.ReleaseDate) && Model.ReleaseDate.Length >= 4 ? Model.ReleaseDate.Substring(0, 4) : null;
+    var inWishlist = Model.IsInWishlist == true;
 }
 
-<div class="col">
-    <div class="card h-100 suggestion-movie-card" id="movie-card-@Model.Id">
-        @* The link is now wrapped around the image *@
-        <a asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">
-            @if (!string.IsNullOrEmpty(Model.PosterPath))
-            {
-                <img src="@(tmdbImageBaseUrl + posterSize + Model.PosterPath)" class="card-img-top" alt="@Model.Title Poster" style="width: 100%; height: 100%; object-fit: contain;">
-            }
-            else
-            {
-                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 295px; font-size:0.8rem; color: #6c757d;">
-                    <span>No Poster Available</span>
-                </div>
-            }
-        </a>
-        <div class="card-body d-flex flex-column">
-            <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">
-                <a asp-action="Preview" asp-controller="Movies" asp-route-tmdbId="@Model.Id" class="link-as-text">
-                    @Model.Title
-                </a>
-            </h6>
-            @* Badge 'Watched' exactamente como en My Movies (pequeño, pill, bg-warning, inline) *@
-            @if (Model.IsWatched == true)
-            {
-                <li class="mt-1 list-unstyled"><span class="badge rounded-pill bg-warning">Watched</span></li>
-            }
-            <p class="card-text mb-2" style="margin-top: 2px;">
-                <small class="text-muted">@(!string.IsNullOrEmpty(Model.ReleaseDate) && Model.ReleaseDate.Length >= 4 ? Model.ReleaseDate.Substring(0, 4) : "")</small>
-            </p>
+<article class="fr-suggest-card" id="movie-card-@Model.Id">
+    <a class="fr-suggest-poster" asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id" tabindex="-1" aria-hidden="true">
+        @if (!string.IsNullOrEmpty(Model.PosterPath))
+        {
+            <img src="https://image.tmdb.org/t/p/w342@(Model.PosterPath)" alt="" width="342" height="513" />
+        }
+        else
+        {
+            <span class="fr-wall-fallback">@Model.Title</span>
+        }
+    </a>
 
-            <div class="mt-auto">
-                <div class="row g-1 mb-1">
-                    <div class="col-6">
-                        @if (Model.IsInWishlist == true)
-                        {
-                            <div>
-                                <button class="btn btn-secondary btn-sm w-100 wishlist-btn" type="button" disabled>In Wishlist</button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div>
-                                <form class="wishlist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToWishlist">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="tmdbId" value="@Model.Id" />
-                                    <button type="submit" class="btn btn-soft-primary btn-sm w-100 wishlist-btn">Add to Wishlist</button>
-                                </form>
-                            </div>
-                        }
-                    </div>
-                    <div class="col-6">
-                        @* Only show blacklist form if not in wishlist (mutual exclusion) *@
-                        @if (!(Model.IsInWishlist ?? false))
-                        {
-@* AJAX form for blacklist - removes card on success without page reload *@
-<form class="blacklist-form" data-tmdbid="@Model.Id" method="post" action="/Movies/AddToBlacklist">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="tmdbId" value="@Model.Id" />
-                                <button type="submit" class="btn btn-soft-danger btn-sm w-100 blacklist-btn">Add to Blacklist</button>
-                            </form>
-                        }
-                    </div>
-                </div>
-                <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@Model.Id" class="btn btn-soft-success btn-sm w-100">
-                    <i class="bi bi-plus-circle me-1"></i> Add to My Movies
-                </a>
+    <a class="fr-film-title fr-suggest-title" asp-controller="Movies" asp-action="Preview" asp-route-tmdbId="@Model.Id">@Model.Title</a>
+    <p class="fr-suggest-meta">
+        @year
+        @if (Model.IsWatched == true)
+        {
+            <span class="fr-tag">Watched</span>
+        }
+    </p>
+
+    <div class="fr-suggest-actions">
+        @if (inWishlist)
+        {
+            <button type="button" class="fr-btn fr-btn--secondary fr-btn--compact" disabled>In your wishlist</button>
+        }
+        else
+        {
+            <form class="wishlist-form" method="post" action="/Movies/AddToWishlist">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="tmdbId" value="@Model.Id" />
+                <button type="submit" class="fr-btn fr-btn--secondary fr-btn--compact wishlist-btn">Save to Wishlist</button>
+            </form>
+        }
+
+        <details class="fr-more">
+            <summary aria-label="More actions for @Model.Title"><span aria-hidden="true">•••</span></summary>
+            <div class="fr-more-menu">
+                <a asp-controller="Movies" asp-action="Add" asp-route-tmdbId="@Model.Id">I've seen it</a>
+                @* Not interested = blacklist. Hidden when the movie is already in the wishlist (mutually exclusive) *@
+                @if (!inWishlist)
+                {
+                    <form class="blacklist-form" method="post" action="/Movies/AddToBlacklist">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="tmdbId" value="@Model.Id" />
+                        <button type="submit" class="blacklist-btn">Not interested</button>
+                    </form>
+                }
             </div>
-        </div>
+        </details>
     </div>
-</div>
+</article>

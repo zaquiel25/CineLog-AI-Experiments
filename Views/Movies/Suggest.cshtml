@@ -1,438 +1,106 @@
-﻿@using Ezequiel_Movies.Models.TmdbApi
+﻿@*
+    Suggestions: a row of chips picks the starting point; results load below via AJAX
+    (server-rendered HTML from MoviesController.RenderSuggestionResultsHtml). Without JS,
+    chips fall back to regular links and the results render in this view (Model != null).
+*@
+@using Ezequiel_Movies.Models.TmdbApi
 @model List<TmdbMovieBrief>
 
 @{
     ViewData["Title"] = "Movie Suggestions";
+    var genreList = ViewData["GenreSuggestions"] as List<TmdbGenre>;
+    var chips = new[]
+    {
+        ("trending", "Trending"),
+        ("genre_recent", "By genre"),
+        ("director_recent", "By director"),
+        ("cast_recent", "By cast"),
+        ("year_recent", "By decade"),
+        ("surprise_me", "Surprise me")
+    };
 }
 
-<div class="text-center pt-4">
-    <h1 class="display-4 mt-5 mb-3">Find your next movie</h1>
-    <p class="lead mb-5">Click a button to get personalized suggestions based on your log.</p>
-</div>
+<section class="fr-suggest">
+    <h1 class="fr-page-title">Find your next movie</h1>
+    <p class="fr-page-sub">Pick a starting point. Suggestions come from what you logged.</p>
 
-<div class="row justify-content-center">
-    <div class="col-md-10 col-lg-9 mb-5 suggestion-cards-container">
-
-        @* This is the full grid for all six suggestion buttons *@
-        <div class="row justify-content-center g-4 suggestion-cards-grid">
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="trending">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-graph-up-arrow display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">Trending Movies</h5>
-                        <p class="suggestion-description small mt-2">See what's popular right now.</p>
-                    </div>
-                </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="director_recent">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-person-video3 display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Director</h5>
-                        <p class="suggestion-description small mt-2">From your recently watched, most frequent, or top-rated directors.</p>
-                    </div>
-                </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="genre_recent">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-tags display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Genre</h5>
-                        <p class="suggestion-description small mt-2">Get suggestions based on genres you've enjoyed.</p>
-                    </div>
-                </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="cast_recent">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-people display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Cast</h5>
-                        <p class="suggestion-description small mt-2">Find movies featuring actors from your logged films.</p>
-                    </div>
-                </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="year_recent">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-calendar3 display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">By Decade</h5>
-                        <p class="suggestion-description small mt-2">Explore movies from your favorite eras.</p>
-                    </div>
-                </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <button type="button" class="suggestion-card card h-100 text-decoration-none border-0 bg-transparent w-100" data-suggestion-type="surprise_me">
-                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
-                        <i class="bi bi-shuffle display-4 mb-2"></i>
-                        <h5 class="card-title mb-0">Surprise Me!</h5>
-                        <p class="suggestion-description small mt-2">Get a random suggestion based on your taste.</p>
-                    </div>
-                </button>
-            </div>
-        </div>
-
-        @{
-            var genreList = ViewData["GenreSuggestions"] as List<TmdbGenre>;
-            var actorList = ViewData["CastSuggestions"] as List<TmdbCastPerson>;
+    <nav class="fr-chips" aria-label="Suggestion types">
+        @foreach (var (type, label) in chips)
+        {
+            var href = type == "surprise_me"
+                ? Url.Action("GetSurpriseSuggestion")
+                : Url.Action("ShowSuggestions", new { suggestionType = type });
+            <a class="fr-chip" href="@href" data-suggestion-type="@type">@label</a>
         }
+    </nav>
 
+    <div id="suggestion-results-slot">
         @if (Model != null)
         {
-            <div id="suggestion-results-area">
-                <hr class="my-5">
-                <div class="text-center mb-4">
-                   <div id="suggestion-header" class="d-flex justify-content-center align-items-center">
-                        @if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
+            var nextType = ViewData["NextSuggestionType"] as string;
+            var canShuffle = Model.Any() && nextType != null &&
+                (nextType.StartsWith("trending") || nextType.StartsWith("cast_") || nextType.StartsWith("director_") ||
+                 nextType.StartsWith("year_") || nextType.StartsWith("genre_") || nextType == "surprise_me");
+            var baseType = nextType == null ? null :
+                nextType.StartsWith("year_") ? "decade" :
+                nextType.StartsWith("genre_") ? "genre" :
+                nextType == "surprise_me" ? "surprise" :
+                (nextType.Contains('_') ? nextType.Split('_')[0] : nextType);
+
+            <div id="suggestion-results-area" class="fr-suggest-results">
+                <div id="suggestion-header" class="fr-suggest-head">
+                    @if (!string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
+                    {
+                        <img id="actor-profile-image" class="fr-suggest-avatar" src="https://image.tmdb.org/t/p/w185@(ViewData["ActorProfilePath"])" alt="" width="44" height="44" />
+                    }
+                    <h2 id="suggestion-title" class="fr-suggest-heading">@ViewData["SuggestionTitle"]</h2>
+                    @if (canShuffle)
+                    {
+                        <button type="button" class="reshuffle-btn fr-btn fr-btn--secondary fr-btn--compact" data-suggestion-type="@baseType">Shuffle</button>
+                    }
+                </div>
+
+                @if (Model.Any())
+                {
+                    <div id="suggestion-grid" class="fr-suggest-grid">
+                        @foreach (var movie in Model)
                         {
-                            var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
-                            <img id="actor-profile-image" src="@(tmdbImageBaseUrl + ViewData["ActorProfilePath"])" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" alt="Profile picture" />
+                            <partial name="_MovieSuggestionCard" model="movie" />
                         }
-                        <h4 id="suggestion-title" class="cinelog-gold-title mb-0">@ViewData["SuggestionTitle"]</h4>
                     </div>
-                    @if (Model.Any())
-                    {
-                        var topNextSuggestionType = ViewData["NextSuggestionType"] as string;
-                        if (topNextSuggestionType != null && (topNextSuggestionType.StartsWith("trending") || topNextSuggestionType.StartsWith("cast_") || topNextSuggestionType.StartsWith("director_") || topNextSuggestionType.StartsWith("year_") || topNextSuggestionType.StartsWith("genre_") ||
-    topNextSuggestionType == "surprise_me"))
-                        {
-                            var topBaseType = topNextSuggestionType.StartsWith("year_") ? "decade" :
-    topNextSuggestionType.StartsWith("genre_") ? "genre" :
-    topNextSuggestionType == "surprise_me" ? "surprise" :
-    (topNextSuggestionType.Contains("_") ? topNextSuggestionType.Split('_')[0] : topNextSuggestionType);
-                        <button type="button" class="reshuffle-btn btn btn-warning mt-3 px-4 py-2" data-suggestion-type="@topBaseType">
-                            <i class="bi bi-shuffle me-2"></i> Reshuffle Suggestions
-                        </button>
-                        }
-                    }
-                </div>
-            </div>
-            @if (Model.Any())
-            {
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
-                    @foreach (var movie in Model)
-                    {
-                        <partial name="_MovieSuggestionCard" model="movie" />
-                    }
-                </div>
-            }
-            @* FIX: Reshuffle button placed below movie grid so mobile users don't have to scroll back up *@
-            <div class="text-center mt-4 mb-3">
-                    @if (Model.Any())
-                    {
-                        var nextSuggestionType = ViewData["NextSuggestionType"] as string;
-                        if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") ||
-    nextSuggestionType == "surprise_me"))
-                        {
-                            var suggestionBaseType = nextSuggestionType.StartsWith("year_") ? "decade" :
-    nextSuggestionType.StartsWith("genre_") ? "genre" :
-    nextSuggestionType == "surprise_me" ? "surprise" :
-    (nextSuggestionType.Contains("_") ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
-                        <button type="button" class="reshuffle-btn btn btn-warning mt-3 px-4 py-2" data-suggestion-type="@suggestionBaseType">
-                            <i class="bi bi-shuffle me-2"></i> Reshuffle Suggestions
-                        </button>
-                        }
-                        else
-                        {
-                            var nextAction = nextSuggestionType == "surprise_me" ? "GetSurpriseSuggestion" : "ShowSuggestions";
-                            <a asp-action="@nextAction"
-                               asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-                               asp-route-query="@ViewData["NextQuery"]"
-                               asp-route-page="@ViewData["NextPage"]"
-                               class="btn btn-warning mt-3 px-4 py-2">
-                                <i class="bi bi-arrow-repeat me-2"></i>
-                                @(nextAction == "GetSurpriseSuggestion" ? "Get Another Surprise" : "Reshuffle Suggestions")
-                            </a>
-                        }
-                    }
-                    else if ((bool?)ViewData["ShowAddMovieButton"] == true)
-                    {
-                        <a asp-controller="Movies" asp-action="Add" class="btn btn-lg btn-success mt-3">
-                            <i class="bi bi-plus-circle me-2"></i> Log a Movie
-                        </a>
-                    }
-                    else
-                    {
-                        <a asp-action="ShowSuggestions"
-                           asp-route-suggestionType="@ViewData["NextSuggestionType"]"
-                           asp-route-query="@ViewData["NextQuery"]"
-                           asp-route-page="@ViewData["NextPage"]"
-                           class="btn btn-warning mt-3 px-4 py-2">
-                            <i class="bi bi-arrow-repeat me-2"></i> Reshuffle Suggestions
-                        </a>
-                    }
+                }
+                else if ((bool?)ViewData["ShowAddMovieButton"] == true)
+                {
+                    <div class="fr-empty">
+                        <p class="fr-empty-title">Log a few movies first.</p>
+                        <p class="fr-empty-text">Suggestions are built from your journal: the more you log, the better they get.</p>
+                        <a asp-action="Add" class="fr-btn">Log a movie</a>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(nextType))
+                {
+                    <a class="fr-btn fr-btn--secondary" asp-action="ShowSuggestions" asp-route-suggestionType="@nextType" asp-route-query="@ViewData["NextQuery"]" asp-route-page="@ViewData["NextPage"]">Try again</a>
+                }
             </div>
         }
         else if (genreList != null && genreList.Any())
         {
-            <div id="suggestion-results-area">
-                <hr class="my-5">
-                <div class="text-center mb-4">
-                    <h4 class="text-info">@ViewData["SuggestionTitle"]</h4>
-                    <p class="text-muted small">Based on genres from your logged movies</p>
+            <div id="suggestion-results-area" class="fr-suggest-results">
+                <div class="fr-suggest-head">
+                    <h2 class="fr-suggest-heading">@ViewData["SuggestionTitle"]</h2>
                 </div>
-                <div class="row row-cols-2 row-cols-sm-3 g-3 justify-content-center mb-5">
+                <p class="fr-page-sub">Based on genres from your logged movies.</p>
+                <nav class="fr-chips" aria-label="Genres">
                     @foreach (var genre in genreList)
                     {
-                        <div class="col text-center">
-                            <a asp-action="ShowSuggestions" asp-route-suggestionType="movies_by_genre" asp-route-query="@genre.Id" class="btn btn-lg btn-outline-warning w-100 p-3">
-                                @genre.Name
-                            </a>
-                        </div>
+                        <a class="fr-chip" asp-action="ShowSuggestions" asp-route-suggestionType="movies_by_genre" asp-route-query="@genre.Id">@genre.Name</a>
                     }
-                </div>
+                </nav>
             </div>
         }
     </div>
-</div>
+</section>
 
 @section Scripts {
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const resultsContainer = document.getElementById('suggestion-results-area');
-        if (resultsContainer) {
-            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        attachEventListeners();
-        attachSuggestionCardListeners();
-    });
-
-    /*
-     * FEATURE: Attaches AJAX click listeners to suggestion cards for seamless navigation.
-     * Converts traditional anchor-based navigation to AJAX-powered interactions without page reloads.
-     */
-    function attachSuggestionCardListeners() {
-        document.querySelectorAll('.suggestion-card[data-suggestion-type]').forEach(card => {
-            card.addEventListener('click', function(e) {
-                e.preventDefault();
-                const suggestionType = this.getAttribute('data-suggestion-type');
-                loadSuggestions(suggestionType);
-            });
-        });
-    }
-
-    /*
-     * FEATURE: Loads movie suggestions via AJAX without page reload.
-     * Maintains identical functionality to traditional navigation while providing seamless UX.  
-     * Includes graceful fallback to regular navigation if AJAX fails.
-     * suggestionType: Type of suggestion to load (trending, director_recent, etc.)
-     */
-    function loadSuggestions(suggestionType) {
-        let endpoint = '';
-        let params = new URLSearchParams();
-        
-        // ARCHITECTURE: Route to appropriate controller endpoint based on suggestion type
-        if (suggestionType === 'surprise_me') {
-            endpoint = '/Movies/GetSurpriseSuggestion';
-        } else {
-            endpoint = '/Movies/ShowSuggestions';
-            params.append('suggestionType', suggestionType);
-        }
-
-        const url = endpoint + (params.toString() ? '?' + params.toString() : '');
-        
-        // PERFORMANCE: Fetch suggestions with AJAX header to get JSON response instead of full page
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'  // Critical for backend AJAX detection
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success && data.html) {
-                // UX: Remove existing results before showing new ones
-                const existingResults = document.getElementById('suggestion-results-area');
-                if (existingResults) {
-                    existingResults.remove();
-                }
-                
-                // ARCHITECTURE: Insert server-rendered HTML to maintain styling consistency
-                const container = document.querySelector('.col-md-10.col-lg-9.mb-5');
-                container.insertAdjacentHTML('beforeend', data.html);
-                
-                // UX: Smooth scroll to new results for better user experience
-                const newResults = document.getElementById('suggestion-results-area');
-                if (newResults) {
-                    newResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-                
-                // CRITICAL: Re-attach event listeners to new suggestion card content
-                attachEventListeners();
-            } else {
-                throw new Error(data.error || 'Invalid response');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading suggestions:', error);
-            // RELIABILITY: Graceful fallback to traditional navigation if AJAX fails
-            window.location.href = url;
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        // Find the reshuffle button, even if the click was on the <i> icon inside it.
-        const reshuffleButton = e.target.closest('.reshuffle-btn');
-
-        if (reshuffleButton) {
-            e.preventDefault();
-            
-            const suggestionType = reshuffleButton.getAttribute('data-suggestion-type');
-            let endpointUrl = '';
-
-            if (suggestionType === 'trending') {
-    endpointUrl = '/Movies/TrendingReshuffle';
-} else if (suggestionType === 'cast') {
-    endpointUrl = '/Movies/CastReshuffle';
-} else if (suggestionType === 'director') {
-    endpointUrl = '/Movies/DirectorReshuffle';
-} else if (suggestionType === 'decade') {
-    endpointUrl = '/Movies/DecadeReshuffle';
-} else if (suggestionType === 'genre') {
-    endpointUrl = '/Movies/GenreReshuffle';
-} else if (suggestionType === 'surprise') {
-    endpointUrl = '/Movies/SurpriseMeReshuffle';
-}
-
-            if (endpointUrl) {
-                const originalHTML = reshuffleButton.innerHTML;
-                reshuffleButton.disabled = true;
-                reshuffleButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reshuffling...';
-
-                fetch(endpointUrl, {
-                    method: 'GET',
-                    headers: { 'X-Requested-with': 'XMLHttpRequest' },
-                    credentials: 'same-origin',
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success && data.html) {
-                        const container = document.querySelector('.row.row-cols-1.row-cols-sm-2.row-cols-md-3.g-4.justify-content-center');
-                        if (container) {
-                            container.innerHTML = data.html;
-                            attachEventListeners();
-                            // FIX: Scroll to first card after reshuffle so mobile users see card #1
-                            const resultsArea = document.getElementById('suggestion-results-area');
-                            if (resultsArea) resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-
-                        const titleElement = document.getElementById('suggestion-title');
-                        if (titleElement && data.suggestionTitle) {
-                            titleElement.textContent = data.suggestionTitle;
-                        }
-
-                        const imgElement = document.getElementById('actor-profile-image');
-                        const headerElement = document.getElementById('suggestion-header');
-                        if (imgElement && headerElement) {
-                            if (data.actorProfileUrl) {
-                                imgElement.src = 'https://image.tmdb.org/t/p/w342' + data.actorProfileUrl;
-                                headerElement.style.display = 'flex';
-                            } else {
-                                headerElement.style.display = 'none';
-                            }
-                        }
-                    } else {
-                        throw new Error(data.error || 'Invalid response');
-                    }
-                })
-                .catch(error => {
-                    console.error('Reshuffle error:', error);
-                    alert('Failed to reshuffle: ' + error.message);
-                })
-                .finally(() => {
-                    reshuffleButton.disabled = false;
-                    reshuffleButton.innerHTML = originalHTML;
-                });
-            }
-        }
-    });
-    // Event delegation for AJAX-powered Reshuffle button.
-    // Handles Trending, Cast, and Director suggestions by dynamically routing to the correct endpoint.
-
-    function attachEventListeners() {
-        document.querySelectorAll('.blacklist-form, .wishlist-form').forEach(form => {
-            // Clonar y reemplazar el nodo para limpiar event listeners viejos
-            const newForm = form.cloneNode(true);
-            form.parentNode.replaceChild(newForm, form);
-
-            if (newForm.classList.contains('blacklist-form')) {
-                newForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const btn = newForm.querySelector('.blacklist-btn');
-                    btn.disabled = true;
-                    btn.textContent = 'Adding...';
-                    const card = newForm.closest('.suggestion-movie-card');
-                    fetch(newForm.action, {
-                        method: 'POST',
-                        body: new FormData(newForm),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                        credentials: 'same-origin'
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Blacklist failed');
-                        btn.textContent = 'Added ✓';
-                        btn.classList.remove('btn-soft-danger');
-                        btn.classList.add('btn-success');
-                        btn.disabled = true;
-                        card.style.transition = 'opacity 0.4s, transform 0.4s';
-                        card.style.opacity = '0';
-                        card.style.transform = 'scale(0.95) translateY(-20px)';
-                        setTimeout(() => card.remove(), 400);
-                    })
-                    .catch(() => {
-                        btn.disabled = false;
-                        btn.textContent = 'Add to Blacklist';
-                        alert('Could not add to blacklist. Please try again.');
-                    });
-                });
-            } else if (newForm.classList.contains('wishlist-form')) {
-                newForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const btn = newForm.querySelector('.wishlist-btn');
-                    btn.disabled = true;
-                    btn.textContent = 'Adding...';
-                    fetch(newForm.action, {
-                        method: 'POST',
-                        body: new FormData(newForm),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                        credentials: 'same-origin'
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Wishlist failed');
-                        btn.textContent = 'Added ✓';
-                        btn.classList.remove('btn-soft-primary');
-                        btn.classList.add('btn-success');
-                        btn.disabled = true;
-                        const card = newForm.closest('.suggestion-movie-card');
-                        if (card) {
-                            const blacklistBtn = card.querySelector('.blacklist-btn');
-                            if (blacklistBtn) {
-                                blacklistBtn.disabled = true;
-                                blacklistBtn.classList.remove('btn-soft-danger');
-                                blacklistBtn.classList.add('btn-secondary');
-                                blacklistBtn.textContent = 'Unavailable';
-                            }
-                            const blacklistForm = card.querySelector('.blacklist-form');
-                            if (blacklistForm) {
-                                blacklistForm.style.pointerEvents = 'none';
-                                blacklistForm.style.opacity = '0.5';
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        btn.disabled = false;
-                        btn.textContent = 'Add to Wishlist';
-                        alert('Could not add to wishlist. Please try again.');
-                    });
-                });
-            }
-        });
-    }
-</script>
+    <script src="~/js/suggestions.js" asp-append-version="true"></script>
 }

@@ -107,6 +107,14 @@ Shared rules for list screens:
 - The only gold on the screen is the main action ("Log a movie").
 - Rating is always `_RatingDots` (5 dots, half points).
 
+## Suggestions
+
+- Picking a starting point uses **chips** (`.fr-chip`), never a grid of icon boxes. Active chip = `--fr-surface-2` with a light inset border.
+- Results appear right below the chips. Heading in normal text (never gold), with one "Shuffle" secondary button next to it.
+- Suggestion card: poster, title (Newsreader), year, optional "Watched" tag. Main action "Save to Wishlist" (secondary button); "I've seen it" and "Not interested" live in the "•••" menu.
+- One result (Surprise me) sits in the middle column.
+- Mobile: chips and result cards scroll sideways with scroll-snap, so the first result is on the first screen.
+
 ## Human touch (declared)
 
 - Hand-drawn underline on the active nav link, derived from the logo's stroke.

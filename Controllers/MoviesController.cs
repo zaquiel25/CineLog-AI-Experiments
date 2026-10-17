@@ -2367,62 +2367,43 @@ return (bucket3x3, bucket2x3, bucket1x3);
             ViewData["NextSuggestionType"] = nextSuggestionType;
             ViewData["NextQuery"] = nextQuery;
 
+            // FIX: Titles include TMDB data (director, actor, genre names); encode before building raw HTML
+            var safeTitle = System.Net.WebUtility.HtmlEncode(suggestionTitle);
+
             var html = new StringBuilder();
-            html.Append("<div id=\"suggestion-results-area\">");
-            html.Append("<hr class=\"my-5\">");
-            html.Append("<div class=\"text-center mb-4\">");
-            html.Append($"<div id=\"suggestion-header\" class=\"d-flex justify-content-center align-items-center\">");
-            
-            // Add actor profile image if available
-            if (ViewData["ActorProfilePath"] != null && !string.IsNullOrEmpty(ViewData["ActorProfilePath"]?.ToString()))
-            {
-                var tmdbImageBaseUrl = "https://image.tmdb.org/t/p/w342";
-                html.Append($"<img id=\"actor-profile-image\" src=\"{tmdbImageBaseUrl}{ViewData["ActorProfilePath"]}\" class=\"rounded-circle me-3\" style=\"width: 50px; height: 50px; object-fit: cover;\" alt=\"Profile picture\" />");
-            }
-            
-            html.Append($"<h4 id=\"suggestion-title\" class=\"cinelog-gold-title mb-0\">{suggestionTitle}</h4>");
-            html.Append("</div>");
+            html.Append("<div id=\"suggestion-results-area\" class=\"fr-suggest-results\">");
+            html.Append("<div id=\"suggestion-header\" class=\"fr-suggest-head\">");
 
-            // UX: Reshuffle button above AND below movie grid for convenience
-            string reshuffleButtonHtml = "";
-            if (suggestedMovies.Any())
+            // Actor profile image for cast-based suggestions
+            var actorProfilePath = ViewData["ActorProfilePath"]?.ToString();
+            if (!string.IsNullOrEmpty(actorProfilePath))
             {
-                var suggestionBaseType = nextSuggestionType?.StartsWith("year_") == true ? "decade" :
-                    nextSuggestionType?.StartsWith("genre_") == true ? "genre" :
+                html.Append($"<img id=\"actor-profile-image\" class=\"fr-suggest-avatar\" src=\"https://image.tmdb.org/t/p/w185{System.Net.WebUtility.HtmlEncode(actorProfilePath)}\" alt=\"\" width=\"44\" height=\"44\" />");
+            }
+
+            html.Append($"<h2 id=\"suggestion-title\" class=\"fr-suggest-heading\">{safeTitle}</h2>");
+
+            // One shuffle button next to the heading
+            if (suggestedMovies.Any() && nextSuggestionType != null &&
+                (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") ||
+                 nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") || nextSuggestionType == "surprise_me"))
+            {
+                var suggestionBaseType = nextSuggestionType.StartsWith("year_") ? "decade" :
+                    nextSuggestionType.StartsWith("genre_") ? "genre" :
                     nextSuggestionType == "surprise_me" ? "surprise" :
-                    (nextSuggestionType?.Contains("_") == true ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
-
-                if (nextSuggestionType != null && (nextSuggestionType.StartsWith("trending") || nextSuggestionType.StartsWith("cast_") || nextSuggestionType.StartsWith("director_") || nextSuggestionType.StartsWith("year_") || nextSuggestionType.StartsWith("genre_") || nextSuggestionType == "surprise_me"))
-                {
-                    reshuffleButtonHtml = $"<button type=\"button\" class=\"reshuffle-btn btn btn-outline-light btn-sm mt-2\" data-suggestion-type=\"{suggestionBaseType}\"><i class=\"bi bi-shuffle\"></i> Reshuffle</button>";
-                }
-            }
-
-            // Top reshuffle button
-            if (!string.IsNullOrEmpty(reshuffleButtonHtml))
-            {
-                html.Append(reshuffleButtonHtml);
+                    (nextSuggestionType.Contains('_') ? nextSuggestionType.Split('_')[0] : nextSuggestionType);
+                html.Append($"<button type=\"button\" class=\"reshuffle-btn fr-btn fr-btn--secondary fr-btn--compact\" data-suggestion-type=\"{suggestionBaseType}\">Shuffle</button>");
             }
 
             html.Append("</div>");
 
             if (suggestedMovies.Any())
             {
-                // ARCHITECTURE: Use Bootstrap grid system matching original view layout
-                html.Append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center\">");
+                html.Append("<div id=\"suggestion-grid\" class=\"fr-suggest-grid\">");
                 foreach (var movie in suggestedMovies)
                 {
-                    var partialViewResult = await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie);
-                    html.Append($"<div class=\"col\">{partialViewResult}</div>");
+                    html.Append(await RenderPartialViewToStringAsync("_MovieSuggestionCard", movie));
                 }
-                html.Append("</div>");
-            }
-
-            // Bottom reshuffle button
-            if (!string.IsNullOrEmpty(reshuffleButtonHtml))
-            {
-                html.Append("<div class=\"text-center mt-4 mb-3\">");
-                html.Append(reshuffleButtonHtml);
                 html.Append("</div>");
             }
 
