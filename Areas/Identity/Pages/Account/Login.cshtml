@@ -5,108 +5,59 @@
     ViewData["Title"] = "Log in";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="text-center mb-4">
-            <img src="~/images/logo-gold.svg" alt="FrameRoute" height="80" class="mb-3">
-            <h3 class="mb-1">Welcome Back</h3>
-            <p class="text-muted">Sign in to your FrameRoute account</p>
-        </div>
-        <section>
-            <form id="account" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <div class="input-group">
-                        <div class="form-floating">
-                            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                            <label asp-for="Input.Password" class="form-label">Password</label>
-                        </div>
-                        <button class="password-toggle" type="button" tabindex="-1" aria-label="Toggle password visibility">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        @Html.DisplayNameFor(m => m.Input.RememberMe)
-                    </label>
-                </div>
-                <div class="mb-3">
-                    <button id="login-submit" type="submit" class="w-100 btn btn-primary">Sign In</button>
-                </div>
-                <div class="text-center">
-                    <div class="mb-2">
-                        <a id="forgot-password" asp-page="./ForgotPassword" class="text-decoration-none">Forgot your password?</a>
-                    </div>
-                    <div class="mb-2">
-                        <span class="text-muted">Don't have an account? </span>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none">Sign up</a>
-                    </div>
-                    <div>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation" class="text-muted text-decoration-none small">Resend email confirmation</a>
-                    </div>
-                </div>
-            </form>
-        </section>
-    </div>
-</div>
+<section class="fr-auth">
+    <h1 class="fr-page-kicker">Log in</h1>
 
-@* Hide external login section when no providers are configured *@
-@if ((Model.ExternalLogins?.Count ?? 0) > 0)
-{
-<div class="row justify-content-center mt-4">
-    <div class="col-md-6 col-lg-4">
-        <div class="text-center">
-            <div class="d-flex align-items-center mb-3">
-                <hr class="flex-grow-1">
-                <span class="px-3 text-muted small">OR</span>
-                <hr class="flex-grow-1">
-            </div>
+    <form id="account" method="post">
+        <div asp-validation-summary="ModelOnly" class="fr-form-errors" role="alert"></div>
+
+        <div class="fr-field">
+            <label asp-for="Input.Email">Email</label>
+            <input asp-for="Input.Email" autocomplete="username" aria-required="true" />
+            <span asp-validation-for="Input.Email"></span>
         </div>
-        <section>
-            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                @* SECURITY: Add anti-forgery token protection for external login *@
-                @Html.AntiForgeryToken()
-                <div class="d-grid gap-2">
-                    @foreach (var provider in Model.ExternalLogins!)
-                    {
-                        <button type="submit" class="@(provider.Name.ToLower() == "google" ? "btn btn-google" : "btn btn-outline-secondary")" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
-                            @if (provider.Name.ToLower() == "google")
-                            {
-                                <i class="fab fa-google me-2"></i><text>Continue with @provider.DisplayName</text>
-                            }
-                            else
-                            {
-                                <i class="fas fa-sign-in-alt me-2"></i><text>Continue with @provider.DisplayName</text>
-                            }
-                        </button>
-                    }
-                </div>
-            </form>
-        </section>
-    </div>
-</div>
-}
+
+        <div class="fr-field">
+            <label asp-for="Input.Password">Password</label>
+            <div class="fr-field-pw">
+                <input asp-for="Input.Password" autocomplete="current-password" aria-required="true" />
+                <button class="fr-pw-toggle" type="button" tabindex="-1" aria-label="Show password" data-pw-toggle><i class="bi bi-eye"></i></button>
+            </div>
+            <span asp-validation-for="Input.Password"></span>
+        </div>
+
+        <div class="fr-auth-row">
+            <label>
+                <input asp-for="Input.RememberMe" />
+                Remember me
+            </label>
+            <a id="forgot-password" class="fr-auth-link" asp-page="./ForgotPassword">Forgot password?</a>
+        </div>
+
+        <button id="login-submit" type="submit" class="fr-btn fr-btn--block">Log in</button>
+    </form>
+
+    @* Hide external login section when no providers are configured *@
+    @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+    {
+        <div class="fr-auth-or">or</div>
+        <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            @* SECURITY: Add anti-forgery token protection for external login *@
+            @Html.AntiForgeryToken()
+            @foreach (var provider in Model.ExternalLogins!)
+            {
+                <button type="submit" class="fr-btn fr-btn--secondary fr-btn--block" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
+                    <i class="@(provider.Name.ToLower() == "google" ? "fab fa-google" : "fas fa-sign-in-alt")" aria-hidden="true"></i>Continue with @provider.DisplayName
+                </button>
+            }
+        </form>
+    }
+
+    <p class="fr-auth-alt">New to FrameRoute? <a class="fr-auth-link" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Sign up</a></p>
+    <p class="fr-auth-alt">No confirmation email? <a id="resend-confirmation" class="fr-auth-link" asp-page="./ResendEmailConfirmation">Send it again</a></p>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        document.querySelectorAll('.password-toggle').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const input = this.closest('.input-group').querySelector('input');
-                const icon = this.querySelector('i');
-                const isPassword = input.type === 'password';
-                input.type = isPassword ? 'text' : 'password';
-                icon.classList.toggle('bi-eye', !isPassword);
-                icon.classList.toggle('bi-eye-slash', isPassword);
-            });
-        });
-    </script>
+    <script src="~/js/account.js" asp-append-version="true"></script>
 }

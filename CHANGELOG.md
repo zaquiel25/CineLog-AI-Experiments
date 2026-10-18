@@ -4,6 +4,12 @@
 - **Edit a viewing redesigned**: same form as Log a movie (sentence on desktop, chips on mobile) with the saved values, rating dots instead of stars, "Save changes" / "Cancel" / "Delete this viewing". Saving returns to the movie page. The film itself can no longer be changed from Edit (delete and log again instead); only date, place, rewatch and rating are saved
 - **Sentence choices in Log a movie and Edit** are now text menus instead of native selects, which opened unreadable popups in the wrong place
 
+- **Account pages redesigned** (log in, sign up, forgot/reset password, email confirmation): one narrow column with a small caps label, fields as a line, one gold button and Google as a secondary button. No more big logo, greeting titles or white Bootstrap fields
+- **Account settings redesigned**: "Account" title, sections as tabs on a bar (like My Movies), one narrow form per tab. Email, Two-factor, Personal data and Delete account now have their own views; the "Account snapshot" and "Security tips" side panels were removed
+
+### Fixed
+- **`jQuery is not defined` on account settings**: the Manage layout printed page scripts before jQuery loaded; the section is now passed through to the main layout
+
 ### Security
 - **Edit POST validates the antiforgery token** (CSRF): the form sent one, but it was never checked
 

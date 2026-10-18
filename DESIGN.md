@@ -155,6 +155,22 @@ Same form as step 2 of Log a movie, filled with the saved values (reference: Let
 - Only gold: "Save changes" (returns to the movie page). "Cancel" is a secondary button. "Delete this viewing" is red text pushed to the right (asks for confirmation).
 - The film cannot be changed here: a wrong film is deleted and logged again.
 
+## Account access (log in, sign up, password reset)
+
+References: Criterion and Letterboxd sign-in (captured 2026-10-18). Taken as a principle (one small column, direct title, nothing else), not as a composition: a split screen with a still or a panel over a full-screen still were rejected as too close to Letterboxd or to generic templates.
+
+- One narrow column, no card. Small caps label ("LOG IN", "SIGN UP", "FORGOT PASSWORD") instead of a logo and a greeting.
+- Fields are a line with the label above (`.fr-field`); show/hide password is an eye icon on the line.
+- Only gold: the main button. "Continue with Google" is a secondary button. Secondary links are underlined text ("New to FrameRoute? Sign up").
+- Confirmation pages (check your email, password saved) are the label plus one line of text and, if needed, one button.
+
+## Account (Identity Manage)
+
+- Title "Account" in Newsreader 600, the email below, and the sections as tabs on a bar (the same `.fr-mm-tabs` as My Movies): Profile, Email, Password, External logins, Two-factor, Personal data.
+- One narrow form per tab (max 440px), fields as a line, one gold button. Saved messages are a line of text with a muted gold rule on the left.
+- Personal data keeps "Delete my account" apart, as red text under a hairline.
+- The 2FA setup sub-pages keep Identity's own markup with a fallback style.
+
 ## Movie page (Preview and Details)
 
 One layout for both: poster on the left (sticky while scrolling), everything else on the right; on mobile it stacks.

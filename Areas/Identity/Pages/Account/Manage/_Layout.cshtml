@@ -1,31 +1,22 @@
+@*
+    Account (Identity Manage): title, the sections as tabs on a bar (same as My Movies) and one narrow form.
+    Also wraps the Identity UI pages that are not scaffolded here (Email, Two-factor, Personal data).
+*@
 @{
     Layout = "/Views/Shared/_Layout.cshtml";
 }
 
-<div class="manage-dashboard py-5">
-    <div class="container manage-dashboard-container">
-        <div class="row g-4 g-xl-5 align-items-start">
-            <div class="col-12 col-xl-3">
-                <aside class="manage-card manage-card-nav h-100">
-                    <div class="manage-card-header">
-                        <span class="manage-card-eyebrow">Account Center</span>
-                        <h2 class="manage-card-title">Manage Settings</h2>
-                        <p class="manage-card-subtitle">Review your profile, security, and personal data from a single place.</p>
-                    </div>
-                    <div class="manage-card-navlist">
-                        <partial name="_ManageNav" />
-                    </div>
-                </aside>
-            </div>
-            <div class="col-12 col-xl-9">
-                <section class="manage-card manage-card-content">
-                    <div class="manage-card-content-body">
-                        @RenderBody()
-                    </div>
-                </section>
-            </div>
-        </div>
+<section class="fr-account">
+    <h1 class="fr-account-title">Account</h1>
+    <p class="fr-account-sub">@User.Identity?.Name</p>
+    <partial name="_ManageNav" />
+    <div class="fr-account-body">
+        @RenderBody()
     </div>
-</div>
+</section>
 
-@RenderSection("Scripts", required: false)
+@* FIX: re-declare the section so page scripts render after jQuery in the main layout.
+   RenderSection here printed them mid-page, before jQuery loaded ("jQuery is not defined"). *@
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

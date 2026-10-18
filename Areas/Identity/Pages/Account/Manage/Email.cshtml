@@ -1,0 +1,36 @@
+@page
+@using Microsoft.AspNetCore.Identity.UI.V5.Pages.Account.Manage.Internal
+@model EmailModel
+@{
+    ViewData["Title"] = "Email";
+    ViewData["ActivePage"] = Ezequiel_Movies.Areas.Identity.Pages.Account.Manage.ManageNavPages.Email;
+}
+
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<form id="email-form" method="post">
+    <div asp-validation-summary="All" class="fr-form-errors" role="alert"></div>
+    <div class="fr-field">
+        <label asp-for="Email">Current email</label>
+        <input asp-for="Email" disabled />
+        @if (Model.IsEmailConfirmed)
+        {
+            <span class="fr-field-hint">Confirmed</span>
+        }
+        else
+        {
+            <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="fr-link-button">Send the confirmation email again</button>
+        }
+    </div>
+    <div class="fr-field">
+        <label asp-for="Input.NewEmail">New email</label>
+        <input asp-for="Input.NewEmail" autocomplete="email" aria-required="true" />
+        <span asp-validation-for="Input.NewEmail"></span>
+        <span class="fr-field-hint">We'll send a link to the new address. The change happens when you open it.</span>
+    </div>
+    <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="fr-btn">Change email</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

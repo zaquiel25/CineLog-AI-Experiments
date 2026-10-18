@@ -1,0 +1,54 @@
+@page
+@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.AspNetCore.Identity.UI.V5.Pages.Account.Manage.Internal
+@model TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+    ViewData["ActivePage"] = Ezequiel_Movies.Areas.Identity.Pages.Account.Manage.ManageNavPages.TwoFactorAuthentication;
+    var consentFeature = HttpContext.Features.Get<ITrackingConsentFeature>();
+}
+
+<partial name="_StatusMessage" for="StatusMessage" />
+
+@if (consentFeature?.CanTrack ?? true)
+{
+    <p class="fr-account-text">Ask for a code from an authenticator app (like Google Authenticator or 1Password) when you log in, on top of your password.</p>
+
+    @if (Model.Is2faEnabled)
+    {
+        @if (Model.RecoveryCodesLeft == 0)
+        {
+            <div class="alert alert-danger">You have no recovery codes left. <a class="fr-auth-link" asp-page="./GenerateRecoveryCodes">Generate new ones</a> before you can log in with a recovery code.</div>
+        }
+        else if (Model.RecoveryCodesLeft <= 3)
+        {
+            <div class="alert alert-danger">Only @Model.RecoveryCodesLeft recovery codes left. <a class="fr-auth-link" asp-page="./GenerateRecoveryCodes">Generate new ones</a>.</div>
+        }
+
+        <ul class="fr-account-list">
+            <li>Two-factor is on <a class="fr-log-delete" asp-page="./Disable2fa">Turn off</a></li>
+            <li>Recovery codes <a class="fr-auth-link" asp-page="./GenerateRecoveryCodes">Make new codes</a></li>
+            @if (Model.IsMachineRemembered)
+            {
+                <li>
+                    This browser skips the code
+                    <form method="post"><button type="submit" class="fr-link-button">Forget this browser</button></form>
+                </li>
+            }
+        </ul>
+    }
+
+    @if (!Model.HasAuthenticator)
+    {
+        <a id="enable-authenticator" asp-page="./EnableAuthenticator" class="fr-btn">Add authenticator app</a>
+    }
+    else
+    {
+        <a id="enable-authenticator" asp-page="./EnableAuthenticator" class="fr-btn fr-btn--secondary">Set up authenticator app</a>
+        <a id="reset-authenticator" asp-page="./ResetAuthenticator" class="fr-btn fr-btn--secondary">Reset authenticator app</a>
+    }
+}
+else
+{
+    <p class="fr-account-text">Accept the cookie policy to turn on two-factor authentication.</p>
+}

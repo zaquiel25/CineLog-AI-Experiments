@@ -1,0 +1,29 @@
+@page
+@using Microsoft.AspNetCore.Identity.UI.V5.Pages.Account.Manage.Internal
+@model DeletePersonalDataModel
+@{
+    ViewData["Title"] = "Delete account";
+    ViewData["ActivePage"] = Ezequiel_Movies.Areas.Identity.Pages.Account.Manage.ManageNavPages.PersonalData;
+}
+
+<p class="fr-account-text"><strong>This deletes your account for good.</strong> Your logged films, your Wishlist and your settings go with it, and there is no way to get them back.</p>
+
+<form id="delete-user" method="post">
+    <div asp-validation-summary="ModelOnly" class="fr-form-errors" role="alert"></div>
+    @if (Model.RequirePassword)
+    {
+        <div class="fr-field">
+            <label asp-for="Input.Password">Your password</label>
+            <input asp-for="Input.Password" autocomplete="current-password" aria-required="true" />
+            <span asp-validation-for="Input.Password"></span>
+        </div>
+    }
+    <div class="fr-account-actions">
+        <button class="fr-btn fr-btn--danger" type="submit">Delete my account</button>
+        <a class="fr-btn fr-btn--secondary" asp-page="./PersonalData">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

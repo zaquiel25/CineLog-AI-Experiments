@@ -1,38 +1,24 @@
 @page
 @model ConfirmEmailModel
 @{
-    ViewData["Title"] = "Confirm Email";
+    ViewData["Title"] = "Confirm email";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="text-center mb-4">
-            <img src="~/images/logo-gold.svg" alt="FrameRoute" height="80" class="mb-3">
-        </div>
+<section class="fr-auth">
+    <h1 class="fr-page-kicker">Confirm email</h1>
 
-        @if (Model.StatusMessage == null)
-        {
-            <div class="text-center">
-                <h3>Confirming your email...</h3>
-            </div>
-        }
-        else if (Model.StatusMessage.StartsWith("Error"))
-        {
-            <div class="alert alert-danger text-center" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>@Model.StatusMessage
-            </div>
-            <div class="text-center mt-3">
-                <a asp-page="./Login" class="text-decoration-none">Back to Login</a>
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-success text-center" role="alert">
-                <i class="fas fa-check-circle me-2"></i>@Model.StatusMessage
-            </div>
-            <div class="text-center mt-3">
-                <a asp-page="./Login" class="btn btn-primary">Sign In</a>
-            </div>
-        }
-    </div>
-</div>
+    @if (Model.StatusMessage == null)
+    {
+        <p class="fr-auth-lead">Confirming your email…</p>
+    }
+    else if (Model.StatusMessage.StartsWith("Error"))
+    {
+        <p class="fr-auth-lead fr-form-errors" role="alert">@Model.StatusMessage</p>
+        <p class="fr-auth-alt"><a class="fr-auth-link" asp-page="./ResendEmailConfirmation">Send a new link</a></p>
+    }
+    else
+    {
+        <p class="fr-auth-lead">@Model.StatusMessage</p>
+        <a asp-page="./Login" class="fr-btn fr-btn--block">Log in</a>
+    }
+</section>

@@ -2235,6 +2235,266 @@ p.fr-log-kicker { margin-bottom: 40px; }
 }
 
 /* --------------------------------------------------------------------------
+   Account access (Identity: log in, sign up, password reset, confirmations).
+   One narrow column, no card: small caps label, fields as a line, one gold button.
+   -------------------------------------------------------------------------- */
+.fr-auth {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 64px 0 96px;
+}
+
+.fr-auth h1.fr-page-kicker,
+.fr-account-body h2.fr-page-kicker { margin-bottom: 28px; }
+
+.fr-auth p.fr-auth-lead,
+.fr-account-body p.fr-auth-lead {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: -8px 0 28px;
+}
+
+.fr-auth p.fr-auth-lead strong { color: var(--fr-text); font-weight: 500; }
+
+/* Field: label above, the input is a line (DESIGN.md: fields are a line, not a box) */
+.fr-field { margin-bottom: 24px; }
+
+.fr-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--fr-muted);
+    margin-bottom: 4px;
+}
+
+.fr-field input {
+    width: 100%;
+    font-family: var(--fr-font-ui);
+    font-size: 17px;
+    color: var(--fr-text);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(243, 239, 230, .28);
+    border-radius: 0;
+    padding: 6px 0 8px;
+    color-scheme: dark;
+}
+
+.fr-field input:focus { outline: none; border-bottom-color: var(--fr-sig); }
+.fr-field input:disabled { color: var(--fr-muted); border-bottom-style: dashed; }
+.fr-field input.input-validation-error { border-bottom-color: var(--fr-danger); }
+
+/* Keep autofilled fields dark instead of the browser's light yellow */
+.fr-field input:-webkit-autofill {
+    -webkit-text-fill-color: var(--fr-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--fr-bg) inset;
+    caret-color: var(--fr-text);
+}
+
+.fr-field-hint { display: block; font-size: 13px; color: var(--fr-muted); margin-top: 6px; }
+.fr-field-error,
+.fr-field .field-validation-error { display: block; font-size: 13px; color: var(--fr-danger); margin-top: 6px; }
+.fr-field .field-validation-valid { display: none; }
+
+.fr-field-pw { position: relative; }
+.fr-field-pw input { padding-right: 36px; }
+
+.fr-pw-toggle {
+    position: absolute;
+    right: 0;
+    bottom: 6px;
+    padding: 4px;
+    color: var(--fr-muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.fr-pw-toggle:hover { color: var(--fr-text); }
+
+/* Server errors above the form */
+.fr-form-errors { font-size: 14px; color: var(--fr-danger); margin-bottom: 20px; }
+.fr-form-errors ul { list-style: none; margin: 0; padding: 0; }
+.fr-form-errors.validation-summary-valid { display: none; }
+
+.fr-auth-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--fr-muted);
+    margin: -4px 0 28px;
+}
+
+.fr-auth-row label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.fr-auth-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--fr-sig); margin: 0; }
+
+.fr-auth a.fr-auth-link,
+.fr-account-body a.fr-auth-link {
+    color: var(--fr-text);
+    text-decoration: underline;
+    text-decoration-color: rgba(243, 239, 230, .35);
+    text-underline-offset: 3px;
+}
+
+.fr-auth a.fr-auth-link:hover,
+.fr-account-body a.fr-auth-link:hover { text-decoration-color: var(--fr-text); }
+
+.fr-btn--block { width: 100%; }
+.fr-btn--block i { margin-right: 10px; }
+
+.fr-auth-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--fr-muted);
+    margin: 24px 0;
+}
+
+.fr-auth-or::before,
+.fr-auth-or::after { content: ""; flex: 1; height: 1px; background: var(--fr-line); }
+
+.fr-auth p.fr-auth-alt {
+    font-size: 14px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 28px 0 0;
+}
+
+.fr-auth p.fr-auth-alt + p.fr-auth-alt { margin-top: 10px; }
+
+/* Honeypot (Register): off screen for people, filled in by bots */
+.fr-honeypot { position: absolute; left: -9999px; }
+
+/* --------------------------------------------------------------------------
+   Account (Identity Manage): title, tabs on a bar like My Movies, one narrow form
+   -------------------------------------------------------------------------- */
+.fr-account {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 0 96px;
+}
+
+h1.fr-account-title {
+    font-family: var(--fr-font-film);
+    font-weight: 600;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--fr-text);
+    text-align: left;
+    margin: 0;
+}
+
+.fr-account p.fr-account-sub {
+    font-size: 15px;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 6px 0 0;
+}
+
+.fr-account .fr-mm-bar { margin-top: 28px; }
+.fr-account .fr-mm-tabs { overflow-x: auto; scrollbar-width: none; }
+.fr-account .fr-mm-tabs a { white-space: nowrap; }
+
+.fr-account-body { max-width: 440px; padding-top: 40px; }
+
+/* Status message after saving (Identity's _StatusMessage renders a Bootstrap alert) */
+.fr-account-body .alert {
+    position: relative;
+    font-size: 14px;
+    color: var(--fr-text);
+    background: none;
+    border: 0;
+    border-left: 2px solid var(--fr-sig);
+    border-radius: 0;
+    padding: 2px 0 2px 12px;
+    margin-bottom: 28px;
+}
+
+.fr-account-body .alert-danger { border-left-color: var(--fr-danger); }
+.fr-account-body .alert .btn-close { display: none; }
+
+.fr-account-body p.fr-account-text {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--fr-muted);
+    text-align: left;
+    margin: 0 0 20px;
+}
+
+.fr-account-list { list-style: none; margin: 0 0 32px; padding: 0; border-top: 1px solid var(--fr-line); }
+
+.fr-account-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 15px;
+    color: var(--fr-text);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--fr-line);
+}
+
+.fr-account-list form { margin: 0; }
+
+.fr-account-body .fr-btn + .fr-btn { margin-left: 8px; }
+.fr-account-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.fr-account-body p.fr-account-text strong { color: var(--fr-text); font-weight: 500; }
+
+/* Destructive zone (Personal data): separated, red text action */
+.fr-account-danger { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--fr-line); }
+
+.fr-btn--danger { background: var(--fr-danger); color: #fff; }
+.fr-btn--danger:hover,
+.fr-btn--danger:focus-visible { background: #F2555A; color: #fff; }
+
+/* A form button that reads as a text link */
+.fr-link-button {
+    display: inline;
+    padding: 0;
+    margin-top: 6px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--fr-text);
+    background: none;
+    border: 0;
+    text-decoration: underline;
+    text-decoration-color: rgba(243, 239, 230, .35);
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+/* Fallback for Identity UI pages not rewritten here (2FA setup, recovery codes): Bootstrap markup
+   in the account style. Legacy CSS sets these with !important, so the key properties need it too. */
+.fr-account-body h3,
+.fr-account-body h4 { font-family: var(--fr-font-ui); font-size: 19px; font-weight: 500; color: var(--fr-text); text-align: left; margin: 0 0 16px; }
+.fr-account-body p,
+.fr-account-body li { font-size: 15px !important; line-height: 1.55; color: var(--fr-muted) !important; text-align: left !important; margin-left: 0 !important; }
+.fr-account-body .form-floating { display: flex; flex-direction: column; margin-bottom: 24px; }
+.fr-account-body .form-floating > label { position: static !important; order: -1; padding: 0 !important; height: auto !important; transform: none !important; opacity: 1 !important; font-size: 13px !important; color: var(--fr-muted) !important; margin-bottom: 4px; }
+.fr-account-body .form-control { height: auto !important; min-height: 0 !important; font-size: 17px !important; color: var(--fr-text) !important; background: transparent !important; border: 0 !important; border-bottom: 1px solid rgba(243, 239, 230, .28) !important; border-radius: 0 !important; padding: 6px 0 8px !important; box-shadow: none !important; }
+.fr-account-body .btn-primary { background: var(--fr-action) !important; color: #000 !important; border: 0 !important; border-radius: var(--fr-radius-control) !important; font-weight: 500; padding: 14px 24px !important; width: auto !important; }
+.fr-account-body .btn-danger { background: var(--fr-danger) !important; color: #fff !important; border: 0 !important; border-radius: var(--fr-radius-control) !important; }
+.fr-account-body .btn-secondary,
+.fr-account-body .btn-outline-secondary { background: var(--fr-surface-2) !important; color: var(--fr-text) !important; border: 1px solid var(--fr-line) !important; border-radius: var(--fr-radius-control) !important; }
+.fr-account-body code,
+.fr-account-body kbd { color: var(--fr-text); background: var(--fr-surface-2); border-radius: 4px; padding: 2px 6px; }
+
+@media (max-width: 767.98px) {
+    .fr-auth { padding: 32px 8px 72px; }
+    .fr-account { padding: 24px 8px 72px; }
+    h1.fr-account-title { font-size: 34px; }
+    .fr-account .fr-mm-tabs { gap: 22px; }
+    .fr-account-body { padding-top: 28px; }
+}
+
+/* --------------------------------------------------------------------------
    Accessibility preferences (motion.md)
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {

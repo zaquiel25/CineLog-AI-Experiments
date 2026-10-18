@@ -1,0 +1,18 @@
+@page
+@using Microsoft.AspNetCore.Identity.UI.V5.Pages.Account.Manage.Internal
+@model PersonalDataModel
+@{
+    ViewData["Title"] = "Personal data";
+    ViewData["ActivePage"] = Ezequiel_Movies.Areas.Identity.Pages.Account.Manage.ManageNavPages.PersonalData;
+}
+
+<p class="fr-account-text">Download a copy of the personal data in your account, or delete the account.</p>
+
+<form id="download-data" asp-page="DownloadPersonalData" method="post">
+    <button class="fr-btn fr-btn--secondary" type="submit">Download my data</button>
+</form>
+
+<div class="fr-account-danger">
+    <p class="fr-account-text">Deleting your account removes it with all your logged films, your Wishlist and your settings. It can't be undone.</p>
+    <a id="delete" asp-page="DeletePersonalData" class="fr-log-delete">Delete my account</a>
+</div>
