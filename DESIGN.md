@@ -141,11 +141,19 @@ Two steps on one page:
 
 1. **Search** ("Log a movie", placeholder "Which film?"): one big underlined field in Newsreader. Results show poster thumb, title (Newsreader) and "year · overview", so films with the same name can be told apart. Arrow keys move through results.
 2. **The log**, two shapes for the same values:
-   - Desktop: a sentence next to the poster. "I watched *Aftersun* [for the first time / again] [today / yesterday / on a date / some time ago], [at home / at the cinema / somewhere else], and I'd give it ●●●●○". Each choice is a native select underlined in muted gold.
+   - Desktop: a sentence next to the poster. "I watched *Aftersun* [for the first time / again] [today / yesterday / on a date / some time ago], [at home / at the cinema / somewhere else], and I'd give it ●●●●○". Each choice is a word underlined in muted gold that opens a text menu (the same menu as "•••", with a ✓ on the current value). Native selects were dropped: their popups rendered unreadable and in the wrong place.
    - Mobile: poster + title on top, then chips (When / Where), rating dots, a Rewatch toggle and a full-width "Log it".
 - Rating is the interactive version of the signature dots: click a dot (left half = half point), click the current value to clear, arrow keys work.
 - "again" is pre-selected when the user already logged the film.
 - Only gold: "Log it". "Change movie" is a secondary button.
+
+## Edit a viewing
+
+Same form as step 2 of Log a movie, filled with the saved values (reference: Letterboxd uses one form to log and to edit a diary entry, with Delete at the bottom).
+
+- Small caps label "Edit this viewing" above the poster and the sentence; mobile shows the same chips.
+- Only gold: "Save changes" (returns to the movie page). "Cancel" is a secondary button. "Delete this viewing" is red text pushed to the right (asks for confirmation).
+- The film cannot be changed here: a wrong film is deleted and logged again.
 
 ## Movie page (Preview and Details)
 

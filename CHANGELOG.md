@@ -1,3 +1,12 @@
+## 2026-10-18
+
+### Changed
+- **Edit a viewing redesigned**: same form as Log a movie (sentence on desktop, chips on mobile) with the saved values, rating dots instead of stars, "Save changes" / "Cancel" / "Delete this viewing". Saving returns to the movie page. The film itself can no longer be changed from Edit (delete and log again instead); only date, place, rewatch and rating are saved
+- **Sentence choices in Log a movie and Edit** are now text menus instead of native selects, which opened unreadable popups in the wrong place
+
+### Security
+- **Edit POST validates the antiforgery token** (CSRF): the form sent one, but it was never checked
+
 ## 2026-10-17
 
 ### Added

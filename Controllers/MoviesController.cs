@@ -4194,6 +4194,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
 
 
         [HttpPost]
+        [ValidateAntiForgeryToken] // FIX: the form sent a token but it was never validated (CSRF)
         public async Task<IActionResult> Edit(AddMoviesViewModel viewModel)
         {
             _logger.LogInformation("Edit POST action invoked for user {UserId}", _userManager.GetUserId(User));
@@ -4231,31 +4232,11 @@ return (bucket3x3, bucket2x3, bucket1x3);
                         movieEntity.UserRating,
                         movieEntity.TmdbId);
 
-                    // Assign values from ViewModel to the Entity
-                    movieEntity.Title = viewModel.Title;
-                    movieEntity.Director = viewModel.Director;
-                    movieEntity.ReleasedYear = viewModel.ReleasedYear;
+                    // Edit only changes the log itself. The film is fixed: a wrong film is deleted and logged again.
                     movieEntity.DateWatched = viewModel.DateWatched;
                     movieEntity.WatchedLocation = viewModel.WatchedLocation;
-                    movieEntity.PosterPath = viewModel.PosterPath;
-                    movieEntity.Overview = viewModel.Overview;
                     movieEntity.IsRewatch = viewModel.IsRewatch;
-                    movieEntity.Subscribed = viewModel.Subscribed;
                     movieEntity.UserRating = viewModel.UserRating;
-                    movieEntity.TmdbId = viewModel.TmdbId;
-                    movieEntity.Genres = viewModel.Genres;// <<< This assignment is crucial and already in your code
-
-                    // VVVV NEW LOGIC TO FETCH AND SAVE GENRES IF THEY ARE MISSING VVVV
-                    if (movieEntity.TmdbId.HasValue && string.IsNullOrEmpty(movieEntity.Genres))
-                    {
-                        var movieDetails = await _tmdbService.GetMovieDetailsAsync(movieEntity.TmdbId.Value);
-                        if (movieDetails?.Genres != null && movieDetails.Genres.Any())
-                        {
-                            movieEntity.Genres = string.Join(", ", movieDetails.Genres.Select(g => g.Name));
-                            _logger.LogInformation("Populated missing genres for movie '{Title}': {Genres}", movieEntity.Title, movieEntity.Genres);
-                        }
-                    }
-                    // ^^^^ END OF NEW LOGIC ^^^^
 
                     _logger.LogDebug("Edit POST - Entity values BEFORE SaveChangesAsync (ID: {Id}) - Title: '{Title}', Director: '{Director}', Year: '{Year}', IsRewatch: {IsRewatch}, TmdbId: {TmdbId}, UserRating: {UserRating}",
                         movieEntity.Id,
@@ -4269,8 +4250,8 @@ return (bucket3x3, bucket2x3, bucket1x3);
                     try
                     {
                         await _dbContext.SaveChangesAsync();
-                        _logger.LogInformation("Edit POST - SaveChangesAsync completed successfully for Movie ID {Id}. Redirecting to List.", movieEntity.Id);
-                        return RedirectToAction("List", "Movies");
+                        _logger.LogInformation("Edit POST - SaveChangesAsync completed successfully for Movie ID {Id}. Redirecting to Details.", movieEntity.Id);
+                        return RedirectToAction("Details", "Movies", new { id = movieEntity.Id });
                     }
                     catch (DbUpdateConcurrencyException ex)
                     {

@@ -872,8 +872,9 @@ p.fr-ph-sub {
     mask: none;
 }
 
-/* Small caps page label (Add): the content below is the protagonist, not the page title */
-h1.fr-page-kicker {
+/* Small caps page label (Add, Edit): the content below is the protagonist, not the page title */
+h1.fr-page-kicker,
+p.fr-page-kicker {
     font-family: var(--fr-font-ui);
     font-size: 12px;
     font-weight: 500;
@@ -1837,7 +1838,7 @@ a.fr-log-sentence-film:hover,
 .fr-log-head,
 .fr-log-fields { display: none; }
 
-p.fr-log-sentence {
+div.fr-log-sentence {
     grid-area: sentence;
     font-family: var(--fr-font-ui);
     font-size: clamp(26px, 3vw, 34px);
@@ -1855,7 +1856,6 @@ p.fr-log-sentence {
     color: var(--fr-text);
 }
 
-.fr-log-inline select,
 .fr-log-inline input {
     field-sizing: content;
     appearance: none;
@@ -1874,9 +1874,28 @@ p.fr-log-sentence {
 }
 
 .fr-log-inline input { font-size: .8em; margin-left: .3em; }
-.fr-log-inline option { background: var(--fr-surface); font-size: 16px; }
+/* Sentence choices: the underlined word opens a text menu (same menu as "•••") */
+.fr-log-pick { display: inline-block; }
 
-.fr-log-inline select:focus-visible,
+.fr-log-pick summary {
+    font: inherit;
+    font-weight: 400;
+    letter-spacing: inherit;
+    line-height: 1.25;
+    color: var(--fr-text);
+    background: none;
+    border-bottom: 2px solid var(--fr-sig);
+    border-radius: 0;
+    padding: 0 2px;
+}
+
+.fr-log-pick summary:hover,
+.fr-log-pick[open] summary { color: var(--fr-text); background: none; border-bottom-color: var(--fr-text); }
+
+.fr-log-pick .fr-more-menu { left: 0; right: auto; transform-origin: top left; }
+.fr-log-pick .fr-more-menu button { font-size: 15px; letter-spacing: 0; }
+.fr-log-pick .fr-more-menu button.is-current::after { content: " ✓"; color: var(--fr-sig); }
+
 .fr-log-inline input:focus-visible,
 .fr-log-dots:focus-visible {
     outline: 2px solid var(--fr-action);
@@ -1918,6 +1937,24 @@ p.fr-log-sentence {
     gap: 12px;
     margin-top: 32px;
 }
+
+/* Edit: destructive action as red text, pushed away from Save / Cancel */
+.fr-log-delete {
+    margin-left: auto;
+    padding: 0;
+    font: inherit;
+    font-size: 15px;
+    color: var(--fr-danger);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.fr-log-delete:hover,
+.fr-log-delete:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Edit has no search step: the label sits above the log with some air */
+p.fr-log-kicker { margin-bottom: 40px; }
 
 .fr-log-errors {
     grid-area: errors;
@@ -2007,8 +2044,10 @@ p.fr-log-sentence {
         vertical-align: middle;
     }
 
-    .fr-log-actions { margin-top: 32px; }
+    .fr-log-actions { margin-top: 32px; flex-wrap: wrap; }
     .fr-log-actions .fr-btn { flex: 1; }
+    p.fr-log-kicker { margin-bottom: 24px; }
+    .fr-log-delete { flex: 1 1 100%; margin: 12px 0 0; padding: 8px 0; text-align: center; }
 }
 
 /* --------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-// Log a movie (Add page): TMDB search, then the log form.
+// Log a movie (Add page): TMDB search, then the log form. Edit uses the same log form without the search step.
 // The sentence (desktop) and the chips (mobile) are two views of the same values, kept in the hidden inputs.
 (function () {
     'use strict';
@@ -70,13 +70,18 @@
         hidden.rewatch.value = state.rewatch ? 'true' : 'false';
         hidden.rating.value = state.rating > 0 ? state.rating.toFixed(1) : '';
 
-        form.querySelectorAll('select[data-field="when"]').forEach(function (s) {
-            s.value = state.when;
-            // Once a date is picked the sentence reads "on 10/10/2026", not "on a date… 10/10/2026"
-            s.querySelector('option[value="date"]').textContent = state.when === 'date' ? 'on' : 'on a date…';
+        form.querySelectorAll('[data-pick]').forEach(function (menu) {
+            const field = menu.dataset.pick;
+            const current = field === 'rewatch' ? String(state.rewatch) : state[field];
+            menu.querySelectorAll('[data-value]').forEach(function (option) {
+                const on = option.dataset.value === current;
+                option.classList.toggle('is-current', on);
+                option.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+            const chosen = menu.querySelector('[data-value="' + current + '"]');
+            // Once a date is picked the sentence reads "on 10/10/2026"; the menu still offers "on a date…"
+            menu.querySelector('[data-pick-label]').textContent = field === 'when' && current === 'date' ? 'on' : chosen.textContent;
         });
-        form.querySelectorAll('select[data-field="where"]').forEach(function (s) { s.value = state.where; });
-        form.querySelectorAll('select[data-field="rewatch"]').forEach(function (s) { s.value = state.rewatch ? 'true' : 'false'; });
         form.querySelectorAll('[data-field="rewatch-check"]').forEach(function (c) { c.checked = state.rewatch; });
 
         form.querySelectorAll('[data-field="date"]').forEach(function (input) {
@@ -101,16 +106,15 @@
     }
 
     // ---------------------------------------------------------------- controls
+    function choose(field, value) {
+        if (field === 'rewatch') state.rewatch = value === 'true';
+        else state[field] = value;
+        if (field === 'when' && value === 'date' && !state.date) state.date = todayIso();
+    }
+
     form.addEventListener('change', function (e) {
         const field = e.target.dataset.field;
-        if (field === 'when') {
-            state.when = e.target.value;
-            if (state.when === 'date' && !state.date) state.date = todayIso();
-        } else if (field === 'where') {
-            state.where = e.target.value;
-        } else if (field === 'rewatch') {
-            state.rewatch = e.target.value === 'true';
-        } else if (field === 'rewatch-check') {
+        if (field === 'rewatch-check') {
             state.rewatch = e.target.checked;
         } else if (field === 'date') {
             state.date = e.target.value;
@@ -123,10 +127,32 @@
     form.addEventListener('click', function (e) {
         const chip = e.target.closest('[data-chip]');
         if (!chip) return;
-        state[chip.dataset.chip] = chip.dataset.value;
-        if (chip.dataset.chip === 'when' && chip.dataset.value === 'date' && !state.date) state.date = todayIso();
+        choose(chip.dataset.chip, chip.dataset.value);
         render();
     });
+
+    // Sentence menus (desktop): native <details> with our own list instead of a <select>,
+    // because native select popups rendered unreadable and in the wrong place.
+    form.addEventListener('click', function (e) {
+        const option = e.target.closest('[data-pick] [data-value]');
+        if (!option) return;
+        const menu = option.closest('[data-pick]');
+        choose(menu.dataset.pick, option.dataset.value);
+        menu.removeAttribute('open');
+        render();
+        const dateInput = form.querySelector('.fr-log-inline--date input');
+        if (menu.dataset.pick === 'when' && option.dataset.value === 'date' && dateInput) dateInput.focus();
+        else menu.querySelector('summary').focus();
+    });
+
+    function closeMenus(except) {
+        form.querySelectorAll('details[data-pick][open]').forEach(function (menu) {
+            if (menu !== except) menu.removeAttribute('open');
+        });
+    }
+
+    document.addEventListener('click', function (e) { closeMenus(e.target.closest('details[data-pick]')); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(null); });
 
     // Rating dots: left half of a dot = half point. Clicking the current value clears the rating.
     form.addEventListener('click', function (e) {
@@ -197,14 +223,28 @@
         });
     });
 
+    form.addEventListener('submit', function (e) {
+        if (!hidden.title.value || logStep.hidden) e.preventDefault();
+    });
+
+    // Edit: the delete button posts a separate form, so ask first
+    const deleteForm = document.getElementById('deleteViewingForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function (e) {
+            if (!confirm('Delete this viewing of "' + deleteForm.dataset.confirmDelete + '"?')) e.preventDefault();
+        });
+    }
+
+    // Edit has no search step: paint the saved values and stop here
+    if (!searchInput) {
+        render();
+        return;
+    }
+
     // FIX: Enter in the search box must never submit, even when a previous movie is still in the hidden
     // fields (after "Change movie"). Only the visible log step can be submitted.
     searchInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') e.preventDefault();
-    });
-
-    form.addEventListener('submit', function (e) {
-        if (!hidden.title.value || logStep.hidden) e.preventDefault();
     });
 
     // ---------------------------------------------------------------- search

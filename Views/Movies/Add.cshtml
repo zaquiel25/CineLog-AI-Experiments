@@ -51,42 +51,42 @@
                 <button type="button" class="fr-btn fr-btn--secondary fr-btn--compact" data-change-movie>Change movie</button>
             </div>
 
-            @* Desktop: the sentence *@
-            <p class="fr-log-sentence">
+            @* Desktop: the sentence (a div, not a p: the <details> menus inside are block-level) *@
+            <div class="fr-log-sentence">
                 I watched <a class="fr-log-sentence-film" data-movie-link data-movie-title href="@(Model.TmdbId.HasValue ? Url.Action("Preview", new { tmdbId = Model.TmdbId }) : "#")">@Model.Title</a>
-                <label class="fr-log-inline">
-                    <span class="visually-hidden">First time or rewatch</span>
-                    <select data-field="rewatch">
-                        <option value="false" selected="@(!Model.IsRewatch)">for the first time</option>
-                        <option value="true" selected="@Model.IsRewatch">again</option>
-                    </select>
-                </label>
-                <label class="fr-log-inline">
-                    <span class="visually-hidden">When</span>
-                    <select data-field="when">
-                        <option value="today">today</option>
-                        <option value="yesterday">yesterday</option>
-                        <option value="date">on a date…</option>
-                        <option value="unknown">some time ago</option>
-                    </select>
-                </label><label class="fr-log-inline fr-log-inline--date" hidden>
+                <details class="fr-more fr-log-pick" data-pick="rewatch">
+                    <summary aria-label="First time or rewatch"><span data-pick-label>@(Model.IsRewatch ? "again" : "for the first time")</span></summary>
+                    <div class="fr-more-menu" role="menu">
+                        <button type="button" role="menuitemradio" data-value="false">for the first time</button>
+                        <button type="button" role="menuitemradio" data-value="true">again</button>
+                    </div>
+                </details>
+                <details class="fr-more fr-log-pick" data-pick="when">
+                    <summary aria-label="When"><span data-pick-label>today</span></summary>
+                    <div class="fr-more-menu" role="menu">
+                        <button type="button" role="menuitemradio" data-value="today">today</button>
+                        <button type="button" role="menuitemradio" data-value="yesterday">yesterday</button>
+                        <button type="button" role="menuitemradio" data-value="date">on a date…</button>
+                        <button type="button" role="menuitemradio" data-value="unknown">some time ago</button>
+                    </div>
+                </details><label class="fr-log-inline fr-log-inline--date" hidden>
                     <span class="visually-hidden">Date watched</span>
                     <input type="date" data-field="date" />
                 </label>,
-                <label class="fr-log-inline">
-                    <span class="visually-hidden">Where</span>
-                    <select data-field="where">
-                        <option value="Home" selected="@(location == "Home")">at home</option>
-                        <option value="Cinema" selected="@(location == "Cinema")">at the cinema</option>
-                        <option value="Other" selected="@(location == "Other")">somewhere else</option>
-                    </select>
-                </label>,
+                <details class="fr-more fr-log-pick" data-pick="where">
+                    <summary aria-label="Where"><span data-pick-label>at home</span></summary>
+                    <div class="fr-more-menu" role="menu">
+                        <button type="button" role="menuitemradio" data-value="Home">at home</button>
+                        <button type="button" role="menuitemradio" data-value="Cinema">at the cinema</button>
+                        <button type="button" role="menuitemradio" data-value="Other">somewhere else</button>
+                    </div>
+                </details>,
                 and I'd give it
                 <span class="fr-log-dots" data-rating tabindex="0" role="slider" aria-label="Your rating"
                       aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="No rating">
                     <i></i><i></i><i></i><i></i><i></i>
                 </span>
-            </p>
+            </div>
             <p class="fr-log-meta fr-log-meta--desktop" data-movie-meta>@meta</p>
 
             @* Mobile: the same choices as chips *@
