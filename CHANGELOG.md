@@ -7,7 +7,12 @@
 - **Account pages redesigned** (log in, sign up, forgot/reset password, email confirmation): one narrow column with a small caps label, fields as a line, one gold button and Google as a secondary button. No more big logo, greeting titles or white Bootstrap fields
 - **Account settings redesigned**: "Account" title, sections as tabs on a bar (like My Movies), one narrow form per tab. Email, Two-factor, Personal data and Delete account now have their own views; the "Account snapshot" and "Security tips" side panels were removed
 
+### Removed
+- **Cookie banner**: the site only sets strictly necessary cookies (login, antiforgery), which need no consent. `CheckConsentNeeded` is off; turn it back on with a banner if non-essential cookies are ever added
+
 ### Fixed
+- **Page titles on Home and My Movies** repeated the brand ("Home - FrameRoute - FrameRoute")
+- **Home posters no longer repeat a film**: logging the same film twice in a row showed its poster twice; the fan now shows the last three different films
 - **`jQuery is not defined` on account settings**: the Manage layout printed page scripts before jQuery loaded; the section is now passed through to the main layout
 
 ### Security

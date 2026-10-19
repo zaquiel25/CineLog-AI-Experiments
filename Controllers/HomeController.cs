@@ -10,6 +10,7 @@ namespace Ezequiel_Movies.Controllers;
 public class HomeController : Controller
 {
     private const int HeroPosterCount = 3;
+    private const int RecentLogsToScan = 20;
 
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _dbContext;
@@ -39,13 +40,20 @@ public class HomeController : Controller
         var userId = _userManager.GetUserId(User);
         if (userId != null)
         {
-            posters = await _dbContext.Movies
+            // FIX: the same film logged twice in a row (a rewatch) showed its poster twice.
+            // Read a few more recent logs and keep the first three different posters.
+            var recent = await _dbContext.Movies
                 .AsNoTracking()
                 .Where(m => m.UserId == userId && m.PosterPath != null && m.PosterPath != "")
                 .OrderByDescending(m => m.DateCreated)
-                .Take(HeroPosterCount)
+                .Take(RecentLogsToScan)
                 .Select(m => new HomePoster(m.Title, m.PosterPath!))
                 .ToListAsync();
+
+            posters = recent
+                .DistinctBy(p => p.PosterPath)
+                .Take(HeroPosterCount)
+                .ToList();
         }
 
         if (posters.Count < HeroPosterCount)

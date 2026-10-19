@@ -7,7 +7,7 @@
 @model PaginatedList<Ezequiel_Movies1.Models.Entities.Movies>
 
 @{
-    ViewData["Title"] = "My Movies - FrameRoute";
+    ViewData["Title"] = "My Movies";
     var currentSort = ViewData["CurrentSort"]?.ToString() ?? "datewatched_desc";
     var groupByMonth = currentSort.StartsWith("datewatched");
     var hasFilters = !string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString())

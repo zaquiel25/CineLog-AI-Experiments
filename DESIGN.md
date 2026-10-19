@@ -96,6 +96,10 @@ From `motion.md` (Marfil): ease-out entries `cubic-bezier(0.22, 1, 0.36, 1)`, ex
 
 Hero posters: the signed-in user's last 3 logged movies (latest in the middle). Visitors, or users with fewer than 3, get TMDB trending to fill the gap.
 
+A sentence-first home ("I watched [Which film?]" with a clickable trending strip) was built and rejected (2026-10-19): the fan of the user's own last films was better, and trending must not invite logging films not yet watched.
+
+No cookie banner: the site only sets strictly necessary cookies. If analytics or any non-essential cookie is added, consent and a banner come back.
+
 ## Page hero (shared)
 
 `Views/Shared/_PageHero.cshtml` + `PageHeroViewModel`: a film still (TMDB backdrop) with a small caps kicker, a title in Newsreader 600, one line of context and the gold main action. Without a still it renders as plain text. Each page picks a film that means something there:

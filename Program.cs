@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Ezequiel_Movies.Data;
 using System.Net.Http.Headers; // <<< ADD THIS IF YOUR IDE DOESN'T ADD IT AUTOMATICALLY
 using Ezequiel_Movies;
@@ -243,12 +243,13 @@ builder.Services.AddHttpClient<Ezequiel_Movies.TmdbService>(client => // Ensure 
 
 
 /// <summary>
-/// FEATURE: Cookie consent policy for GDPR compliance.
-/// Shows a banner asking users to accept cookies before non-essential cookies are set.
+/// Cookie policy. The site only sets strictly necessary cookies (login session, antiforgery, temp messages),
+/// which need no consent, so there is no consent banner. Turn CheckConsentNeeded back on (and restore a
+/// banner) if analytics or any other non-essential cookie is ever added.
 /// </summary>
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.CheckConsentNeeded = context => true;
+    options.CheckConsentNeeded = context => false;
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
 });
 

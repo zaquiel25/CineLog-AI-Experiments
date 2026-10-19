@@ -7,7 +7,7 @@
 @model PaginatedList<Ezequiel_Movies1.Models.CollectionMovieViewModel>
 
 @{
-    ViewData["Title"] = "My Movies - Collection - FrameRoute";
+    ViewData["Title"] = "My Movies - Collection";
     var movieCount = ViewData["MovieCount"] as int? ?? 0;
     var totalWatches = ViewData["TotalWatches"] as int? ?? 0;
     var rewatches = Math.Max(0, totalWatches - movieCount);
