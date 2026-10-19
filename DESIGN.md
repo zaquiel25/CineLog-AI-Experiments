@@ -175,6 +175,14 @@ References: Criterion and Letterboxd sign-in (captured 2026-10-18). Taken as a p
 - Personal data keeps "Delete my account" apart, as red text under a hairline.
 - The 2FA setup sub-pages keep Identity's own markup with a fallback style.
 
+## Get the app
+
+FrameRoute is a PWA: it installs from the browser, no store. References: Letterboxd apps and MUBI devices pages (captured 2026-10-19) show the real app per platform with one action each. We kept "one clear action per device" and dropped the device mockups.
+
+- One column: small caps label "GET THE APP", one line ("installs from the browser, no app store, free"), tabs iPhone / Android / Computer (`.fr-mm-tabs`). The visitor's device tab opens first and is marked "this device".
+- Steps are a list with the number in Newsreader, muted gold (a real sequence).
+- Where the browser offers installation (Chrome/Edge on Android and computers), a gold "Install FrameRoute" button installs it in one tap. Safari never offers it, so iPhone keeps the steps. Once installed, a line says so.
+
 ## Movie page (Preview and Details)
 
 One layout for both: poster on the left (sticky while scrolling), everything else on the right; on mobile it stacks.

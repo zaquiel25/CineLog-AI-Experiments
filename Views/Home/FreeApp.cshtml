@@ -1,241 +1,55 @@
+@*
+    Get the app: FrameRoute is a PWA, so it installs from the browser. One column with the steps per device
+    (the tab for the visitor's device opens first) and, where the browser allows it (Chrome/Edge on Android
+    and computers), a one-tap "Install FrameRoute" button. Behaviour lives in wwwroot/js/get-app.js.
+*@
 @{
-    ViewData["Title"] = "Free App";
+    ViewData["Title"] = "Get the app";
 }
 
-<div class="free-app-page">
-    <h1><i class="bi bi-download me-2"></i>Get FrameRoute</h1>
-    <p class="free-app-subtitle">Install FrameRoute on your device for free — no app store needed.</p>
+<section class="fr-app">
+    <h1 class="fr-page-kicker">Get the app</h1>
+    <p class="fr-app-lead">FrameRoute installs from the browser. <strong>No app store, free</strong>, and it opens in its own window like any app.</p>
 
-    @* FEATURE: Phone installation instructions — Android & iPhone *@
-    <div class="install-section">
-        <div class="install-section-header">
-            <div class="install-icon">
-                <i class="bi bi-phone"></i>
-            </div>
-            <h2>From Your Phone</h2>
-        </div>
-
-        <div class="install-subsection">
-            <h3><i class="bi bi-android2 me-2"></i>Android <span class="install-badge">Chrome</span></h3>
-            <div class="install-steps">
-                <div class="install-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <strong>Tap the menu <i class="bi bi-three-dots-vertical"></i></strong>
-                        <p>Tap the three-dot menu icon in the top-right corner.</p>
-                    </div>
-                </div>
-                <div class="install-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <strong>Tap "Add to Home Screen" or "Install App"</strong>
-                        <p>The option name may vary slightly depending on your device.</p>
-                    </div>
-                </div>
-                <div class="install-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <strong>Confirm and enjoy</strong>
-                        <p>FrameRoute will appear on your home screen like a native app.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <hr class="install-divider">
-
-        <div class="install-subsection">
-            <h3><i class="bi bi-apple me-2"></i>iPhone <span class="install-badge">Safari / Chrome</span></h3>
-            <div class="install-steps">
-                <div class="install-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <strong>Tap the Share button <i class="bi bi-box-arrow-up"></i></strong>
-                        <p>Tap the square icon with an arrow in the top-right corner.</p>
-                    </div>
-                </div>
-                <div class="install-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <strong>Scroll down and tap "Add to Home Screen"</strong>
-                        <p>You may need to tap "View More" to find this option.</p>
-                    </div>
-                </div>
-                <div class="install-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <strong>Tap "Add" to confirm</strong>
-                        <p>FrameRoute will appear on your home screen like a native app.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="fr-mm-bar">
+        <nav class="fr-mm-tabs" role="tablist" aria-label="Your device">
+            <a href="#iphone" role="tab" id="tab-iphone" aria-controls="iphone" data-device-tab="iphone">iPhone</a>
+            <a href="#android" role="tab" id="tab-android" aria-controls="android" data-device-tab="android">Android</a>
+            <a href="#computer" role="tab" id="tab-computer" aria-controls="computer" data-device-tab="computer">Computer</a>
+        </nav>
     </div>
 
-    @* FEATURE: Desktop installation instructions (Chrome) *@
-    <div class="install-section">
-        <div class="install-section-header">
-            <div class="install-icon">
-                <i class="bi bi-laptop"></i>
-            </div>
-            <h2>From Your Desktop</h2>
-            <span class="install-badge">Chrome</span>
-        </div>
-
-        <div class="install-steps">
-            <div class="install-step">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <strong>Look for the install icon <i class="bi bi-box-arrow-down"></i></strong>
-                    <p>In the address bar (right side), you'll see a small install icon. Click it.</p>
-                </div>
-            </div>
-            <div class="install-step">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <strong>Click "Install"</strong>
-                    <p>FrameRoute will open in its own window — no tabs, no clutter. You can find it in your Start Menu or Applications folder.</p>
-                </div>
-            </div>
-        </div>
+    <div id="iphone" class="fr-app-panel" role="tabpanel" aria-labelledby="tab-iphone" data-device-panel="iphone">
+        <ol class="fr-app-steps">
+            <li>Open frameroute.net in Safari and tap Share <i class="bi bi-box-arrow-up" aria-hidden="true"></i><span>The square with an arrow, at the bottom of the screen.</span></li>
+            <li>Tap "Add to Home Screen"<span>Scroll down the list if you don't see it.</span></li>
+            <li>Tap "Add"<span>FrameRoute shows up on your home screen.</span></li>
+        </ol>
     </div>
-</div>
 
-<style>
-    .free-app-page {
-        max-width: 720px;
-        margin: 0 auto;
-        padding: 1rem 0 3rem;
-    }
+    <div id="android" class="fr-app-panel" role="tabpanel" aria-labelledby="tab-android" data-device-panel="android">
+        <ol class="fr-app-steps">
+            <li>Open frameroute.net in Chrome and tap the menu <i class="bi bi-three-dots-vertical" aria-hidden="true"></i><span>Top right corner.</span></li>
+            <li>Tap "Install app" or "Add to Home screen"<span>The name changes a little between phones.</span></li>
+            <li>Confirm<span>FrameRoute shows up on your home screen.</span></li>
+        </ol>
+    </div>
 
-    .free-app-page h1 {
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
+    <div id="computer" class="fr-app-panel" role="tabpanel" aria-labelledby="tab-computer" data-device-panel="computer">
+        <ol class="fr-app-steps">
+            <li>Open frameroute.net in Chrome or Edge and click the install icon <i class="bi bi-box-arrow-down" aria-hidden="true"></i><span>On the right side of the address bar.</span></li>
+            <li>Click "Install"<span>FrameRoute opens in its own window. You'll find it with your other apps.</span></li>
+        </ol>
+    </div>
 
-    .free-app-subtitle {
-        text-align: center;
-        color: #b8bcc8;
-        font-size: 1.05rem;
-        margin-bottom: 2.5rem;
-    }
+    @* Shown by get-app.js only when the browser offers installation (beforeinstallprompt) *@
+    <div class="fr-app-install" data-install hidden>
+        <button type="button" class="fr-btn" data-install-button>Install FrameRoute</button>
+        <span>or follow the steps above.</span>
+    </div>
+    <p class="fr-app-installed" data-installed hidden>FrameRoute is installed on this device.</p>
+</section>
 
-    /* Section card */
-    .install-section {
-        background: #1e2124;
-        border: 1px solid #495057;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .install-section-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .install-section-header h2 {
-        margin: 0;
-        font-size: 1.35rem;
-        font-weight: 600;
-    }
-
-    .install-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--cinelog-gold), var(--cinelog-gold-light));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        box-shadow: 0 4px 12px rgba(244, 208, 63, 0.25);
-    }
-
-    .install-icon i {
-        font-size: 1.3rem;
-        color: #1a1a1a;
-    }
-
-    .install-badge {
-        background: rgba(244, 208, 63, 0.15);
-        color: var(--cinelog-gold);
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.2rem 0.6rem;
-        border-radius: 4px;
-        letter-spacing: 0.05em;
-    }
-
-    /* Subsections (Android / iPhone) */
-    .install-subsection h3 {
-        font-size: 1.05rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .install-divider {
-        border-color: #495057;
-        margin: 1.5rem 0;
-    }
-
-    /* Steps */
-    .install-steps {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .install-step {
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .step-number {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #252830;
-        border: 2px solid var(--cinelog-gold);
-        color: var(--cinelog-gold);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.85rem;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-
-    .step-content strong {
-        display: block;
-        font-size: 0.95rem;
-        margin-bottom: 0.2rem;
-        color: #f8f9fa;
-    }
-
-    .step-content p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #b8bcc8;
-        line-height: 1.4;
-        text-align: left;
-    }
-
-    /* Responsive */
-    @@media (max-width: 576px) {
-        .install-section {
-            padding: 1.25rem;
-        }
-
-        .install-section-header h2 {
-            font-size: 1.15rem;
-        }
-    }
-</style>
+@section Scripts {
+    <script src="~/js/get-app.js" asp-append-version="true"></script>
+}
