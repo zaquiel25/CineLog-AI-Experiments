@@ -7,79 +7,12 @@ using Ezequiel_Movies.Services;
 using Ezequiel_Movies.Models;
 using System.Collections;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
-
-/// <summary>
-/// PRODUCTION MONITORING: Configure Application Insights for comprehensive production monitoring.
-/// Integrates with Azure Key Vault for secure connection string management and provides
-/// FrameRoute-specific telemetry for user experience, performance optimization validation,
-/// and business intelligence tracking.
-/// 
-/// FEATURE: Validates recent 70-90% database performance improvements
-/// FEATURE: Monitors TMDB API usage and response times
-/// FEATURE: Tracks user authentication success rates and session analytics
-/// FEATURE: Provides suggestion system performance metrics and cache hit rates
-/// </summary>
-// Configure Application Insights
-var applicationInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"] ?? 
-                                         builder.Configuration["ApplicationInsights--ConnectionString"];
-
-if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
-{
-    // Add Application Insights telemetry
-    builder.Services.AddApplicationInsightsTelemetry(options =>
-    {
-        options.ConnectionString = applicationInsightsConnectionString;
-        options.EnableAdaptiveSampling = true; // Optimize cost in production
-        options.EnableQuickPulseMetricStream = true; // Real-time monitoring
-        options.EnableAuthenticationTrackingJavaScript = true; // User session tracking
-        options.EnableDependencyTrackingTelemetryModule = true; // Database and API tracking
-        options.EnableEventCounterCollectionModule = true; // Performance counters
-    });
-    
-    // Configure telemetry for production optimization
-    builder.Services.Configure<TelemetryConfiguration>(telemetryConfiguration =>
-    {
-        // Configure sampling for cost optimization while preserving critical telemetry
-        if (builder.Environment.IsProduction())
-        {
-            // Reduce sampling rate in production to manage costs while keeping error tracking
-            telemetryConfiguration.DefaultTelemetrySink.TelemetryProcessorChainBuilder
-                .UseAdaptiveSampling(maxTelemetryItemsPerSecond: 5, excludedTypes: "Exception;Event")
-                .Build();
-        }
-    });
-    
-    // Register FrameRoute-specific telemetry service
-    builder.Services.AddScoped<FrameRouteTelemetryService>();
-    
-    builder.Services.AddLogging(logging =>
-    {
-        logging.AddApplicationInsights();
-        if (builder.Environment.IsDevelopment())
-        {
-            logging.SetMinimumLevel(LogLevel.Information);
-        }
-        else
-        {
-            logging.SetMinimumLevel(LogLevel.Warning); // Reduce log noise in production
-        }
-    });
-}
-else
-{
-    // Application Insights not configured - skip telemetry services
-    if (builder.Environment.IsProduction())
-    {
-        Console.WriteLine("WARNING: Application Insights not configured in production environment");
-    }
-}
 
 // --- VVVV START: ADDED CODE FOR TMDB TOKEN AND HTTPCLIENT VVVV ---
 // Retrieve the TMDB Access Token from configuration (User Secrets in dev, Key Vault in production)
@@ -124,7 +57,7 @@ builder.Services.AddScoped<UserDisplayNameService>();
 
 /// <summary>
 /// PRODUCTION MONITORING: Configure health checks for comprehensive system monitoring.
-/// Provides endpoints for Application Insights and Azure monitoring to track
+/// Provides a /health endpoint to track
 /// database connectivity, TMDB API availability, cache performance, and system resources.
 /// Essential for validating the 70-90% performance improvements and detecting regressions.
 /// </summary>
@@ -278,11 +211,11 @@ app.Use(async (context, next) =>
     headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
     headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' https://js.monitor.azure.com; " +
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
-        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
         "img-src 'self' https://image.tmdb.org data:; " +
-        "connect-src 'self' https://image.tmdb.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com https://dc.services.visualstudio.com https://*.in.applicationinsights.azure.com; " +
+        "connect-src 'self' https://image.tmdb.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
         "frame-ancestors 'none'; " +
         "base-uri 'self'; " +
         "form-action 'self' https://accounts.google.com";
@@ -313,7 +246,7 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 /// <summary>
-/// PRODUCTION MONITORING: Configure health check endpoints for Application Insights monitoring.
+/// PRODUCTION MONITORING: Configure the health check endpoint.
 /// Provides detailed health status for database, TMDB API, cache, and performance optimizations.
 /// Essential for production monitoring and validating recent 70-90% performance improvements.
 /// </summary>

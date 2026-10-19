@@ -84,8 +84,8 @@ var userMovies = _dbContext.Movies.Where(m => m.UserId == userId);
 - `DisplayName` on `AspNetUsers` is a shadow property (accessed via raw SQL). Keep it declared in `OnModelCreating` or migrations will drop it
 - Use provider-agnostic ADO.NET (`command.CreateParameter()`), never `SqlParameter` / `Microsoft.Data.SqlClient`
 
-### Legacy Azure Code
-- Application Insights is still wired in `Program.cs` (no-op without a connection string). Pending removal
+### Monitoring
+- Application Insights was removed (2026-10-19). Health checks remain: `/health` (requires login), `/health/ready` and `/health/live`
 
 ## Agent System
 

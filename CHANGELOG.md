@@ -7,11 +7,13 @@
 - **Account pages redesigned** (log in, sign up, forgot/reset password, email confirmation): one narrow column with a small caps label, fields as a line, one gold button and Google as a secondary button. No more big logo, greeting titles or white Bootstrap fields
 - **Account settings redesigned**: "Account" title, sections as tabs on a bar (like My Movies), one narrow form per tab. Email, Two-factor, Personal data and Delete account now have their own views; the "Account snapshot" and "Security tips" side panels were removed
 
+- **App manifest and browser theme color** use the warm black (#0D0C0A) instead of the old yellow and grey; static cache bumped to v4 so installed apps pick up the new assets
 - **Get the app redesigned**: one column with device tabs (the visitor's device opens first), steps as a list, and a one-tap "Install FrameRoute" button where the browser supports it (Chrome/Edge). Replaces the cards with gold icon circles and badges
 - **Default share and search texts without em dashes**: "FrameRoute: We Know What You Should Watch Next"; the OG and SEO descriptions use a comma and a colon instead
 - **Suggestion titles** for the director and actor fallbacks no longer end in "(Random)"
 
 ### Removed
+- **Application Insights**: package, configuration, the FrameRoute telemetry services and their calls in TmdbService, CacheService and the health check. The development settings had a placeholder connection string, so local runs were trying to send telemetry to Microsoft. The Content-Security-Policy no longer allows Azure monitoring or Google Fonts domains
 - **Roboto from Google Fonts**: `bootstrap.min.css` imported it on every page without using it (one less request to Google per visit)
 - **Cookie banner**: the site only sets strictly necessary cookies (login, antiforgery), which need no consent. `CheckConsentNeeded` is off; turn it back on with a banner if non-essential cookies are ever added
 

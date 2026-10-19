@@ -5,7 +5,7 @@
  * Client handles: TMDB posters, static assets, offline navigation
  */
 
-const STATIC_CACHE = 'cinelog-static-v3';
+const STATIC_CACHE = 'cinelog-static-v4';
 const POSTER_CACHE = 'cinelog-posters-v2';
 
 const STATIC_ASSETS = [

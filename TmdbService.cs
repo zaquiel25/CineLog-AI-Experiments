@@ -29,7 +29,6 @@ public class TmdbService : IDisposable
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<TmdbService> _logger;
-        private readonly FrameRouteTelemetryService? _telemetryService;
         private static readonly Random _random = new Random();
         
         /// <summary>
@@ -271,15 +270,14 @@ public class TmdbService : IDisposable
 
         private readonly IMemoryCache _memoryCache;
 
-        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache memoryCache, FrameRouteTelemetryService? telemetryService = null)
+        public TmdbService(HttpClient httpClient, ILogger<TmdbService> logger, IMemoryCache memoryCache)
         {
             _httpClient = httpClient;
             _logger = logger;
             _memoryCache = memoryCache;
-            _telemetryService = telemetryService;
             _tmdbSemaphore = new SemaphoreSlim(6); // Limit concurrent TMDB API calls to 6
             // This helps prevent rate limiting issues with TMDB's API.
-            _logger.LogInformation("TMDB Service initialized with a semaphore limit of 6 concurrent calls and Application Insights monitoring");
+            _logger.LogInformation("TMDB Service initialized with a semaphore limit of 6 concurrent calls");
         }
 
         public void Dispose()
@@ -542,19 +540,14 @@ public class TmdbService : IDisposable
         {
             if (tmdbMovieId <= 0) return null;
 
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             string cacheKey = $"movie_details_{tmdbMovieId}";
 
             // Check cache first
             if (_memoryCache.TryGetValue(cacheKey, out TmdbMovieDetails? cachedDetails) && cachedDetails != null)
             {
-                stopwatch.Stop();
                 
                 _logger.LogWarning("CACHE HIT: La clave '{CacheKey}' fue encontrada en memoria.", cacheKey);
                 
-                // Track cache hit performance
-                _telemetryService?.TrackCacheOperation("MovieDetails", "Get", true, stopwatch.Elapsed);
-                _telemetryService?.TrackTmdbApiCall($"movie/{tmdbMovieId}", stopwatch.Elapsed, true, 200, true);
                 
                 return cachedDetails;
             }
@@ -568,15 +561,11 @@ public class TmdbService : IDisposable
             try
             {
                 var movieDetails = await _httpClient.GetFromJsonAsync<TmdbMovieDetails>(requestUri);
-                stopwatch.Stop();
 
                 if (movieDetails != null)
                 {
                     _memoryCache.Set(cacheKey, movieDetails, TimeSpan.FromHours(24));
                     
-                    // Track successful API call and cache miss
-                    _telemetryService?.TrackCacheOperation("MovieDetails", "Set", false, stopwatch.Elapsed);
-                    _telemetryService?.TrackTmdbApiCall($"movie/{tmdbMovieId}", stopwatch.Elapsed, true, 200, false);
                 }
                 
                 _logger.LogInformation("Successfully fetched details for movie ID {MovieId}.", tmdbMovieId);
@@ -584,17 +573,9 @@ public class TmdbService : IDisposable
             }
             catch (Exception ex)
             {
-                stopwatch.Stop();
                 
                 _logger.LogError(ex, "Exception occurred while getting TMDB details for ID {MovieId}.", tmdbMovieId);
                 
-                // Track failed API call
-                _telemetryService?.TrackTmdbApiCall($"movie/{tmdbMovieId}", stopwatch.Elapsed, false, null, false);
-                _telemetryService?.TrackException(ex, "TmdbApiCall", additionalProperties: new Dictionary<string, string>
-                {
-                    ["Endpoint"] = requestUri,
-                    ["TmdbId"] = tmdbMovieId.ToString()
-                });
                 
                 return null;
             }

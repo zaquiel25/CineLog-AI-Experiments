@@ -2,27 +2,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Ezequiel_Movies.Data;
 using Ezequiel_Movies1.Models.Entities;
-using System.Diagnostics;
 
 namespace Ezequiel_Movies.Services
 {
     /// <summary>
     /// Centralized caching service for user-specific data to improve performance.
-    /// Enhanced with Application Insights telemetry for monitoring cache effectiveness
-    /// and validating recent 70-90% database performance improvements.
     /// </summary>
     public class CacheService
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IMemoryCache _memoryCache;
-        private readonly FrameRouteTelemetryService? _telemetryService;
         private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(15);
 
-        public CacheService(ApplicationDbContext dbContext, IMemoryCache memoryCache, FrameRouteTelemetryService? telemetryService = null)
+        public CacheService(ApplicationDbContext dbContext, IMemoryCache memoryCache)
         {
             _dbContext = dbContext;
             _memoryCache = memoryCache;
-            _telemetryService = telemetryService;
         }
 
         /// <summary>
@@ -34,14 +29,11 @@ namespace Ezequiel_Movies.Services
             if (string.IsNullOrEmpty(userId))
                 throw new ArgumentNullException(nameof(userId));
             
-            var stopwatch = Stopwatch.StartNew();
             var cacheKey = $"BlacklistIds_{userId}";
             
             // Check cache first
             if (_memoryCache.TryGetValue(cacheKey, out List<int>? cachedIds) && cachedIds != null)
             {
-                stopwatch.Stop();
-                _telemetryService?.TrackCacheOperation("UserBlacklist", "Get", true, stopwatch.Elapsed);
                 return cachedIds;
             }
 
@@ -51,14 +43,10 @@ namespace Ezequiel_Movies.Services
                 .Select(b => b.TmdbId)
                 .ToListAsync();
 
-            stopwatch.Stop();
             
             // Cache the results
             _memoryCache.Set(cacheKey, ids, _cacheExpiration);
             
-            // Track cache miss and database performance
-            _telemetryService?.TrackCacheOperation("UserBlacklist", "Set", false, stopwatch.Elapsed);
-            _telemetryService?.TrackDatabaseQuery("BlacklistQuery", stopwatch.Elapsed, ids.Count, userId);
             
             return ids;
         }
@@ -72,14 +60,11 @@ namespace Ezequiel_Movies.Services
             if (string.IsNullOrEmpty(userId))
                 throw new ArgumentNullException(nameof(userId));
             
-            var stopwatch = Stopwatch.StartNew();
             var cacheKey = $"WishlistIds_{userId}";
             
             // Check cache first
             if (_memoryCache.TryGetValue(cacheKey, out List<int>? cachedIds) && cachedIds != null)
             {
-                stopwatch.Stop();
-                _telemetryService?.TrackCacheOperation("UserWishlist", "Get", true, stopwatch.Elapsed);
                 return cachedIds;
             }
 
@@ -89,14 +74,10 @@ namespace Ezequiel_Movies.Services
                 .Select(w => w.TmdbId)
                 .ToListAsync();
 
-            stopwatch.Stop();
             
             // Cache the results
             _memoryCache.Set(cacheKey, ids, _cacheExpiration);
             
-            // Track cache miss and database performance
-            _telemetryService?.TrackCacheOperation("UserWishlist", "Set", false, stopwatch.Elapsed);
-            _telemetryService?.TrackDatabaseQuery("WishlistQuery", stopwatch.Elapsed, ids.Count, userId);
             
             return ids;
         }

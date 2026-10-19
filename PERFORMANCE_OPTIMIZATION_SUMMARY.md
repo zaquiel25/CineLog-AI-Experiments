@@ -82,6 +82,8 @@ BANDWIDTH OPTIMIZATION:
 
 ## 📊 **APPLICATION INSIGHTS MONITORING DEPLOYMENT (2025-08-17)**
 
+> Historical. Application Insights was removed on 2026-10-19 together with the Azure infrastructure.
+
 ### 🎯 **MONITORING MILESTONE: Real-Time Performance Validation Framework**
 
 **Monitoring Status**: ✅ **DEPLOYED TO PRODUCTION** - Successfully deployed comprehensive Application Insights monitoring to validate and track the 70-90% database performance improvements achieved on 2025-08-15.

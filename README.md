@@ -11,6 +11,7 @@ FrameRoute is a comprehensive movie tracking application that helps you manage y
 **Done**:
 - Database moved from SQL Server to SQLite (single `InitialSqlite` migration, database file `FrameRoute.db`, gitignored)
 - Azure Key Vault and Azure SQL configuration removed
+- Application Insights removed (package, telemetry services and configuration)
 
 **Run locally**:
 ```bash
@@ -20,7 +21,6 @@ dotnet run --launch-profile http     # http://localhost:5059
 
 **Next steps**:
 - Redesign the UI
-- Remove Application Insights
 - Redeploy to a new host and point `frameroute.net` at it
 
 Sections below that mention Azure describe the previous infrastructure.

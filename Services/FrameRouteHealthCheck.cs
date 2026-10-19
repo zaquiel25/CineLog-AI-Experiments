@@ -9,27 +9,24 @@ namespace Ezequiel_Movies.Services
     /// <summary>
     /// Custom health check for FrameRoute application components.
     /// Monitors database connectivity, TMDB API availability, and cache performance
-    /// to provide comprehensive production health status for Application Insights monitoring.
+    /// to provide comprehensive production health status.
     /// </summary>
     public class FrameRouteHealthCheck : IHealthCheck
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _memoryCache;
-        private readonly FrameRouteTelemetryService? _telemetryService;
         private readonly ILogger<FrameRouteHealthCheck> _logger;
 
         public FrameRouteHealthCheck(
             ApplicationDbContext dbContext,
             IHttpClientFactory httpClientFactory,
             IMemoryCache memoryCache,
-            ILogger<FrameRouteHealthCheck> logger,
-            FrameRouteTelemetryService? telemetryService = null)
+            ILogger<FrameRouteHealthCheck> logger)
         {
             _dbContext = dbContext;
             _httpClient = httpClientFactory.CreateClient();
             _memoryCache = memoryCache;
-            _telemetryService = telemetryService;
             _logger = logger;
         }
 
@@ -62,8 +59,6 @@ namespace Ezequiel_Movies.Services
                         issues.Add($"Database response time slow: {dbStopwatch.ElapsedMilliseconds}ms");
                     }
 
-                    // Track database performance for optimization validation
-                    _telemetryService?.TrackDatabaseQuery("HealthCheck", dbStopwatch.Elapsed, 1);
                 }
                 catch (Exception ex)
                 {
@@ -72,7 +67,6 @@ namespace Ezequiel_Movies.Services
                     issues.Add($"Database health check failed: {ex.Message}");
                     healthCheckData["DatabaseError"] = ex.Message;
                     
-                    _telemetryService?.TrackException(ex, "HealthCheck_Database");
                 }
 
                 // 2. TMDB API availability check
@@ -102,8 +96,6 @@ namespace Ezequiel_Movies.Services
                         issues.Add($"TMDB API response time slow: {tmdbStopwatch.ElapsedMilliseconds}ms");
                     }
 
-                    // Track TMDB API performance
-                    _telemetryService?.TrackTmdbApiCall("configuration", tmdbStopwatch.Elapsed, response.IsSuccessStatusCode, (int)response.StatusCode);
                 }
                 catch (Exception ex)
                 {
@@ -113,7 +105,6 @@ namespace Ezequiel_Movies.Services
                     issues.Add($"TMDB API health check failed: {ex.Message}");
                     healthCheckData["TmdbError"] = ex.Message;
                     
-                    _telemetryService?.TrackException(ex, "HealthCheck_TmdbApi");
                 }
 
                 // 3. Memory cache functionality check
@@ -142,7 +133,6 @@ namespace Ezequiel_Movies.Services
                     issues.Add($"Memory cache health check failed: {ex.Message}");
                     healthCheckData["MemoryCacheError"] = ex.Message;
                     
-                    _telemetryService?.TrackException(ex, "HealthCheck_MemoryCache");
                 }
 
                 // 4. Performance optimization validation
@@ -161,15 +151,12 @@ namespace Ezequiel_Movies.Services
                         issues.Add("Database performance optimizations not detected");
                     }
 
-                    // Track performance optimization validation
-                    _telemetryService?.TrackPerformanceOptimization("DatabaseIndexes", "HealthCheck", indexExists ? 1 : 0);
                 }
                 catch (Exception ex)
                 {
                     issues.Add($"Performance optimization check failed: {ex.Message}");
                     healthCheckData["OptimizationCheckError"] = ex.Message;
                     
-                    _telemetryService?.TrackException(ex, "HealthCheck_PerformanceOptimization");
                 }
 
                 // 5. System resources check
@@ -200,19 +187,12 @@ namespace Ezequiel_Movies.Services
                     ? "All FrameRoute components are healthy" 
                     : $"Health issues detected: {string.Join(", ", issues)}";
 
-                // Track overall health status
-                _telemetryService?.TrackFeatureUsage("HealthCheck", additionalProperties: new Dictionary<string, string>
-                {
-                    ["HealthStatus"] = overallHealth.ToString(),
-                    ["IssueCount"] = issues.Count.ToString()
-                });
 
                 return new HealthCheckResult(overallHealth, resultMessage, data: healthCheckData);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Health check failed with unexpected exception");
-                _telemetryService?.TrackException(ex, "HealthCheck_Unexpected");
                 
                 return new HealthCheckResult(HealthStatus.Unhealthy, 
                     $"Health check failed: {ex.Message}", 
