@@ -6,11 +6,11 @@
     <title>@ViewData["Title"] - FrameRoute</title>
     @{
         // FEATURE: Dynamic OG tags — movie pages override these via ViewData, all other pages use defaults
-        var ogTitle = ViewData["OgTitle"] as string ?? "FrameRoute — We Know What You Should Watch Next";
-        var ogDescription = ViewData["OgDescription"] as string ?? "Log what you watch. We pick what's next — based on your favorite genres, directors, and ratings. Not the same 10 movies everyone recommends.";
+        var ogTitle = ViewData["OgTitle"] as string ?? "FrameRoute: We Know What You Should Watch Next";
+        var ogDescription = ViewData["OgDescription"] as string ?? "Log what you watch. We pick what's next, based on your favorite genres, directors, and ratings. Not the same 10 movies everyone recommends.";
         var ogImage = ViewData["OgImage"] as string ?? "https://frameroute.net/images/og-image.png";
         var ogUrl = ViewData["OgUrl"] as string ?? "https://frameroute.net";
-        var seoDescription = ViewData["SeoDescription"] as string ?? "Log movies and get recommendations based on what you actually like — your genres, directors, and ratings. Free movie tracker with smart suggestions.";
+        var seoDescription = ViewData["SeoDescription"] as string ?? "Log movies and get recommendations based on what you actually like: your genres, directors, and ratings. Free movie tracker with smart suggestions.";
     }
     <!-- SEO -->
     <meta name="description" content="@seoDescription">

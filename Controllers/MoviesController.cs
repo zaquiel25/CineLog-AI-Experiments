@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -2819,7 +2819,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                                 var fallbackMovies = await GetSuggestionsForDirector(fallbackDirector, userId);
                                 directorToSuggest = fallbackDirector;
                                 directorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
-                                suggestionTitle = $"Because you like {fallbackDirector} (Random)";
+                                suggestionTitle = $"Because you like {fallbackDirector}";
                                 _logger.LogInformation("Fallback director selected: {Director}", fallbackDirector);
                             }
                             else
@@ -3100,7 +3100,7 @@ return (bucket3x3, bucket2x3, bucket1x3);
                             var fallbackMovies = await GetSuggestionsForActor(fallbackActor.Id, userId);
                             actorToSuggest = fallbackActor;
                             actorSuggestions = fallbackMovies.Take(Math.Min(3, fallbackMovies.Count)).ToList();
-                            suggestionTitle = $"Because you like movies with {fallbackActor.Name} (Random)";
+                            suggestionTitle = $"Because you like movies with {fallbackActor.Name}";
                             _logger.LogInformation("Fallback actor selected: {Actor}", fallbackActor.Name);
                         }
                         else
